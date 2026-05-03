@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ChefHat, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -187,8 +187,8 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
                 const error = rowError?.id === tanda.id ? rowError.message : null;
 
                 return (
-                  <>
-                    <TableRow key={tanda.id} className="border-border">
+                  <Fragment key={tanda.id}>
+                    <TableRow className="border-border">
                       <TableCell className="font-medium">{tanda.recetaNombre}</TableCell>
                       <TableCell className="text-center tabular-nums text-sm">
                         {tanda.cantidadTandas}
@@ -275,7 +275,7 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
                     </TableRow>
 
                     {error && (
-                      <TableRow key={`${tanda.id}-error`} className="border-0">
+                      <TableRow className="border-0">
                         <TableCell colSpan={5} className="pt-0 pb-2">
                           <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -284,7 +284,7 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 );
               })
             )}

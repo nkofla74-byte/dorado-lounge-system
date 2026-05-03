@@ -32,7 +32,7 @@ export async function createInsumo(input: unknown): Promise<Result<Insumo>> {
     const repo = createInsumoRepository();
     const insumo = await createInsumoUseCase(repo, ctx.tenantId, {
       ...parsed.data,
-      codigo: parsed.data.codigo ?? null,
+      codigo: parsed.data.codigo || null,
     });
 
     await auditLog({

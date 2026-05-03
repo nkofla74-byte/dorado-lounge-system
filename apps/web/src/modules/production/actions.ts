@@ -71,9 +71,7 @@ export async function iniciarTanda(tandaId: string): Promise<Result<Tanda>> {
       );
     }
 
-    const updated = await repo.updateEstado(tandaId, ctx.tenantId, 'en_proceso', {
-      startedAt: new Date(),
-    });
+    const updated = await repo.updateEstado(tandaId, ctx.tenantId, 'en_proceso');
 
     await auditLog({
       tenantId: ctx.tenantId,
@@ -133,7 +131,7 @@ export async function completarTanda(tandaId: string): Promise<Result<Tanda>> {
           throw new AppError(
             'FEFO_ERROR',
             500,
-            `Error descontando ${ing.insumoNombre}: ${error.message}`,
+            `Error al descontar stock de '${ing.insumoNombre}'. Intenta de nuevo.`,
           );
         }
 
@@ -148,9 +146,7 @@ export async function completarTanda(tandaId: string): Promise<Result<Tanda>> {
       }
     }
 
-    const updated = await repo.updateEstado(tandaId, ctx.tenantId, 'completada', {
-      completedAt: new Date(),
-    });
+    const updated = await repo.updateEstado(tandaId, ctx.tenantId, 'completada');
 
     await auditLog({
       tenantId: ctx.tenantId,

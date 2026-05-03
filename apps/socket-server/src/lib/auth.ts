@@ -11,8 +11,7 @@ export interface SocketData {
   role: UserRole;
 }
 
-// El secreto JWT de Supabase vive en SUPABASE_JWT_SECRET (nunca NEXT_PUBLIC_*).
-const JWT_SECRET = process.env['SOCKET_JWT_SECRET'];
+const JWT_SECRET = process.env['SUPABASE_JWT_SECRET'];
 
 export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError) => void): void {
   if (!JWT_SECRET) {

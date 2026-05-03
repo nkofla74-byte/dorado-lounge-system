@@ -142,21 +142,12 @@ export function createProductionRepository(): ProductionRepository {
       return toTandaWithIngredientes(data as unknown as TandaWithIngsRow);
     },
 
-    async updateEstado(
-      id: string,
-      tenantId: string,
-      estado: EstadoTanda,
-      extra?: { startedAt?: Date; completedAt?: Date },
-    ): Promise<Tanda> {
+    async updateEstado(id: string, tenantId: string, estado: EstadoTanda): Promise<Tanda> {
       const supabase = createClient();
-
-      const patch: Record<string, unknown> = { estado, updated_at: new Date().toISOString() };
-      if (extra?.startedAt) patch['started_at'] = extra.startedAt.toISOString();
-      if (extra?.completedAt) patch['completed_at'] = extra.completedAt.toISOString();
 
       const { data, error } = await supabase
         .from('tandas_produccion')
-        .update(patch)
+        .update({ estado })
         .eq('id', id)
         .eq('tenant_id', tenantId)
         .select(

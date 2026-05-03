@@ -11,7 +11,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login');
 
-  const role = (user.app_metadata?.role ?? 'admin') as UserRole;
+  const rawRole = user.app_metadata?.role as string | undefined;
+  const tenantId = user.app_metadata?.tenant_id as string | undefined;
+
+  if (!rawRole || !tenantId) redirect('/login');
+
+  const role = rawRole as UserRole;
   const name =
     user.user_metadata?.full_name ??
     user.user_metadata?.name ??

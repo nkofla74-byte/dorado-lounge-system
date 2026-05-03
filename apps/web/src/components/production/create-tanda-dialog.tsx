@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -45,6 +45,9 @@ export function CreateTandaDialog({
 }: CreateTandaDialogProps) {
   const [serverError, setServerError] = useState('');
 
+  const genKey = () => `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const idempotencyKeyRef = useRef(genKey());
+
   const {
     register,
     handleSubmit,
@@ -53,15 +56,8 @@ export function CreateTandaDialog({
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(createTandaSchema),
-    defaultValues: { cantidadTandas: 1 },
+    defaultValues: { cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current },
   });
-
-  // Genera idempotency key al abrir el dialog
-  useEffect(() => {
-    if (open) {
-      setValue('idempotencyKey', `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-    }
-  }, [open, setValue]);
 
   const onSubmit = async (values: FormOutput) => {
     setServerError('');
@@ -70,13 +66,14 @@ export function CreateTandaDialog({
       setServerError(result.error.message);
       return;
     }
-    reset();
+    idempotencyKeyRef.current = genKey();
+    reset({ cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current });
     onCreated();
   };
 
   const handleClose = (open: boolean) => {
     if (!open) {
-      reset();
+      reset({ cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current });
       setServerError('');
     }
     onOpenChange(open);
@@ -100,20 +97,23 @@ export function CreateTandaDialog({
                 <SelectValue placeholder="Seleccionar receta de producción" />
               </SelectTrigger>
               <SelectContent>
-                {recetas.length === 0 ? (
-                  <SelectItem value="_empty" disabled>
-                    No hay recetas de producción
-                  </SelectItem>
-                ) : (
-                  recetas.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.nombre}
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        ({r.ingredientes.length} ing.)
-                      </span>
+                {(() => {
+                  const con = recetas.filter((r) => r.ingredientes.length > 0);
+                  return con.length === 0 ? (
+                    <SelectItem value="_empty" disabled>
+                      No hay recetas con ingredientes
                     </SelectItem>
-                  ))
-                )}
+                  ) : (
+                    con.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.nombre}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({r.ingredientes.length} ing.)
+                        </span>
+                      </SelectItem>
+                    ))
+                  );
+                })()}
               </SelectContent>
             </Select>
             {formErrors.recetaId && (
@@ -165,7 +165,12 @@ export function CreateTandaDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || recetas.length === 0}>
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting || recetas.filter((r) => r.ingredientes.length > 0).length === 0
+              }
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
