@@ -1,8 +1,21 @@
-// Chunk 2 añadirá: @typescript-eslint, hexagonal boundaries de @dorado/eslint-config
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
+const prettier = require('eslint-config-prettier');
+const { hexagonalBoundaries } = require('@dorado/eslint-config');
+
 /** @type {import('eslint').Linter.FlatConfig[]} */
 module.exports = [
   {
     files: ['src/**/*.ts'],
-    rules: {},
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: { project: './tsconfig.json' },
+    },
+    plugins: { '@typescript-eslint': tsPlugin },
+    rules: {
+      ...tsPlugin.configs['recommended'].rules,
+    },
   },
+  hexagonalBoundaries,
+  prettier,
 ];
