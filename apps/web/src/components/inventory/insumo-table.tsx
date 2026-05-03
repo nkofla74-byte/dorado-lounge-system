@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
+import { Package, AlertTriangle, Plus, RefreshCw, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getInsumos } from '@/modules/inventory/actions';
 import { CreateInsumoDialog } from './create-insumo-dialog';
+import { LotesSheet } from './lotes-sheet';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 
 const CAPA_LABEL: Record<string, string> = {
@@ -41,6 +42,7 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -104,12 +106,13 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
               <TableHead>Unidad</TableHead>
               <TableHead className="text-right">Stock actual</TableHead>
               <TableHead className="text-right">Stock mínimo</TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
                   No hay insumos registrados. Crea el primero con el botón de arriba.
                 </TableCell>
               </TableRow>
@@ -151,6 +154,17 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
                     <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
                       {insumo.stockMinimo.toLocaleString('es-CO', { maximumFractionDigits: 4 })}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1.5"
+                        onClick={() => setLotesInsumo(insumo)}
+                      >
+                        <Layers className="h-3.5 w-3.5" />
+                        Lotes
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -163,6 +177,14 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onCreated={handleCreated}
+      />
+
+      <LotesSheet
+        insumo={lotesInsumo}
+        onOpenChange={(open) => {
+          if (!open) setLotesInsumo(null);
+        }}
+        onLoteCreated={refresh}
       />
     </div>
   );

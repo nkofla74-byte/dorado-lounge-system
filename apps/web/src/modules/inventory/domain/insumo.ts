@@ -23,3 +23,25 @@ export interface CreateInsumoInput {
   unidadMedida: UnidadMedida;
   stockMinimo: number;
 }
+
+export interface Lote {
+  id: string;
+  tenantId: string;
+  insumoId: string;
+  cantidadInicial: number;
+  cantidadActual: number;
+  fechaRecibido: string;
+  fechaVencimiento: string | null;
+  proveedor: string | null;
+  costoUnitario: number | null;
+  activo: boolean;
+  createdAt: Date;
+}
+
+export type CreateLoteInput = {
+  insumoId: string;
+  cantidadInicial: number;
+  fechaVencimiento?: string | undefined;
+  proveedor?: string | undefined;
+  costoUnitario?: number | undefined;
+};

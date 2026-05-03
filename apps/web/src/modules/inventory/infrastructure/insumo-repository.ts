@@ -1,13 +1,49 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { InsumoRepository } from '../application/ports/insumo-repository.port';
-import type { Insumo, InsumoWithStock, CreateInsumoInput } from '../domain/insumo';
+import type {
+  Insumo,
+  InsumoWithStock,
+  CreateInsumoInput,
+  Lote,
+  CreateLoteInput,
+} from '../domain/insumo';
 
-type LoteRow = {
+type LoteStockRow = {
   cantidad_actual: number;
   activo: boolean;
   deleted_at: string | null;
 };
+
+type LoteRow = {
+  id: string;
+  tenant_id: string;
+  insumo_id: string;
+  cantidad_inicial: number;
+  cantidad_actual: number;
+  fecha_recibido: string;
+  fecha_vencimiento: string | null;
+  proveedor: string | null;
+  costo_unitario: number | null;
+  activo: boolean;
+  created_at: string;
+};
+
+function toLote(row: LoteRow): Lote {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    insumoId: row.insumo_id,
+    cantidadInicial: Number(row.cantidad_inicial),
+    cantidadActual: Number(row.cantidad_actual),
+    fechaRecibido: row.fecha_recibido,
+    fechaVencimiento: row.fecha_vencimiento,
+    proveedor: row.proveedor,
+    costoUnitario: row.costo_unitario !== null ? Number(row.costo_unitario) : null,
+    activo: row.activo,
+    createdAt: new Date(row.created_at),
+  };
+}
 
 type InsumoRow = {
   id: string;
@@ -19,7 +55,7 @@ type InsumoRow = {
   stock_minimo: number;
   activo: boolean;
   created_at: string;
-  lotes: LoteRow[] | null;
+  lotes: LoteStockRow[] | null;
 };
 
 function toInsumoWithStock(row: InsumoRow): InsumoWithStock {
@@ -106,6 +142,45 @@ export function createInsumoRepository(): InsumoRepository {
       }
 
       return toInsumo(data as unknown as Omit<InsumoRow, 'lotes'>);
+    },
+
+    async findLotesByInsumo(insumoId: string): Promise<Lote[]> {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('lotes')
+        .select(
+          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, costo_unitario, activo, created_at',
+        )
+        .eq('insumo_id', insumoId)
+        .is('deleted_at', null)
+        .eq('activo', true)
+        .order('fecha_vencimiento', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as LoteRow[]).map(toLote);
+    },
+
+    async createLote(tenantId: string, input: CreateLoteInput): Promise<Lote> {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('lotes')
+        .insert({
+          tenant_id: tenantId,
+          insumo_id: input.insumoId,
+          cantidad_inicial: input.cantidadInicial,
+          cantidad_actual: input.cantidadInicial,
+          fecha_vencimiento: input.fechaVencimiento ?? null,
+          proveedor: input.proveedor ?? null,
+          costo_unitario: input.costoUnitario ?? null,
+        })
+        .select(
+          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, costo_unitario, activo, created_at',
+        )
+        .single();
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return toLote(data as unknown as LoteRow);
     },
   };
 }
