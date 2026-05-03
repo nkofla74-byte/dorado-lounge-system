@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   { href: '/inventario', label: 'Inventario', icon: Package, enabled: true },
   { href: '/recetas', label: 'Recetas', icon: BookOpen, enabled: true },
   { href: '/produccion', label: 'Producción', icon: ChefHat, enabled: true },
-  { href: '/pedidos', label: 'Pedidos', icon: ClipboardList, enabled: false },
+  { href: '/pedidos', label: 'Pedidos', icon: ClipboardList, enabled: true },
   { href: '/buffet', label: 'Buffet', icon: UtensilsCrossed, enabled: false },
   { href: '/snack', label: 'Snack', icon: Coffee, enabled: false },
   { href: '/turnos', label: 'Turnos', icon: Clock, enabled: false },

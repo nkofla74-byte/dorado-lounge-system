@@ -23,6 +23,7 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   'orders:create': ['admin', 'mesero_amex'],
   'orders:dispatch': ['admin', 'chef', 'sous_chef'],
   'orders:deliver': ['admin', 'mesero_amex'],
+  'orders:cancel': ['admin', 'chef', 'sous_chef', 'mesero_amex'],
   // Buffet
   'buffet:read': ['admin', 'chef', 'sous_chef', 'personal_buffet'],
   'buffet:write': ['admin', 'personal_buffet'],
