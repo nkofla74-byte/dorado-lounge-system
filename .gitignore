@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+.env*
+!.env.example
+.DS_Store
+*.log
+.turbo/
+.vercel/
+playwright-report/
+test-results/
