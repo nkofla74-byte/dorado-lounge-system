@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: dorado-lounge-socket
+    env: node
+    plan: free
+    buildCommand: corepack enable && corepack prepare pnpm@10.33.2 --activate && pnpm install --frozen-lockfile && pnpm --filter @dorado/socket-server build
+    startCommand: node apps/socket-server/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SOCKET_JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: AXIOM_TOKEN
+        sync: false
+      - key: AXIOM_DATASET
+        sync: false

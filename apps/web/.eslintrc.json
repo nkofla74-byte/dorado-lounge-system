@@ -1,0 +1,34 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/infrastructure/**"],
+            "message": "Violación hexagonal: domain/ y application/ no pueden importar de infrastructure/"
+          },
+          {
+            "group": ["@supabase/*"],
+            "message": "Solo infrastructure/ puede usar Supabase directamente"
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/modules/*/infrastructure/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["src/lib/supabase/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}
