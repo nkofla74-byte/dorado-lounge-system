@@ -1,6 +1,9 @@
+import 'dotenv/config';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { logger } from './lib/logger';
+import { authenticateHandshake, canJoinChannel } from './lib/auth';
+import type { SocketData } from './lib/auth';
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001;
 const ALLOWED_ORIGIN = process.env['ALLOWED_ORIGIN'] ?? 'http://localhost:3000';
@@ -19,17 +22,44 @@ const io = new Server(httpServer, {
   cors: { origin: ALLOWED_ORIGIN, credentials: true },
 });
 
-// TODO Sprint 1: reemplazar con authenticateHandshake(socket, next)
-// que verifique JWT, extraiga tenant_id y role, y los asigne a socket.data
-io.use((_socket, next) => {
-  next();
-});
+// Middleware: verifica JWT en el handshake, extrae userId/tenantId/role a socket.data
+io.use(authenticateHandshake);
 
 io.on('connection', (socket) => {
-  logger.info({ event: 'socket_connected', socketId: socket.id });
+  const { userId, tenantId, role } = socket.data as SocketData;
 
-  socket.on('disconnect', () => {
-    logger.info({ event: 'socket_disconnected', socketId: socket.id });
+  logger.info({ event: 'socket_connected', socketId: socket.id, userId, tenantId, role });
+
+  // join: el cliente solicita unirse a un canal
+  socket.on('join', (channel: string) => {
+    if (!canJoinChannel(socket, channel)) {
+      logger.warn({
+        event: 'channel_acl_violation',
+        socketId: socket.id,
+        userId,
+        channel,
+        role,
+      });
+      socket.emit('error', { code: 'FORBIDDEN', channel });
+      socket.disconnect(true);
+      return;
+    }
+
+    // Aislar por tenant: cada socket solo ve rooms de su propio tenant
+    const tenantRoom = `${tenantId}:${channel}`;
+    void socket.join(tenantRoom);
+    logger.info({ event: 'channel_joined', socketId: socket.id, userId, channel: tenantRoom });
+  });
+
+  // leave: el cliente abandona un canal voluntariamente
+  socket.on('leave', (channel: string) => {
+    const tenantRoom = `${tenantId}:${channel}`;
+    void socket.leave(tenantRoom);
+    logger.info({ event: 'channel_left', socketId: socket.id, channel: tenantRoom });
+  });
+
+  socket.on('disconnect', (reason) => {
+    logger.info({ event: 'socket_disconnected', socketId: socket.id, userId, reason });
   });
 });
 

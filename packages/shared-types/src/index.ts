@@ -1,6 +1,3 @@
-// Sprint 1: exportar desde:
-//   ./domain-events   — DomainEvent base type
-//   ./socket-events   — CHANNELS, CHANNEL_ACL, SocketEvent discriminated union
-//   ./enums           — Role, CategoriaMerma, TipoMovimiento, EstadoPedido
-
-export {};
+export * from './enums';
+export * from './domain-events';
+export * from './socket-events';

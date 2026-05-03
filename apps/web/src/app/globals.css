@@ -4,48 +4,53 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* Light mode — Dorado Lounge brand */
+    --background: 43 33% 96%;
+    --foreground: 216 12% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 216 12% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
+    --popover-foreground: 216 12% 8%;
+    --primary: 42 53% 54%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 43 18% 90%;
+    --secondary-foreground: 216 12% 8%;
+    --muted: 43 18% 92%;
+    --muted-foreground: 216 8% 40%;
+    --accent: 43 18% 88%;
+    --accent-foreground: 216 12% 8%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 43 18% 86%;
+    --input: 43 18% 86%;
+    --ring: 42 53% 54%;
+    --sidebar: 43 25% 93%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
+    /* Dark mode — identidad primaria del sistema */
+    --background: 216 12% 8%;
+    --foreground: 43 44% 94%;
+    --card: 214 16% 17%;
+    --card-foreground: 43 44% 94%;
+    --popover: 214 16% 17%;
+    --popover-foreground: 43 44% 94%;
+    --primary: 42 53% 54%;
+    --primary-foreground: 216 12% 8%;
+    --secondary: 214 16% 14%;
+    --secondary-foreground: 43 44% 94%;
+    --muted: 214 14% 13%;
+    --muted-foreground: 217 12% 55%;
+    --accent: 42 25% 22%;
+    --accent-foreground: 43 44% 94%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 14% 22%;
+    --input: 214 14% 22%;
+    --ring: 42 53% 54%;
+    --sidebar: 215 14% 6%;
+    --radius: 0.5rem;
   }
 }
 
@@ -54,6 +59,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
