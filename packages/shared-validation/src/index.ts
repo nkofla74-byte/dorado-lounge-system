@@ -133,7 +133,7 @@ export const transicionTandaSchema = z.object({
 export const stockOutSchema = z.object({
   insumoId: uuidSchema,
   cantidad: cantidadSchema,
-  turnoId: uuidSchema,
+  turnoId: uuidSchema.optional(),
   idempotencyKey: idempotencyKeySchema,
 });
 

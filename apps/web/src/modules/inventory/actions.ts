@@ -1,14 +1,14 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
-import { ok, err, toAppError } from '@/lib/result';
+import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
 import { createLote as createLoteUseCase } from './application/create-lote';
-import { createInsumoSchema, createLoteSchema } from '@dorado/shared-validation';
+import { createInsumoSchema, createLoteSchema, stockOutSchema } from '@dorado/shared-validation';
 import type { Result } from '@/lib/result';
 import type { InsumoWithStock, Insumo, Lote } from './domain/insumo';
 
@@ -57,6 +57,51 @@ export async function getLotesByInsumo(insumoId: string): Promise<Result<Lote[]>
     await assertCan('inventory:read');
     const repo = createInsumoRepository();
     return ok(await repo.findLotesByInsumo(insumoId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function stockOut(input: unknown): Promise<Result<void>> {
+  try {
+    const ctx = await assertCan('inventory:stock_out');
+
+    const parsed = stockOutSchema.safeParse(input);
+    if (!parsed.success) {
+      return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
+    }
+
+    const admin = createAdminClient();
+    const { error: rpcError } = await admin.rpc('fn_descontar_insumo_fefo', {
+      p_tenant_id: ctx.tenantId,
+      p_insumo_id: parsed.data.insumoId,
+      p_cantidad: parsed.data.cantidad,
+      p_idempotency_key: parsed.data.idempotencyKey,
+      p_tipo: 'ajuste',
+      p_referencia_id: null,
+      p_referencia_tipo: 'stock_out',
+      p_usuario_id: ctx.userId,
+    });
+
+    if (rpcError) {
+      if (rpcError.code === 'P0001') {
+        return err(
+          new AppError('STOCK_INSUFICIENTE', 409, 'Stock insuficiente para realizar el descuento'),
+        );
+      }
+      return err(new AppError('FEFO_ERROR', 500, 'Error al descontar stock. Intenta de nuevo.'));
+    }
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'inventory:stock_out',
+      resourceId: parsed.data.insumoId,
+      resourceType: 'insumo',
+      payload: { cantidad: parsed.data.cantidad, idempotencyKey: parsed.data.idempotencyKey },
+    });
+
+    return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
   }

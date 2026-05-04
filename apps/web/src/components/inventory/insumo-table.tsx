@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, AlertTriangle, Plus, RefreshCw, Layers } from 'lucide-react';
+import {
+  Package,
+  AlertTriangle,
+  Plus,
+  RefreshCw,
+  MoreHorizontal,
+  Layers,
+  TrendingDown,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,11 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { getInsumos } from '@/modules/inventory/actions';
 import { CreateInsumoDialog } from './create-insumo-dialog';
 import { LotesSheet } from './lotes-sheet';
+import { StockOutDialog } from './stock-out-dialog';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
+import type { UserRole } from '@dorado/shared-types';
 
 const CAPA_LABEL: Record<string, string> = {
   capa_1: 'Bodega',
@@ -32,17 +48,32 @@ const UNIDAD_LABEL: Record<string, string> = {
   porcion: 'porc',
 };
 
+const WRITE_ROLES = new Set<UserRole | string>(['superuser', 'admin', 'chef', 'sous_chef']);
+const STOCK_OUT_ROLES = new Set<UserRole | string>([
+  'superuser',
+  'admin',
+  'chef',
+  'sous_chef',
+  'personal_snack',
+  'personal_buffet',
+]);
+
 interface InsumoTableProps {
   initialData: InsumoWithStock[];
   error?: string | undefined;
+  userRole?: UserRole | undefined;
 }
 
-export function InsumoTable({ initialData, error: initialError }: InsumoTableProps) {
+export function InsumoTable({ initialData, error: initialError, userRole }: InsumoTableProps) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
+  const [stockOutInsumo, setStockOutInsumo] = useState<InsumoWithStock | null>(null);
+
+  const canWrite = WRITE_ROLES.has(userRole ?? '');
+  const canStockOut = STOCK_OUT_ROLES.has(userRole ?? '');
 
   const refresh = async () => {
     setLoading(true);
@@ -80,10 +111,12 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nuevo insumo
-          </Button>
+          {canWrite && (
+            <Button size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nuevo insumo
+            </Button>
+          )}
         </div>
       </div>
 
@@ -155,15 +188,28 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
                       {insumo.stockMinimo.toLocaleString('es-CO', { maximumFractionDigits: 4 })}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs gap-1.5"
-                        onClick={() => setLotesInsumo(insumo)}
-                      >
-                        <Layers className="h-3.5 w-3.5" />
-                        Lotes
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setLotesInsumo(insumo)}>
+                            <Layers className="h-3.5 w-3.5 mr-2" />
+                            Lotes
+                          </DropdownMenuItem>
+                          {canStockOut && (
+                            <DropdownMenuItem
+                              onClick={() => setStockOutInsumo(insumo)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <TrendingDown className="h-3.5 w-3.5 mr-2" />
+                              Stock Out
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -173,11 +219,13 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
         </Table>
       </div>
 
-      <CreateInsumoDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={handleCreated}
-      />
+      {canWrite && (
+        <CreateInsumoDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onCreated={handleCreated}
+        />
+      )}
 
       <LotesSheet
         insumo={lotesInsumo}
@@ -186,6 +234,16 @@ export function InsumoTable({ initialData, error: initialError }: InsumoTablePro
         }}
         onLoteCreated={refresh}
       />
+
+      {canStockOut && (
+        <StockOutDialog
+          insumo={stockOutInsumo}
+          onOpenChange={(open) => {
+            if (!open) setStockOutInsumo(null);
+          }}
+          onSuccess={refresh}
+        />
+      )}
     </div>
   );
 }
