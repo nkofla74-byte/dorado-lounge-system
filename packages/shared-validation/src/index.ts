@@ -130,6 +130,14 @@ export const transicionTandaSchema = z.object({
   estadoNuevo: estadoTandaSchema,
 });
 
+export const createMermaSchema = z.object({
+  insumoId: uuidSchema,
+  cantidad: cantidadSchema,
+  categoria: categoriaMermaSchema,
+  descripcion: z.string().max(500).optional(),
+  idempotencyKey: idempotencyKeySchema,
+});
+
 export const stockOutSchema = z.object({
   insumoId: uuidSchema,
   cantidad: cantidadSchema,
@@ -167,6 +175,7 @@ export type CreateRecetaInput = z.infer<typeof createRecetaSchema>;
 export type AddIngredienteInput = z.infer<typeof addIngredienteSchema>;
 export type CreateTandaInput = z.infer<typeof createTandaSchema>;
 export type TransicionTandaInput = z.infer<typeof transicionTandaSchema>;
+export type CreateMermaInput = z.infer<typeof createMermaSchema>;
 export type StockOutInput = z.infer<typeof stockOutSchema>;
 export type CreatePedidoInput = z.infer<typeof createPedidoSchema>;
 export type TransicionPedidoInput = z.infer<typeof transicionPedidoSchema>;

@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Layers,
   TrendingDown,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ import { getInsumos } from '@/modules/inventory/actions';
 import { CreateInsumoDialog } from './create-insumo-dialog';
 import { LotesSheet } from './lotes-sheet';
 import { StockOutDialog } from './stock-out-dialog';
+import { MermaDialog } from './merma-dialog';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -71,6 +73,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
   const [stockOutInsumo, setStockOutInsumo] = useState<InsumoWithStock | null>(null);
+  const [mermaInsumo, setMermaInsumo] = useState<InsumoWithStock | null>(null);
 
   const canWrite = WRITE_ROLES.has(userRole ?? '');
   const canStockOut = STOCK_OUT_ROLES.has(userRole ?? '');
@@ -208,6 +211,15 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                               Stock Out
                             </DropdownMenuItem>
                           )}
+                          {canStockOut && (
+                            <DropdownMenuItem
+                              onClick={() => setMermaInsumo(insumo)}
+                              className="text-amber-500 focus:text-amber-500"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
+                              Merma
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -240,6 +252,16 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
           insumo={stockOutInsumo}
           onOpenChange={(open) => {
             if (!open) setStockOutInsumo(null);
+          }}
+          onSuccess={refresh}
+        />
+      )}
+
+      {canStockOut && (
+        <MermaDialog
+          insumo={mermaInsumo}
+          onOpenChange={(open) => {
+            if (!open) setMermaInsumo(null);
           }}
           onSuccess={refresh}
         />

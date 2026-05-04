@@ -12,6 +12,7 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   'inventory:read': ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
   'inventory:write': ['admin', 'chef', 'sous_chef'],
   'inventory:stock_out': ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
+  'inventory:merma': ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
   // Recetas
   'recipes:read': ['admin', 'chef', 'sous_chef'],
   'recipes:write': ['admin'],
