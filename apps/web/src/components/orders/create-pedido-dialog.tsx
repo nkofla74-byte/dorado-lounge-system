@@ -9,6 +9,7 @@ import { createPedido } from '@/modules/orders/actions';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -113,6 +114,9 @@ export function CreatePedidoDialog({
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nuevo pedido</DialogTitle>
+          <DialogDescription className="sr-only">
+            Registra un pedido por zona con una o más recetas de servicio.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">

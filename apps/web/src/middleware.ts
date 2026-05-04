@@ -40,13 +40,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Con sesión en login → redirigir al dashboard
+  // Con sesión en login → redirigir al dashboard solo si el JWT tiene rol y tenant
   if (user && isPublicPath) {
-    const next = request.nextUrl.searchParams.get('next') ?? '/inventario';
-    const url = request.nextUrl.clone();
-    url.pathname = next;
-    url.searchParams.delete('next');
-    return NextResponse.redirect(url);
+    const role = user.app_metadata?.role as string | undefined;
+    const tenantId = user.app_metadata?.tenant_id as string | undefined;
+    if (role && tenantId) {
+      const next = request.nextUrl.searchParams.get('next') ?? '/inventario';
+      const url = request.nextUrl.clone();
+      url.pathname = next;
+      url.searchParams.delete('next');
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

@@ -35,6 +35,19 @@ export default function LoginPage() {
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const role = user?.app_metadata?.role as string | undefined;
+    const tenantId = user?.app_metadata?.tenant_id as string | undefined;
+
+    if (!role || !tenantId) {
+      await supabase.auth.signOut();
+      setError('Tu usuario no tiene rol o tenant asignado. Contacta al administrador.');
+      setLoading(false);
+      return;
+    }
+
     const next = searchParams.get('next') ?? '/inventario';
     router.refresh();
     router.push(next);

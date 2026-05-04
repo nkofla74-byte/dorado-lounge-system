@@ -9,6 +9,7 @@ import { createInsumo } from '@/modules/inventory/actions';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -70,6 +71,9 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nuevo insumo</DialogTitle>
+          <DialogDescription className="sr-only">
+            Registra un insumo con capa, unidad de medida y stock mínimo.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">

@@ -9,6 +9,7 @@ import { createTanda } from '@/modules/production/actions';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -86,6 +87,9 @@ export function CreateTandaDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nueva tanda de producción</DialogTitle>
+          <DialogDescription className="sr-only">
+            Programa una tanda a partir de una receta de producción existente.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">

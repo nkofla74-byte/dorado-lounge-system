@@ -9,6 +9,7 @@ import { createReceta } from '@/modules/recipes/actions';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -90,6 +91,9 @@ export function CreateRecipeDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nueva receta</DialogTitle>
+          <DialogDescription className="sr-only">
+            Crea una receta de producción o servicio con su configuración base.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">

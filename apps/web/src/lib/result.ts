@@ -1,4 +1,11 @@
-export type Result<T, E = AppError> = { ok: true; value: T } | { ok: false; error: E };
+export interface AppErrorPayload {
+  code: string;
+  httpStatus: number;
+  message: string;
+  meta?: Record<string, unknown>;
+}
+
+export type Result<T, E = AppErrorPayload> = { ok: true; value: T } | { ok: false; error: E };
 
 export class AppError extends Error {
   constructor(
@@ -16,7 +23,23 @@ export function ok<T>(value: T): Result<T, never> {
   return { ok: true, value };
 }
 
-export function err<E = AppError>(error: E): Result<never, E> {
+export function err(error: AppError): Result<never>;
+export function err<E>(error: E): Result<never, E>;
+export function err<E>(error: E): Result<never, E | AppErrorPayload> {
+  if (isAppError(error)) {
+    const payload: AppErrorPayload = {
+      code: error.code,
+      httpStatus: error.httpStatus,
+      message: error.message,
+    };
+    if (error.meta) payload.meta = error.meta;
+
+    return {
+      ok: false,
+      error: payload,
+    };
+  }
+
   return { ok: false, error };
 }
 
