@@ -16,6 +16,7 @@ import {
   LogOut,
   MonitorCheck,
   QrCode,
+  UserCog,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -100,6 +101,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/analytics',
     label: 'Analytics',
     icon: BarChart3,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/personal',
+    label: 'Personal',
+    icon: UserCog,
     roles: ['admin'],
   },
 ];

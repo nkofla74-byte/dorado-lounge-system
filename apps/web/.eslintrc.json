@@ -25,7 +25,7 @@
       }
     },
     {
-      "files": ["src/modules/*/actions.ts"],
+      "files": ["src/modules/*/actions.ts", "src/app/**/*actions.ts"],
       "rules": {
         "no-restricted-imports": "off"
       }
