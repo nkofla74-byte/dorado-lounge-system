@@ -3,10 +3,12 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
+import { emitEvent } from '@/lib/socket/emit-event';
 import { createSnackRepository } from './infrastructure/snack-repository';
 import { getDespachos as getDespachoUseCase } from './application/get-despachos';
 import { getStuartRequests as getStuartUseCase } from './application/get-stuart-requests';
 import { enviarStuartSchema } from '@dorado/shared-validation';
+import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { DespachoSnack, TurnoActivo } from './domain/despacho-snack';
 import type { StuartRequest } from './domain/stuart-request';
@@ -63,6 +65,18 @@ export async function enviarStuart(input: unknown): Promise<Result<StuartRequest
       resourceId: request.id,
       resourceType: 'mensaje_chat',
       payload: { descripcion: request.descripcion, canal: request.canal },
+    });
+
+    await emitEvent(ctx.tenantId, CHANNELS.STUART_SNACK, {
+      type: 'STUART_REQUEST',
+      payload: {
+        tenantId: ctx.tenantId,
+        zona: 'snack',
+        solicitanteId: ctx.userId,
+        descripcion: request.descripcion,
+        createdAt:
+          request.createdAt instanceof Date ? request.createdAt.toISOString() : request.createdAt,
+      },
     });
 
     return ok(request);

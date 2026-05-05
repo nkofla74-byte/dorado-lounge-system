@@ -124,6 +124,18 @@ export interface StuartRequestEvent {
   };
 }
 
+export interface TurnoEvent {
+  type: 'TURNO_EVENTO';
+  payload: {
+    turnoId: string;
+    tenantId: string;
+    nombre: string;
+    accion: 'iniciado' | 'cerrado';
+    responsableId: string;
+    timestamp: string;
+  };
+}
+
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
@@ -131,6 +143,7 @@ export type SocketEvent =
   | DespachoEvent
   | MensajeChatEvent
   | BroadcastEvent
-  | StuartRequestEvent;
+  | StuartRequestEvent
+  | TurnoEvent;
 
 export type SocketEventType = SocketEvent['type'];

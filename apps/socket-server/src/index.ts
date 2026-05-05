@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { logger } from './lib/logger';
 import { authenticateHandshake, canJoinChannel } from './lib/auth';
+import { createEmitHandler } from './lib/emit-handler';
 import type { SocketData } from './lib/auth';
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001;
@@ -14,6 +15,11 @@ const httpServer = createServer((req, res) => {
     res.end(JSON.stringify({ status: 'ok', service: 'dorado-socket' }));
     return;
   }
+  // POST /emit — usado por Server Actions para broadcast tras persistir en DB
+  if (req.method === 'POST' && req.url === '/emit') {
+    emitHandler(req, res);
+    return;
+  }
   res.writeHead(404);
   res.end();
 });
@@ -21,6 +27,8 @@ const httpServer = createServer((req, res) => {
 const io = new Server(httpServer, {
   cors: { origin: ALLOWED_ORIGIN, credentials: true },
 });
+
+const emitHandler = createEmitHandler(io);
 
 // Middleware: verifica JWT en el handshake, extrae userId/tenantId/role a socket.data
 io.use(authenticateHandshake);

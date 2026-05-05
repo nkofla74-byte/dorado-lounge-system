@@ -3,12 +3,14 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
+import { emitEvent } from '@/lib/socket/emit-event';
 import { createTurnoRepository } from './infrastructure/turno-repository';
 import { getTurnos as getTurnosUseCase } from './application/get-turnos';
 import { createTurno as createTurnoUseCase } from './application/create-turno';
 import { cerrarTurno as cerrarTurnoUseCase } from './application/cerrar-turno';
 import { createTurnoSchema } from '@dorado/shared-validation';
 import { TurnoYaActivoError, TurnoNoActivoError } from './domain/turno';
+import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { Turno } from './domain/turno';
 
@@ -53,6 +55,21 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
       payload: { nombre: turno.nombre },
     });
 
+    await emitEvent(ctx.tenantId, CHANNELS.ADMIN, {
+      type: 'TURNO_EVENTO',
+      payload: {
+        turnoId: turno.id,
+        tenantId: ctx.tenantId,
+        nombre: turno.nombre,
+        accion: 'iniciado',
+        responsableId: ctx.userId,
+        timestamp:
+          turno.iniciadoAt instanceof Date
+            ? turno.iniciadoAt.toISOString()
+            : turno.createdAt.toISOString(),
+      },
+    });
+
     return ok(turno);
   } catch (e) {
     if (e instanceof TurnoYaActivoError) {
@@ -75,6 +92,21 @@ export async function cerrarTurno(turnoId: string): Promise<Result<Turno>> {
       resourceId: turno.id,
       resourceType: 'turno',
       payload: { nombre: turno.nombre, cerradoAt: turno.cerradoAt },
+    });
+
+    await emitEvent(ctx.tenantId, CHANNELS.ADMIN, {
+      type: 'TURNO_EVENTO',
+      payload: {
+        turnoId: turno.id,
+        tenantId: ctx.tenantId,
+        nombre: turno.nombre,
+        accion: 'cerrado',
+        responsableId: ctx.userId,
+        timestamp:
+          turno.cerradoAt instanceof Date
+            ? turno.cerradoAt.toISOString()
+            : new Date().toISOString(),
+      },
     });
 
     return ok(turno);

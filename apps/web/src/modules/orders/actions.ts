@@ -3,6 +3,7 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
+import { emitEvent } from '@/lib/socket/emit-event';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
@@ -10,6 +11,7 @@ import { createPedido as createPedidoUseCase } from './application/create-pedido
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { cantidadConMerma } from '@/modules/inventory/domain/merma';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
+import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { Pedido, PedidoWithItems } from './domain/pedido';
 
@@ -54,6 +56,24 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       payload: { zona: pedido.zona, itemsCount: pedido.items.length },
     });
 
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
+      type: 'PEDIDO_CREADO',
+      payload: {
+        pedidoId: pedido.id,
+        tenantId: ctx.tenantId,
+        zona: pedido.zona,
+        ...(pedido.numeroMesa != null && { numeroMesa: pedido.numeroMesa }),
+        items: pedido.items.map((i) => ({
+          recetaId: i.recetaId,
+          cantidad: i.cantidad,
+          nombre: i.recetaNombre,
+        })),
+        creadoPor: ctx.userId,
+        createdAt:
+          pedido.createdAt instanceof Date ? pedido.createdAt.toISOString() : pedido.createdAt,
+      },
+    });
+
     return ok(pedido);
   } catch (e) {
     return err(toAppError(e));
@@ -92,6 +112,19 @@ export async function iniciarPreparacion(
       payload: {},
     });
 
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'en_preparacion',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    });
+
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -125,6 +158,19 @@ export async function despacharPedido(pedidoId: string, version: number): Promis
       resourceId: pedidoId,
       resourceType: 'pedido',
       payload: {},
+    });
+
+    await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'despachado',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
     });
 
     return ok(updated);
@@ -194,6 +240,19 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       payload: { itemsCount: pedido.items.length },
     });
 
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'entregado',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    });
+
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -227,6 +286,19 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
       resourceId: pedidoId,
       resourceType: 'pedido',
       payload: {},
+    });
+
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'cancelado',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
     });
 
     return ok(updated);

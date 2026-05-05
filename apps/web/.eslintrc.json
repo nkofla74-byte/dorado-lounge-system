@@ -25,7 +25,18 @@
       }
     },
     {
-      "files": ["src/lib/supabase/**/*.ts"],
+      "files": ["src/modules/*/actions.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": [
+        "src/lib/supabase/**/*.ts",
+        "src/lib/socket/**/*.ts",
+        "src/lib/auth/**/*.ts",
+        "src/middleware.ts"
+      ],
       "rules": {
         "no-restricted-imports": "off"
       }

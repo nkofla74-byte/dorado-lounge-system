@@ -3,12 +3,14 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
+import { emitEvent } from '@/lib/socket/emit-event';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cantidadConMerma } from '@/modules/inventory/domain/merma';
 import { createBuffetRepository } from './infrastructure/buffet-repository';
 import { getDespachos as getDespachoUseCase } from './application/get-despachos';
 import { getTicketsByTurno as getTicketsUseCase } from './application/get-tickets';
 import { despacharLoteBuffetSchema, registrarTicketsTurnoSchema } from '@dorado/shared-validation';
+import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { DespachoBuffet } from './domain/despacho-buffet';
 import type { TicketTurno, TurnoActivo } from './domain/ticket-turno';
@@ -131,6 +133,23 @@ export async function despacharLoteBuffet(input: unknown): Promise<Result<Despac
         cantidad: despacho.cantidad,
         turnoId: despacho.turnoId,
         ingredientesDescontados: receta.ingredientes.length,
+      },
+    });
+
+    await emitEvent(ctx.tenantId, CHANNELS.BUFFET, {
+      type: 'DESPACHO',
+      payload: {
+        despachoId: despacho.id,
+        tenantId: ctx.tenantId,
+        recetaId: despacho.recetaId,
+        zona: 'buffet',
+        cantidad: despacho.cantidad,
+        idempotencyKey: parsed.data.idempotencyKey,
+        despachoPor: ctx.userId,
+        createdAt:
+          despacho.createdAt instanceof Date
+            ? despacho.createdAt.toISOString()
+            : despacho.createdAt,
       },
     });
 
