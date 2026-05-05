@@ -198,6 +198,25 @@ export const registrarIngresoSchema = z.object({
   vueloNumero: z.string().min(1).max(10).optional().nullable(),
 });
 
+// ── SuperUser: tenants y usuarios ────────────────────────────────────────────
+
+export const crearTenantSchema = z.object({
+  nombre: z.string().min(2, 'Nombre muy corto').max(100, 'Nombre muy largo'),
+  slug: z
+    .string()
+    .min(3, 'Slug mínimo 3 caracteres')
+    .max(32, 'Slug máximo 32 caracteres')
+    .regex(/^[a-z0-9-]+$/, 'Solo minúsculas, números y guiones'),
+});
+
+export const crearUsuarioSchema = z.object({
+  tenantId: uuidSchema,
+  nombre: z.string().min(2, 'Nombre muy corto').max(100, 'Nombre muy largo'),
+  email: z.string().email('Email inválido'),
+  role: userRoleSchema,
+  password: z.string().min(8, 'Contraseña mínimo 8 caracteres').max(100, 'Contraseña muy larga'),
+});
+
 // ── Re-exports de tipos inferidos ─────────────────────────────────────────────
 
 export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
@@ -215,3 +234,5 @@ export type RegistrarTicketsTurnoInput = z.infer<typeof registrarTicketsTurnoSch
 export type EnviarStuartInput = z.infer<typeof enviarStuartSchema>;
 export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
 export type RegistrarIngresoInput = z.infer<typeof registrarIngresoSchema>;
+export type CrearTenantInput = z.infer<typeof crearTenantSchema>;
+export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
