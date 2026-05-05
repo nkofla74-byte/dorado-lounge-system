@@ -78,10 +78,9 @@ class SupabaseSuperuserRepository implements SuperuserRepository {
   }
 
   async listUsers(tenantId?: string): Promise<TenantUser[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (this.admin.from('users') as any).select('*').is('deleted_at', null);
-    if (tenantId) query = query.eq('tenant_id', tenantId);
-    const { data: users, error } = await query.order('created_at', { ascending: false });
+    const base = this.admin.from('users').select('*').is('deleted_at', null);
+    const filtered = tenantId ? base.eq('tenant_id', tenantId) : base;
+    const { data: users, error } = await filtered.order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
 
     // Fetch all auth users to build an id→email map (avoids N+1)
