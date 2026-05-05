@@ -33,6 +33,9 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   'snack:write': ['admin', 'personal_snack'],
   // Analytics
   'analytics:read': ['admin'],
+  // Afluencia
+  'afluencia:read': ['admin', 'chef', 'sous_chef'],
+  'afluencia:write': ['admin', 'chef', 'sous_chef'],
   // Turnos
   'turnos:read': ['admin', 'chef', 'sous_chef'],
   'turnos:write': ['admin'],

@@ -11,6 +11,7 @@ import {
   Coffee,
   Clock,
   BarChart3,
+  Users,
   LogOut,
   type LucideIcon,
 } from 'lucide-react';
@@ -72,6 +73,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/turnos',
     label: 'Turnos',
     icon: Clock,
+    roles: ['admin', 'chef', 'sous_chef'],
+  },
+  {
+    href: '/afluencia',
+    label: 'Afluencia',
+    icon: Users,
     roles: ['admin', 'chef', 'sous_chef'],
   },
   {

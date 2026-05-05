@@ -188,6 +188,16 @@ export const createTurnoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
 });
 
+export const registrarIngresoSchema = z.object({
+  turnoId: uuidSchema,
+  cantidad: z
+    .number({ invalid_type_error: 'La cantidad debe ser un número' })
+    .int('La cantidad debe ser un entero')
+    .positive('La cantidad debe ser mayor a cero'),
+  zona: zonaServicioSchema.optional().nullable(),
+  vueloNumero: z.string().min(1).max(10).optional().nullable(),
+});
+
 // ── Re-exports de tipos inferidos ─────────────────────────────────────────────
 
 export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
@@ -204,3 +214,4 @@ export type DespacharLoteBuffetInput = z.infer<typeof despacharLoteBuffetSchema>
 export type RegistrarTicketsTurnoInput = z.infer<typeof registrarTicketsTurnoSchema>;
 export type EnviarStuartInput = z.infer<typeof enviarStuartSchema>;
 export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
+export type RegistrarIngresoInput = z.infer<typeof registrarIngresoSchema>;
