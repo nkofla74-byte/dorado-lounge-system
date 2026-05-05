@@ -1,0 +1,27 @@
+{
+  "qr": {
+    "title": "Dorado Lounge",
+    "subtitle": "El Dorado Airport, Bogotá",
+    "mesa": "Table {mesa}",
+    "zona": "Zone {zona}",
+    "menu": "Menu",
+    "cart": "Your order",
+    "cartEmpty": "Add dishes to your order",
+    "total": "Total items: {count}",
+    "notes": "General notes (optional)",
+    "notesPlaceholder": "E.g.: no onion, nut allergy…",
+    "submit": "Place order",
+    "submitting": "Sending…",
+    "itemNotes": "Notes for this dish",
+    "quantity": "Quantity",
+    "add": "Add",
+    "remove": "Remove",
+    "successTitle": "Order received!",
+    "successMessage": "Your order is being prepared. Staff will bring it to your table.",
+    "newOrder": "Place another order",
+    "errorTitle": "Invalid QR",
+    "errorMessage": "The QR code is not valid or has expired. Ask staff for a new one.",
+    "errorOrder": "Could not submit order. Please try again.",
+    "portions": "{n} portion | {n} portions"
+  }
+}

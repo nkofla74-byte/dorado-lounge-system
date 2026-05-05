@@ -1,0 +1,27 @@
+{
+  "qr": {
+    "title": "Dorado Lounge",
+    "subtitle": "Aeropuerto El Dorado, Bogotá",
+    "mesa": "Mesa {mesa}",
+    "zona": "Zona {zona}",
+    "menu": "Menú",
+    "cart": "Tu pedido",
+    "cartEmpty": "Añade platos a tu pedido",
+    "total": "Total de ítems: {count}",
+    "notes": "Notas generales (opcional)",
+    "notesPlaceholder": "Ej: sin cebolla, alergia a frutos secos…",
+    "submit": "Realizar pedido",
+    "submitting": "Enviando…",
+    "itemNotes": "Notas para este plato",
+    "quantity": "Cantidad",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "successTitle": "¡Pedido recibido!",
+    "successMessage": "Tu pedido está en preparación. El personal te lo entregará en tu mesa.",
+    "newOrder": "Hacer otro pedido",
+    "errorTitle": "Token inválido",
+    "errorMessage": "El QR no es válido o ha expirado. Solicita uno nuevo al personal.",
+    "errorOrder": "No se pudo enviar el pedido. Inténtalo de nuevo.",
+    "portions": "{n} porción | {n} porciones"
+  }
+}

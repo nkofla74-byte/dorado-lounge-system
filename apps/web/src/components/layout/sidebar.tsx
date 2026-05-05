@@ -15,6 +15,7 @@ import {
   Building2,
   LogOut,
   MonitorCheck,
+  QrCode,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -64,6 +65,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     label: 'Pedidos',
     icon: ClipboardList,
     roles: ['admin', 'chef', 'sous_chef', 'mesero_amex'],
+  },
+  {
+    href: '/admin/qr',
+    label: 'Generador QR',
+    icon: QrCode,
+    roles: ['admin', 'mesero_amex'],
   },
   {
     href: '/buffet',
