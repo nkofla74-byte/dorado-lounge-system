@@ -14,6 +14,7 @@ function makeRecetaBase(overrides: Partial<Receta> = {}): Receta {
     tipoReceta: 'produccion',
     zona: null,
     insumoDestinoId: 'insumo-pandebono',
+    areaProduccion: null,
     porciones: 12,
     activo: true,
     createdAt: new Date('2026-01-01'),

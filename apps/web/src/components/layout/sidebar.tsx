@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -209,6 +210,7 @@ export function Sidebar({ user }: SidebarProps) {
           <p className="text-xs text-primary truncate">{ROLE_LABELS[user.role]}</p>
           <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
+        <ThemeToggle />
         <Button
           variant="ghost"
           size="sm"

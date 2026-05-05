@@ -1,4 +1,4 @@
-import type { TipoReceta, ZonaServicio } from '@dorado/shared-types';
+import type { TipoReceta, ZonaServicio, AreaProduccion } from '@dorado/shared-types';
 
 export interface Receta {
   id: string;
@@ -7,6 +7,7 @@ export interface Receta {
   tipoReceta: TipoReceta;
   zona: ZonaServicio | null;
   insumoDestinoId: string | null;
+  areaProduccion: AreaProduccion | null;
   porciones: number;
   activo: boolean;
   createdAt: Date;

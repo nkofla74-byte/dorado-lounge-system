@@ -57,6 +57,78 @@ export async function createInsumo(input: unknown): Promise<Result<Insumo>> {
   }
 }
 
+export interface BulkImportRowError {
+  row: number;
+  message: string;
+}
+
+export interface BulkImportResult {
+  created: number;
+  failed: BulkImportRowError[];
+}
+
+export async function createInsumosBulk(rows: unknown): Promise<Result<BulkImportResult>> {
+  try {
+    const ctx = await assertCan('inventory:write');
+
+    if (!Array.isArray(rows)) {
+      return err(toAppError(new Error('Se esperaba un arreglo de insumos')));
+    }
+    if (rows.length === 0) {
+      return err(toAppError(new Error('Sin filas para importar')));
+    }
+    if (rows.length > 500) {
+      return err(toAppError(new Error('Máximo 500 filas por carga')));
+    }
+
+    const repo = createInsumoRepository();
+    const failed: BulkImportRowError[] = [];
+    let created = 0;
+    const createdIds: string[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const parsed = createInsumoSchema.safeParse(rows[i]);
+      if (!parsed.success) {
+        failed.push({
+          row: i + 1,
+          message: parsed.error.errors[0]?.message ?? 'Datos inválidos',
+        });
+        continue;
+      }
+      try {
+        const insumo = await createInsumoUseCase(repo, ctx.tenantId, {
+          ...parsed.data,
+          codigo: parsed.data.codigo || null,
+        });
+        created++;
+        createdIds.push(insumo.id);
+      } catch (e) {
+        failed.push({
+          row: i + 1,
+          message: e instanceof Error ? e.message : 'Error desconocido',
+        });
+      }
+    }
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'inventory:bulk_import_insumos',
+      resourceType: 'insumo',
+      payload: {
+        attempted: rows.length,
+        created,
+        failed: failed.length,
+        createdIds,
+      },
+    });
+
+    return ok({ created, failed });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 export async function getLotesByInsumo(insumoId: string): Promise<Result<Lote[]>> {
   try {
     await assertCan('inventory:read');

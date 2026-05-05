@@ -25,6 +25,7 @@ type RecetaRow = {
   tipo_receta: string;
   zona: string | null;
   insumo_destino_id: string | null;
+  area_produccion: string | null;
   porciones: number;
   activo: boolean;
   created_at: string;
@@ -42,6 +43,7 @@ function toRecetaWithIngredientes(row: RecetaRow): RecetaWithIngredientes {
     zona: row.zona as RecetaWithIngredientes['zona'],
     insumoDestinoId: row.insumo_destino_id,
     insumoDestinoNombre: row.insumo_destino?.nombre ?? null,
+    areaProduccion: row.area_produccion as RecetaWithIngredientes['areaProduccion'],
     porciones: row.porciones,
     activo: row.activo,
     createdAt: new Date(row.created_at),
@@ -66,6 +68,7 @@ function toReceta(row: Omit<RecetaRow, 'receta_ingredientes' | 'insumo_destino'>
     tipoReceta: row.tipo_receta as Receta['tipoReceta'],
     zona: row.zona as Receta['zona'],
     insumoDestinoId: row.insumo_destino_id,
+    areaProduccion: row.area_produccion as Receta['areaProduccion'],
     porciones: row.porciones,
     activo: row.activo,
     createdAt: new Date(row.created_at),
@@ -82,7 +85,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .select(
           `
-          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, porciones, activo, created_at, updated_at,
+          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, activo, created_at, updated_at,
           insumo_destino:insumos!recetas_insumo_destino_id_fkey(nombre),
           receta_ingredientes(
             id, receta_id, insumo_id, cantidad, merma_coeficiente,
@@ -126,7 +129,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .insert(insert)
         .select(
-          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, porciones, activo, created_at, updated_at',
+          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, activo, created_at, updated_at',
         )
         .single();
 

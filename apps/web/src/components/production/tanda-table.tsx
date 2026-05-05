@@ -22,6 +22,7 @@ import {
 import { CreateTandaDialog } from './create-tanda-dialog';
 import type { Tanda, EstadoTanda } from '@/modules/production/domain/tanda';
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
+import type { Turno } from '@/modules/turnos/domain/turno';
 
 const ESTADO_LABEL: Record<EstadoTanda, string> = {
   planificada: 'Planificada',
@@ -79,10 +80,18 @@ function formatDate(d: Date): string {
 interface TandaTableProps {
   initialData: Tanda[];
   recetas: RecetaWithIngredientes[];
+  turnoActivo: Turno | null;
+  responsableNombre: string;
   error?: string | undefined;
 }
 
-export function TandaTable({ initialData, recetas, error: initialError }: TandaTableProps) {
+export function TandaTable({
+  initialData,
+  recetas,
+  turnoActivo,
+  responsableNombre,
+  error: initialError,
+}: TandaTableProps) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
@@ -92,6 +101,21 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const recetasProduccion = recetas.filter((r) => r.tipoReceta === 'produccion');
+
+  const [areaFilter, setAreaFilter] = useState<'todas' | 'cocina' | 'pasteleria' | 'amex'>('todas');
+
+  const recetaAreaById = new Map(recetas.map((r) => [r.id, r.areaProduccion]));
+  const filteredData =
+    areaFilter === 'todas'
+      ? data
+      : data.filter((t) => recetaAreaById.get(t.recetaId) === areaFilter);
+
+  const counts = {
+    todas: data.length,
+    cocina: data.filter((t) => recetaAreaById.get(t.recetaId) === 'cocina').length,
+    pasteleria: data.filter((t) => recetaAreaById.get(t.recetaId) === 'pasteleria').length,
+    amex: data.filter((t) => recetaAreaById.get(t.recetaId) === 'amex').length,
+  };
 
   const refresh = async () => {
     setLoading(true);
@@ -162,26 +186,58 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
         </div>
       )}
 
+      {/* Tabs por área de producción (terminales) */}
+      <div className="flex flex-wrap gap-1 p-1 bg-muted/40 rounded-md w-fit">
+        {(['todas', 'cocina', 'pasteleria', 'amex'] as const).map((area) => {
+          const labels = {
+            todas: 'Todas',
+            cocina: 'Cocina (Chef)',
+            pasteleria: 'Pastelería',
+            amex: 'AMEX',
+          };
+          const isActive = areaFilter === area;
+          return (
+            <button
+              key={area}
+              onClick={() => setAreaFilter(area)}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+                isActive
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {labels[area]}
+              <span className="ml-1.5 text-[10px] tabular-nums opacity-70">{counts[area]}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
               <TableHead>Receta</TableHead>
               <TableHead className="text-center">Tandas</TableHead>
+              <TableHead>Responsable</TableHead>
+              <TableHead>Turno</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Creada</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.length === 0 ? (
+            {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay tandas registradas. Crea la primera con el botón de arriba.
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
+                  {areaFilter === 'todas'
+                    ? 'No hay tandas registradas. Crea la primera con el botón de arriba.'
+                    : `No hay tandas en el área "${areaFilter}".`}
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((tanda) => {
+              filteredData.map((tanda) => {
                 const isProcessing = processingId === tanda.id;
                 const isConfirming = confirmingId === tanda.id;
                 const error = rowError?.id === tanda.id ? rowError.message : null;
@@ -192,6 +248,16 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
                       <TableCell className="font-medium">{tanda.recetaNombre}</TableCell>
                       <TableCell className="text-center tabular-nums text-sm">
                         {tanda.cantidadTandas}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {tanda.responsableNombre ?? (
+                          <span className="text-muted-foreground italic">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {tanda.turnoNombre ?? (
+                          <span className="text-muted-foreground italic">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <EstadoBadge estado={tanda.estado} />
@@ -276,7 +342,7 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
 
                     {error && (
                       <TableRow className="border-0">
-                        <TableCell colSpan={5} className="pt-0 pb-2">
+                        <TableCell colSpan={7} className="pt-0 pb-2">
                           <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {error}
@@ -297,6 +363,8 @@ export function TandaTable({ initialData, recetas, error: initialError }: TandaT
         onOpenChange={setCreateOpen}
         onCreated={handleCreated}
         recetas={recetasProduccion}
+        turnoActivo={turnoActivo}
+        responsableNombre={responsableNombre}
       />
     </div>
   );

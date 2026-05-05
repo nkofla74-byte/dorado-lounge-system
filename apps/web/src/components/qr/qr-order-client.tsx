@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useCallback, useId } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Minus, Plus, ShoppingBag, CheckCircle2, Loader2, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { QRLanguageSwitcher } from '@/components/qr/qr-language-switcher';
 import { createPedidoFromQR } from '@/app/qr/[locale]/actions';
 import type { PublicReceta, MesaInfo } from '@/app/qr/[locale]/actions';
 
@@ -27,6 +29,7 @@ interface QROrderClientProps {
 
 export function QROrderClient({ recetas, mesa, token }: QROrderClientProps) {
   const t = useTranslations('qr');
+  const locale = useLocale();
   const idPrefix = useId();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [globalNotes, setGlobalNotes] = useState('');
@@ -110,17 +113,23 @@ export function QROrderClient({ recetas, mesa, token }: QROrderClientProps) {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div>
-            <p className="font-bold text-sm">{t('mesa', { mesa: mesa.mesaNumero })}</p>
-            <p className="text-xs text-muted-foreground">{ZONA_DISPLAY[mesa.zona] ?? mesa.zona}</p>
+        <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-bold text-sm truncate">{t('mesa', { mesa: mesa.mesaNumero })}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {ZONA_DISPLAY[mesa.zona] ?? mesa.zona}
+            </p>
           </div>
-          {totalItems > 0 && (
-            <div className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm font-medium">
-              <ShoppingBag className="h-3.5 w-3.5" />
-              {totalItems}
-            </div>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            <QRLanguageSwitcher currentLocale={locale} />
+            <ThemeToggle variant="compact" />
+            {totalItems > 0 && (
+              <div className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm font-medium ml-1">
+                <ShoppingBag className="h-3.5 w-3.5" />
+                {totalItems}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

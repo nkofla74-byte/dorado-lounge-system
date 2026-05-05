@@ -120,6 +120,7 @@ export const addIngredienteSchema = z.object({
 
 export const createTandaSchema = z.object({
   recetaId: uuidSchema,
+  turnoId: uuidSchema.optional(),
   cantidadTandas: z.number().int().positive('La cantidad de tandas debe ser mayor que 0'),
   notas: z.string().max(500).optional(),
   idempotencyKey: idempotencyKeySchema,

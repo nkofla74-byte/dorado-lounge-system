@@ -34,7 +34,11 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
 
     const repo = createProductionRepository();
     const tanda = await createTandaUseCase(repo, ctx.tenantId, {
-      ...parsed.data,
+      recetaId: parsed.data.recetaId,
+      cantidadTandas: parsed.data.cantidadTandas,
+      idempotencyKey: parsed.data.idempotencyKey,
+      responsableId: ctx.userId,
+      turnoId: parsed.data.turnoId ?? null,
       notas: parsed.data.notas ?? null,
     });
 
@@ -44,7 +48,12 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
       action: 'production:create_tanda',
       resourceId: tanda.id,
       resourceType: 'tanda',
-      payload: { recetaId: tanda.recetaId, cantidadTandas: tanda.cantidadTandas },
+      payload: {
+        recetaId: tanda.recetaId,
+        cantidadTandas: tanda.cantidadTandas,
+        turnoId: tanda.turnoId,
+        responsableId: tanda.responsableId,
+      },
     });
 
     return ok(tanda);

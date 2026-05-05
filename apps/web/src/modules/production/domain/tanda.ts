@@ -9,6 +9,10 @@ export interface Tanda {
   recetaNombre: string;
   cantidadTandas: number;
   estado: EstadoTanda;
+  responsableId: string | null;
+  responsableNombre: string | null;
+  turnoId: string | null;
+  turnoNombre: string | null;
   notas: string | null;
   startedAt: Date | null;
   completedAt: Date | null;
@@ -31,6 +35,8 @@ export interface CreateTandaInput {
   recetaId: string;
   cantidadTandas: number;
   notas?: string | null;
+  responsableId?: string | null;
+  turnoId?: string | null;
   idempotencyKey: string;
 }
 

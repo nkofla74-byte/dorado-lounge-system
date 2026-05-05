@@ -9,12 +9,16 @@ type TandaRow = {
   receta_id: string;
   cantidad_tandas: number;
   estado: string;
+  responsable_id: string | null;
+  turno_id: string | null;
   notas: string | null;
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
   receta: { nombre: string } | null;
+  responsable: { nombre: string } | null;
+  turno: { nombre: string } | null;
 };
 
 type TandaWithIngsRow = TandaRow & {
@@ -37,6 +41,10 @@ function toTanda(row: TandaRow): Tanda {
     recetaNombre: row.receta?.nombre ?? '',
     cantidadTandas: row.cantidad_tandas,
     estado: row.estado as EstadoTanda,
+    responsableId: row.responsable_id,
+    responsableNombre: row.responsable?.nombre ?? null,
+    turnoId: row.turno_id,
+    turnoNombre: row.turno?.nombre ?? null,
     notas: row.notas,
     startedAt: row.started_at ? new Date(row.started_at) : null,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
@@ -66,8 +74,10 @@ export function createProductionRepository(): ProductionRepository {
         .from('tandas_produccion')
         .select(
           `
-          id, tenant_id, receta_id, cantidad_tandas, estado, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre)
+          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+          receta:recetas(nombre),
+          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
+          turno:turnos(nombre)
         `,
         )
         .eq('tenant_id', tenantId)
@@ -87,14 +97,18 @@ export function createProductionRepository(): ProductionRepository {
         .insert({
           tenant_id: tenantId,
           receta_id: input.recetaId,
+          turno_id: input.turnoId ?? null,
+          responsable_id: input.responsableId ?? null,
           cantidad_tandas: input.cantidadTandas,
           notas: input.notas ?? null,
           idempotency_key: input.idempotencyKey,
         })
         .select(
           `
-          id, tenant_id, receta_id, cantidad_tandas, estado, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre)
+          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+          receta:recetas(nombre),
+          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
+          turno:turnos(nombre)
         `,
         )
         .single();
@@ -123,11 +137,13 @@ export function createProductionRepository(): ProductionRepository {
         .from('tandas_produccion')
         .select(
           `
-          id, tenant_id, receta_id, cantidad_tandas, estado, notas, started_at, completed_at, created_at, updated_at,
+          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
           receta:recetas(
             nombre,
             receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
-          )
+          ),
+          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
+          turno:turnos(nombre)
         `,
         )
         .eq('id', id)
@@ -152,8 +168,10 @@ export function createProductionRepository(): ProductionRepository {
         .eq('tenant_id', tenantId)
         .select(
           `
-          id, tenant_id, receta_id, cantidad_tandas, estado, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre)
+          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+          receta:recetas(nombre),
+          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
+          turno:turnos(nombre)
         `,
         )
         .single();

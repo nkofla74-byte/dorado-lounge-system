@@ -10,6 +10,7 @@ import {
   Layers,
   TrendingDown,
   Trash2,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getInsumos } from '@/modules/inventory/actions';
 import { CreateInsumoDialog } from './create-insumo-dialog';
+import { BulkImportDialog } from './bulk-import-dialog';
 import { LotesSheet } from './lotes-sheet';
 import { StockOutDialog } from './stock-out-dialog';
 import { MermaDialog } from './merma-dialog';
@@ -71,6 +73,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
   const [stockOutInsumo, setStockOutInsumo] = useState<InsumoWithStock | null>(null);
   const [mermaInsumo, setMermaInsumo] = useState<InsumoWithStock | null>(null);
@@ -115,10 +118,21 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
           {canWrite && (
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Nuevo insumo
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkOpen(true)}
+                title="Cargar varios insumos desde CSV"
+              >
+                <Upload className="h-4 w-4 mr-1.5" />
+                Carga masiva
+              </Button>
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Nuevo insumo
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -237,6 +251,10 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
           onOpenChange={setDialogOpen}
           onCreated={handleCreated}
         />
+      )}
+
+      {canWrite && (
+        <BulkImportDialog open={bulkOpen} onOpenChange={setBulkOpen} onImported={refresh} />
       )}
 
       <LotesSheet

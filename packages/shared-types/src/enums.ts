@@ -55,6 +55,14 @@ export const TipoReceta = {
 
 export type TipoReceta = (typeof TipoReceta)[keyof typeof TipoReceta];
 
+export const AreaProduccion = {
+  cocina: 'cocina',
+  pasteleria: 'pasteleria',
+  amex: 'amex',
+} as const;
+
+export type AreaProduccion = (typeof AreaProduccion)[keyof typeof AreaProduccion];
+
 export const ZonaServicio = {
   amex: 'amex',
   snack: 'snack',

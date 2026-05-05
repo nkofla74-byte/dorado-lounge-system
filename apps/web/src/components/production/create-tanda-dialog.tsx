@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
+import type { Turno } from '@/modules/turnos/domain/turno';
 import type { z } from 'zod';
 
 type FormInput = z.input<typeof createTandaSchema>;
@@ -36,6 +37,8 @@ interface CreateTandaDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
   recetas: RecetaWithIngredientes[];
+  turnoActivo: Turno | null;
+  responsableNombre: string;
 }
 
 export function CreateTandaDialog({
@@ -43,11 +46,19 @@ export function CreateTandaDialog({
   onOpenChange,
   onCreated,
   recetas,
+  turnoActivo,
+  responsableNombre,
 }: CreateTandaDialogProps) {
   const [serverError, setServerError] = useState('');
 
   const genKey = () => `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const idempotencyKeyRef = useRef(genKey());
+
+  const baseDefaults = (): Partial<FormInput> => ({
+    cantidadTandas: 1,
+    idempotencyKey: idempotencyKeyRef.current,
+    ...(turnoActivo ? { turnoId: turnoActivo.id } : {}),
+  });
 
   const {
     register,
@@ -57,7 +68,7 @@ export function CreateTandaDialog({
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(createTandaSchema),
-    defaultValues: { cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current },
+    defaultValues: baseDefaults(),
   });
 
   const onSubmit = async (values: FormOutput) => {
@@ -68,13 +79,13 @@ export function CreateTandaDialog({
       return;
     }
     idempotencyKeyRef.current = genKey();
-    reset({ cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current });
+    reset(baseDefaults());
     onCreated();
   };
 
   const handleClose = (open: boolean) => {
     if (!open) {
-      reset({ cantidadTandas: 1, idempotencyKey: idempotencyKeyRef.current });
+      reset(baseDefaults());
       setServerError('');
     }
     onOpenChange(open);
@@ -137,6 +148,32 @@ export function CreateTandaDialog({
             />
             {formErrors.cantidadTandas && (
               <p className="text-xs text-destructive">{formErrors.cantidadTandas.message}</p>
+            )}
+          </div>
+
+          {/* Responsable (auto del usuario logueado) */}
+          <div className="space-y-1.5">
+            <Label>Responsable</Label>
+            <div className="flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm text-muted-foreground">
+              {responsableNombre}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se registra el usuario que crea la tanda.
+            </p>
+          </div>
+
+          {/* Turno activo */}
+          <div className="space-y-1.5">
+            <Label>Turno</Label>
+            {turnoActivo ? (
+              <div className="flex items-center justify-between px-3 py-2 rounded-md border bg-muted/40 text-sm">
+                <span>{turnoActivo.nombre}</span>
+                <span className="text-xs text-muted-foreground">Activo</span>
+              </div>
+            ) : (
+              <div className="flex items-center px-3 py-2 rounded-md border border-amber-500/40 bg-amber-500/5 text-sm text-amber-700 dark:text-amber-300">
+                Sin turno activo — la tanda quedará sin asignar
+              </div>
             )}
           </div>
 

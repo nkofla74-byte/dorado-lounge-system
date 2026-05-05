@@ -1,6 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { ThemeProvider } from '@/components/theme/theme-provider';
+import '@/app/globals.css';
 
 const LOCALES = ['es', 'en', 'fr', 'pt'] as const;
 type Locale = (typeof LOCALES)[number];
@@ -28,11 +30,13 @@ export default async function QRLocaleLayout({
   const messages = await loadMessages(locale);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <ThemeProvider defaultTheme="system">
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
