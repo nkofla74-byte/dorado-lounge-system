@@ -14,6 +14,7 @@ import {
   Users,
   Building2,
   LogOut,
+  MonitorCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -44,6 +45,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/recetas',
     label: 'Recetas',
     icon: BookOpen,
+    roles: ['admin', 'chef', 'sous_chef'],
+  },
+  {
+    href: '/cocina',
+    label: 'KDS Cocina',
+    icon: MonitorCheck,
     roles: ['admin', 'chef', 'sous_chef'],
   },
   {
