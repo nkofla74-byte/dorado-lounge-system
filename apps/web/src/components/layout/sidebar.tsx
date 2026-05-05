@@ -12,6 +12,7 @@ import {
   Clock,
   BarChart3,
   LogOut,
+  type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -28,16 +29,58 @@ interface SidebarProps {
   user: SidebarUser;
 }
 
-const NAV_ITEMS = [
-  { href: '/inventario', label: 'Inventario', icon: Package, enabled: true },
-  { href: '/recetas', label: 'Recetas', icon: BookOpen, enabled: true },
-  { href: '/produccion', label: 'Producción', icon: ChefHat, enabled: true },
-  { href: '/pedidos', label: 'Pedidos', icon: ClipboardList, enabled: true },
-  { href: '/buffet', label: 'Buffet', icon: UtensilsCrossed, enabled: false },
-  { href: '/snack', label: 'Snack', icon: Coffee, enabled: false },
-  { href: '/turnos', label: 'Turnos', icon: Clock, enabled: false },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3, enabled: false },
-] as const;
+// roles autorizados por ruta (espejo de la matriz PERMISSIONS en assertCan.ts).
+// superuser ve todo — se maneja en el filtro del componente, no aquí.
+const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRole[] }[] = [
+  {
+    href: '/inventario',
+    label: 'Inventario',
+    icon: Package,
+    roles: ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
+  },
+  {
+    href: '/recetas',
+    label: 'Recetas',
+    icon: BookOpen,
+    roles: ['admin', 'chef', 'sous_chef'],
+  },
+  {
+    href: '/produccion',
+    label: 'Producción',
+    icon: ChefHat,
+    roles: ['admin', 'chef', 'sous_chef'],
+  },
+  {
+    href: '/pedidos',
+    label: 'Pedidos',
+    icon: ClipboardList,
+    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex'],
+  },
+  {
+    href: '/buffet',
+    label: 'Buffet',
+    icon: UtensilsCrossed,
+    roles: ['admin', 'chef', 'sous_chef', 'personal_buffet'],
+  },
+  {
+    href: '/snack',
+    label: 'Snack',
+    icon: Coffee,
+    roles: ['admin', 'chef', 'sous_chef', 'personal_snack'],
+  },
+  {
+    href: '/turnos',
+    label: 'Turnos',
+    icon: Clock,
+    roles: ['admin', 'chef', 'sous_chef'],
+  },
+  {
+    href: '/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    roles: ['admin'],
+  },
+];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   superuser: 'Super Usuario',
@@ -74,20 +117,10 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Navegación */}
       <nav className="flex-1 px-2 py-3 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon, enabled }) => {
+        {NAV_ITEMS.filter(
+          ({ roles }) => user.role === 'superuser' || roles.includes(user.role),
+        ).map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/');
-
-          if (!enabled) {
-            return (
-              <div
-                key={href}
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground/35 cursor-not-allowed select-none"
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {label}
-              </div>
-            );
-          }
 
           return (
             <Link

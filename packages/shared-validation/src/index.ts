@@ -167,6 +167,27 @@ export const transicionPedidoSchema = z.object({
   version: z.number().int().positive(),
 });
 
+export const despacharLoteBuffetSchema = z.object({
+  recetaId: uuidSchema,
+  cantidad: z.number().int().positive('La cantidad debe ser mayor que 0'),
+  turnoId: uuidSchema.optional(),
+  idempotencyKey: idempotencyKeySchema,
+});
+
+export const registrarTicketsTurnoSchema = z.object({
+  turnoId: uuidSchema,
+  cantidadTickets: z.number().int().min(0, 'La cantidad de tickets no puede ser negativa'),
+  idempotencyKey: idempotencyKeySchema,
+});
+
+export const enviarStuartSchema = z.object({
+  descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
+});
+
+export const createTurnoSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+});
+
 // ── Re-exports de tipos inferidos ─────────────────────────────────────────────
 
 export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
@@ -179,3 +200,7 @@ export type CreateMermaInput = z.infer<typeof createMermaSchema>;
 export type StockOutInput = z.infer<typeof stockOutSchema>;
 export type CreatePedidoInput = z.infer<typeof createPedidoSchema>;
 export type TransicionPedidoInput = z.infer<typeof transicionPedidoSchema>;
+export type DespacharLoteBuffetInput = z.infer<typeof despacharLoteBuffetSchema>;
+export type RegistrarTicketsTurnoInput = z.infer<typeof registrarTicketsTurnoSchema>;
+export type EnviarStuartInput = z.infer<typeof enviarStuartSchema>;
+export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
