@@ -30,9 +30,9 @@ export default async function QRLocaleLayout({
   const messages = await loadMessages(locale);
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} className="light" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider defaultTheme="system">
+        <ThemeProvider defaultTheme="light">
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
           </NextIntlClientProvider>
