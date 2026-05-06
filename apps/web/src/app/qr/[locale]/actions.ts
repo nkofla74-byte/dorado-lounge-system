@@ -7,10 +7,20 @@ import { ok, err, toAppError } from '@/lib/result';
 import type { Result } from '@/lib/result';
 import type { ZonaServicio } from '@dorado/shared-types';
 
+export interface PublicIngrediente {
+  nombre: string;
+  unidadMedida: string;
+}
+
+export type CategoriaMenu = 'entrada' | 'plato_fuerte' | 'acompanante';
+
 export interface PublicReceta {
   id: string;
   nombre: string;
   porciones: number;
+  descripcion: string | null;
+  categoriaMenu: CategoriaMenu | null;
+  ingredientes: PublicIngrediente[];
 }
 
 export interface MesaInfo {
@@ -38,16 +48,42 @@ export async function getMenuPublico(
     const admin = createAdminClient();
     const { data, error } = await admin
       .from('recetas')
-      .select('id, nombre, porciones')
+      .select(
+        `
+        id, nombre, porciones, descripcion, categoria_menu,
+        receta_ingredientes(
+          cantidad,
+          insumos(nombre, unidad_medida)
+        )
+      `,
+      )
       .eq('tenant_id', mesa.tenantId)
       .eq('tipo_receta', 'servicio')
+      .not('categoria_menu', 'is', null)
       .is('deleted_at', null)
       .order('nombre');
 
     if (error) return err(toAppError(new Error(error.message)));
 
+    const recetas: PublicReceta[] = (data ?? []).map((r: Record<string, unknown>) => ({
+      id: r['id'] as string,
+      nombre: r['nombre'] as string,
+      porciones: r['porciones'] as number,
+      descripcion: (r['descripcion'] as string | null) ?? null,
+      categoriaMenu: (r['categoria_menu'] as CategoriaMenu | null) ?? null,
+      ingredientes: ((r['receta_ingredientes'] as Array<Record<string, unknown>>) ?? []).map(
+        (ri) => {
+          const insumo = ri['insumos'] as Record<string, unknown> | null;
+          return {
+            nombre: (insumo?.['nombre'] as string) ?? '',
+            unidadMedida: (insumo?.['unidad_medida'] as string) ?? '',
+          };
+        },
+      ),
+    }));
+
     return ok({
-      recetas: (data ?? []) as PublicReceta[],
+      recetas,
       mesa: {
         tenantId: mesa.tenantId,
         zona: mesa.zona,

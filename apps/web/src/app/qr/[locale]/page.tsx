@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
 import { getMenuPublico } from './actions';
-import { QROrderClient } from '@/components/qr/qr-order-client';
+import { QRPassengerApp } from '@/components/qr/qr-passenger-app';
 
 interface Props {
   params: { locale: string };
   searchParams: { t?: string };
 }
 
-export default async function QRPage({ searchParams }: Props) {
+export default async function QRPage({ params, searchParams }: Props) {
   const token = searchParams.t ?? '';
+  const locale = params.locale;
 
   if (!token) {
     return (
@@ -24,12 +25,9 @@ export default async function QRPage({ searchParams }: Props) {
   }
 
   const result = await getMenuPublico(token);
-
-  if (!result.ok) {
-    notFound();
-  }
+  if (!result.ok) notFound();
 
   const { recetas, mesa } = result.value;
 
-  return <QROrderClient recetas={recetas} mesa={mesa} token={token} />;
+  return <QRPassengerApp recetas={recetas} mesa={mesa} token={token} initialLocale={locale} />;
 }
