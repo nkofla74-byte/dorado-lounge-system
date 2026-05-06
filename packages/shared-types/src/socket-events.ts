@@ -23,14 +23,14 @@ export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
 // Roles que pueden unirse a cada canal. Un rol ausente = desconexión + audit_log.
 export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:cocina': ['chef', 'sous_chef', 'admin', 'superuser'],
-  'sala:amex': ['mesero_amex', 'admin', 'superuser'],
+  'sala:amex': ['mesero_amex', 'recepcion', 'admin', 'superuser'],
   'sala:snack': ['personal_snack', 'admin', 'superuser'],
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
-  'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:stuart:amex': ['mesero_amex', 'recepcion', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:stuart:snack': ['personal_snack', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:stuart:buffet': ['personal_buffet', 'chef', 'sous_chef', 'admin', 'superuser'],
-  'sala:broadcast:cocina': ['chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:broadcast:cocina': ['chef', 'sous_chef', 'personal_pasteleria', 'admin', 'superuser'],
   'sala:broadcast:admin': ['admin', 'superuser'],
 };
 

@@ -36,7 +36,18 @@ import type { TenantUser } from '@/modules/superuser/domain/superuser';
 const formSchema = z.object({
   nombre: z.string().min(2, 'Nombre muy corto').max(100),
   email: z.string().email('Email inválido'),
-  role: z.enum(['admin', 'chef', 'sous_chef', 'mesero_amex', 'personal_snack', 'personal_buffet']),
+  role: z.enum([
+    'admin',
+    'chef',
+    'sous_chef',
+    'mesero_amex',
+    'personal_snack',
+    'personal_buffet',
+    'recepcion',
+    'personal_almacen',
+    'personal_pasteleria',
+    'steward',
+  ]),
   password: z.string().min(8, 'Mínimo 8 caracteres').max(100),
 });
 
@@ -49,6 +60,10 @@ const ROLE_LABELS: Record<string, string> = {
   mesero_amex: 'Mesero Amex',
   personal_snack: 'Personal Snack',
   personal_buffet: 'Personal Buffet',
+  recepcion: 'Recepción',
+  personal_almacen: 'Personal Almacén',
+  personal_pasteleria: 'Personal Pastelería',
+  steward: 'Steward',
 };
 
 interface Props {

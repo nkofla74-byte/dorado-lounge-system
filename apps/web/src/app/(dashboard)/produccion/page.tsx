@@ -19,6 +19,7 @@ export default async function ProduccionPage() {
   ]);
 
   const user = userData.user;
+  const userRole = user?.app_metadata?.role as string | undefined;
   const responsableNombre =
     (user?.user_metadata?.full_name as string | undefined) ??
     (user?.user_metadata?.name as string | undefined) ??
@@ -39,6 +40,7 @@ export default async function ProduccionPage() {
         turnoActivo={turnoResult.ok ? turnoResult.value : null}
         responsableNombre={responsableNombre}
         error={tandasResult.ok ? undefined : tandasResult.error.message}
+        userRole={userRole}
       />
     </div>
   );

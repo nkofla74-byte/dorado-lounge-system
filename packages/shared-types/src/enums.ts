@@ -6,6 +6,10 @@ export const UserRole = {
   mesero_amex: 'mesero_amex',
   personal_snack: 'personal_snack',
   personal_buffet: 'personal_buffet',
+  recepcion: 'recepcion',
+  personal_almacen: 'personal_almacen',
+  personal_pasteleria: 'personal_pasteleria',
+  steward: 'steward',
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];

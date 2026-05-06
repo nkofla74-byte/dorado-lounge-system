@@ -40,6 +40,10 @@ const ROLE_LABELS: Record<string, string> = {
   mesero_amex: 'Mesero Amex',
   personal_snack: 'Personal Snack',
   personal_buffet: 'Personal Buffet',
+  recepcion: 'Recepción',
+  personal_almacen: 'Personal Almacén',
+  personal_pasteleria: 'Personal Pastelería',
+  steward: 'Steward',
 };
 
 // superuser no se ofrece para crear desde UI (solo configuración de plataforma)

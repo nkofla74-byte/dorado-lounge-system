@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { Sidebar } from '@/components/layout/sidebar';
+import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { SocketProvider } from '@/lib/socket/socket-provider';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -28,11 +28,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const token = sessionData.session?.access_token ?? '';
 
+  const sidebarUser = { name, email: user.email ?? '', role };
+
   return (
     <SocketProvider token={token}>
       <div className="flex min-h-screen bg-background">
-        <Sidebar user={{ name, email: user.email ?? '', role }} />
-        <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+        <Sidebar user={sidebarUser} />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <MobileTopBar user={sidebarUser} />
+          <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
+        </div>
       </div>
     </SocketProvider>
   );

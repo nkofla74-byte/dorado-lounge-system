@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -14,6 +15,7 @@ import {
   Users,
   Building2,
   LogOut,
+  Menu,
   MonitorCheck,
   QrCode,
   UserCog,
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@dorado/shared-types';
@@ -39,16 +42,30 @@ interface SidebarProps {
 // superuser ve todo — se maneja en el filtro del componente, no aquí.
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRole[] }[] = [
   {
+    href: '/almacen',
+    label: 'Almacén',
+    icon: Package,
+    roles: ['personal_almacen'],
+  },
+  {
     href: '/inventario',
     label: 'Inventario',
     icon: Package,
-    roles: ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
+    roles: [
+      'admin',
+      'chef',
+      'sous_chef',
+      'personal_snack',
+      'personal_buffet',
+      'personal_pasteleria',
+      'steward',
+    ],
   },
   {
     href: '/recetas',
     label: 'Recetas',
     icon: BookOpen,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef', 'sous_chef', 'personal_pasteleria'],
   },
   {
     href: '/cocina',
@@ -60,13 +77,19 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/produccion',
     label: 'Producción',
     icon: ChefHat,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
+  },
+  {
+    href: '/pasteleria',
+    label: 'Pastelería',
+    icon: Coffee,
+    roles: ['admin', 'personal_pasteleria'],
   },
   {
     href: '/pedidos',
     label: 'Pedidos',
     icon: ClipboardList,
-    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex'],
+    roles: ['admin', 'mesero_amex', 'recepcion'],
   },
   {
     href: '/admin/qr',
@@ -96,7 +119,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/afluencia',
     label: 'Afluencia',
     icon: Users,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
   },
   {
     href: '/analytics',
@@ -125,9 +148,17 @@ const ROLE_LABELS: Record<UserRole, string> = {
   mesero_amex: 'Mesero Amex',
   personal_snack: 'Personal Snack',
   personal_buffet: 'Personal Buffet',
+  recepcion: 'Recepción',
+  personal_almacen: 'Personal Almacén',
+  personal_pasteleria: 'Personal Pastelería',
+  steward: 'Steward',
 };
 
-export function Sidebar({ user }: SidebarProps) {
+interface SidebarContentProps extends SidebarProps {
+  onNavigate?: () => void;
+}
+
+function SidebarContent({ user, onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -137,8 +168,28 @@ export function Sidebar({ user }: SidebarProps) {
     router.push('/login');
   };
 
+  const renderItem = ({ href, label, Icon }: { href: string; label: string; Icon: LucideIcon }) => {
+    const isActive = pathname === href || pathname.startsWith(href + '/');
+    return (
+      <Link
+        key={href}
+        href={href}
+        {...(onNavigate && { onClick: onNavigate })}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[40px]',
+          isActive
+            ? 'bg-primary/15 text-primary'
+            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{label}</span>
+      </Link>
+    );
+  };
+
   return (
-    <aside className="flex flex-col w-60 h-screen sticky top-0 overflow-y-auto bg-sidebar border-r border-border/50 shrink-0">
+    <div className="flex flex-col h-full bg-sidebar">
       {/* Branding */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border/50">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-bold shrink-0">
@@ -151,28 +202,10 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* Navegación */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
+      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.filter(
           ({ roles }) => user.role === 'superuser' || roles.includes(user.role),
-        ).map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/');
-
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
+        ).map(({ href, label, icon: Icon }) => renderItem({ href, label, Icon }))}
 
         {user.role === 'superuser' && (
           <>
@@ -181,30 +214,15 @@ export function Sidebar({ user }: SidebarProps) {
                 Plataforma
               </p>
             </div>
-            {SUPERUSER_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname.startsWith(href + '/');
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {label}
-                </Link>
-              );
-            })}
+            {SUPERUSER_NAV_ITEMS.map(({ href, label, icon: Icon }) =>
+              renderItem({ href, label, Icon }),
+            )}
           </>
         )}
       </nav>
 
       {/* Usuario + logout */}
-      <div className="px-2 py-3 border-t border-border/50 space-y-1">
+      <div className="px-2 py-3 border-t border-border/50 space-y-1 safe-pb">
         <div className="px-3 py-2">
           <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
           <p className="text-xs text-primary truncate">{ROLE_LABELS[user.role]}</p>
@@ -214,13 +232,55 @@ export function Sidebar({ user }: SidebarProps) {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-accent min-h-[40px]"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
           Cerrar sesión
         </Button>
       </div>
+    </div>
+  );
+}
+
+export function Sidebar({ user }: SidebarProps) {
+  return (
+    <aside className="hidden md:flex w-60 h-screen sticky top-0 border-r border-border/50 shrink-0">
+      <SidebarContent user={user} />
     </aside>
+  );
+}
+
+export function MobileTopBar({ user }: SidebarProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <header className="md:hidden sticky top-0 z-30 flex items-center gap-2 h-14 px-3 border-b border-border/50 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/80 safe-pt">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            aria-label="Abrir menú de navegación"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-72 max-w-[85vw]">
+          <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
+          <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0">
+          DL
+        </div>
+        <p className="text-sm font-semibold truncate">Dorado Lounge</p>
+      </div>
+
+      <ThemeToggle />
+    </header>
   );
 }

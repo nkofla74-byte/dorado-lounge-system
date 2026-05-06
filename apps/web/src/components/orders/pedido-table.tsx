@@ -34,8 +34,15 @@ const ESTADO_LABEL: Record<EstadoPedido, string> = {
 };
 
 const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
-const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex']);
-const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
+const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'recepcion']);
+const CANCEL_ROLES = new Set<UserRole>([
+  'superuser',
+  'admin',
+  'chef',
+  'sous_chef',
+  'mesero_amex',
+  'recepcion',
+]);
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   const base = 'text-xs font-medium';

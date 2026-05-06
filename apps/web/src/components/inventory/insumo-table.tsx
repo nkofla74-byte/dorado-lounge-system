@@ -61,6 +61,15 @@ const STOCK_OUT_ROLES = new Set<UserRole | string>([
   'personal_snack',
   'personal_buffet',
 ]);
+const MERMA_ROLES = new Set<UserRole | string>([
+  'superuser',
+  'admin',
+  'chef',
+  'sous_chef',
+  'personal_snack',
+  'personal_buffet',
+  'personal_almacen',
+]);
 
 interface InsumoTableProps {
   initialData: InsumoWithStock[];
@@ -80,6 +89,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
 
   const canWrite = WRITE_ROLES.has(userRole ?? '');
   const canStockOut = STOCK_OUT_ROLES.has(userRole ?? '');
+  const canMerma = MERMA_ROLES.has(userRole ?? '');
 
   const refresh = async () => {
     setLoading(true);
@@ -225,7 +235,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                               Stock Out
                             </DropdownMenuItem>
                           )}
-                          {canStockOut && (
+                          {canMerma && (
                             <DropdownMenuItem
                               onClick={() => setMermaInsumo(insumo)}
                               className="text-amber-500 focus:text-amber-500"
@@ -275,7 +285,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
         />
       )}
 
-      {canStockOut && (
+      {canMerma && (
         <MermaDialog
           insumo={mermaInsumo}
           onOpenChange={(open) => {

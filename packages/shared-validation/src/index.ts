@@ -25,6 +25,10 @@ export const userRoleSchema = z.enum([
   'mesero_amex',
   'personal_snack',
   'personal_buffet',
+  'recepcion',
+  'personal_almacen',
+  'personal_pasteleria',
+  'steward',
 ]);
 
 export const zonaServicioSchema = z.enum(['amex', 'snack', 'buffet']);

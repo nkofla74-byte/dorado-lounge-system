@@ -92,9 +92,10 @@ export function SnackPanel({
   };
 
   const handleTurnoChange = (value: string) => {
-    setSelectedTurnoId(value);
+    const turnoId = value === 'all' ? '' : value;
+    setSelectedTurnoId(turnoId);
     startTransition(async () => {
-      const result = await getDespachos(value || undefined);
+      const result = await getDespachos(turnoId || undefined);
       if (result.ok) setDespachos(result.value);
     });
   };
@@ -104,12 +105,12 @@ export function SnackPanel({
       {/* Barra de acciones */}
       <div className="flex items-center gap-3 flex-wrap">
         {turnos.length > 0 && (
-          <Select value={selectedTurnoId} onValueChange={handleTurnoChange}>
+          <Select value={selectedTurnoId || 'all'} onValueChange={handleTurnoChange}>
             <SelectTrigger className="w-52">
               <SelectValue placeholder="Todos los turnos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos los turnos</SelectItem>
+              <SelectItem value="all">Todos los turnos</SelectItem>
               {turnos.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.nombre}

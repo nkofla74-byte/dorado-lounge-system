@@ -9,6 +9,10 @@ const ROLE_HOME: Record<string, string> = {
   mesero_amex: '/pedidos',
   personal_snack: '/snack',
   personal_buffet: '/buffet',
+  recepcion: '/pedidos',
+  personal_almacen: '/almacen',
+  personal_pasteleria: '/pasteleria',
+  steward: '/produccion',
 };
 
 export default async function HomePage() {

@@ -77,12 +77,22 @@ function formatDate(d: Date): string {
   }).format(d);
 }
 
+const CREATE_ROLES = new Set<string>([
+  'superuser',
+  'admin',
+  'chef',
+  'sous_chef',
+  'personal_pasteleria',
+]);
+
 interface TandaTableProps {
   initialData: Tanda[];
   recetas: RecetaWithIngredientes[];
   turnoActivo: Turno | null;
   responsableNombre: string;
   error?: string | undefined;
+  userRole?: string | undefined;
+  defaultAreaFilter?: 'todas' | 'cocina' | 'pasteleria' | 'amex';
 }
 
 export function TandaTable({
@@ -91,6 +101,8 @@ export function TandaTable({
   turnoActivo,
   responsableNombre,
   error: initialError,
+  userRole,
+  defaultAreaFilter = 'todas',
 }: TandaTableProps) {
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
@@ -100,9 +112,12 @@ export function TandaTable({
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
+  const canCreate = CREATE_ROLES.has(userRole ?? '');
   const recetasProduccion = recetas.filter((r) => r.tipoReceta === 'produccion');
 
-  const [areaFilter, setAreaFilter] = useState<'todas' | 'cocina' | 'pasteleria' | 'amex'>('todas');
+  const [areaFilter, setAreaFilter] = useState<'todas' | 'cocina' | 'pasteleria' | 'amex'>(
+    defaultAreaFilter,
+  );
 
   const recetaAreaById = new Map(recetas.map((r) => [r.id, r.areaProduccion]));
   const filteredData =
@@ -172,10 +187,12 @@ export function TandaTable({
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nueva tanda
-          </Button>
+          {canCreate && (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nueva tanda
+            </Button>
+          )}
         </div>
       </div>
 
@@ -358,14 +375,16 @@ export function TandaTable({
         </Table>
       </div>
 
-      <CreateTandaDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={handleCreated}
-        recetas={recetasProduccion}
-        turnoActivo={turnoActivo}
-        responsableNombre={responsableNombre}
-      />
+      {canCreate && (
+        <CreateTandaDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={handleCreated}
+          recetas={recetasProduccion}
+          turnoActivo={turnoActivo}
+          responsableNombre={responsableNombre}
+        />
+      )}
     </div>
   );
 }

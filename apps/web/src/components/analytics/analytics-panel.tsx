@@ -68,8 +68,9 @@ export function AnalyticsPanel({
   };
 
   const handleTurnoChange = (value: string) => {
-    setTurnoId(value);
-    applyFilters({ turnoId: value });
+    const next = value === 'all' ? '' : value;
+    setTurnoId(next);
+    applyFilters({ turnoId: next });
   };
 
   const handleRefresh = async () => {
@@ -93,12 +94,12 @@ export function AnalyticsPanel({
         {turnos.length > 0 && (
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Turno</Label>
-            <Select value={turnoId} onValueChange={handleTurnoChange}>
+            <Select value={turnoId || 'all'} onValueChange={handleTurnoChange}>
               <SelectTrigger className="w-52">
                 <SelectValue placeholder="Todos los turnos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los turnos</SelectItem>
+                <SelectItem value="all">Todos los turnos</SelectItem>
                 {turnos.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.nombre}
