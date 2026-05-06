@@ -15,7 +15,9 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: SOCKET_JWT_SECRET
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SOCKET_EMIT_SECRET
         sync: false
       - key: ALLOWED_ORIGIN
         sync: false
