@@ -14,7 +14,7 @@ export default async function QRGeneratorPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Generador de QR</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Genera el enlace QR para cada mesa. El código expira en 4 horas.
+          Genera e imprime el código QR para cada mesa. Escaneable directamente por el pasajero.
         </p>
       </div>
       <QRGeneratorClient />
