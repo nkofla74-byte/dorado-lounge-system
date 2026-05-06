@@ -75,6 +75,14 @@ export const ZonaServicio = {
 
 export type ZonaServicio = (typeof ZonaServicio)[keyof typeof ZonaServicio];
 
+export const CategoriaMenu = {
+  entrada: 'entrada',
+  plato_fuerte: 'plato_fuerte',
+  acompanante: 'acompanante',
+} as const;
+
+export type CategoriaMenu = (typeof CategoriaMenu)[keyof typeof CategoriaMenu];
+
 export const EstadoTanda = {
   planificada: 'planificada',
   en_proceso: 'en_proceso',

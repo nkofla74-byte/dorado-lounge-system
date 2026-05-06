@@ -7,7 +7,11 @@ import { createRecipeRepository } from './infrastructure/recipe-repository';
 import { getRecetas as getRecetasUseCase } from './application/get-recipes';
 import { createReceta as createRecetaUseCase } from './application/create-recipe';
 import { addIngrediente as addIngredienteUseCase } from './application/add-ingrediente';
-import { createRecetaSchema, addIngredienteSchema } from '@dorado/shared-validation';
+import {
+  createRecetaSchema,
+  addIngredienteSchema,
+  updateRecetaMenuSchema,
+} from '@dorado/shared-validation';
 import type { Result } from '@/lib/result';
 import type { Receta, RecetaIngrediente, RecetaWithIngredientes } from './domain/recipe';
 
@@ -70,6 +74,33 @@ export async function addIngredienteAReceta(input: unknown): Promise<Result<Rece
     });
 
     return ok(ingrediente);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function updateRecetaMenuMeta(input: unknown): Promise<Result<void>> {
+  try {
+    const ctx = await assertCan('recipes:write');
+
+    const parsed = updateRecetaMenuSchema.safeParse(input);
+    if (!parsed.success) {
+      return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
+    }
+
+    const repo = createRecipeRepository();
+    await repo.updateMenuMeta(ctx.tenantId, parsed.data);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'recipes:update_menu_meta',
+      resourceId: parsed.data.recetaId,
+      resourceType: 'receta',
+      payload: { categoriaMenu: parsed.data.categoriaMenu, descripcion: parsed.data.descripcion },
+    });
+
+    return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
   }

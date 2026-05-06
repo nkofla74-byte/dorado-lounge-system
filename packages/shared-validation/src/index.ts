@@ -65,6 +65,8 @@ export const estadoTandaSchema = z.enum(['planificada', 'en_proceso', 'completad
 
 export const tipoRecetaSchema = z.enum(['produccion', 'servicio']);
 
+export const categoriaMenuSchema = z.enum(['entrada', 'plato_fuerte', 'acompanante']);
+
 // ── Valores de dominio ────────────────────────────────────────────────────────
 
 export const cantidadSchema = z
@@ -114,6 +116,12 @@ export const createRecetaSchema = z.discriminatedUnion('tipoReceta', [
     porciones: z.number().int().positive('Las porciones deben ser mayor que 0'),
   }),
 ]);
+
+export const updateRecetaMenuSchema = z.object({
+  recetaId: uuidSchema,
+  categoriaMenu: categoriaMenuSchema.nullable(),
+  descripcion: z.string().max(500).nullable(),
+});
 
 export const addIngredienteSchema = z.object({
   recetaId: uuidSchema,
@@ -227,6 +235,7 @@ export const crearUsuarioSchema = z.object({
 export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
 export type CreateLoteInput = z.infer<typeof createLoteSchema>;
 export type CreateRecetaInput = z.infer<typeof createRecetaSchema>;
+export type UpdateRecetaMenuInput = z.infer<typeof updateRecetaMenuSchema>;
 export type AddIngredienteInput = z.infer<typeof addIngredienteSchema>;
 export type CreateTandaInput = z.infer<typeof createTandaSchema>;
 export type TransicionTandaInput = z.infer<typeof transicionTandaSchema>;

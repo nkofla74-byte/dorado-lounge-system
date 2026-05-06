@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, AlertTriangle, Plus, RefreshCw, ChevronRight } from 'lucide-react';
+import { BookOpen, AlertTriangle, Plus, RefreshCw, ChevronRight, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,12 +17,19 @@ import { getRecetas } from '@/modules/recipes/actions';
 import { CreateRecipeDialog } from './create-recipe-dialog';
 import { IngredientsSheet } from './ingredients-sheet';
 import type { RecetaWithIngredientes, RecetaIngrediente } from '@/modules/recipes/domain/recipe';
+import type { CategoriaMenu } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 
 const ZONA_LABEL: Record<string, string> = {
   amex: 'Amex',
   snack: 'Snack',
   buffet: 'Buffet',
+};
+
+const CATEGORIA_LABEL: Record<CategoriaMenu, string> = {
+  entrada: 'Entrada',
+  plato_fuerte: 'Plato fuerte',
+  acompanante: 'Acompañante',
 };
 
 interface RecipeTableProps {
@@ -68,6 +75,19 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
     );
   };
 
+  const handleMenuMetaUpdated = (
+    recetaId: string,
+    categoriaMenu: CategoriaMenu | null,
+    descripcion: string | null,
+  ) => {
+    setData((prev) =>
+      prev.map((r) => (r.id === recetaId ? { ...r, categoriaMenu, descripcion } : r)),
+    );
+    setSheetReceta((prev) =>
+      prev?.id === recetaId ? { ...prev, categoriaMenu, descripcion } : prev,
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -110,13 +130,19 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
               <TableHead>Destino / Zona</TableHead>
               <TableHead className="text-center">Porciones</TableHead>
               <TableHead className="text-center">Ingredientes</TableHead>
+              <TableHead>
+                <span className="flex items-center gap-1">
+                  <QrCode className="h-3.5 w-3.5" />
+                  Menú QR
+                </span>
+              </TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
                   No hay recetas registradas. Crea la primera con el botón de arriba.
                 </TableCell>
               </TableRow>
@@ -151,6 +177,19 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
                     </span>
                   </TableCell>
                   <TableCell>
+                    {receta.tipoReceta === 'servicio' ? (
+                      receta.categoriaMenu ? (
+                        <Badge variant="secondary" className="text-xs">
+                          {CATEGORIA_LABEL[receta.categoriaMenu]}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">Sin categoría</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -183,6 +222,7 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
         }}
         insumos={insumos}
         onIngredienteAdded={handleIngredienteAdded}
+        onMenuMetaUpdated={handleMenuMetaUpdated}
       />
     </div>
   );

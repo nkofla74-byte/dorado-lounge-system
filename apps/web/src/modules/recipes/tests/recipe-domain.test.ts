@@ -16,6 +16,8 @@ function makeRecetaBase(overrides: Partial<Receta> = {}): Receta {
     insumoDestinoId: 'insumo-pandebono',
     areaProduccion: null,
     porciones: 12,
+    categoriaMenu: null,
+    descripcion: null,
     activo: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

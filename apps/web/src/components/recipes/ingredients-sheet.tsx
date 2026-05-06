@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, QrCode, Check } from 'lucide-react';
 import { addIngredienteSchema } from '@dorado/shared-validation';
-import { addIngredienteAReceta } from '@/modules/recipes/actions';
+import { addIngredienteAReceta, updateRecetaMenuMeta } from '@/modules/recipes/actions';
 import {
   Sheet,
   SheetContent,
@@ -25,8 +25,10 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { RecetaWithIngredientes, RecetaIngrediente } from '@/modules/recipes/domain/recipe';
+import type { CategoriaMenu } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { z } from 'zod';
 
@@ -42,12 +44,23 @@ const UNIDAD_LABEL: Record<string, string> = {
   porcion: 'porc',
 };
 
+const CATEGORIA_LABELS: Record<CategoriaMenu, string> = {
+  entrada: 'Entrada',
+  plato_fuerte: 'Plato fuerte',
+  acompanante: 'Acompañante',
+};
+
 interface IngredientsSheetProps {
   receta: RecetaWithIngredientes | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   insumos: InsumoWithStock[];
   onIngredienteAdded: (recetaId: string, ingrediente: RecetaIngrediente) => void;
+  onMenuMetaUpdated?: (
+    recetaId: string,
+    categoriaMenu: CategoriaMenu | null,
+    descripcion: string | null,
+  ) => void;
 }
 
 export function IngredientsSheet({
@@ -56,9 +69,14 @@ export function IngredientsSheet({
   onOpenChange,
   insumos,
   onIngredienteAdded,
+  onMenuMetaUpdated,
 }: IngredientsSheetProps) {
   const [serverError, setServerError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [menuCategoria, setMenuCategoria] = useState<CategoriaMenu | null>(null);
+  const [menuDescripcion, setMenuDescripcion] = useState('');
+  const [menuSaving, setMenuSaving] = useState(false);
+  const [menuSaved, setMenuSaved] = useState(false);
 
   const {
     register,
@@ -71,7 +89,35 @@ export function IngredientsSheet({
     defaultValues: { mermaCoeficiente: 0 },
   });
 
+  // Sync local menu state when the selected receta changes
+  useEffect(() => {
+    if (receta) {
+      setMenuCategoria(receta.categoriaMenu);
+      setMenuDescripcion(receta.descripcion ?? '');
+    }
+  }, [receta?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!receta) return null;
+
+  const currentCategoria = menuCategoria;
+  const currentDescripcion = menuDescripcion;
+
+  const handleSaveMenuMeta = async () => {
+    setMenuSaving(true);
+    const result = await updateRecetaMenuMeta({
+      recetaId: receta.id,
+      categoriaMenu: currentCategoria,
+      descripcion: currentDescripcion.trim() || null,
+    });
+    setMenuSaving(false);
+    if (!result.ok) {
+      setServerError(result.error.message);
+      return;
+    }
+    setMenuSaved(true);
+    setTimeout(() => setMenuSaved(false), 2000);
+    onMenuMetaUpdated?.(receta.id, currentCategoria, currentDescripcion.trim() || null);
+  };
 
   const usedInsumoIds = new Set(receta.ingredientes.map((i) => i.insumoId));
   const availableInsumos = insumos.filter((i) => !usedInsumoIds.has(i.id));
@@ -93,6 +139,9 @@ export function IngredientsSheet({
       reset();
       setShowForm(false);
       setServerError('');
+      setMenuCategoria(null);
+      setMenuDescripcion('');
+      setMenuSaved(false);
     }
     onOpenChange(open);
   };
@@ -245,6 +294,80 @@ export function IngredientsSheet({
             <Plus className="h-4 w-4 mr-1.5" />
             Agregar ingrediente
           </Button>
+        )}
+
+        {/* ── Sección Menú QR — solo para recetas de servicio ─────────────── */}
+        {receta.tipoReceta === 'servicio' && (
+          <>
+            <Separator className="my-4" />
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <QrCode className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Menú QR</p>
+                <span className="text-xs text-muted-foreground">(visible al pasajero)</span>
+              </div>
+
+              {/* Categoría */}
+              <div className="space-y-1.5">
+                <Label>Categoría en el menú</Label>
+                <div className="flex gap-2">
+                  {(['entrada', 'plato_fuerte', 'acompanante'] as CategoriaMenu[]).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setMenuCategoria(cat === currentCategoria ? null : cat)}
+                      className={cn(
+                        'flex-1 py-1.5 text-xs rounded-lg border transition-colors',
+                        currentCategoria === cat
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border hover:bg-accent',
+                      )}
+                    >
+                      {CATEGORIA_LABELS[cat]}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Sin categoría = no aparece en el menú QR
+                </p>
+              </div>
+
+              {/* Descripción */}
+              <div className="space-y-1.5">
+                <Label htmlFor="descripcion-qr">Descripción corta</Label>
+                <Textarea
+                  id="descripcion-qr"
+                  placeholder="Ej: Selección de quesos nacionales con mermelada de mora…"
+                  rows={2}
+                  maxLength={500}
+                  value={menuDescripcion !== '' ? menuDescripcion : (receta.descripcion ?? '')}
+                  onChange={(e) => setMenuDescripcion(e.target.value)}
+                  className="resize-none text-sm"
+                />
+              </div>
+
+              {serverError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{serverError}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={handleSaveMenuMeta}
+                disabled={menuSaving}
+              >
+                {menuSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                ) : menuSaved ? (
+                  <Check className="h-4 w-4 mr-1.5" />
+                ) : null}
+                {menuSaved ? 'Guardado' : 'Guardar configuración QR'}
+              </Button>
+            </div>
+          </>
         )}
       </SheetContent>
     </Sheet>

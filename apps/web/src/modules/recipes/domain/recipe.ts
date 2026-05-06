@@ -1,4 +1,4 @@
-import type { TipoReceta, ZonaServicio, AreaProduccion } from '@dorado/shared-types';
+import type { TipoReceta, ZonaServicio, AreaProduccion, CategoriaMenu } from '@dorado/shared-types';
 
 export interface Receta {
   id: string;
@@ -9,6 +9,8 @@ export interface Receta {
   insumoDestinoId: string | null;
   areaProduccion: AreaProduccion | null;
   porciones: number;
+  categoriaMenu: CategoriaMenu | null;
+  descripcion: string | null;
   activo: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -48,4 +50,10 @@ export interface AddIngredienteInput {
   insumoId: string;
   cantidad: number;
   mermaCoeficiente: number;
+}
+
+export interface UpdateMenuMetaInput {
+  recetaId: string;
+  categoriaMenu: CategoriaMenu | null;
+  descripcion: string | null;
 }

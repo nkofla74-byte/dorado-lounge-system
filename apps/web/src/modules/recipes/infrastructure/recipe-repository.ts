@@ -7,6 +7,7 @@ import type {
   RecetaWithIngredientes,
   CreateRecetaInput,
   AddIngredienteInput,
+  UpdateMenuMetaInput,
 } from '../domain/recipe';
 
 type IngredienteRow = {
@@ -27,6 +28,8 @@ type RecetaRow = {
   insumo_destino_id: string | null;
   area_produccion: string | null;
   porciones: number;
+  categoria_menu: string | null;
+  descripcion: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -45,6 +48,8 @@ function toRecetaWithIngredientes(row: RecetaRow): RecetaWithIngredientes {
     insumoDestinoNombre: row.insumo_destino?.nombre ?? null,
     areaProduccion: row.area_produccion as RecetaWithIngredientes['areaProduccion'],
     porciones: row.porciones,
+    categoriaMenu: (row.categoria_menu as RecetaWithIngredientes['categoriaMenu']) ?? null,
+    descripcion: row.descripcion ?? null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -70,6 +75,8 @@ function toReceta(row: Omit<RecetaRow, 'receta_ingredientes' | 'insumo_destino'>
     insumoDestinoId: row.insumo_destino_id,
     areaProduccion: row.area_produccion as Receta['areaProduccion'],
     porciones: row.porciones,
+    categoriaMenu: (row.categoria_menu as Receta['categoriaMenu']) ?? null,
+    descripcion: row.descripcion ?? null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -85,7 +92,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .select(
           `
-          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, activo, created_at, updated_at,
+          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, activo, created_at, updated_at,
           insumo_destino:insumos!recetas_insumo_destino_id_fkey(nombre),
           receta_ingredientes(
             id, receta_id, insumo_id, cantidad, merma_coeficiente,
@@ -129,7 +136,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .insert(insert)
         .select(
-          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, activo, created_at, updated_at',
+          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, activo, created_at, updated_at',
         )
         .single();
 
@@ -178,6 +185,21 @@ export function createRecipeRepository(): RecipeRepository {
         cantidad: Number(row.cantidad),
         mermaCoeficiente: Number(row.merma_coeficiente),
       };
+    },
+
+    async updateMenuMeta(tenantId: string, input: UpdateMenuMetaInput): Promise<void> {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from('recetas')
+        .update({
+          categoria_menu: input.categoriaMenu,
+          descripcion: input.descripcion,
+        })
+        .eq('id', input.recetaId)
+        .eq('tenant_id', tenantId);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
     },
   };
 }
