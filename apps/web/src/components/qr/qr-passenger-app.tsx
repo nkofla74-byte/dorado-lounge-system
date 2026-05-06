@@ -201,19 +201,16 @@ const LOCALES = [
 // ─── Logo Amex ────────────────────────────────────────────────────────────────
 function AmexLogo({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex flex-col items-center gap-0.5 ${className}`}>
+    <div className={`flex flex-col items-center ${className}`}>
       <div
-        className="rounded-lg px-5 py-2.5 flex flex-col items-center"
-        style={{ background: '#016FD0' }}
+        className="rounded-xl px-6 py-3 flex flex-col items-center gap-0"
+        style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}
       >
-        <span className="text-white text-[10px] font-semibold tracking-[0.2em] uppercase">
+        <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase opacity-80">
           American
         </span>
-        <span className="text-white text-lg font-black tracking-[0.12em] leading-none">
+        <span className="text-white text-xl font-black tracking-[0.1em] leading-tight">
           EXPRESS
-        </span>
-        <span className="text-white/70 text-[9px] tracking-[0.15em] uppercase mt-0.5">
-          Member Since
         </span>
       </div>
     </div>
@@ -264,7 +261,11 @@ function DishCard({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3">
-          {added && <span className="text-xs text-emerald-600 font-medium">{t['addDish']}</span>}
+          {added && (
+            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+              ✓ Añadido
+            </span>
+          )}
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
@@ -277,8 +278,11 @@ function DishCard({
       {expanded && (
         <div className="px-4 pb-4 pt-1 bg-card border-t border-border space-y-3">
           {/* Imagen placeholder */}
-          <div className="w-full h-36 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center">
-            <UtensilsCrossed className="h-10 w-10 text-blue-300" />
+          <div className="w-full h-40 rounded-xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-zinc-800 dark:to-zinc-700 flex flex-col items-center justify-center gap-2">
+            <UtensilsCrossed className="h-12 w-12 text-amber-300 dark:text-amber-600" />
+            <span className="text-xs text-amber-400 dark:text-amber-600 font-medium tracking-wide uppercase">
+              Dorado Lounge
+            </span>
           </div>
 
           {/* Ingredientes */}
@@ -347,7 +351,7 @@ function MenuScreen({
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState<CategoriaMenu>('entrada');
+  const [emptyWarning, setEmptyWarning] = useState(false);
 
   const byCategory = CATEGORY_ORDER.reduce<Record<string, PublicReceta[]>>((acc, cat) => {
     acc[cat] = recetas.filter((r) => r.categoriaMenu === cat);
@@ -355,6 +359,9 @@ function MenuScreen({
   }, {});
 
   const availableCategories = CATEGORY_ORDER.filter((c) => (byCategory[c]?.length ?? 0) > 0);
+  const [activeCategory, setActiveCategory] = useState<CategoriaMenu>(
+    availableCategories[0] ?? 'entrada',
+  );
 
   const addItem = (item: CartItem) => {
     setCart((prev) => {
@@ -365,7 +372,7 @@ function MenuScreen({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b px-4 py-3">
         <div className="flex items-center justify-between gap-2">
@@ -420,12 +427,31 @@ function MenuScreen({
       {error && <p className="px-4 pb-2 text-sm text-destructive text-center">{error}</p>}
 
       {/* CTA fijo */}
-      <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-t px-4 py-3 safe-pb">
+      <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-t px-4 py-3 safe-pb space-y-2">
+        {emptyWarning && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 text-center font-medium">
+            {locale === 'en'
+              ? 'Select at least one dish to continue'
+              : locale === 'pt'
+                ? 'Selecione pelo menos um prato para continuar'
+                : locale === 'fr'
+                  ? 'Sélectionnez au moins un plat pour continuer'
+                  : 'Selecciona al menos un plato para continuar'}
+          </p>
+        )}
         <Button
           className="w-full text-white font-semibold"
           style={{ background: '#016FD0' }}
           size="lg"
-          onClick={() => onConfirm(cart)}
+          onClick={() => {
+            if (cart.length === 0) {
+              setEmptyWarning(true);
+              setTimeout(() => setEmptyWarning(false), 3000);
+              return;
+            }
+            setEmptyWarning(false);
+            onConfirm(cart);
+          }}
           disabled={loading}
         >
           {loading ? (
@@ -522,24 +548,30 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   if (step === 'welcome') {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-between px-6 py-10"
+        className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
         style={{ background: '#016FD0' }}
       >
-        <AmexLogo />
+        {/* Logo top */}
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-white/60 text-[9px] font-bold tracking-[0.25em] uppercase">
+            American
+          </span>
+          <span className="text-white text-3xl font-black tracking-[0.08em]">EXPRESS</span>
+        </div>
 
         <div className="w-full space-y-6 text-center">
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight">{t['byAmex']}</h1>
             <p className="text-white/70 text-sm mt-1">{t['selectLanguage']}</p>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {LOCALES.map((l) => (
               <button
                 key={l.code}
                 onClick={() => handleLocaleSelect(l.code)}
-                className={`w-full py-3.5 rounded-2xl font-semibold text-base transition-all ${
+                className={`py-4 rounded-2xl font-semibold text-base transition-all ${
                   locale === l.code
-                    ? 'bg-white text-[#016FD0]'
+                    ? 'bg-white text-[#016FD0] shadow-lg'
                     : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
               >
@@ -549,7 +581,13 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           </div>
         </div>
 
-        <AmexLogo />
+        {/* Logo bottom */}
+        <div className="flex flex-col items-center gap-1 opacity-60">
+          <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase">
+            American
+          </span>
+          <span className="text-white text-lg font-black tracking-[0.1em]">EXPRESS</span>
+        </div>
       </div>
     );
   }
@@ -593,7 +631,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-[100dvh] flex flex-col bg-background">
         {/* Header */}
         <div className="px-6 pt-10 pb-6 text-center" style={{ background: '#016FD0' }}>
           <AmexLogo className="mb-4" />
@@ -640,7 +678,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     const n = parseInt(guestInput, 10);
     const valid = n >= 1 && n <= 20;
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 gap-8">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8">
         <div className="text-center space-y-2">
           <Users className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
           <h2 className="text-xl font-bold">{t['howManyGuests']}</h2>
@@ -698,7 +736,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   // ── Done ─────────────────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-between px-6 py-12"
+      className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
       style={{ background: '#016FD0' }}
     >
       <AmexLogo />
@@ -767,7 +805,7 @@ function HubCard({
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-background">
       <div className="px-5 py-4 border-b flex items-center gap-3">
         <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">
           ← {t['back']}
