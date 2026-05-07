@@ -207,6 +207,22 @@ export function QRGeneratorClient() {
             </Button>
           </div>
 
+          {/* URL generada (diagnóstico) */}
+          <div className="rounded-md border border-dashed border-border p-2.5 bg-muted/30">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              URL del QR
+            </p>
+            <p className="text-[11px] font-mono break-all text-foreground/80 leading-relaxed">
+              {result.url}
+            </p>
+            {!result.url.startsWith('http') && (
+              <p className="text-[11px] text-destructive mt-1.5">
+                ⚠ URL relativa detectada — el QR no funcionará al escanearse. Configura{' '}
+                <code>NEXT_PUBLIC_APP_URL</code> en Vercel.
+              </p>
+            )}
+          </div>
+
           <p className="text-xs text-muted-foreground text-center">
             Token válido por 4 horas · Genera uno nuevo cuando sea necesario
           </p>

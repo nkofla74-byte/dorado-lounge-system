@@ -8,16 +8,30 @@ import type { Result } from '@/lib/result';
 import type { ZonaServicio } from '@dorado/shared-types';
 
 function resolveBaseUrl(): string {
+  // 1. Variable explícita (puede venir con o sin protocolo)
   const explicit = process.env['NEXT_PUBLIC_APP_URL'];
-  if (explicit) return explicit.replace(/\/+$/, '');
-
-  const h = headers();
-  const host = h.get('x-forwarded-host') ?? h.get('host');
-  if (host) {
-    const proto = h.get('x-forwarded-proto') ?? 'https';
-    return `${proto}://${host}`;
+  if (explicit && explicit.trim()) {
+    const trimmed = explicit.trim().replace(/\/+$/, '');
+    return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
   }
 
+  // 2. Vercel: dominio de producción del proyecto (alias estable)
+  const vercelProd = process.env['VERCEL_PROJECT_PRODUCTION_URL'];
+  if (vercelProd) return `https://${vercelProd.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+
+  // 3. Headers del request actual (custom domains, dev local)
+  try {
+    const h = headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    if (host) {
+      const proto = h.get('x-forwarded-proto') ?? 'https';
+      return `${proto}://${host}`;
+    }
+  } catch {
+    // headers() puede no estar disponible en algunos contextos
+  }
+
+  // 4. Vercel: URL específica del deployment (preview, dev branch)
   const vercelUrl = process.env['VERCEL_URL'];
   if (vercelUrl) return `https://${vercelUrl}`;
 
