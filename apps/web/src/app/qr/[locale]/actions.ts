@@ -20,6 +20,7 @@ export interface PublicReceta {
   porciones: number;
   descripcion: string | null;
   categoriaMenu: CategoriaMenu | null;
+  imagenUrl: string | null;
   ingredientes: PublicIngrediente[];
 }
 
@@ -50,7 +51,7 @@ export async function getMenuPublico(
       .from('recetas')
       .select(
         `
-        id, nombre, porciones, descripcion, categoria_menu,
+        id, nombre, porciones, descripcion, categoria_menu, imagen_url,
         receta_ingredientes(
           cantidad,
           insumos(nombre, unidad_medida)
@@ -71,6 +72,7 @@ export async function getMenuPublico(
       porciones: r['porciones'] as number,
       descripcion: (r['descripcion'] as string | null) ?? null,
       categoriaMenu: (r['categoria_menu'] as CategoriaMenu | null) ?? null,
+      imagenUrl: (r['imagen_url'] as string | null) ?? null,
       ingredientes: ((r['receta_ingredientes'] as Array<Record<string, unknown>>) ?? []).map(
         (ri) => {
           const insumo = ri['insumos'] as Record<string, unknown> | null;

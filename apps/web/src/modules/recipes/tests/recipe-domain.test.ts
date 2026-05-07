@@ -18,6 +18,7 @@ function makeRecetaBase(overrides: Partial<Receta> = {}): Receta {
     porciones: 12,
     categoriaMenu: null,
     descripcion: null,
+    imagenUrl: null,
     activo: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),

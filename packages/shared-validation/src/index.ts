@@ -121,6 +121,11 @@ export const updateRecetaMenuSchema = z.object({
   recetaId: uuidSchema,
   categoriaMenu: categoriaMenuSchema.nullable(),
   descripcion: z.string().max(500).nullable(),
+  imagenUrl: z
+    .string()
+    .url('URL inválida')
+    .nullable()
+    .or(z.literal('').transform(() => null)),
 });
 
 export const addIngredienteSchema = z.object({

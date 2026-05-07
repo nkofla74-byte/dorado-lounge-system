@@ -79,12 +79,13 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
     recetaId: string,
     categoriaMenu: CategoriaMenu | null,
     descripcion: string | null,
+    imagenUrl: string | null,
   ) => {
     setData((prev) =>
-      prev.map((r) => (r.id === recetaId ? { ...r, categoriaMenu, descripcion } : r)),
+      prev.map((r) => (r.id === recetaId ? { ...r, categoriaMenu, descripcion, imagenUrl } : r)),
     );
     setSheetReceta((prev) =>
-      prev?.id === recetaId ? { ...prev, categoriaMenu, descripcion } : prev,
+      prev?.id === recetaId ? { ...prev, categoriaMenu, descripcion, imagenUrl } : prev,
     );
   };
 

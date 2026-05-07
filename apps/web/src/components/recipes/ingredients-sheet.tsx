@@ -60,6 +60,7 @@ interface IngredientsSheetProps {
     recetaId: string,
     categoriaMenu: CategoriaMenu | null,
     descripcion: string | null,
+    imagenUrl: string | null,
   ) => void;
 }
 
@@ -75,6 +76,7 @@ export function IngredientsSheet({
   const [showForm, setShowForm] = useState(false);
   const [menuCategoria, setMenuCategoria] = useState<CategoriaMenu | null>(null);
   const [menuDescripcion, setMenuDescripcion] = useState('');
+  const [menuImagenUrl, setMenuImagenUrl] = useState('');
   const [menuSaving, setMenuSaving] = useState(false);
   const [menuSaved, setMenuSaved] = useState(false);
 
@@ -94,6 +96,7 @@ export function IngredientsSheet({
     if (receta) {
       setMenuCategoria(receta.categoriaMenu);
       setMenuDescripcion(receta.descripcion ?? '');
+      setMenuImagenUrl(receta.imagenUrl ?? '');
     }
   }, [receta?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -108,6 +111,7 @@ export function IngredientsSheet({
       recetaId: receta.id,
       categoriaMenu: currentCategoria,
       descripcion: currentDescripcion.trim() || null,
+      imagenUrl: menuImagenUrl.trim() || null,
     });
     setMenuSaving(false);
     if (!result.ok) {
@@ -116,7 +120,12 @@ export function IngredientsSheet({
     }
     setMenuSaved(true);
     setTimeout(() => setMenuSaved(false), 2000);
-    onMenuMetaUpdated?.(receta.id, currentCategoria, currentDescripcion.trim() || null);
+    onMenuMetaUpdated?.(
+      receta.id,
+      currentCategoria,
+      currentDescripcion.trim() || null,
+      menuImagenUrl.trim() || null,
+    );
   };
 
   const usedInsumoIds = new Set(receta.ingredientes.map((i) => i.insumoId));
@@ -345,6 +354,23 @@ export function IngredientsSheet({
                   onChange={(e) => setMenuDescripcion(e.target.value)}
                   className="resize-none text-sm"
                 />
+              </div>
+
+              {/* URL de imagen */}
+              <div className="space-y-1.5">
+                <Label htmlFor="imagen-url">URL de foto del plato</Label>
+                <Input
+                  id="imagen-url"
+                  type="url"
+                  placeholder="https://…supabase.co/storage/v1/object/public/recetas/…"
+                  value={menuImagenUrl}
+                  onChange={(e) => setMenuImagenUrl(e.target.value)}
+                  className="text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Sube la foto al bucket <code className="bg-muted px-1 rounded">recetas</code> en
+                  Supabase Storage y pega la URL pública aquí.
+                </p>
               </div>
 
               {serverError && (

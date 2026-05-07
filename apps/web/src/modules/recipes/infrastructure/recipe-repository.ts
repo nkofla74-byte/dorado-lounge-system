@@ -30,6 +30,7 @@ type RecetaRow = {
   porciones: number;
   categoria_menu: string | null;
   descripcion: string | null;
+  imagen_url: string | null;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -50,6 +51,7 @@ function toRecetaWithIngredientes(row: RecetaRow): RecetaWithIngredientes {
     porciones: row.porciones,
     categoriaMenu: (row.categoria_menu as RecetaWithIngredientes['categoriaMenu']) ?? null,
     descripcion: row.descripcion ?? null,
+    imagenUrl: row.imagen_url ?? null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -77,6 +79,7 @@ function toReceta(row: Omit<RecetaRow, 'receta_ingredientes' | 'insumo_destino'>
     porciones: row.porciones,
     categoriaMenu: (row.categoria_menu as Receta['categoriaMenu']) ?? null,
     descripcion: row.descripcion ?? null,
+    imagenUrl: row.imagen_url ?? null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -92,7 +95,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .select(
           `
-          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, activo, created_at, updated_at,
+          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at,
           insumo_destino:insumos!recetas_insumo_destino_id_fkey(nombre),
           receta_ingredientes(
             id, receta_id, insumo_id, cantidad, merma_coeficiente,
@@ -136,7 +139,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .insert(insert)
         .select(
-          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, activo, created_at, updated_at',
+          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at',
         )
         .single();
 
@@ -195,6 +198,7 @@ export function createRecipeRepository(): RecipeRepository {
         .update({
           categoria_menu: input.categoriaMenu,
           descripcion: input.descripcion,
+          imagen_url: input.imagenUrl,
         })
         .eq('id', input.recetaId)
         .eq('tenant_id', tenantId);

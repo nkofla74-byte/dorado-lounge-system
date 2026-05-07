@@ -277,13 +277,22 @@ function DishCard({
       {/* Detalle expandido */}
       {expanded && (
         <div className="px-4 pb-4 pt-1 bg-card border-t border-border space-y-3">
-          {/* Imagen placeholder */}
-          <div className="w-full h-40 rounded-xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-zinc-800 dark:to-zinc-700 flex flex-col items-center justify-center gap-2">
-            <UtensilsCrossed className="h-12 w-12 text-amber-300 dark:text-amber-600" />
-            <span className="text-xs text-amber-400 dark:text-amber-600 font-medium tracking-wide uppercase">
-              Dorado Lounge
-            </span>
-          </div>
+          {/* Imagen del plato */}
+          {receta.imagenUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={receta.imagenUrl}
+              alt={receta.nombre}
+              className="w-full h-48 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="w-full h-40 rounded-xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-zinc-800 dark:to-zinc-700 flex flex-col items-center justify-center gap-2">
+              <UtensilsCrossed className="h-12 w-12 text-amber-300 dark:text-amber-600" />
+              <span className="text-xs text-amber-400 dark:text-amber-600 font-medium tracking-wide uppercase">
+                Dorado Lounge
+              </span>
+            </div>
+          )}
 
           {/* Ingredientes */}
           {receta.ingredientes.length > 0 && (

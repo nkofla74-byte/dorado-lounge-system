@@ -11,6 +11,7 @@ export interface Receta {
   porciones: number;
   categoriaMenu: CategoriaMenu | null;
   descripcion: string | null;
+  imagenUrl: string | null;
   activo: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -56,4 +57,5 @@ export interface UpdateMenuMetaInput {
   recetaId: string;
   categoriaMenu: CategoriaMenu | null;
   descripcion: string | null;
+  imagenUrl: string | null;
 }
