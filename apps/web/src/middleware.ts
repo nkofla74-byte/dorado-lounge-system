@@ -30,18 +30,22 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublicPath = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
+  const pathname = request.nextUrl.pathname;
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isLoginPath = pathname.startsWith('/login');
 
   // Sin sesión → redirigir a login (excepto rutas públicas)
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('next', request.nextUrl.pathname);
+    url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Con sesión en login → redirigir al dashboard solo si el JWT tiene rol y tenant
-  if (user && isPublicPath) {
+  // Usuario autenticado en /login → mandar al dashboard.
+  // OJO: /qr/* es público para pasajeros y NO debe redirigir nunca, aunque
+  // el admin esté logueado en el mismo navegador.
+  if (user && isLoginPath) {
     const role = user.app_metadata?.role as string | undefined;
     const tenantId = user.app_metadata?.tenant_id as string | undefined;
     if (role && tenantId) {
