@@ -39,17 +39,17 @@ pnpm --filter apps/socket-server dev      # nodemon con ts-node
 
 ## Stack (no cambiar sin discutir)
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Next.js 14 App Router + TypeScript strict |
-| UI | React + Tailwind CSS + shadcn/ui |
-| DB / Auth | Supabase (PostgreSQL 15 + Auth + Storage) |
-| Real-time | Socket.io en Node.js independiente (Render.com) |
-| Validación | Zod + React Hook Form |
-| i18n QR | next-intl (`/qr/[locale]` con es/en/fr/pt) |
-| Testing | Vitest (unit/integration), Playwright (E2E), pgTAP (DB) |
-| Observabilidad | Sentry + Axiom + Better Stack |
-| Deploy | Vercel (web) + Render.com Starter (socket) |
+| Capa           | Tecnología                                              |
+| -------------- | ------------------------------------------------------- |
+| Framework      | Next.js 14 App Router + TypeScript strict               |
+| UI             | React + Tailwind CSS + shadcn/ui                        |
+| DB / Auth      | Supabase (PostgreSQL 15 + Auth + Storage)               |
+| Real-time      | Socket.io en Node.js independiente (Render.com)         |
+| Validación     | Zod + React Hook Form                                   |
+| i18n QR        | next-intl (`/qr/[locale]` con es/en/fr/pt)              |
+| Testing        | Vitest (unit/integration), Playwright (E2E), pgTAP (DB) |
+| Observabilidad | Sentry + Axiom + Better Stack                           |
+| Deploy         | Vercel (web) + Render.com Starter (socket)              |
 
 ---
 
@@ -93,6 +93,7 @@ ESLint enforcement activo: `domain/` y `application/` no pueden importar de `inf
 `actions.ts` es la Composition Root: cablea infrastructure → application → response. Código fuera del módulo solo puede importar de `actions.ts`.
 
 **Bounded contexts (módulos):**
+
 - **Core** (no dependen de nadie): `inventory`, `recipes`, `production`
 - **Supporting** (orquestan core): `orders`, `buffet`, `snack`, `affluence`
 - **Generic**: `identity`, `tenants`, `rbac`, `realtime`, `audit`, `analytics`
@@ -130,10 +131,10 @@ El RPC maneja idempotencia por `idempotency_key`: si la key ya existe, devuelve 
 
 ### Tres zonas — cuándo ocurre el descuento
 
-| Zona | Descuento |
-|---|---|
-| Amex | Al confirmar entrega del pedido |
-| Snack | Al despachar desde cocina |
+| Zona   | Descuento                                                                    |
+| ------ | ---------------------------------------------------------------------------- |
+| Amex   | Al confirmar entrega del pedido                                              |
+| Snack  | Al despachar desde cocina                                                    |
 | Buffet | Al despachar lote al buffet. Conciliación al cierre con tickets recolectados |
 
 Buffet NO registra consumo individual en tiempo real. `1 ticket = 1 servicio`, ingresado al cierre del turno.
@@ -196,14 +197,14 @@ Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Post
 
 ## Roles (RBAC fijos en código)
 
-| Rol | Acceso |
-|---|---|
-| `superuser` | God Mode: CRUD tenants, usuarios, auditoría |
-| `admin` | Operación completa: carta, recetas, inventario, reportes |
-| `chef` / `sous_chef` | Producción batch, despacho, KDS, chat |
-| `mesero_amex` | Pedidos por mesa, confirmación de entrega |
-| `personal_snack` | Stock Out, Stuart, conteo de cierre |
-| `personal_buffet` | Stock Out, Stuart, registro de tickets |
+| Rol                  | Acceso                                                   |
+| -------------------- | -------------------------------------------------------- |
+| `superuser`          | God Mode: CRUD tenants, usuarios, auditoría              |
+| `admin`              | Operación completa: carta, recetas, inventario, reportes |
+| `chef` / `sous_chef` | Producción batch, despacho, KDS, chat                    |
+| `mesero_amex`        | Pedidos por mesa, confirmación de entrega                |
+| `personal_snack`     | Stock Out, Stuart, conteo de cierre                      |
+| `personal_buffet`    | Stock Out, Stuart, registro de tickets                   |
 
 Los roles son constantes de código. El SuperUser configura permisos opcionales dentro de un rol (matriz finita), no la estructura de la UI. Antes de agregar un rol, revisar si se resuelve con permisos del SuperUser.
 
@@ -263,6 +264,7 @@ Antes de crear una tabla, consultar este listado y el modelo E-R en `ARCHITECTUR
 ## Analytics
 
 Dos KPIs separados (no mezclar):
+
 - `cogs_per_passenger` = consumo aplicado por recetas + merma operativa / pasajeros (eficiencia real)
 - `cash_outflow_per_passenger` = compras del período / pasajeros (flujo de caja)
 
@@ -272,16 +274,16 @@ Analytics solo lee vistas materializadas (`mv_consumo_vs_produccion_turno`, etc.
 
 ## Decisiones congeladas (no re-discutir)
 
-| Tema | Decisión |
-|---|---|
-| Real-time | Socket.io — control granular de canales |
-| Buffet | Lotes + tickets al cierre (no registro individual) |
-| Merma | Coeficiente por receta + categorización obligatoria |
-| Multi-tenant | RLS de Postgres + `tenant_id` en cada tabla |
-| QR pasajero | PWA pública `/qr/[locale]`, sin login, token de mesa |
-| Inventory ops | RPC SQL atómica, no coordinación desde Node |
-| Roles | Fijos en código, permisos opcionales configurables |
-| Broadcast | Dos canales: `sala:broadcast:cocina` y `sala:broadcast:admin` |
+| Tema          | Decisión                                                      |
+| ------------- | ------------------------------------------------------------- |
+| Real-time     | Socket.io — control granular de canales                       |
+| Buffet        | Lotes + tickets al cierre (no registro individual)            |
+| Merma         | Coeficiente por receta + categorización obligatoria           |
+| Multi-tenant  | RLS de Postgres + `tenant_id` en cada tabla                   |
+| QR pasajero   | PWA pública `/qr/[locale]`, sin login, token de mesa          |
+| Inventory ops | RPC SQL atómica, no coordinación desde Node                   |
+| Roles         | Fijos en código, permisos opcionales configurables            |
+| Broadcast     | Dos canales: `sala:broadcast:cocina` y `sala:broadcast:admin` |
 
 ---
 
@@ -297,4 +299,4 @@ Analytics solo lee vistas materializadas (`mv_consumo_vs_produccion_turno`, etc.
 
 ---
 
-*v3.0 — Mayo 2025 · Sprint 0 en progreso · 6 meses de desarrollo*
+_v3.0 — Mayo 2025 · Sprint 0 en progreso · 6 meses de desarrollo_
