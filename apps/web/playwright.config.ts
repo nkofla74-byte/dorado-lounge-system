@@ -26,12 +26,14 @@ export default defineConfig({
     },
   ],
 
-  webServer: process.env.CI
-    ? undefined
+  ...(process.env.CI
+    ? {}
     : {
-        command: 'pnpm dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: true,
-        timeout: 120_000,
-      },
+        webServer: {
+          command: 'pnpm dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+      }),
 });
