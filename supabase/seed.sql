@@ -102,6 +102,146 @@ BEGIN
   VALUES ('da000000-0400-4000-8000-000000000004', v_tenant_id, 'Luis Herrera (Snack)', 'personal_snack')
   ON CONFLICT (id) DO NOTHING;
 
+  -- Superuser
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-5000-4000-8000-000000000005',
+    '00000000-0000-0000-0000-000000000000',
+    'superuser@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'superuser'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'superuser'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-5000-4000-8000-000000000005', v_tenant_id, 'Sofía Navarro (Superuser)', 'superuser')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Sous Chef
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-6000-4000-8000-000000000006',
+    '00000000-0000-0000-0000-000000000000',
+    'soushef@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'sous_chef'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'sous_chef'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-6000-4000-8000-000000000006', v_tenant_id, 'David Ruiz (Sous Chef)', 'sous_chef')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Personal Buffet
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-7000-4000-8000-000000000007',
+    '00000000-0000-0000-0000-000000000000',
+    'buffet@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_buffet'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_buffet'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-7000-4000-8000-000000000007', v_tenant_id, 'Beatriz Mora (Buffet)', 'personal_buffet')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Personal Almacén
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-8000-4000-8000-000000000008',
+    '00000000-0000-0000-0000-000000000000',
+    'almacen@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_almacen'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_almacen'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-8000-4000-8000-000000000008', v_tenant_id, 'Andrés Castro (Almacén)', 'personal_almacen')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Personal Pastelería
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-9000-4000-8000-000000000009',
+    '00000000-0000-0000-0000-000000000000',
+    'pasteleria@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_pasteleria'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'personal_pasteleria'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-9000-4000-8000-000000000009', v_tenant_id, 'Paola Díaz (Pastelería)', 'personal_pasteleria')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Steward
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-a000-4000-8000-00000000000a',
+    '00000000-0000-0000-0000-000000000000',
+    'steward@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'steward'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'steward'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-a000-4000-8000-00000000000a', v_tenant_id, 'Roberto Peña (Steward)', 'steward')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Recepción
+  INSERT INTO auth.users (
+    id, instance_id, email, encrypted_password,
+    email_confirmed_at, raw_user_meta_data, raw_app_meta_data,
+    aud, role, created_at, updated_at
+  ) VALUES (
+    'da000000-b000-4000-8000-00000000000b',
+    '00000000-0000-0000-0000-000000000000',
+    'recepcion@dorado.test',
+    crypt('dorado2025!', gen_salt('bf')),
+    now(),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'recepcion'),
+    jsonb_build_object('tenant_id', v_tenant_id, 'role', 'recepcion'),
+    'authenticated', 'authenticated', now(), now()
+  ) ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role)
+  VALUES ('da000000-b000-4000-8000-00000000000b', v_tenant_id, 'Valeria Torres (Recepción)', 'recepcion')
+  ON CONFLICT (id) DO NOTHING;
+
 END $$;
 
 
