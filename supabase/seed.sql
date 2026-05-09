@@ -270,13 +270,157 @@ END $$;
 
 
 -- ── 8. Turno de demo ──────────────────────────────────────────────────────────
-INSERT INTO public.turnos (id, tenant_id, nombre)
+INSERT INTO public.turnos (id, tenant_id, nombre, responsable_id, activo)
 VALUES (
   'de000000-0001-4000-8000-000000000001',
   'd0de0000-0000-4000-8000-000000000001',
-  'Turno Mañana — Demo'
+  'Turno Mañana — Demo',
+  'da000000-ad00-4000-8000-000000000001',
+  true
 )
 ON CONFLICT (id) DO NOTHING;
+
+
+-- ── 9. Movimientos de inventario (entradas iniciales por lote) ────────────────
+DO $$
+DECLARE v_tid uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_uid uuid := 'da000000-ad00-4000-8000-000000000001';
+        v_tur uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.movimientos_inventario
+    (id, tenant_id, insumo_id, lote_id, tipo, cantidad, turno_id, usuario_id, referencia_tipo, idempotency_key)
+  VALUES
+    ('0abe0000-0001-4000-8000-000000000001', v_tid, 'c1000000-0001-4000-8000-000000000001', '10de0000-0001-4000-8000-000000000001', 'entrada', 10,   v_tur, v_uid, 'compra', 'seed-mov-0001'),
+    ('0abe0000-0002-4000-8000-000000000001', v_tid, 'c1000000-0002-4000-8000-000000000001', '10de0000-0002-4000-8000-000000000001', 'entrada', 20,   v_tur, v_uid, 'compra', 'seed-mov-0002'),
+    ('0abe0000-0003-4000-8000-000000000001', v_tid, 'c1000000-0003-4000-8000-000000000001', '10de0000-0003-4000-8000-000000000001', 'entrada', 5,    v_tur, v_uid, 'compra', 'seed-mov-0003'),
+    ('0abe0000-0004-4000-8000-000000000001', v_tid, 'c1000000-0004-4000-8000-000000000001', '10de0000-0004-4000-8000-000000000001', 'entrada', 3,    v_tur, v_uid, 'compra', 'seed-mov-0004'),
+    ('0abe0000-0005-4000-8000-000000000001', v_tid, 'c1000000-0005-4000-8000-000000000001', '10de0000-0005-4000-8000-000000000001', 'entrada', 4,    v_tur, v_uid, 'compra', 'seed-mov-0005'),
+    ('0abe0000-0006-4000-8000-000000000001', v_tid, 'c1000000-0006-4000-8000-000000000001', '10de0000-0006-4000-8000-000000000001', 'entrada', 10,   v_tur, v_uid, 'compra', 'seed-mov-0006'),
+    ('0abe0000-0007-4000-8000-000000000001', v_tid, 'c1000000-0007-4000-8000-000000000001', '10de0000-0007-4000-8000-000000000001', 'entrada', 120,  v_tur, v_uid, 'compra', 'seed-mov-0007'),
+    ('0abe0000-0008-4000-8000-000000000001', v_tid, 'c1000000-0008-4000-8000-000000000001', '10de0000-0008-4000-8000-000000000001', 'entrada', 50,   v_tur, v_uid, 'compra', 'seed-mov-0008'),
+    ('0abe0000-0009-4000-8000-000000000001', v_tid, 'c1000000-0009-4000-8000-000000000001', '10de0000-0009-4000-8000-000000000001', 'entrada', 2000, v_tur, v_uid, 'compra', 'seed-mov-0009'),
+    ('0abe0000-000a-4000-8000-000000000001', v_tid, 'c1000000-000a-4000-8000-000000000001', '10de0000-000a-4000-8000-000000000001', 'entrada', 5000, v_tur, v_uid, 'compra', 'seed-mov-000a')
+  ON CONFLICT (idempotency_key) DO NOTHING;
+END $$;
+
+
+-- ── 10. Tandas de producción ──────────────────────────────────────────────────
+DO $$
+DECLARE v_tid uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_chef uuid := 'da000000-cf00-4000-8000-000000000002';
+        v_tur  uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.tandas_produccion
+    (id, tenant_id, receta_id, turno_id, cantidad_tandas, estado, responsable_id, notas, idempotency_key)
+  VALUES
+    ('0add0000-0001-4000-8000-000000000001', v_tid, 'aec00000-0001-4000-8000-000000000001', v_tur, 2, 'completada',  v_chef, 'Tanda matutina completada — 24 pandebonos', 'seed-tanda-0001'),
+    ('0add0000-0002-4000-8000-000000000001', v_tid, 'aec00000-0002-4000-8000-000000000001', v_tur, 1, 'completada',  v_chef, 'Ensaladas listas para el turno',             'seed-tanda-0002'),
+    ('0add0000-0003-4000-8000-000000000001', v_tid, 'aec00000-0001-4000-8000-000000000001', v_tur, 1, 'en_proceso',  v_chef, 'Segunda tanda pandebonos en horno',          'seed-tanda-0003'),
+    ('0add0000-0004-4000-8000-000000000001', v_tid, 'aec00000-0001-4000-8000-000000000001', v_tur, 1, 'planificada', v_chef, 'Planificada para la tarde',                  'seed-tanda-0004')
+  ON CONFLICT (idempotency_key) DO NOTHING;
+END $$;
+
+
+-- ── 11. Pedidos y pedido_items ────────────────────────────────────────────────
+DO $$
+DECLARE v_tid  uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_mes  uuid := 'da000000-0300-4000-8000-000000000003';
+        v_snk  uuid := 'da000000-0400-4000-8000-000000000004';
+        v_tur  uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.pedidos (id, tenant_id, turno_id, numero_mesa, responsable_id, estado, zona, origen, idempotency_key)
+  VALUES
+    ('0edd0000-0001-4000-8000-000000000001', v_tid, v_tur, 'A-01', v_mes, 'entregado',     'amex',  'mesero',      'seed-ped-0001'),
+    ('0edd0000-0002-4000-8000-000000000001', v_tid, v_tur, 'A-02', v_mes, 'en_preparacion','amex',  'mesero',      'seed-ped-0002'),
+    ('0edd0000-0003-4000-8000-000000000001', v_tid, v_tur, NULL,   v_snk, 'despachado',    'snack', 'mesero',      'seed-ped-0003')
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.pedido_items (id, tenant_id, pedido_id, receta_id, cantidad)
+  VALUES
+    ('0ed10000-0001-4000-8000-000000000001', v_tid, '0edd0000-0001-4000-8000-000000000001', 'aec00000-0003-4000-8000-000000000001', 2),
+    ('0ed10000-0002-4000-8000-000000000001', v_tid, '0edd0000-0001-4000-8000-000000000001', 'aec00000-0006-4000-8000-000000000001', 2),
+    ('0ed10000-0003-4000-8000-000000000001', v_tid, '0edd0000-0002-4000-8000-000000000001', 'aec00000-0003-4000-8000-000000000001', 1),
+    ('0ed10000-0004-4000-8000-000000000001', v_tid, '0edd0000-0003-4000-8000-000000000001', 'aec00000-0004-4000-8000-000000000001', 3)
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
+
+-- ── 12. Mermas ────────────────────────────────────────────────────────────────
+DO $$
+DECLARE v_tid  uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_chef uuid := 'da000000-cf00-4000-8000-000000000002';
+        v_tur  uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.mermas (id, tenant_id, insumo_id, lote_id, cantidad, categoria, descripcion, turno_id, registrado_por, idempotency_key)
+  VALUES
+    ('0e1a0000-0001-4000-8000-000000000001', v_tid, 'c1000000-0003-4000-8000-000000000001', '10de0000-0003-4000-8000-000000000001', 0.15, 'operativa',  'Recortes de lechuga en preparación',    v_tur, v_chef, 'seed-merma-0001'),
+    ('0e1a0000-0002-4000-8000-000000000001', v_tid, 'c1000000-000a-4000-8000-000000000001', '10de0000-000a-4000-8000-000000000001', 200,  'vencimiento','Jugo vencido detectado en apertura',   v_tur, v_chef, 'seed-merma-0002'),
+    ('0e1a0000-0003-4000-8000-000000000001', v_tid, 'c1000000-0001-4000-8000-000000000001', '10de0000-0001-4000-8000-000000000001', 0.10, 'operativa',  'Recortes en fileteo de pollo',          v_tur, v_chef, 'seed-merma-0003')
+  ON CONFLICT (idempotency_key) DO NOTHING;
+END $$;
+
+
+-- ── 13. Afluencia de pasajeros ────────────────────────────────────────────────
+DO $$
+DECLARE v_tid uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_adm uuid := 'da000000-ad00-4000-8000-000000000001';
+        v_tur uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.afluencia_ingresos (id, tenant_id, turno_id, cantidad, zona, registrado_por, vuelo_numero)
+  VALUES
+    ('af100000-0001-4000-8000-000000000001', v_tid, v_tur, 12, 'amex',   v_adm, 'AV9641'),
+    ('af100000-0002-4000-8000-000000000001', v_tid, v_tur, 8,  'snack',  v_adm, 'LA4031'),
+    ('af100000-0003-4000-8000-000000000001', v_tid, v_tur, 20, 'buffet', v_adm, 'LA4031'),
+    ('af100000-0004-4000-8000-000000000001', v_tid, v_tur, 15, 'amex',   v_adm, 'AV9700'),
+    ('af100000-0005-4000-8000-000000000001', v_tid, v_tur, 6,  'snack',  v_adm, NULL)
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
+
+-- ── 14. Buffet tickets al cierre ──────────────────────────────────────────────
+DO $$
+DECLARE v_tid uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_snk uuid := 'da000000-0400-4000-8000-000000000004';
+        v_tur uuid := 'de000000-0001-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.buffet_tickets_turno (id, tenant_id, turno_id, cantidad_tickets, registrado_por, idempotency_key)
+  VALUES (
+    'bf100000-0001-4000-8000-000000000001',
+    v_tid, v_tur, 20, v_snk, 'seed-buffet-ticket-0001'
+  ) ON CONFLICT (idempotency_key) DO NOTHING;
+END $$;
+
+
+-- ── 15. Feature flags ─────────────────────────────────────────────────────────
+DO $$
+DECLARE v_tid uuid := 'd0de0000-0000-4000-8000-000000000001';
+BEGIN
+  INSERT INTO public.feature_flags (id, tenant_id, clave, valor, descripcion)
+  VALUES
+    ('ff100000-0001-4000-8000-000000000001', v_tid, 'kds_enabled',          true,  'Habilita el Kitchen Display System (KDS)'),
+    ('ff100000-0002-4000-8000-000000000001', v_tid, 'chat_enabled',         true,  'Habilita el chat entre estaciones'),
+    ('ff100000-0003-4000-8000-000000000001', v_tid, 'analytics_enabled',    true,  'Habilita el módulo de analytics'),
+    ('ff100000-0004-4000-8000-000000000001', v_tid, 'qr_pasajero_enabled',  true,  'Permite pedidos QR de pasajeros'),
+    ('ff100000-0005-4000-8000-000000000001', v_tid, 'buffet_lotes_mode',    true,  'Buffet opera en modo lotes (vs. individual)')
+  ON CONFLICT (tenant_id, clave) DO NOTHING;
+END $$;
+
+
+-- ── 16. Mensajes de chat ──────────────────────────────────────────────────────
+DO $$
+DECLARE v_tid  uuid := 'd0de0000-0000-4000-8000-000000000001';
+        v_adm  uuid := 'da000000-ad00-4000-8000-000000000001';
+        v_chef uuid := 'da000000-cf00-4000-8000-000000000002';
+BEGIN
+  INSERT INTO public.mensajes_chat (id, tenant_id, canal, remitente_id, contenido, tipo)
+  VALUES
+    ('ca000000-0001-4000-8000-000000000001', v_tid, 'sala:cocina',  v_chef, 'Iniciando turno, todo listo en cocina',              'text'),
+    ('ca000000-0002-4000-8000-000000000001', v_tid, 'sala:cocina',  v_adm,  'Recibido chef, adelante',                            'text'),
+    ('ca000000-0003-4000-8000-000000000001', v_tid, 'sala:admin',   v_adm,  'Atención: revisión de inventario a las 14:00',       'broadcast'),
+    ('ca000000-0004-4000-8000-000000000001', v_tid, 'sala:cocina',  v_chef, 'Stock bajo de pandebonos, preparando nueva tanda',   'alert'),
+    ('ca000000-0005-4000-8000-000000000001', v_tid, 'sala:cocina',  v_adm,  'Cerrando turno, todo en orden',                      'text')
+  ON CONFLICT (id) DO NOTHING;
+END $$;
 
 
 -- =============================================================================
