@@ -29,6 +29,9 @@ importers:
       '@dorado/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@supabase/supabase-js':
+        specifier: ^2.105.1
+        version: 2.105.1
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -41,6 +44,9 @@ importers:
       socket.io:
         specifier: ^4.8.1
         version: 4.8.3
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@dorado/eslint-config':
         specifier: workspace:*

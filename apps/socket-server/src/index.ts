@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { logger } from './lib/logger';
 import { authenticateHandshake, canJoinChannel } from './lib/auth';
 import { createEmitHandler } from './lib/emit-handler';
+import { registerHandlers } from './lib/handlers/index';
 import type { SocketData } from './lib/auth';
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001;
@@ -65,6 +66,9 @@ io.on('connection', (socket) => {
     void socket.leave(tenantRoom);
     logger.info({ event: 'channel_left', socketId: socket.id, channel: tenantRoom });
   });
+
+  // Registrar handlers de eventos operativos (MENSAJE_CHAT, BROADCAST, STUART_REQUEST)
+  registerHandlers(socket, io);
 
   socket.on('disconnect', (reason) => {
     logger.info({ event: 'socket_disconnected', socketId: socket.id, userId, reason });

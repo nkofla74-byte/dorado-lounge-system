@@ -11,10 +11,9 @@ export interface SocketData {
   role: UserRole;
 }
 
-const JWT_SECRET = process.env['SUPABASE_JWT_SECRET'];
-
 export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError) => void): void {
-  if (!JWT_SECRET) {
+  const jwtSecret = process.env['SUPABASE_JWT_SECRET'];
+  if (!jwtSecret) {
     logger.error({ event: 'auth_missing_jwt_secret' });
     return next(new Error('SERVER_MISCONFIGURED'));
   }
@@ -27,7 +26,7 @@ export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
     const appMeta = decoded.app_metadata as { tenant_id?: string; role?: string } | undefined;
 
     if (!appMeta?.tenant_id || !appMeta?.role) {
