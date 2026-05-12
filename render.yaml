@@ -2,28 +2,15 @@ services:
   - type: web
     name: dorado-lounge-socket
     env: node
-    plan: free
-    buildCommand: corepack enable && corepack prepare pnpm@10.33.2 --activate && pnpm install --frozen-lockfile && pnpm --filter @dorado/socket-server build
-    startCommand: node apps/socket-server/dist/index.js
-    healthCheckPath: /health
+    plan: starter # RECOMENDACIÓN: El plan free hiberna y mata los WebSockets
+    # 1. Compilamos TODO el monorepo para asegurar que las dependencias compartidas existan
+    buildCommand: corepack enable && corepack prepare pnpm@10.33.2 --activate && pnpm install --frozen-lockfile && pnpm build
+    # 2. Ejecutamos desde el directorio del paquete para que Node resuelva bien las rutas relativas
+    startCommand: cd apps/socket-server && node dist/index.js
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: SUPABASE_JWT_SECRET
-        sync: false
-      - key: SOCKET_EMIT_SECRET
-        sync: false
-      - key: ALLOWED_ORIGIN
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      - key: AXIOM_TOKEN
-        sync: false
-      - key: AXIOM_DATASET
-        sync: false
+        value: 3001
+      # ... tus otras variables de entorno
