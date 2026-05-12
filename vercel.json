@@ -1,6 +1,0 @@
-{
-  "buildCommand": "pnpm --filter @dorado/web build",
-  "outputDirectory": "apps/web/.next",
-  "framework": "nextjs",
-  "installCommand": "pnpm install --frozen-lockfile"
-}
