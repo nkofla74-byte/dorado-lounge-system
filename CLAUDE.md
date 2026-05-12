@@ -12,28 +12,37 @@ Documento de análisis completo: `docs/analisis-v6.docx` | Arquitectura detallad
 
 ```bash
 # Monorepo (pnpm workspaces)
-pnpm dev                        # arranca web + socket-server en paralelo
-pnpm build                      # build de todos los paquetes
-pnpm lint                       # eslint + prettier check en todos los paquetes
-pnpm test                       # vitest unit + integration (todos los paquetes)
-pnpm test --filter apps/web     # tests solo de web
-pnpm test -- --run src/modules/inventory  # correr tests de un módulo específico
+pnpm dev                              # arranca web + socket-server en paralelo
+pnpm build                            # build de todos los paquetes
+pnpm lint                             # eslint en todos los paquetes
+pnpm format                           # prettier --write (auto-fix)
+pnpm format:check                     # prettier --check (lo que corre en CI)
+pnpm typecheck                        # tsc --noEmit en todos los paquetes
+pnpm test                             # vitest unit + integration (todos los paquetes)
 
-# Dentro de apps/web
-pnpm --filter apps/web dev
-pnpm --filter apps/web test:e2e           # playwright
-pnpm --filter apps/web tsc --noEmit       # type-check sin build
+# Filtrar por workspace
+pnpm --filter @dorado/web test        # tests solo de web
+pnpm --filter @dorado/web test -- --run src/modules/inventory  # módulo específico
+pnpm --filter @dorado/web dev
+pnpm --filter @dorado/web test:e2e    # playwright
+pnpm --filter @dorado/web tsc --noEmit
+
+# Socket server
+pnpm --filter @dorado/socket-server dev   # tsx watch src/index.ts
 
 # Database workflow (cloud only)
 # Las migraciones viven en supabase/migrations/*.sql
 # Se aplican vía integración GitHub + Supabase en cada PR / merge.
 # Nunca usar supabase start ni Docker local en este proyecto.
-
-# Socket server
-pnpm --filter apps/socket-server dev      # nodemon con ts-node
+#
+# Seed de desarrollo: supabase/seed.sql
+# Aplicar en Supabase dashboard → SQL Editor, o via CLI:
+#   supabase db push --include-seed --project-ref <ref>
+# Contraseña de todos los usuarios seed: DoradoTest2024!
+# Usuarios: superuser@ | admin@ | chef@ | soschef@ | amex@ | snack@ | buffet@ @doradolounge.dev
 ```
 
-> Sprint 0 en progreso: si los scripts aún no existen en `package.json`, agregarlos como parte del task.
+> CI corre en orden: **Lint** (`pnpm lint` + `pnpm format:check`) → **Typecheck** → **Test**. Los tres deben pasar antes de merge.
 
 ---
 
@@ -62,12 +71,13 @@ pnpm --filter apps/socket-server dev      # nodemon con ts-node
 ## Arquitectura del monorepo
 
 ```
-apps/web/            Next.js — UI + Server Actions
-apps/socket-server/  Node.js — Socket.io con JWT auth
+apps/web/                    Next.js — UI + Server Actions
+apps/socket-server/          Node.js — Socket.io con JWT auth
 packages/shared-types/       Tipos y contratos compartidos (SocketEvent, CHANNELS, CHANNEL_ACL)
 packages/shared-validation/  Schemas Zod reutilizables
 packages/eslint-config/      Config ESLint compartida
 supabase/migrations/         SQL idempotente (CI aplica via supabase db push)
+supabase/seed.sql            Datos de desarrollo: 1 tenant, 7 roles, 28 lotes, 8 recetas, 2 pedidos KDS
 ```
 
 `packages/shared-types` es la fuente de verdad del contrato entre web y socket-server. Si un evento cambia de forma, cambia aquí primero.
@@ -299,4 +309,4 @@ Analytics solo lee vistas materializadas (`mv_consumo_vs_produccion_turno`, etc.
 
 ---
 
-_v3.0 — Mayo 2025 · Sprint 0 en progreso · 6 meses de desarrollo_
+_v3.1 — Mayo 2026 · Sprint 1 en progreso · seed de desarrollo disponible_
