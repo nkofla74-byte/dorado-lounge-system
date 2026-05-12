@@ -78,7 +78,7 @@ BEGIN
   -- ──────────────────────────────────────────────────────────────────────────
   INSERT INTO public.tenants (id, nombre, slug, activo)
   VALUES (v_tenant, 'GISAT S.A. — Dorado Lounge', 'dorado-lounge', true)
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
   -- 2. USUARIOS
