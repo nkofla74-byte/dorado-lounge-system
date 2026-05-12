@@ -57,6 +57,7 @@ claude doctor
 ```
 
 Si `claude` no se encuentra después de instalar, reinicia la terminal o:
+
 ```bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
@@ -66,19 +67,23 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ## 2. Crear proyectos en la nube (~15 min, navegador)
 
 ### 2.1 GitHub
+
 - Username confirmado, SSH key cargada (`gh auth status`).
 
 ### 2.2 Supabase
+
 1. Dashboard → **New project**
 2. Region: **South America (São Paulo)** o **East US** (más cerca de Bogotá)
 3. Plan: **Free**
 4. Anota: `Project ref`, `URL`, `anon key`, `service_role key` (ve a Settings → API)
 
 ### 2.3 Vercel
+
 1. Login con GitHub
 2. No crees proyecto todavía — lo conectas en paso 3.2
 
 ### 2.4 Render
+
 1. Login con GitHub
 2. No crees servicio todavía — el `render.yaml` lo creará Claude Code
 
@@ -87,9 +92,11 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ## 3. Integraciones cloud (~10 min, navegador)
 
 ### 3.1 Supabase ↔ GitHub (branching)
+
 > No actives esto todavía. El repo aún no existe. Lo harás al final del paso 4.
 
 ### 3.2 Vercel ↔ Supabase
+
 > Lo conectas después de crear el proyecto en Vercel (Sprint 0, chunk 4).
 
 ---
@@ -142,6 +149,7 @@ gh repo create dorado-lounge-system --private --source=. --remote=origin --push
 ### 4.1 Activar Supabase ↔ GitHub (ahora sí)
 
 Dashboard de Supabase → tu proyecto:
+
 1. **Project Settings** → **Integrations** → **GitHub Integration** → **Authorize GitHub**
 2. Repositorio: `dorado-lounge-system`
 3. **Working directory**: `.`
@@ -165,7 +173,7 @@ OAuth en navegador. Autoriza. Activa **Plan Mode** (`Shift+Tab`).
 **Prompt inicial — copia exactamente:**
 
 ```
-Lee CLAUDE.md, ARCHITECTURE.md y docs/BOOTSTRAP.md de este repo. Son el contrato 
+Lee CLAUDE.md, ARCHITECTURE.md y docs/BOOTSTRAP.md de este repo. Son el contrato
 operativo del proyecto. Confirma comprensión resumiendo en 5 bullets:
 1. Stack y por qué
 2. Principio rector inviolable
@@ -176,10 +184,10 @@ operativo del proyecto. Confirma comprensión resumiendo en 5 bullets:
 CONTEXTO OPERATIVO PARA TODA LA SESIÓN:
 - Fedora 42, Node 22, pnpm, sin Docker, sin Supabase CLI local.
 - Las migraciones SQL son archivos planos en supabase/migrations/.
-- Se aplican vía la integración GitHub-Supabase (preview branch en PR, 
+- Se aplican vía la integración GitHub-Supabase (preview branch en PR,
   producción al mergear a main).
 - Vercel hace deploy preview por PR; Render lo mismo via render.yaml.
-- En local solo correré: pnpm install, pnpm dev, pnpm test, pnpm lint, 
+- En local solo correré: pnpm install, pnpm dev, pnpm test, pnpm lint,
   git, claude.
 
 NO empieces a hacer nada todavía. Solo confirma comprensión y este contexto.
@@ -233,10 +241,10 @@ PLAN MODE.
 
 Sprint 0, chunk 2. Cadena de calidad:
 
-- ESLint con regla no-restricted-imports (ARCHITECTURE.md §16.2): 
+- ESLint con regla no-restricted-imports (ARCHITECTURE.md §16.2):
   domain/application no pueden importar de infrastructure/ ni @supabase/*
 - Prettier con config compartida en packages/eslint-config
-- TypeScript strict en todos los paquetes (noUncheckedIndexedAccess, 
+- TypeScript strict en todos los paquetes (noUncheckedIndexedAccess,
   noImplicitOverride, exactOptionalPropertyTypes)
 - Vitest configurado donde aplique
 - Husky + lint-staged + commitlint (Conventional Commits)
@@ -261,7 +269,7 @@ Contenido (ARCHITECTURE.md §8 y §11.4):
 - Extensiones: pgcrypto (gen_random_uuid, digest)
 - Tabla tenants (id, nombre, slug, created_at, deleted_at)
 - Tabla users que extiende auth.users vía FK
-- Función SECURITY DEFINER + trigger on_auth_user_created que pobla 
+- Función SECURITY DEFINER + trigger on_auth_user_created que pobla
   custom claim 'tenant_id' en raw_app_meta_data
 - RLS habilitada en tenants y users con políticas tenant_isolation
 
@@ -271,7 +279,7 @@ La migración debe ser:
 - Bloque DROP final comentado (para rollback documentado)
 
 Después del archivo, dame:
-1. Pasos para aplicarla la primera vez vía SQL Editor del dashboard 
+1. Pasos para aplicarla la primera vez vía SQL Editor del dashboard
    (mientras el branching no está aún en flujo de PR)
 2. Cómo verificar que las políticas RLS funcionan (test query)
 ```
@@ -289,13 +297,13 @@ Sprint 0, chunk 4. Cierra Sprint 0 con deploys funcionando:
 
 apps/web:
 - Página /health que responde 200 OK
-- Cliente Supabase configurado (lib/supabase/client.ts y server.ts) usando 
+- Cliente Supabase configurado (lib/supabase/client.ts y server.ts) usando
   env vars NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY
 - next.config.mjs con headers de seguridad básicos (§11.6)
 
 apps/socket-server:
 - Endpoint GET /health → 200 OK
-- Servidor Socket.io vacío con auth middleware stub (acepta cualquier token 
+- Servidor Socket.io vacío con auth middleware stub (acepta cualquier token
   por ahora, marcado con TODO: implementar JWT verify en Sprint 1)
 - Logger pino estructurado
 
@@ -303,7 +311,7 @@ Variables a documentar en .env.example, NO en código.
 
 Después del chunk, dame las instrucciones para:
 1. Crear el proyecto en Vercel apuntando a apps/web (root directory)
-2. Conectar Vercel ↔ Supabase (integración) 
+2. Conectar Vercel ↔ Supabase (integración)
 3. Crear el Blueprint en Render apuntando al render.yaml
 4. Verificar que ambos deploys preview funcionan en una PR de prueba
 ```
@@ -338,11 +346,13 @@ gh pr create --fill
 ```
 
 **Cuándo hacer `/clear` en Claude Code:**
+
 - Al cambiar de bounded context (de inventory a real-time, etc.)
 - Después de una sesión larga (>1h)
 - Cuando notes que olvidó algo del CLAUDE.md → mejor `/clear` y readjuntar
 
 **Cuándo NO usar Claude Code:**
+
 - Aprobar una migración SQL sin leerla línea por línea
 - Pegar valores reales de `.env` (siempre `.env.example`)
 - Decisiones de negocio (las 12 preguntas abiertas de ARCHITECTURE.md §19)
@@ -352,24 +362,30 @@ gh pr create --fill
 ## 8. Troubleshooting Fedora 42
 
 ### `EACCES: permission denied` con npm
+
 No instalaste con prefix en home. Repite paso 1.
 
 ### `node-gyp` falla compilando paquete nativo
+
 ```bash
 sudo dnf install gcc-c++ make python3-devel -y
 pnpm rebuild
 ```
 
 ### `pnpm install` falla por SELinux denegando acceso a `node_modules`
+
 Raro pero pasa con symlinks. Solución temporal:
+
 ```bash
 sudo setenforce 0   # solo durante el install
 pnpm install
 sudo setenforce 1
 ```
+
 Si recurre, configura un boolean específico — abre issue, no es bloqueante.
 
 ### Claude Code: `command not found: claude`
+
 ```bash
 ls ~/.local/bin/claude   # verifica que está
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
@@ -377,12 +393,15 @@ source ~/.bashrc
 ```
 
 ### Vercel deploy falla: "Could not find Next.js in apps/web"
+
 Settings del proyecto en Vercel → **Root Directory** → `apps/web`. **Build & Development Settings** → **Install Command** → `cd ../.. && pnpm install --frozen-lockfile`.
 
 ### Render deploy falla por pnpm
+
 En `render.yaml`, el `buildCommand` debe incluir `corepack enable && corepack prepare pnpm@latest --activate` antes del `pnpm install`.
 
 ### Supabase preview branch sin migraciones
+
 Verifica que el `Working directory` de la integración GitHub sea `.` y que los archivos estén en `supabase/migrations/` (no `supabase/migration/`).
 
 ---
@@ -407,4 +426,4 @@ Cuando los 11 estén marcados: **Sprint 0 cerrado**. Avanzas a Sprint 1 (Identit
 
 ---
 
-*v1.0 — Sprint 0, modo desarrollo · Fedora 42 · Próxima revisión al cierre de Sprint 0*
+_v1.0 — Sprint 0, modo desarrollo · Fedora 42 · Próxima revisión al cierre de Sprint 0_

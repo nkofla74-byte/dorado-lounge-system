@@ -39,14 +39,14 @@
 
 **Drivers arquitectónicos** (ordenados por peso):
 
-1. **Integridad de datos absoluta.** Cada gramo descontado de bodega debe ser reconstruible. La trazabilidad no es un *nice-to-have*: es el producto.
+1. **Integridad de datos absoluta.** Cada gramo descontado de bodega debe ser reconstruible. La trazabilidad no es un _nice-to-have_: es el producto.
 2. **Disponibilidad 24/7 sin ventanas.** El aeropuerto no para; el sistema tampoco.
 3. **Latencia perceptible <1 s** en KDS, chat y Stock Out. Una alerta lenta deja de ser alerta.
 4. **Multi-tenant aislado por defecto.** Un bug nunca debe filtrar datos entre clientes.
 5. **Operable por una sola persona.** El desarrollador es el equipo: la solución debe ser depurable, observable y reversible por un humano.
 6. **Costo operativo bajo en arranque.** Cada cliente nuevo paga su propia infraestructura, no requiere reinversión.
 
-**Forma de la solución:** **monolito modular** en Next.js 14 con un **servidor Socket.io independiente** como único colaborador remoto. Domain-Driven Design por bounded contexts dentro del monolito; eventos de dominio persistidos en Postgres como única fuente de verdad para auditoría y replay. Postgres con Row-Level Security para aislamiento multi-tenant. Lo que *no* se hace: microservicios, message brokers externos, Kubernetes, ni separación frontend/backend artificial.
+**Forma de la solución:** **monolito modular** en Next.js 14 con un **servidor Socket.io independiente** como único colaborador remoto. Domain-Driven Design por bounded contexts dentro del monolito; eventos de dominio persistidos en Postgres como única fuente de verdad para auditoría y replay. Postgres con Row-Level Security para aislamiento multi-tenant. Lo que _no_ se hace: microservicios, message brokers externos, Kubernetes, ni separación frontend/backend artificial.
 
 ---
 
@@ -55,53 +55,69 @@
 Esta sección lista lo que un arquitecto principal cuestionaría en una revisión formal del `analisis-v6.docx`. No son cambios al stack ni a las decisiones cerradas en `CLAUDE.md`; son **brechas que deben cerrarse antes o durante el Sprint 1** para evitar deuda técnica fundacional.
 
 ### 2.1 Aislamiento multi-tenant insuficientemente especificado
+
 El documento dice "datos aislados por `tenant_id`" pero no menciona Row-Level Security. Filtrar por `tenant_id` en queries de la aplicación es la #1 causa documentada de filtraciones cross-tenant en SaaS. **Decisión:** RLS de Postgres es obligatorio. El JWT lleva `tenant_id` y `role`; las políticas RLS los leen vía `auth.jwt()`. La aplicación nunca confía en sí misma para filtrar tenants. Detalle en §11.4.
 
 ### 2.2 Ausencia total de observabilidad en el spec
-"99.5% de disponibilidad" sin un párrafo sobre cómo se mide, alerta o recupera. Para un sistema 24/7 esto es un agujero. **Decisión:** observabilidad de primer día — Sentry para errores, Logflare/Axiom para logs estructurados, Better Stack o UptimeRobot para *uptime*, Vercel Analytics + Web Vitals para frontend. Detalle en §12.
+
+"99.5% de disponibilidad" sin un párrafo sobre cómo se mide, alerta o recupera. Para un sistema 24/7 esto es un agujero. **Decisión:** observabilidad de primer día — Sentry para errores, Logflare/Axiom para logs estructurados, Better Stack o UptimeRobot para _uptime_, Vercel Analytics + Web Vitals para frontend. Detalle en §12.
 
 ### 2.3 El cálculo de "costo por usuario" está mal definido
+
 La fórmula `gasto_insumos / pasajeros_ingresados` mezcla dos cosas distintas: **gasto** (dinero que salió a proveedores) y **costo de ventas** (insumos efectivamente consumidos). Estos son distintos porque (a) las compras se hacen por lotes que duran varios turnos, (b) las mermas categorizadas no deben atribuirse al pasajero, y (c) el inventario terminal del turno es propiedad del siguiente.
 
 **Decisión:** dos métricas separadas, ambas reportadas:
+
 - `cogs_per_passenger` = (consumo aplicado por recetas + merma operativa) / pasajeros
 - `cash_outflow_per_passenger` = compras del período / pasajeros
-La primera es la **eficiencia operativa real**; la segunda es flujo de caja. Confundirlas es por qué los restaurantes quiebran. Detalle en §9.6.
+  La primera es la **eficiencia operativa real**; la segunda es flujo de caja. Confundirlas es por qué los restaurantes quiebran. Detalle en §9.6.
 
 ### 2.4 Concurrencia en KDS y descuento de inventario sin tratar
+
 Tres meseros confirmando entrega de pedidos al mismo segundo, dos chefs aceptando el mismo ticket KDS, un Stock Out emitido dos veces por mash de botón. El documento no menciona estas condiciones. En producción, **explotan**. **Decisión:** transacciones serializables para descuentos de inventario, locks `FOR UPDATE` en `lotes`, máquinas de estado explícitas para pedidos con transiciones validadas, idempotency keys en Stock Out (ver §9.4 y §10.5).
 
 ### 2.5 FIFO/FEFO mencionado pero no modelado
+
 "FIFO inteligente" aparece dos veces en el doc pero no hay tabla `lotes`. Sin lotes, no hay FIFO real, solo deseo de FIFO. **Decisión:** tabla `lotes` con `fecha_recibido`, `fecha_vencimiento`, `cantidad_actual`, `tenant_id`, `insumo_id`. Política de descuento: **FEFO** (First-Expired-First-Out) por defecto, con fallback a FIFO si las fechas son iguales. Esto previene vencimientos automáticamente. Detalle en §9.2.
 
 ### 2.6 Auditoría descrita pero no garantizada como inmutable
+
 "Registro inmutable" es prometido en RF-15 pero `DELETE` y `UPDATE` en Postgres son operaciones triviales si tienes `service_role`. **Decisión:** tabla `audit_log` append-only enforced por trigger (`BEFORE UPDATE/DELETE → RAISE EXCEPTION`), encadenada con hash de la fila anterior (tamper-evident). Sin esto, "inmutable" es marketing, no realidad técnica. Detalle en §11.7.
 
 ### 2.7 PWA QR sin estrategia anti-abuso
+
 "Sin login" + "PWA pública" = vector de spam, scraping de carta y ataques de inventario falso. **Decisión:** sesión anónima con token firmado por mesa al escanear el QR (válido para esa mesa por X horas), rate limiting por token, captcha invisible (Cloudflare Turnstile) en el primer pedido, prevención de doble submit por idempotency key. Detalle en §11.5.
 
 ### 2.8 Resiliencia offline no contemplada
+
 Cocinas y barras pierden WiFi. Si un mesero pierde conexión a mitad de un pedido, ¿qué pasa? El doc no lo dice. **Decisión:** PWA con service worker, cola offline en IndexedDB con reintentos, optimistic UI en operaciones idempotentes, bloqueo de operaciones críticas (despacho, cierre de buffet) hasta reconexión. Detalle en §15.3.
 
 ### 2.9 Backup y disaster recovery ausentes
+
 "Disponibilidad 99.5%" sin DR es aspiracional. **Decisión:** Supabase Pro obligatorio en producción ($25 USD/mes — el doc lo asume, no lo problematiza) por PITR (Point-In-Time Recovery) de 7 días + dump diario a almacenamiento off-vendor (Cloudflare R2 o S3) cifrado en reposo. RTO objetivo: 4 h. RPO objetivo: 5 min. Detalle en §14.5.
 
 ### 2.10 Render free para Socket.io es incompatible con 24/7
+
 El doc dice "Render.com gratis" para Socket.io, pero el plan free de Render hiberna tras inactividad. Una sala VIP aeroportuaria 24/7 hiberna y un mesero pierde el chat. **Decisión:** Render Starter ($7/mes) o Fly.io en el plan más bajo. Costo asumido en producción, no negociable. El stack libre solo aplica a desarrollo.
 
 ### 2.11 Integración con API de vuelos sin proveedor definido
+
 `FLIGHTS_API_KEY` aparece pero no hay vendor seleccionado. El Dorado opera sobre SITA y Opain tiene sus propias API. **Decisión:** documentar como "TBD — Sprint 6" con candidatos: AviationStack (más barato, datos genéricos), FlightAware AeroAPI (estándar de la industria, costoso), Opain directo (requiere convenio). Mientras tanto, abstraer detrás de un puerto `FlightsProvider` (hexagonal) para no acoplar el código.
 
 ### 2.12 Habeas data (Ley 1581) no abordada
+
 Pasajeros internacionales escaneando QR generan datos personales (idioma, dispositivo, hora, mesa). El cliente es responsable bajo Ley 1581. **Decisión:** política de retención explícita (90 días para datos de pedidos QR sin login), endpoint de derecho al olvido, tratamiento documentado, cookies banner en el QR PWA. Detalle en §11.8.
 
 ### 2.13 SLA de tiempos sin metodología clara
+
 "<1 s para chat y KDS" es un objetivo, no una métrica. **Decisión:** definir como p95 medido en cliente con Web Vitals + Sentry Performance: `kds_event_to_render_p95 < 1500ms`, `chat_send_to_ack_p95 < 500ms`, `stock_out_to_admin_visible_p95 < 1000ms`. Sin medir, no es real.
 
 ### 2.14 RBAC configurable desde SuperUser — bonito, peligroso
-"El SuperUser configura qué elementos de la interfaz son visibles para cada rol" suena a power-user feature. En la práctica genera (a) caching nightmares, (b) testing combinatorio explosivo, (c) bugs de seguridad por configuraciones inválidas. **Decisión refinada:** roles fijos en código (los 7 listados en `CLAUDE.md`); el SuperUser configura **permisos opcionales** dentro de un rol (matriz finita), no la estructura de la UI. La UI por rol es una *constante de diseño*, no una variable de runtime. Esto preserva la promesa al cliente sin abrir una caja de Pandora.
+
+"El SuperUser configura qué elementos de la interfaz son visibles para cada rol" suena a power-user feature. En la práctica genera (a) caching nightmares, (b) testing combinatorio explosivo, (c) bugs de seguridad por configuraciones inválidas. **Decisión refinada:** roles fijos en código (los 7 listados en `CLAUDE.md`); el SuperUser configura **permisos opcionales** dentro de un rol (matriz finita), no la estructura de la UI. La UI por rol es una _constante de diseño_, no una variable de runtime. Esto preserva la promesa al cliente sin abrir una caja de Pandora.
 
 ### 2.15 "Difusión global solo desde cocina" como única regla de broadcast
+
 Falta el caso del SuperUser/Admin: necesitan poder emitir avisos del sistema (mantenimiento, cambios de turno). **Decisión:** dos canales de broadcast — `sala:broadcast:cocina` (chef) y `sala:broadcast:admin` (admin/superuser). Detalle en §10.
 
 ---
@@ -110,26 +126,26 @@ Falta el caso del SuperUser/Admin: necesitan poder emitir avisos del sistema (ma
 
 Formato corto. Una ADR completa por cada una vivirá en `docs/adr/NNN-titulo.md` cuando lo amerite.
 
-| # | Decisión | Estado | Razón |
-|---|---|---|---|
-| 001 | Monolito modular en Next.js 14 + servidor Socket.io independiente | Aceptada | Equipo unipersonal, 6 meses, dominio coherente. Microservicios sería sobreingeniería. |
-| 002 | DDD con bounded contexts dentro del monolito | Aceptada | El dominio (inventario/recetas/merma) es complejo y central; aislarlo como dominio puro paga compounding interest. |
-| 003 | Hexagonal en cada bounded context (puertos/adaptadores) | Aceptada | Permite reemplazar Supabase, Socket.io o el proveedor de vuelos sin reescribir la lógica de negocio. |
-| 004 | Postgres como única fuente de verdad + RLS para multi-tenancy | Aceptada | Aislamiento a nivel DB es defensa en profundidad real, no aspiracional. |
-| 005 | Server Actions de Next.js para mutaciones, queries directas para lecturas | Aceptada | Coherente con `jrxdevs-sistemas`; reduce la superficie de API. |
-| 006 | Eventos de dominio persistidos (`domain_events` table) | Aceptada | Auditoría real + replay para debugging + futura proyección a read models sin acoplar código. |
-| 007 | CQRS *light*: vistas materializadas para analytics, mismo Postgres | Aceptada | OLTP y OLAP separados lógicamente sin agregar infra. Refresh programado. Pasamos a read replica si crece. |
-| 008 | Socket.io con autenticación JWT en handshake + middleware de canales | Aceptada (heredada de `CLAUDE.md`) | Granularidad de permisos requerida por la topología. |
-| 009 | Coeficiente de merma aplicado en una sola función pura, testeada exhaustivamente | Aceptada | Es el corazón del producto. Si esto está mal, el producto está mal. |
-| 010 | Lotes con política FEFO (First-Expired-First-Out) | Aceptada (corrección al spec) | "FIFO inteligente" mal definido en el documento original. FEFO previene vencimientos. |
-| 011 | Audit log append-only via trigger + hash chain | Aceptada (corrección al spec) | "Inmutable" en RF-15 requiere enforcement técnico, no solo política. |
-| 012 | Idempotency keys en operaciones críticas (Stock Out, despacho, ticket) | Aceptada (corrección al spec) | Doble submit por mash de botón o reintento offline rompe inventario. |
-| 013 | Sentry + Axiom + Better Stack desde el día 1 | Aceptada (corrección al spec) | Sin observabilidad, los SLA del documento son ficción. |
-| 014 | Roles fijos en código; permisos finitos configurables por SuperUser | Aceptada (refinamiento al spec) | Configurar UI por rol en runtime es una trampa. Roles son constantes, permisos son variables. |
-| 015 | RPC de Postgres (funciones SQL) para operaciones atómicas críticas | Aceptada | Descuento de inventario debe ocurrir en una transacción serializable; intentar coordinarlo desde Node es frágil. |
-| 016 | TypeScript estricto + Zod en bordes (UI ↔ server, server ↔ socket) | Aceptada | Misma defensa que `jrxdevs`. Tipo runtime + tipo de compilación, sin huecos. |
-| 017 | Monorepo con pnpm workspaces (web + socket-server + shared types) | Aceptada | Tipos compartidos sin versioning friction; deploy independiente. |
-| 018 | i18n del QR como rutas dinámicas de Next (`/qr/[locale]`) | Aceptada | Bundle splitting natural; SEO no aplica (es PWA privada por mesa) pero el patrón es estándar. |
+| #   | Decisión                                                                         | Estado                             | Razón                                                                                                              |
+| --- | -------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 001 | Monolito modular en Next.js 14 + servidor Socket.io independiente                | Aceptada                           | Equipo unipersonal, 6 meses, dominio coherente. Microservicios sería sobreingeniería.                              |
+| 002 | DDD con bounded contexts dentro del monolito                                     | Aceptada                           | El dominio (inventario/recetas/merma) es complejo y central; aislarlo como dominio puro paga compounding interest. |
+| 003 | Hexagonal en cada bounded context (puertos/adaptadores)                          | Aceptada                           | Permite reemplazar Supabase, Socket.io o el proveedor de vuelos sin reescribir la lógica de negocio.               |
+| 004 | Postgres como única fuente de verdad + RLS para multi-tenancy                    | Aceptada                           | Aislamiento a nivel DB es defensa en profundidad real, no aspiracional.                                            |
+| 005 | Server Actions de Next.js para mutaciones, queries directas para lecturas        | Aceptada                           | Coherente con `jrxdevs-sistemas`; reduce la superficie de API.                                                     |
+| 006 | Eventos de dominio persistidos (`domain_events` table)                           | Aceptada                           | Auditoría real + replay para debugging + futura proyección a read models sin acoplar código.                       |
+| 007 | CQRS _light_: vistas materializadas para analytics, mismo Postgres               | Aceptada                           | OLTP y OLAP separados lógicamente sin agregar infra. Refresh programado. Pasamos a read replica si crece.          |
+| 008 | Socket.io con autenticación JWT en handshake + middleware de canales             | Aceptada (heredada de `CLAUDE.md`) | Granularidad de permisos requerida por la topología.                                                               |
+| 009 | Coeficiente de merma aplicado en una sola función pura, testeada exhaustivamente | Aceptada                           | Es el corazón del producto. Si esto está mal, el producto está mal.                                                |
+| 010 | Lotes con política FEFO (First-Expired-First-Out)                                | Aceptada (corrección al spec)      | "FIFO inteligente" mal definido en el documento original. FEFO previene vencimientos.                              |
+| 011 | Audit log append-only via trigger + hash chain                                   | Aceptada (corrección al spec)      | "Inmutable" en RF-15 requiere enforcement técnico, no solo política.                                               |
+| 012 | Idempotency keys en operaciones críticas (Stock Out, despacho, ticket)           | Aceptada (corrección al spec)      | Doble submit por mash de botón o reintento offline rompe inventario.                                               |
+| 013 | Sentry + Axiom + Better Stack desde el día 1                                     | Aceptada (corrección al spec)      | Sin observabilidad, los SLA del documento son ficción.                                                             |
+| 014 | Roles fijos en código; permisos finitos configurables por SuperUser              | Aceptada (refinamiento al spec)    | Configurar UI por rol en runtime es una trampa. Roles son constantes, permisos son variables.                      |
+| 015 | RPC de Postgres (funciones SQL) para operaciones atómicas críticas               | Aceptada                           | Descuento de inventario debe ocurrir en una transacción serializable; intentar coordinarlo desde Node es frágil.   |
+| 016 | TypeScript estricto + Zod en bordes (UI ↔ server, server ↔ socket)               | Aceptada                           | Misma defensa que `jrxdevs`. Tipo runtime + tipo de compilación, sin huecos.                                       |
+| 017 | Monorepo con pnpm workspaces (web + socket-server + shared types)                | Aceptada                           | Tipos compartidos sin versioning friction; deploy independiente.                                                   |
+| 018 | i18n del QR como rutas dinámicas de Next (`/qr/[locale]`)                        | Aceptada                           | Bundle splitting natural; SEO no aplica (es PWA privada por mesa) pero el patrón es estándar.                      |
 
 ---
 
@@ -212,7 +228,7 @@ flowchart TB
 
 ## 5. Bounded contexts y mapa de dominio
 
-DDD táctico aplicado al dominio. Cada *bounded context* tiene su propio lenguaje ubicuo, sus entidades, sus invariantes, y se materializa como un módulo en `src/modules/`.
+DDD táctico aplicado al dominio. Cada _bounded context_ tiene su propio lenguaje ubicuo, sus entidades, sus invariantes, y se materializa como un módulo en `src/modules/`.
 
 ```mermaid
 flowchart LR
@@ -254,48 +270,51 @@ flowchart LR
 ```
 
 **Reglas de relación:**
+
 - Los módulos `core` no dependen de los `support`. Los `support` orquestan `core`.
 - Ningún módulo importa directamente de otro: comunican vía **eventos de dominio** o **APIs explícitas** (`actions.ts` exportado).
 - `Analytics` es solo-lectura: nunca produce eventos, solo proyecta.
 - `Audit` es transversal: cualquier módulo emite eventos de auditoría, pero ninguno depende de su lectura.
 
 **Lenguaje ubicuo (extracto, en español por insistencia del documento):**
-- *Insumo*: ítem de Capa 1 (materia prima).
-- *Producto interno*: ítem de Capa 2 (elaborado en cocina).
-- *Receta de producción*: regla de transformación Capa 1 → Capa 2.
-- *Receta de servicio*: regla de descuento al despachar a una zona.
-- *Tanda*: ejecución concreta de una receta de producción (un batch).
-- *Despacho*: ejecución concreta de una receta de servicio.
-- *Lote*: cantidad recibida de un insumo en una compra (con su vencimiento).
-- *Coeficiente de merma*: porcentaje de pérdida esperada en una receta.
-- *Merma categorizada*: pérdida con causa registrada (5 tipos).
-- *Conciliación de buffet*: igualar tickets recolectados contra porciones despachadas.
+
+- _Insumo_: ítem de Capa 1 (materia prima).
+- _Producto interno_: ítem de Capa 2 (elaborado en cocina).
+- _Receta de producción_: regla de transformación Capa 1 → Capa 2.
+- _Receta de servicio_: regla de descuento al despachar a una zona.
+- _Tanda_: ejecución concreta de una receta de producción (un batch).
+- _Despacho_: ejecución concreta de una receta de servicio.
+- _Lote_: cantidad recibida de un insumo en una compra (con su vencimiento).
+- _Coeficiente de merma_: porcentaje de pérdida esperada en una receta.
+- _Merma categorizada_: pérdida con causa registrada (5 tipos).
+- _Conciliación de buffet_: igualar tickets recolectados contra porciones despachadas.
 
 ---
 
 ## 6. Stack tecnológico — justificación capa por capa
 
-| Capa | Tecnología | Por qué esta y no otra |
-|---|---|---|
-| Framework web | **Next.js 14 (App Router)** | Server Actions reducen API surface; SSR para dashboards admin; es el stack del dev. Alternativas (Remix, SvelteKit) ofrecen ventajas marginales que no compensan retrabajo. |
-| Lenguaje | **TypeScript estricto** (`strict: true`) | Tipos en compilación. No negociable para un sistema con esta cantidad de invariantes. |
-| UI | **React + Tailwind + shadcn/ui** | Tailwind y shadcn dan diseño consistente sin fricción. Modo oscuro es un toggle. |
-| Validación | **Zod + React Hook Form** | Una sola fuente de verdad para tipos runtime + compile-time. Mismo patrón que `jrxdevs`. |
-| Auth | **Supabase Auth (JWT)** | Integrado con RLS. JWT lleva `tenant_id` y `role` en custom claims. |
-| DB | **PostgreSQL 15+ (Supabase)** | Transacciones serializables, RLS, triggers, constraint checks, vistas materializadas, LISTEN/NOTIFY. Todo lo necesario. |
-| Real-time | **Socket.io en Node.js** | Granularidad de canales y permisos por rol. Supabase Realtime es excelente para state replication, mediocre para chat con permisos. Decisión heredada de `CLAUDE.md`. |
-| i18n | **next-intl** | Routing por locale, message catalogs, integración con App Router. Probado. |
-| Testing | **Vitest + Playwright + Testing Library** | Vitest es 5–10x más rápido que Jest en este stack y comparte plugin de TS con Vite. Playwright para E2E real-time (puede manejar WebSockets). |
-| Linting | **ESLint + Prettier + TS-ESLint estricto** | Sin debate. |
-| Hooks | **Husky + lint-staged + commitlint** | Conventional Commits desde el primer commit. |
-| Observabilidad | **Sentry + Axiom + Better Stack** | Errores + APM (Sentry), logs estructurados (Axiom barato y rápido), uptime + status page (Better Stack). |
-| Deploy web | **Vercel Pro** | Edge network, deploy preview por PR, secretos cifrados, integra con GitHub. |
-| Deploy socket | **Render.com Starter** ($7) o **Fly.io** | Necesita conexión persistente y healthcheck WS. |
-| Storage backups | **Cloudflare R2** | S3-compatible, sin egress cost, $0.015/GB. Off-vendor de Supabase = independencia. |
-| CI/CD | **GitHub Actions** | Built-in, suficiente para este alcance. |
-| IaC | **No por ahora** | Terraform es prematura optimización para 1 servicio Node + Vercel + Supabase. Los proveedores tienen UI estable. Se introduce cuando haya >5 entornos o >2 regiones. |
+| Capa            | Tecnología                                 | Por qué esta y no otra                                                                                                                                                      |
+| --------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework web   | **Next.js 14 (App Router)**                | Server Actions reducen API surface; SSR para dashboards admin; es el stack del dev. Alternativas (Remix, SvelteKit) ofrecen ventajas marginales que no compensan retrabajo. |
+| Lenguaje        | **TypeScript estricto** (`strict: true`)   | Tipos en compilación. No negociable para un sistema con esta cantidad de invariantes.                                                                                       |
+| UI              | **React + Tailwind + shadcn/ui**           | Tailwind y shadcn dan diseño consistente sin fricción. Modo oscuro es un toggle.                                                                                            |
+| Validación      | **Zod + React Hook Form**                  | Una sola fuente de verdad para tipos runtime + compile-time. Mismo patrón que `jrxdevs`.                                                                                    |
+| Auth            | **Supabase Auth (JWT)**                    | Integrado con RLS. JWT lleva `tenant_id` y `role` en custom claims.                                                                                                         |
+| DB              | **PostgreSQL 15+ (Supabase)**              | Transacciones serializables, RLS, triggers, constraint checks, vistas materializadas, LISTEN/NOTIFY. Todo lo necesario.                                                     |
+| Real-time       | **Socket.io en Node.js**                   | Granularidad de canales y permisos por rol. Supabase Realtime es excelente para state replication, mediocre para chat con permisos. Decisión heredada de `CLAUDE.md`.       |
+| i18n            | **next-intl**                              | Routing por locale, message catalogs, integración con App Router. Probado.                                                                                                  |
+| Testing         | **Vitest + Playwright + Testing Library**  | Vitest es 5–10x más rápido que Jest en este stack y comparte plugin de TS con Vite. Playwright para E2E real-time (puede manejar WebSockets).                               |
+| Linting         | **ESLint + Prettier + TS-ESLint estricto** | Sin debate.                                                                                                                                                                 |
+| Hooks           | **Husky + lint-staged + commitlint**       | Conventional Commits desde el primer commit.                                                                                                                                |
+| Observabilidad  | **Sentry + Axiom + Better Stack**          | Errores + APM (Sentry), logs estructurados (Axiom barato y rápido), uptime + status page (Better Stack).                                                                    |
+| Deploy web      | **Vercel Pro**                             | Edge network, deploy preview por PR, secretos cifrados, integra con GitHub.                                                                                                 |
+| Deploy socket   | **Render.com Starter** ($7) o **Fly.io**   | Necesita conexión persistente y healthcheck WS.                                                                                                                             |
+| Storage backups | **Cloudflare R2**                          | S3-compatible, sin egress cost, $0.015/GB. Off-vendor de Supabase = independencia.                                                                                          |
+| CI/CD           | **GitHub Actions**                         | Built-in, suficiente para este alcance.                                                                                                                                     |
+| IaC             | **No por ahora**                           | Terraform es prematura optimización para 1 servicio Node + Vercel + Supabase. Los proveedores tienen UI estable. Se introduce cuando haya >5 entornos o >2 regiones.        |
 
-**Lo que explícitamente *no* usamos y por qué:**
+**Lo que explícitamente _no_ usamos y por qué:**
+
 - **AWS / Kubernetes / Docker en producción**: complejidad operativa injustificada para el tamaño actual. Vercel y Render hacen el trabajo sin equipo de DevOps.
 - **NestJS / FastAPI**: separar API server de Next.js obliga a un BFF y duplica auth. No hay ganancia.
 - **Redis**: no se necesita aún. Si aparece necesidad de cache compartido, Upstash Redis serverless. Mientras tanto, cache local en Next + Postgres es suficiente.
@@ -395,6 +414,7 @@ dorado-lounge-system/
 ```
 
 **Notas:**
+
 - Cada `module/` sigue Hexagonal: `domain/` no importa nada externo; `infrastructure/` adapta a Supabase; `application/` orquesta.
 - `actions.ts` es la **única superficie pública** del módulo. Si algo no está exportado allí, no se puede usar fuera del módulo. Refuerzo con ESLint `no-restricted-imports`.
 - `shared-types` se comparte entre web y socket-server: garantiza que un evento emitido por uno sea entendido por el otro en compile-time.
@@ -730,10 +750,7 @@ export const Coeficiente = z.number().min(0).max(0.9999);
  *
  * cantidad_a_descontar = cantidad_requerida / (1 - coeficiente)
  */
-export function cantidadConMerma(
-  cantidadRequerida: number,
-  coeficiente: number,
-): number {
+export function cantidadConMerma(cantidadRequerida: number, coeficiente: number): number {
   Cantidad.parse(cantidadRequerida);
   Coeficiente.parse(coeficiente);
   // Redondear a 4 decimales para evitar drift de punto flotante
@@ -852,10 +869,7 @@ export async function dispatchOrder(input: {
   for (const item of pedido.items) {
     const receta = await recetaRepo.findById(item.recetaServicioId);
     for (const ing of receta.ingredientes) {
-      const cantidadFinal = cantidadConMerma(
-        ing.cantidad * item.cantidad,
-        receta.mermaCoeficiente,
-      );
+      const cantidadFinal = cantidadConMerma(ing.cantidad * item.cantidad, receta.mermaCoeficiente);
       consumos.push({
         insumoId: ing.insumoId,
         cantidadBase: cantidadFinal,
@@ -878,11 +892,15 @@ export async function dispatchOrder(input: {
       });
     }
 
-    await tx.from('pedidos').update({
-      estado: 'despachado',
-      despachado_at: new Date().toISOString(),
-      version: pedido.version + 1,
-    }).eq('id', pedido.id).eq('version', pedido.version); // optimistic lock
+    await tx
+      .from('pedidos')
+      .update({
+        estado: 'despachado',
+        despachado_at: new Date().toISOString(),
+        version: pedido.version + 1,
+      })
+      .eq('id', pedido.id)
+      .eq('version', pedido.version); // optimistic lock
 
     await emitDomainEvent(tx, {
       tenantId: input.tenantId,
@@ -906,7 +924,7 @@ export async function raiseStockOut(input: {
   productoId: string;
   productoTipo: 'insumo' | 'producto_interno';
   userId: string;
-  clientGeneratedId: string;          // <- previene doble submit
+  clientGeneratedId: string; // <- previene doble submit
 }) {
   // Si ya existe alerta abierta para mismo producto en mismo turno desde misma zona,
   // simplemente reposicionamos timestamp en lugar de crear duplicado.
@@ -1025,40 +1043,40 @@ export type Permission = 'read' | 'write';
 
 export const CHANNEL_ACL: Record<string, Partial<Record<Role, Permission[]>>> = {
   [CHANNELS.ADMIN]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
   },
   [CHANNELS.COCINA]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
-    chef: ['read','write'],
-    sous_chef: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
+    chef: ['read', 'write'],
+    sous_chef: ['read', 'write'],
   },
   [CHANNELS.AMEX]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
-    chef: ['read','write'],
-    sous_chef: ['read','write'],
-    mesero_amex: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
+    chef: ['read', 'write'],
+    sous_chef: ['read', 'write'],
+    mesero_amex: ['read', 'write'],
   },
   [CHANNELS.SNACK]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
-    chef: ['read','write'],
-    sous_chef: ['read','write'],
-    personal_snack: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
+    chef: ['read', 'write'],
+    sous_chef: ['read', 'write'],
+    personal_snack: ['read', 'write'],
   },
   [CHANNELS.BUFFET]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
-    chef: ['read','write'],
-    sous_chef: ['read','write'],
-    personal_buffet: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
+    chef: ['read', 'write'],
+    sous_chef: ['read', 'write'],
+    personal_buffet: ['read', 'write'],
   },
   [CHANNELS.BROADCAST_COCINA]: {
     chef: ['write'],
     sous_chef: ['write'],
-    superuser: ['read','write'],
+    superuser: ['read', 'write'],
     admin: ['read'],
     mesero_amex: ['read'],
     personal_snack: ['read'],
@@ -1066,9 +1084,9 @@ export const CHANNEL_ACL: Record<string, Partial<Record<Role, Permission[]>>> = 
   },
   // Stuart channels: solo zona-relevante + admin
   [CHANNELS.STUART_AMEX]: {
-    superuser: ['read','write'],
-    admin: ['read','write'],
-    mesero_amex: ['read','write'],
+    superuser: ['read', 'write'],
+    admin: ['read', 'write'],
+    mesero_amex: ['read', 'write'],
   },
   // ...
 };
@@ -1082,13 +1100,47 @@ export const CHANNEL_ACL: Record<string, Partial<Record<Role, Permission[]>>> = 
 // packages/shared-types/src/socket-events.ts
 
 export type SocketEvent =
-  | { type: 'kds:order_created'; payload: { pedidoId: string; mesa: string; items: ItemDTO[]; sla: string } }
-  | { type: 'kds:order_state_changed'; payload: { pedidoId: string; estado: EstadoPedido; at: string } }
-  | { type: 'stock_out:raised'; payload: { zona: string; productoId: string; productoNombre: string; userId: string; at: string } }
+  | {
+      type: 'kds:order_created';
+      payload: { pedidoId: string; mesa: string; items: ItemDTO[]; sla: string };
+    }
+  | {
+      type: 'kds:order_state_changed';
+      payload: { pedidoId: string; estado: EstadoPedido; at: string };
+    }
+  | {
+      type: 'stock_out:raised';
+      payload: {
+        zona: string;
+        productoId: string;
+        productoNombre: string;
+        userId: string;
+        at: string;
+      };
+    }
   | { type: 'stock_out:resolved'; payload: { stockOutId: string; resolvedBy: string; at: string } }
-  | { type: 'dispatch:notified'; payload: { despachoId: string; zona: string; items: DispatchItemDTO[]; at: string } }
-  | { type: 'stuart:request'; payload: { zona: string; tipo: 'utensilios'|'bandeja'|'vajilla'|'otro'; descripcion: string } }
-  | { type: 'chat:message'; payload: { channel: string; texto: string; userId: string; at: string; quickReplyId?: string } }
+  | {
+      type: 'dispatch:notified';
+      payload: { despachoId: string; zona: string; items: DispatchItemDTO[]; at: string };
+    }
+  | {
+      type: 'stuart:request';
+      payload: {
+        zona: string;
+        tipo: 'utensilios' | 'bandeja' | 'vajilla' | 'otro';
+        descripcion: string;
+      };
+    }
+  | {
+      type: 'chat:message';
+      payload: {
+        channel: string;
+        texto: string;
+        userId: string;
+        at: string;
+        quickReplyId?: string;
+      };
+    }
   | { type: 'broadcast:cocina'; payload: { texto: string; userId: string; at: string } };
 ```
 
@@ -1106,7 +1158,10 @@ export async function authenticateHandshake(socket: Socket, next: NextFn) {
     if (!token) throw new Error('NO_TOKEN');
 
     const sb = createSupabaseAdmin();
-    const { data: { user }, error } = await sb.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await sb.auth.getUser(token);
     if (error || !user) throw new Error('INVALID_TOKEN');
 
     const tenantId = user.app_metadata?.tenant_id;
@@ -1124,7 +1179,7 @@ export async function authenticateHandshake(socket: Socket, next: NextFn) {
 
 ### 10.5 Persistencia de mensajes (no perder nada)
 
-Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Postgres **antes** de hacer broadcast por Socket.io. Si el broadcast falla, el evento queda en DB y un job de reconciliación lo reenvía. Esto convierte WebSocket en *best-effort delivery* sobre una base persistente.
+Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Postgres **antes** de hacer broadcast por Socket.io. Si el broadcast falla, el evento queda en DB y un job de reconciliación lo reenvía. Esto convierte WebSocket en _best-effort delivery_ sobre una base persistente.
 
 ---
 
@@ -1132,18 +1187,18 @@ Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Post
 
 ### 11.1 Modelo de amenazas (resumen)
 
-| Amenaza | Vector | Mitigación |
-|---|---|---|
-| Filtración cross-tenant | Bug en query, JWT manipulado | RLS obligatoria (§11.4), JWT firmado por Supabase, tenant_id en custom claims |
-| Acceso no autorizado a canal | Usuario uniéndose con socket ID forjado | Handshake JWT + middleware de canales, ACL como fuente de verdad |
-| Inyección SQL | Concatenación de strings en queries | Cliente Supabase parametriza por defecto; ESLint regla `no-template-string-sql` |
-| XSS | Renderizado de input de usuario | React escapa por defecto; CSP estricta; sanitización en chat con `DOMPurify` solo en mensajes ricos |
-| CSRF | Mutaciones desde origen externo | Server Actions de Next.js incluyen tokens CSRF; cookies SameSite=Lax |
-| Replay de Stock Out / dispatch | Doble submit por mash, reintento offline | Idempotency keys obligatorias en operaciones críticas |
-| Spam en QR público | Bot escaneando QR y ordenando | Token de mesa firmado, rate limit por IP+token, Cloudflare Turnstile invisible en primer pedido |
-| Tampering de audit log | service_role DELETE/UPDATE | Trigger que bloquea mutaciones + hash chain (§11.7) |
-| Robo de credenciales | Phishing al admin | 2FA obligatorio para roles `admin` y `superuser` (Supabase MFA) |
-| Filtración de service_role key | Key en repo o frontend | Variable solo en backend (Server Actions, socket-server); rotación trimestral; scan con `truffleHog` en CI |
+| Amenaza                        | Vector                                   | Mitigación                                                                                                 |
+| ------------------------------ | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Filtración cross-tenant        | Bug en query, JWT manipulado             | RLS obligatoria (§11.4), JWT firmado por Supabase, tenant_id en custom claims                              |
+| Acceso no autorizado a canal   | Usuario uniéndose con socket ID forjado  | Handshake JWT + middleware de canales, ACL como fuente de verdad                                           |
+| Inyección SQL                  | Concatenación de strings en queries      | Cliente Supabase parametriza por defecto; ESLint regla `no-template-string-sql`                            |
+| XSS                            | Renderizado de input de usuario          | React escapa por defecto; CSP estricta; sanitización en chat con `DOMPurify` solo en mensajes ricos        |
+| CSRF                           | Mutaciones desde origen externo          | Server Actions de Next.js incluyen tokens CSRF; cookies SameSite=Lax                                       |
+| Replay de Stock Out / dispatch | Doble submit por mash, reintento offline | Idempotency keys obligatorias en operaciones críticas                                                      |
+| Spam en QR público             | Bot escaneando QR y ordenando            | Token de mesa firmado, rate limit por IP+token, Cloudflare Turnstile invisible en primer pedido            |
+| Tampering de audit log         | service_role DELETE/UPDATE               | Trigger que bloquea mutaciones + hash chain (§11.7)                                                        |
+| Robo de credenciales           | Phishing al admin                        | 2FA obligatorio para roles `admin` y `superuser` (Supabase MFA)                                            |
+| Filtración de service_role key | Key en repo o frontend                   | Variable solo en backend (Server Actions, socket-server); rotación trimestral; scan con `truffleHog` en CI |
 
 ### 11.2 Autenticación
 
@@ -1159,19 +1214,21 @@ Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Post
 // lib/auth/rbac.ts
 export const ROLE_PERMISSIONS = {
   superuser: ['*'],
-  admin: ['inventory:*','recipes:*','orders:*','reports:*','users:read'],
-  chef: ['production:*','dispatch:*','orders:read','orders:update'],
-  sous_chef: ['production:create','dispatch:create','orders:read'],
-  mesero_amex: ['orders:create','orders:update','orders:confirm_delivery'],
-  personal_snack: ['stock_out:create','stuart:create','count:create'],
-  personal_buffet: ['stock_out:create','stuart:create','tickets:create'],
+  admin: ['inventory:*', 'recipes:*', 'orders:*', 'reports:*', 'users:read'],
+  chef: ['production:*', 'dispatch:*', 'orders:read', 'orders:update'],
+  sous_chef: ['production:create', 'dispatch:create', 'orders:read'],
+  mesero_amex: ['orders:create', 'orders:update', 'orders:confirm_delivery'],
+  personal_snack: ['stock_out:create', 'stuart:create', 'count:create'],
+  personal_buffet: ['stock_out:create', 'stuart:create', 'tickets:create'],
 } as const satisfies Record<Role, readonly string[]>;
 
 export function can(role: Role, perm: string): boolean {
   const grants = ROLE_PERMISSIONS[role];
-  return grants.includes('*' as never) ||
-         grants.includes(perm as never) ||
-         grants.some(g => g.endsWith(':*') && perm.startsWith(g.slice(0, -1)));
+  return (
+    grants.includes('*' as never) ||
+    grants.includes(perm as never) ||
+    grants.some((g) => g.endsWith(':*') && perm.startsWith(g.slice(0, -1)))
+  );
 }
 ```
 
@@ -1276,21 +1333,22 @@ Ya cubierto en §8.3 con `audit_log` + trigger de bloqueo + hash chain. Adiciona
 
 ### 12.4 SLOs y alertas
 
-| SLO | Objetivo | Alerta dispara |
-|---|---|---|
-| Disponibilidad web | 99.5% mensual | <99.5% sobre ventana de 1 h |
-| Latencia p95 KDS event→render | <1500 ms | >2 s sostenido 5 min |
-| Latencia p95 chat send→ack | <500 ms | >1 s sostenido 5 min |
-| Error rate Server Actions | <0.5% | >2% sostenido 5 min |
-| Error rate Socket handlers | <0.5% | >2% sostenido 5 min |
-| Saturación DB (CPU) | <70% | >85% sostenido 10 min |
-| Saturación DB (conexiones) | <80% del pool | >90% del pool |
-| Backlog de domain_events sin procesar | 0 | >100 |
-| Audit chain integrity | 100% | cualquier discrepancia |
+| SLO                                   | Objetivo      | Alerta dispara              |
+| ------------------------------------- | ------------- | --------------------------- |
+| Disponibilidad web                    | 99.5% mensual | <99.5% sobre ventana de 1 h |
+| Latencia p95 KDS event→render         | <1500 ms      | >2 s sostenido 5 min        |
+| Latencia p95 chat send→ack            | <500 ms       | >1 s sostenido 5 min        |
+| Error rate Server Actions             | <0.5%         | >2% sostenido 5 min         |
+| Error rate Socket handlers            | <0.5%         | >2% sostenido 5 min         |
+| Saturación DB (CPU)                   | <70%          | >85% sostenido 10 min       |
+| Saturación DB (conexiones)            | <80% del pool | >90% del pool               |
+| Backlog de domain_events sin procesar | 0             | >100                        |
+| Audit chain integrity                 | 100%          | cualquier discrepancia      |
 
 ### 12.5 Runbooks
 
 Cada alerta crítica tiene un runbook en `docs/runbooks/`. Mínimos:
+
 - `db-saturation.md`
 - `socket-server-down.md`
 - `audit-chain-broken.md` (incidente de seguridad)
@@ -1301,16 +1359,16 @@ Cada alerta crítica tiene un runbook en `docs/runbooks/`. Mínimos:
 
 ## 13. Estrategia de pruebas
 
-| Nivel | Herramienta | Cobertura objetivo |
-|---|---|---|
-| Unit | Vitest | 90%+ en `domain/` y funciones puras (especialmente `cantidadConMerma`) |
-| Integration | Vitest + Supabase local | Casos de uso end-to-end del módulo, contra DB real (Docker) |
-| Database | pgTAP en `supabase/tests/` | Triggers, RLS, RPCs (FEFO) |
-| E2E | Playwright | Flujos críticos: pedido Amex, despacho, Stock Out, ticket buffet, QR pasajero en 4 idiomas |
-| Real-time | Playwright + cliente Socket.io | Permisos de canal, broadcast, persistencia |
-| Carga | k6 | Real-time engine: 200 conexiones simultáneas, 50 mensajes/s |
-| Seguridad | OWASP ZAP en CI | Escaneo automático en PR |
-| Migraciones | Test de aplicación + rollback en branch DB | Cada migración debe ser reversible o documentada como no-reversible |
+| Nivel       | Herramienta                                | Cobertura objetivo                                                                         |
+| ----------- | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Unit        | Vitest                                     | 90%+ en `domain/` y funciones puras (especialmente `cantidadConMerma`)                     |
+| Integration | Vitest + Supabase local                    | Casos de uso end-to-end del módulo, contra DB real (Docker)                                |
+| Database    | pgTAP en `supabase/tests/`                 | Triggers, RLS, RPCs (FEFO)                                                                 |
+| E2E         | Playwright                                 | Flujos críticos: pedido Amex, despacho, Stock Out, ticket buffet, QR pasajero en 4 idiomas |
+| Real-time   | Playwright + cliente Socket.io             | Permisos de canal, broadcast, persistencia                                                 |
+| Carga       | k6                                         | Real-time engine: 200 conexiones simultáneas, 50 mensajes/s                                |
+| Seguridad   | OWASP ZAP en CI                            | Escaneo automático en PR                                                                   |
+| Migraciones | Test de aplicación + rollback en branch DB | Cada migración debe ser reversible o documentada como no-reversible                        |
 
 **Política:** PR sin tests verdes no se mergea. PR que toca `domain/` requiere PR description con justificación si la cobertura baja del 90%.
 
@@ -1320,12 +1378,12 @@ Cada alerta crítica tiene un runbook en `docs/runbooks/`. Mínimos:
 
 ### 14.1 Entornos
 
-| Entorno | Web | Socket | DB | Datos |
-|---|---|---|---|---|
-| `local` | Next dev | Node local | Supabase local (Docker) | seed |
-| `preview` | Vercel preview por PR | Render preview env | Supabase branch | seed por PR |
-| `staging` | Vercel staging | Render staging | Supabase project staging | datos sintéticos |
-| `production` | Vercel prod | Render prod | Supabase Pro prod | datos reales |
+| Entorno      | Web                   | Socket             | DB                       | Datos            |
+| ------------ | --------------------- | ------------------ | ------------------------ | ---------------- |
+| `local`      | Next dev              | Node local         | Supabase local (Docker)  | seed             |
+| `preview`    | Vercel preview por PR | Render preview env | Supabase branch          | seed por PR      |
+| `staging`    | Vercel staging        | Render staging     | Supabase project staging | datos sintéticos |
+| `production` | Vercel prod           | Render prod        | Supabase Pro prod        | datos reales     |
 
 ### 14.2 Pipelines (GitHub Actions)
 
@@ -1334,10 +1392,10 @@ Cada alerta crítica tiene un runbook en `docs/runbooks/`. Mínimos:
 name: CI
 on: [pull_request]
 jobs:
-  lint:    # eslint + prettier + tsc --noEmit
-  test:    # vitest unit + integration con Supabase docker
-  pgtap:   # tests SQL
-  e2e:     # playwright contra preview deploy
+  lint: # eslint + prettier + tsc --noEmit
+  test: # vitest unit + integration con Supabase docker
+  pgtap: # tests SQL
+  e2e: # playwright contra preview deploy
   security: # gitleaks + dependency audit
 ```
 
@@ -1357,14 +1415,14 @@ Deploy a producción **solo desde `main`** y solo si todos los jobs pasan. Tags 
 
 ### 14.5 Disaster recovery
 
-| Escenario | RTO | RPO | Procedimiento |
-|---|---|---|---|
-| Vercel down | 30 min | 0 | DNS failover a página estática mantenimiento; escalar a Vercel support |
-| Render socket down | 5 min | mensajes perdidos < ventana de outage | UI degrada a polling REST; auto-reconnect al volver |
-| Supabase region down | 4 h | < 5 min (PITR) | Restore en nueva region; escalado manual; aviso a clientes |
-| Borrado accidental | 1 h | < 5 min | PITR de Supabase Pro |
-| Compromiso de credenciales | 1 h | 0 | Rotar todas las keys, invalidar JWTs, audit log review |
-| Pérdida total Supabase | 24 h | < 24 h (último backup R2) | Restore desde dump R2 a nuevo Supabase; clientes notificados de gap |
+| Escenario                  | RTO    | RPO                                   | Procedimiento                                                          |
+| -------------------------- | ------ | ------------------------------------- | ---------------------------------------------------------------------- |
+| Vercel down                | 30 min | 0                                     | DNS failover a página estática mantenimiento; escalar a Vercel support |
+| Render socket down         | 5 min  | mensajes perdidos < ventana de outage | UI degrada a polling REST; auto-reconnect al volver                    |
+| Supabase region down       | 4 h    | < 5 min (PITR)                        | Restore en nueva region; escalado manual; aviso a clientes             |
+| Borrado accidental         | 1 h    | < 5 min                               | PITR de Supabase Pro                                                   |
+| Compromiso de credenciales | 1 h    | 0                                     | Rotar todas las keys, invalidar JWTs, audit log review                 |
+| Pérdida total Supabase     | 24 h   | < 24 h (último backup R2)             | Restore desde dump R2 a nuevo Supabase; clientes notificados de gap    |
 
 **Backups:** dump diario `pg_dump` + `pg_dumpall` cifrado con `gpg` y subido a Cloudflare R2. Retención 30 días + 1 mensual durante 12 meses. Cron en GitHub Actions usando IP statically allowlisted en Supabase.
 
@@ -1388,20 +1446,20 @@ Deploy a producción **solo desde `main`** y solo si todos los jobs pasan. Tags 
 
 ### 15.3 Resiliencia offline (PWA)
 
-- Service worker con estrategia *stale-while-revalidate* para catálogos.
+- Service worker con estrategia _stale-while-revalidate_ para catálogos.
 - IndexedDB queue para mutaciones críticas (`createOrder`, `confirmDelivery`, `stockOut`).
 - Banner persistente si está offline; reintenta con backoff exponencial al recuperar conexión.
 - **Operaciones bloqueadas offline:** despacho desde cocina, cierre de turno, registro de tickets, conteo final. Estas requieren conectividad por su impacto contable.
 
 ### 15.4 Plan de escalado
 
-| Disparador | Acción |
-|---|---|
-| Sucursales > 5 | Read replica de Postgres |
+| Disparador                       | Acción                                                |
+| -------------------------------- | ----------------------------------------------------- |
+| Sucursales > 5                   | Read replica de Postgres                              |
 | Conexiones WS > 1000 simultáneas | Sticky sessions + clúster Socket.io con Redis adapter |
-| Mensajes/s > 200 | Particionar `mensajes_chat` por mes |
-| Postgres CPU > 70% sostenido | Upgrade plan + revisar índices |
-| Tabla > 5M filas | Particionamiento (HASH tenant_id + RANGE mensual) |
+| Mensajes/s > 200                 | Particionar `mensajes_chat` por mes                   |
+| Postgres CPU > 70% sostenido     | Upgrade plan + revisar índices                        |
+| Tabla > 5M filas                 | Particionamiento (HASH tenant_id + RANGE mensual)     |
 
 ---
 
@@ -1442,6 +1500,7 @@ domain     ← application ← infrastructure ← actions
 - `actions.ts` cablea todo (Composition Root).
 
 ESLint enforcement:
+
 ```javascript
 // eslint.config.mjs (extracto)
 {
@@ -1461,7 +1520,7 @@ ESLint enforcement:
 - **Funciones puras siempre que sea posible.** El motor de merma es la prueba: una función pura que se testea sin mocks.
 - **Inmutabilidad por defecto.** Estados se transforman, no se mutan.
 - **Errores explícitos.** Result types o exceptions tipadas. Nunca `throw new Error('algo falló')` sin contexto.
-- **Comentarios solo cuando explican el *porqué*.** El *qué* lo dice el código.
+- **Comentarios solo cuando explican el _porqué_.** El _qué_ lo dice el código.
 - **Commits convencionales** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`).
 
 ### 16.4 Modelo de manejo de errores
@@ -1472,11 +1531,13 @@ export type Result<T, E = AppError> = { ok: true; value: T } | { ok: false; erro
 
 export class AppError extends Error {
   constructor(
-    public code: string,             // 'INSUMO_INSUFICIENTE'
+    public code: string, // 'INSUMO_INSUFICIENTE'
     public httpStatus: number,
     message: string,
     public meta?: Record<string, unknown>,
-  ) { super(message); }
+  ) {
+    super(message);
+  }
 }
 ```
 
@@ -1488,27 +1549,27 @@ Server Actions devuelven `Result`. La UI maneja casos discriminadamente. No hay 
 
 26 semanas calendario (Fases SENA ADSI):
 
-| Fase | Semanas | Foco |
-|---|---|---|
-| Análisis | 1–3 | Documento + preguntas abiertas (§19) cerradas con cliente |
-| Diseño | 4–7 | E-R, Socket, prototipos |
-| Desarrollo | 8–18 | Sprints 1–6 (abajo) |
-| Pruebas | 19–22 | UAT por nodo + carga |
-| Implementación | 23–26 | Despliegue + capacitación + manuales |
+| Fase           | Semanas | Foco                                                      |
+| -------------- | ------- | --------------------------------------------------------- |
+| Análisis       | 1–3     | Documento + preguntas abiertas (§19) cerradas con cliente |
+| Diseño         | 4–7     | E-R, Socket, prototipos                                   |
+| Desarrollo     | 8–18    | Sprints 1–6 (abajo)                                       |
+| Pruebas        | 19–22   | UAT por nodo + carga                                      |
+| Implementación | 23–26   | Despliegue + capacitación + manuales                      |
 
 ### 17.1 Sprints de desarrollo (re-ordenados respecto al spec)
 
 > El documento original ordena los sprints por capa técnica. **Lo invertí a orden por valor de negocio + reducción de riesgo**: lo más arriesgado y lo más fundamental primero.
 
-| Sprint | Sem | Entregables | Por qué este orden |
-|---|---|---|---|
-| **0** | 8 | Setup repo, CI/CD, Sentry, Axiom, Supabase project, esqueleto de monorepo, RLS base, deploy preview funcional | Infra es el lecho del río. Si esto está bien, el resto fluye. |
-| **1** | 9–10 | Identity + Tenant + RBAC + SuperUser CRUD + Audit log inmutable | Sin auth multi-tenant correcta, el resto es inseguro. |
-| **2** | 11–12 | Inventory dos capas + Lotes + FEFO + Mermas categorizadas + Recetas | El corazón del producto. Riesgo más alto. Hacerlo temprano permite refactorizar sin presión. |
-| **3** | 13 | Production (tandas) + descuento Capa 1 → suma Capa 2 + tests E2E del flujo crítico | Cierra el ciclo de inventario. |
-| **4** | 14–15 | Real-time engine (socket-server) + canales + permisos + persistencia + chat básico | El segundo riesgo más alto. Aislado de inventario para no contaminarlos. |
-| **5** | 16–17 | KDS Amex + Pedidos + Despacho con merma + QR pasajero i18n (4 idiomas) + Buffet flow + Snack | Las tres zonas de servicio en un sprint largo. |
-| **6** | 18 | Affluence + Analytics Engine (vistas materializadas, dashboards) + cogs/cash separados + integración API vuelos | Valor visible para gerencia. |
+| Sprint | Sem   | Entregables                                                                                                     | Por qué este orden                                                                           |
+| ------ | ----- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **0**  | 8     | Setup repo, CI/CD, Sentry, Axiom, Supabase project, esqueleto de monorepo, RLS base, deploy preview funcional   | Infra es el lecho del río. Si esto está bien, el resto fluye.                                |
+| **1**  | 9–10  | Identity + Tenant + RBAC + SuperUser CRUD + Audit log inmutable                                                 | Sin auth multi-tenant correcta, el resto es inseguro.                                        |
+| **2**  | 11–12 | Inventory dos capas + Lotes + FEFO + Mermas categorizadas + Recetas                                             | El corazón del producto. Riesgo más alto. Hacerlo temprano permite refactorizar sin presión. |
+| **3**  | 13    | Production (tandas) + descuento Capa 1 → suma Capa 2 + tests E2E del flujo crítico                              | Cierra el ciclo de inventario.                                                               |
+| **4**  | 14–15 | Real-time engine (socket-server) + canales + permisos + persistencia + chat básico                              | El segundo riesgo más alto. Aislado de inventario para no contaminarlos.                     |
+| **5**  | 16–17 | KDS Amex + Pedidos + Despacho con merma + QR pasajero i18n (4 idiomas) + Buffet flow + Snack                    | Las tres zonas de servicio en un sprint largo.                                               |
+| **6**  | 18    | Affluence + Analytics Engine (vistas materializadas, dashboards) + cogs/cash separados + integración API vuelos | Valor visible para gerencia.                                                                 |
 
 ### 17.2 Definition of Done por sprint
 
@@ -1520,29 +1581,30 @@ Server Actions devuelven `Result`. La UI maneja casos discriminadamente. No hay 
 - Sin secretos, sin `console.log`, sin TODOs sin issue asociado.
 
 ### 17.3 Buffers
-2 semanas de pruebas + 2 de buffer dentro del cronograma de implementación. La realidad es que algo va a fallar. Si no falla, se invierte en *polish*, no en feature creep.
+
+2 semanas de pruebas + 2 de buffer dentro del cronograma de implementación. La realidad es que algo va a fallar. Si no falla, se invierte en _polish_, no en feature creep.
 
 ---
 
 ## 18. Registro de riesgos
 
-| # | Riesgo | Probabilidad | Impacto | Mitigación |
-|---|---|---|---|---|
-| R-01 | Curva Socket.io (1er proyecto del dev con esto) | Media | Alto | Sprint 4 dedicado; spike de 2 días en Sprint 0 con setup mínimo |
-| R-02 | API de vuelos sin proveedor cerrado | Alta | Medio | Abstracción `FlightsProvider` desde Sprint 0; degradación graceful si no hay datos |
-| R-03 | Coeficiente de merma mal calibrado por cliente | Alta | Alto | Permitir ajuste automático: `coeficiente_real = histórico_movimientos / consumo_teórico` con sugerencia al admin |
-| R-04 | Concurrencia rompe inventario | Media | Crítico | RPC SQL atómicas + tests de carga + alertas de inventario negativo |
-| R-05 | Render socket free hiberna | Cierta si no se paga | Crítico | Plan Starter desde día 1 de producción ($7) |
-| R-06 | RLS mal configurada filtra datos | Baja | Crítico | Test E2E cross-tenant en CI; review obligatorio de cada política |
-| R-07 | Aceptación del cliente cambia scope | Media | Alto | Documento congelado; cualquier cambio = ADR + impacto en cronograma |
-| R-08 | Habeas data — queja de pasajero | Baja | Alto | Política implementada + endpoint de borrado + aviso de privacidad |
-| R-09 | Pérdida de Supabase free durante dev | Baja | Medio | Backups locales semanales + migration files versionados |
-| R-10 | El dev se enferma / vacaciones | Cierta | Alto | Documentación de runbooks; autopilot operativo (nada manual semanal) |
-| R-11 | Latencia WiFi del aeropuerto en cocina | Alta | Alto | PWA offline + cola IndexedDB; degradación graceful |
-| R-12 | Crecimiento de tablas (audit, events) en años | Cierta | Medio | Estrategia de particionamiento (§15.4) + archivado a R2 |
-| R-13 | Cliente exige features fuera de scope (facturación DIAN, ERP) | Media | Medio | v3.0 explícito; contrato de licencia delimita scope |
-| R-14 | Supabase down 1+ h | Baja | Crítico | DR plan (§14.5); status page Better Stack |
-| R-15 | Cliente exige migrar a su infra (on-premise) | Baja | Medio | Arquitectura hexagonal permite mover adaptadores; cobrar como servicio |
+| #    | Riesgo                                                        | Probabilidad         | Impacto | Mitigación                                                                                                       |
+| ---- | ------------------------------------------------------------- | -------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| R-01 | Curva Socket.io (1er proyecto del dev con esto)               | Media                | Alto    | Sprint 4 dedicado; spike de 2 días en Sprint 0 con setup mínimo                                                  |
+| R-02 | API de vuelos sin proveedor cerrado                           | Alta                 | Medio   | Abstracción `FlightsProvider` desde Sprint 0; degradación graceful si no hay datos                               |
+| R-03 | Coeficiente de merma mal calibrado por cliente                | Alta                 | Alto    | Permitir ajuste automático: `coeficiente_real = histórico_movimientos / consumo_teórico` con sugerencia al admin |
+| R-04 | Concurrencia rompe inventario                                 | Media                | Crítico | RPC SQL atómicas + tests de carga + alertas de inventario negativo                                               |
+| R-05 | Render socket free hiberna                                    | Cierta si no se paga | Crítico | Plan Starter desde día 1 de producción ($7)                                                                      |
+| R-06 | RLS mal configurada filtra datos                              | Baja                 | Crítico | Test E2E cross-tenant en CI; review obligatorio de cada política                                                 |
+| R-07 | Aceptación del cliente cambia scope                           | Media                | Alto    | Documento congelado; cualquier cambio = ADR + impacto en cronograma                                              |
+| R-08 | Habeas data — queja de pasajero                               | Baja                 | Alto    | Política implementada + endpoint de borrado + aviso de privacidad                                                |
+| R-09 | Pérdida de Supabase free durante dev                          | Baja                 | Medio   | Backups locales semanales + migration files versionados                                                          |
+| R-10 | El dev se enferma / vacaciones                                | Cierta               | Alto    | Documentación de runbooks; autopilot operativo (nada manual semanal)                                             |
+| R-11 | Latencia WiFi del aeropuerto en cocina                        | Alta                 | Alto    | PWA offline + cola IndexedDB; degradación graceful                                                               |
+| R-12 | Crecimiento de tablas (audit, events) en años                 | Cierta               | Medio   | Estrategia de particionamiento (§15.4) + archivado a R2                                                          |
+| R-13 | Cliente exige features fuera de scope (facturación DIAN, ERP) | Media                | Medio   | v3.0 explícito; contrato de licencia delimita scope                                                              |
+| R-14 | Supabase down 1+ h                                            | Baja                 | Crítico | DR plan (§14.5); status page Better Stack                                                                        |
+| R-15 | Cliente exige migrar a su infra (on-premise)                  | Baja                 | Medio   | Arquitectura hexagonal permite mover adaptadores; cobrar como servicio                                           |
 
 ---
 
@@ -1627,4 +1689,4 @@ FF_FLIGHTS_INTEGRATION_ENABLED=false
 
 ---
 
-*v1.0 — Mayo 2026 · Autor: Principal Software Architect (sesión inicial Claude Code) · Próxima revisión obligatoria: cierre de Sprint 1*
+_v1.0 — Mayo 2026 · Autor: Principal Software Architect (sesión inicial Claude Code) · Próxima revisión obligatoria: cierre de Sprint 1_
