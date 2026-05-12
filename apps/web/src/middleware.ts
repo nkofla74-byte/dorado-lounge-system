@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
+import { getSafeNext, getRoleHome } from '@/lib/auth/role-home';
 
 const PUBLIC_PATHS = ['/login', '/qr'];
 
@@ -49,10 +50,11 @@ export async function middleware(request: NextRequest) {
     const role = user.app_metadata?.role as string | undefined;
     const tenantId = user.app_metadata?.tenant_id as string | undefined;
     if (role && tenantId) {
-      const next = request.nextUrl.searchParams.get('next') ?? '/inventario';
+      const rawNext = request.nextUrl.searchParams.get('next');
+      const destination = getSafeNext(rawNext, role);
       const url = request.nextUrl.clone();
-      url.pathname = next;
-      url.searchParams.delete('next');
+      url.pathname = destination;
+      url.search = '';
       return NextResponse.redirect(url);
     }
   }

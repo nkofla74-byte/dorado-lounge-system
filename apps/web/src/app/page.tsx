@@ -1,19 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-
-const ROLE_HOME: Record<string, string> = {
-  superuser: '/admin/tenants',
-  admin: '/inventario',
-  chef: '/cocina',
-  sous_chef: '/cocina',
-  mesero_amex: '/pedidos',
-  personal_snack: '/snack',
-  personal_buffet: '/buffet',
-  recepcion: '/pedidos',
-  personal_almacen: '/almacen',
-  personal_pasteleria: '/pasteleria',
-  steward: '/produccion',
-};
+import { getRoleHome } from '@/lib/auth/role-home';
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -24,5 +11,5 @@ export default async function HomePage() {
   if (!user) redirect('/login');
 
   const role = user.app_metadata?.role as string | undefined;
-  redirect(ROLE_HOME[role ?? ''] ?? '/inventario');
+  redirect(getRoleHome(role));
 }
