@@ -50,9 +50,10 @@ function urgencyClass(since: Date, estado: string): string {
 interface PedidoCardProps {
   pedido: PedidoWithItems;
   onStateChange: (pedidoId: string, nuevoEstado: string) => void;
+  onRefresh?: () => void;
 }
 
-export function PedidoCard({ pedido, onStateChange }: PedidoCardProps) {
+export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps) {
   const [loading, setLoading] = useState(false);
   const elapsed = useElapsed(
     pedido.estado === 'en_preparacion' ? pedido.updatedAt : pedido.createdAt,
@@ -64,6 +65,7 @@ export function PedidoCard({ pedido, onStateChange }: PedidoCardProps) {
     setLoading(false);
     if (!result.ok) {
       toast.error(result.error.message);
+      if (result.error.code === 'VERSION_CONFLICT') onRefresh?.();
       return;
     }
     toast.success('Preparación iniciada');
@@ -76,6 +78,7 @@ export function PedidoCard({ pedido, onStateChange }: PedidoCardProps) {
     setLoading(false);
     if (!result.ok) {
       toast.error(result.error.message);
+      if (result.error.code === 'VERSION_CONFLICT') onRefresh?.();
       return;
     }
     toast.success('Pedido despachado');

@@ -144,6 +144,7 @@ export function createOrderRepository(): OrderRepository {
           numero_mesa: input.numeroMesa ?? null,
           notas: input.notas ?? null,
           idempotency_key: input.idempotencyKey,
+          turno_id: input.turnoId ?? null,
         })
         .select(PEDIDO_FLAT_SELECT)
         .single();

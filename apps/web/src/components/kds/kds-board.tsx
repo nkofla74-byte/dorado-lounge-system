@@ -86,8 +86,13 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
       if (event.type === 'PEDIDO_ESTADO') {
         const { pedidoId, estadoNuevo } = event.payload;
         if (estadoNuevo === 'entregado' || estadoNuevo === 'cancelado') {
-          // Quitar del tablero
-          setPedidos((prev) => prev.filter((p) => p.id !== pedidoId));
+          setPedidos((prev) => {
+            if (estadoNuevo === 'cancelado') {
+              const p = prev.find((x) => x.id === pedidoId);
+              toast.warning(`Pedido cancelado${p?.numeroMesa ? ` — ${p.numeroMesa}` : ''}`);
+            }
+            return prev.filter((p) => p.id !== pedidoId);
+          });
         } else {
           setPedidos((prev) =>
             prev.map((p) =>
@@ -163,7 +168,12 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
                   </div>
                 ) : (
                   items.map((pedido) => (
-                    <PedidoCard key={pedido.id} pedido={pedido} onStateChange={handleStateChange} />
+                    <PedidoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      onStateChange={handleStateChange}
+                      onRefresh={refresh}
+                    />
                   ))
                 )}
               </div>
