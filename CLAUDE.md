@@ -25,17 +25,17 @@ Seed de desarrollo: `supabase/seed.sql` (1 tenant, 7 usuarios cubriendo roles op
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Next.js 14 App Router · TypeScript strict |
-| UI | React · Tailwind CSS · shadcn/ui |
-| DB / Auth | Supabase (PostgreSQL 15 + Auth + Storage) |
-| Real-time | Socket.io en Node.js independiente (Render.com Starter) |
-| Validación | Zod + React Hook Form |
-| i18n QR | next-intl (`/qr/[locale]` — es/en/fr/pt) |
-| Testing | Vitest (unit/integration) · Playwright (E2E) |
-| Observabilidad | Sentry · Axiom · Better Stack |
-| Deploy | Vercel (web) · Render.com Starter (socket) |
+| Capa           | Tecnología                                              |
+| -------------- | ------------------------------------------------------- |
+| Framework      | Next.js 14 App Router · TypeScript strict               |
+| UI             | React · Tailwind CSS · shadcn/ui                        |
+| DB / Auth      | Supabase (PostgreSQL 15 + Auth + Storage)               |
+| Real-time      | Socket.io en Node.js independiente (Render.com Starter) |
+| Validación     | Zod + React Hook Form                                   |
+| i18n QR        | next-intl (`/qr/[locale]` — es/en/fr/pt)                |
+| Testing        | Vitest (unit/integration) · Playwright (E2E)            |
+| Observabilidad | Sentry · Axiom · Better Stack                           |
+| Deploy         | Vercel (web) · Render.com Starter (socket)              |
 
 ---
 
@@ -77,6 +77,7 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 Fuera del módulo: importar solo de `actions.ts`.
 
 **Módulos existentes:**
+
 - Core: `inventory` · `recipes` · `production`
 - Supporting: `orders` · `buffet` · `snack` · `afluencia` · `chat`
 - Generic: `superuser` · `turnos` · `identity` · `rbac` · `realtime` · `audit` · `analytics`
@@ -103,10 +104,10 @@ Idempotente por `idempotency_key`: si la key ya existe, devuelve el resultado pr
 - `capa_1`: materia prima bodega → `capa_2`: producción interna
 - `receta_produccion`: Capa 1 → Capa 2 · `receta_servicio`: Capa 1/2 → zona de despacho
 
-| Zona | Cuándo descuenta |
-|---|---|
-| Amex | Al confirmar entrega del pedido |
-| Snack | Al despachar desde cocina |
+| Zona   | Cuándo descuenta                                                    |
+| ------ | ------------------------------------------------------------------- |
+| Amex   | Al confirmar entrega del pedido                                     |
+| Snack  | Al despachar desde cocina                                           |
 | Buffet | Al despachar lote; conciliación al cierre (`1 ticket = 1 servicio`) |
 
 ---
@@ -114,6 +115,7 @@ Idempotente por `idempotency_key`: si la key ya existe, devuelve el resultado pr
 ## Base de datos
 
 **Convenciones (no negociables):**
+
 - IDs: `uuid` · `gen_random_uuid()`
 - Todas las tablas: `tenant_id uuid NOT NULL` + RLS habilitada
 - Multi-tenancy enforza en **Postgres**, no en la app
@@ -154,17 +156,17 @@ Canal sin permiso → desconexión inmediata + `audit_log` (evento de seguridad,
 
 ## Roles (fijos en código)
 
-| Rol | Alcance |
-|---|---|
-| `superuser` | God Mode: CRUD tenants, usuarios, auditoría |
-| `admin` | Operación completa: carta, recetas, inventario, reportes |
-| `chef` / `sous_chef` | KDS, producción, despacho, chat |
-| `mesero_amex` / `recepcion` | Pedidos Amex, confirmación entrega |
-| `personal_snack` | Stock Out Snack, Stuart |
-| `personal_buffet` | Stock Out Buffet, Stuart, tickets cierre |
-| `personal_almacen` | Gestión bodega, recepción de lotes |
-| `personal_pasteleria` | Producción pastelería |
-| `steward` | Gestión utensilios (Stuart) |
+| Rol                         | Alcance                                                  |
+| --------------------------- | -------------------------------------------------------- |
+| `superuser`                 | God Mode: CRUD tenants, usuarios, auditoría              |
+| `admin`                     | Operación completa: carta, recetas, inventario, reportes |
+| `chef` / `sous_chef`        | KDS, producción, despacho, chat                          |
+| `mesero_amex` / `recepcion` | Pedidos Amex, confirmación entrega                       |
+| `personal_snack`            | Stock Out Snack, Stuart                                  |
+| `personal_buffet`           | Stock Out Buffet, Stuart, tickets cierre                 |
+| `personal_almacen`          | Gestión bodega, recepción de lotes                       |
+| `personal_pasteleria`       | Producción pastelería                                    |
+| `steward`                   | Gestión utensilios (Stuart)                              |
 
 Antes de agregar un rol: verificar si se resuelve con permisos opcionales del SuperUser.
 
@@ -236,4 +238,4 @@ Solo lectura de vistas materializadas. Filtros obligatorios en todo reporte: tur
 
 ---
 
-*v4.0 — Mayo 2026 · Sprint 1 en curso*
+_v4.0 — Mayo 2026 · Sprint 1 en curso_
