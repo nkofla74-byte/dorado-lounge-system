@@ -17,6 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { createPedidoFromQR } from '@/app/qr/[locale]/actions';
 import type { PublicReceta, MesaInfo, CategoriaMenu } from '@/app/qr/[locale]/actions';
+import { useOfflineSync } from '@/lib/offline/use-offline-sync';
+import { enqueueOrder } from '@/lib/offline/queue';
+import { OfflineBanner } from '@/components/qr/offline-banner';
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -500,6 +503,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   const [loading, setLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
   const orderCountRef = useRef(0);
+  const { isOnline, pendingCount, syncing } = useOfflineSync();
 
   const t = TEXTS[locale] ?? TEXTS['es']!;
 
@@ -525,7 +529,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     const idempotencyKey = `${idPrefix}-c${currentComensal}-${orderCountRef.current}`;
 
     if (items.length > 0) {
-      const result = await createPedidoFromQR({
+      const orderInput = {
         token,
         items: items.map((i) => ({
           recetaId: i.receta.id,
@@ -534,12 +538,35 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
         })),
         notas: `Comensal ${currentComensal} de ${totalComensales}`,
         idempotencyKey,
-      });
+      };
 
-      if (!result.ok) {
-        setOrderError(t['errorOrder'] ?? '');
-        setLoading(false);
-        return;
+      if (!isOnline) {
+        // Sin red: guardar en cola y continuar (idempotencyKey garantiza entrega única)
+        try {
+          await enqueueOrder({ id: idempotencyKey, input: orderInput });
+        } catch {
+          setOrderError(t['errorOrder'] ?? '');
+          setLoading(false);
+          return;
+        }
+      } else {
+        const result = await createPedidoFromQR(orderInput);
+        if (!result.ok) {
+          // Si cayó la red durante el envío, encolar para reintento
+          if (!navigator.onLine) {
+            try {
+              await enqueueOrder({ id: idempotencyKey, input: orderInput });
+            } catch {
+              setOrderError(t['errorOrder'] ?? '');
+              setLoading(false);
+              return;
+            }
+          } else {
+            setOrderError(t['errorOrder'] ?? '');
+            setLoading(false);
+            return;
+          }
+        }
       }
     }
 
@@ -556,48 +583,56 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   // ── Welcome ──────────────────────────────────────────────────────────────
   if (step === 'welcome') {
     return (
-      <div
-        className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
-        style={{ background: '#016FD0' }}
-      >
-        {/* Logo top */}
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-white/60 text-[9px] font-bold tracking-[0.25em] uppercase">
-            American
-          </span>
-          <span className="text-white text-3xl font-black tracking-[0.08em]">EXPRESS</span>
-        </div>
-
-        <div className="w-full space-y-6 text-center">
-          <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">{t['byAmex']}</h1>
-            <p className="text-white/70 text-sm mt-1">{t['selectLanguage']}</p>
+      <>
+        <OfflineBanner
+          isOnline={isOnline}
+          pendingCount={pendingCount}
+          syncing={syncing}
+          locale={locale}
+        />
+        <div
+          className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
+          style={{ background: '#016FD0' }}
+        >
+          {/* Logo top */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-white/60 text-[9px] font-bold tracking-[0.25em] uppercase">
+              American
+            </span>
+            <span className="text-white text-3xl font-black tracking-[0.08em]">EXPRESS</span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {LOCALES.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => handleLocaleSelect(l.code)}
-                className={`py-4 rounded-2xl font-semibold text-base transition-all ${
-                  locale === l.code
-                    ? 'bg-white text-[#016FD0] shadow-lg'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
+
+          <div className="w-full space-y-6 text-center">
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight">{t['byAmex']}</h1>
+              <p className="text-white/70 text-sm mt-1">{t['selectLanguage']}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {LOCALES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => handleLocaleSelect(l.code)}
+                  className={`py-4 rounded-2xl font-semibold text-base transition-all ${
+                    locale === l.code
+                      ? 'bg-white text-[#016FD0] shadow-lg'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Logo bottom */}
+          <div className="flex flex-col items-center gap-1 opacity-60">
+            <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase">
+              American
+            </span>
+            <span className="text-white text-lg font-black tracking-[0.1em]">EXPRESS</span>
           </div>
         </div>
-
-        {/* Logo bottom */}
-        <div className="flex flex-col items-center gap-1 opacity-60">
-          <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase">
-            American
-          </span>
-          <span className="text-white text-lg font-black tracking-[0.1em]">EXPRESS</span>
-        </div>
-      </div>
+      </>
     );
   }
 
@@ -605,80 +640,112 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   if (step === 'hub') {
     if (hubView === 'wifi') {
       return (
-        <HubCard title={t['wifi_title'] ?? ''} onBack={() => setHubView('main')} locale={locale}>
-          <div className="space-y-4 text-center">
-            <Wifi className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
-            <div>
-              <p className="font-bold text-lg">{t['wifi_name']}</p>
-              <p className="text-sm text-muted-foreground mt-1">{t['wifi_pass']}</p>
+        <>
+          <OfflineBanner
+            isOnline={isOnline}
+            pendingCount={pendingCount}
+            syncing={syncing}
+            locale={locale}
+          />
+          <HubCard title={t['wifi_title'] ?? ''} onBack={() => setHubView('main')} locale={locale}>
+            <div className="space-y-4 text-center">
+              <Wifi className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
+              <div>
+                <p className="font-bold text-lg">{t['wifi_name']}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t['wifi_pass']}</p>
+              </div>
             </div>
-          </div>
-        </HubCard>
+          </HubCard>
+        </>
       );
     }
     if (hubView === 'benefits') {
       return (
-        <HubCard
-          title={t['benefits_title'] ?? ''}
-          onBack={() => setHubView('main')}
-          locale={locale}
-        >
-          <p className="text-sm text-muted-foreground leading-relaxed">{t['benefits_text']}</p>
-        </HubCard>
+        <>
+          <OfflineBanner
+            isOnline={isOnline}
+            pendingCount={pendingCount}
+            syncing={syncing}
+            locale={locale}
+          />
+          <HubCard
+            title={t['benefits_title'] ?? ''}
+            onBack={() => setHubView('main')}
+            locale={locale}
+          >
+            <p className="text-sm text-muted-foreground leading-relaxed">{t['benefits_text']}</p>
+          </HubCard>
+        </>
       );
     }
     if (hubView === 'experience') {
       return (
-        <HubCard
-          title={t['experience_title'] ?? ''}
-          onBack={() => setHubView('main')}
-          locale={locale}
-        >
-          <p className="text-sm text-muted-foreground leading-relaxed">{t['experience_text']}</p>
-        </HubCard>
+        <>
+          <OfflineBanner
+            isOnline={isOnline}
+            pendingCount={pendingCount}
+            syncing={syncing}
+            locale={locale}
+          />
+          <HubCard
+            title={t['experience_title'] ?? ''}
+            onBack={() => setHubView('main')}
+            locale={locale}
+          >
+            <p className="text-sm text-muted-foreground leading-relaxed">{t['experience_text']}</p>
+          </HubCard>
+        </>
       );
     }
 
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-background">
-        {/* Header */}
-        <div className="px-6 pt-10 pb-6 text-center" style={{ background: '#016FD0' }}>
-          <AmexLogo className="mb-4" />
-          <h1 className="text-2xl font-black text-white">{t['welcome']}</h1>
-          <p className="text-white/80 text-sm mt-1">
-            {mesa.mesaNumero} · {mesa.zona.toUpperCase()}
-          </p>
-        </div>
+      <>
+        <OfflineBanner
+          isOnline={isOnline}
+          pendingCount={pendingCount}
+          syncing={syncing}
+          locale={locale}
+        />
+        <div className="min-h-[100dvh] flex flex-col bg-background">
+          {/* Header */}
+          <div className="px-6 pt-10 pb-6 text-center" style={{ background: '#016FD0' }}>
+            <AmexLogo className="mb-4" />
+            <h1 className="text-2xl font-black text-white">{t['welcome']}</h1>
+            <p className="text-white/80 text-sm mt-1">
+              {mesa.mesaNumero} · {mesa.zona.toUpperCase()}
+            </p>
+          </div>
 
-        {/* Opciones */}
-        <div className="flex-1 px-5 py-6 space-y-3">
-          <HubButton
-            icon={<UtensilsCrossed className="h-5 w-5" />}
-            label={t['hub_menu'] ?? ''}
-            primary
-            onClick={() => setStep('comensales')}
-          />
-          <HubButton
-            icon={<Wifi className="h-5 w-5" />}
-            label={t['hub_wifi'] ?? ''}
-            onClick={() => setHubView('wifi')}
-          />
-          <HubButton
-            icon={<Star className="h-5 w-5" />}
-            label={t['hub_benefits'] ?? ''}
-            onClick={() => setHubView('benefits')}
-          />
-          <HubButton
-            icon={<Users className="h-5 w-5" />}
-            label={t['hub_experience'] ?? ''}
-            onClick={() => setHubView('experience')}
-          />
-        </div>
+          {/* Opciones */}
+          <div className="flex-1 px-5 py-6 space-y-3">
+            <HubButton
+              icon={<UtensilsCrossed className="h-5 w-5" />}
+              label={t['hub_menu'] ?? ''}
+              primary
+              onClick={() => setStep('comensales')}
+            />
+            <HubButton
+              icon={<Wifi className="h-5 w-5" />}
+              label={t['hub_wifi'] ?? ''}
+              onClick={() => setHubView('wifi')}
+            />
+            <HubButton
+              icon={<Star className="h-5 w-5" />}
+              label={t['hub_benefits'] ?? ''}
+              onClick={() => setHubView('benefits')}
+            />
+            <HubButton
+              icon={<Users className="h-5 w-5" />}
+              label={t['hub_experience'] ?? ''}
+              onClick={() => setHubView('experience')}
+            />
+          </div>
 
-        <div className="pb-8 flex justify-center">
-          <AmexLogo />
+          <div className="pb-8 flex justify-center">
+            <AmexLogo />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -687,86 +754,110 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     const n = parseInt(guestInput, 10);
     const valid = n >= 1 && n <= 20;
     return (
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8">
-        <div className="text-center space-y-2">
-          <Users className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
-          <h2 className="text-xl font-bold">{t['howManyGuests']}</h2>
+      <>
+        <OfflineBanner
+          isOnline={isOnline}
+          pendingCount={pendingCount}
+          syncing={syncing}
+          locale={locale}
+        />
+        <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8">
+          <div className="text-center space-y-2">
+            <Users className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
+            <h2 className="text-xl font-bold">{t['howManyGuests']}</h2>
+          </div>
+          <div className="w-full max-w-xs space-y-4">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={20}
+              placeholder={t['guestsPlaceholder']}
+              value={guestInput}
+              onChange={(e) => setGuestInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && valid && handleGuestsConfirm()}
+              className="w-full text-center text-2xl font-bold border-2 border-border rounded-2xl px-4 py-4 bg-background focus:outline-none focus:border-blue-400"
+              style={{ '--tw-ring-color': '#016FD0' } as React.CSSProperties}
+            />
+            <Button
+              className="w-full font-semibold text-white"
+              style={{ background: '#016FD0' }}
+              size="lg"
+              disabled={!valid}
+              onClick={handleGuestsConfirm}
+            >
+              {t['continueCta']}
+              <ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
+            <button
+              className="w-full text-sm text-muted-foreground py-2"
+              onClick={() => setStep('hub')}
+            >
+              {t['back']}
+            </button>
+          </div>
         </div>
-        <div className="w-full max-w-xs space-y-4">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={20}
-            placeholder={t['guestsPlaceholder']}
-            value={guestInput}
-            onChange={(e) => setGuestInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && valid && handleGuestsConfirm()}
-            className="w-full text-center text-2xl font-bold border-2 border-border rounded-2xl px-4 py-4 bg-background focus:outline-none focus:border-blue-400"
-            style={{ '--tw-ring-color': '#016FD0' } as React.CSSProperties}
-          />
-          <Button
-            className="w-full font-semibold text-white"
-            style={{ background: '#016FD0' }}
-            size="lg"
-            disabled={!valid}
-            onClick={handleGuestsConfirm}
-          >
-            {t['continueCta']}
-            <ArrowRight className="h-4 w-4 ml-1.5" />
-          </Button>
-          <button
-            className="w-full text-sm text-muted-foreground py-2"
-            onClick={() => setStep('hub')}
-          >
-            {t['back']}
-          </button>
-        </div>
-      </div>
+      </>
     );
   }
 
   // ── Menú por comensal ────────────────────────────────────────────────────
   if (step === 'menu') {
     return (
-      <MenuScreen
-        key={currentComensal}
-        recetas={recetas}
-        locale={locale}
-        currentComensal={currentComensal}
-        totalComensales={totalComensales}
-        onConfirm={handleConfirmOrder}
-        loading={loading}
-        error={orderError}
-      />
+      <>
+        <OfflineBanner
+          isOnline={isOnline}
+          pendingCount={pendingCount}
+          syncing={syncing}
+          locale={locale}
+        />
+        <MenuScreen
+          key={currentComensal}
+          recetas={recetas}
+          locale={locale}
+          currentComensal={currentComensal}
+          totalComensales={totalComensales}
+          onConfirm={handleConfirmOrder}
+          loading={loading}
+          error={orderError}
+        />
+      </>
     );
   }
 
   // ── Done ─────────────────────────────────────────────────────────────────
   return (
-    <div
-      className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
-      style={{ background: '#016FD0' }}
-    >
-      <AmexLogo />
-      <div className="text-center space-y-4">
-        <CheckCircle2 className="h-20 w-20 mx-auto text-white" />
-        <h2 className="text-2xl font-black text-white">{t['allDone']}</h2>
-        <p className="text-white/80 text-sm max-w-xs mx-auto">{t['enjoyMessage']}</p>
-        <button
-          className="mt-4 text-white/60 text-sm underline underline-offset-4"
-          onClick={() => {
-            setStep('welcome');
-            setGuestInput('');
-            setCurrentComensal(1);
-            setOrderError('');
-          }}
-        >
-          {t['newSession']}
-        </button>
+    <>
+      <OfflineBanner
+        isOnline={isOnline}
+        pendingCount={pendingCount}
+        syncing={syncing}
+        locale={locale}
+      />
+      <div
+        className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
+        style={{ background: '#016FD0' }}
+      >
+        <AmexLogo />
+        <div className="text-center space-y-4">
+          <CheckCircle2 className="h-20 w-20 mx-auto text-white" />
+          <h2 className="text-2xl font-black text-white">{t['allDone']}</h2>
+          <p className="text-white/80 text-sm max-w-xs mx-auto">{t['enjoyMessage']}</p>
+          <button
+            className="mt-4 text-white/60 text-sm underline underline-offset-4"
+            onClick={() => {
+              setStep('welcome');
+              setGuestInput('');
+              setCurrentComensal(1);
+              setOrderError('');
+            }}
+          >
+            {t['newSession']}
+          </button>
+        </div>
+        <AmexLogo />
       </div>
-      <AmexLogo />
-    </div>
+    </>
   );
 }
 
