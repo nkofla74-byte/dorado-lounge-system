@@ -101,10 +101,16 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Refresca la sesión si existe — obligatorio con @supabase/ssr
+  // Lectura local de cookies (sin fetch a Supabase Auth): patrón oficial para
+  // middleware. La validación REAL del JWT contra el servidor sigue ocurriendo
+  // en server components / Server Actions vía supabase.auth.getUser(), que
+  // assertCan() ya enforza. Acá solo decidimos si hay token presente para
+  // rutear público vs privado, y dejamos que @supabase/ssr refresque cookies
+  // si están por expirar.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
 
   const pathname = request.nextUrl.pathname;
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
