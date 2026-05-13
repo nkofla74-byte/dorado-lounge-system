@@ -50,6 +50,7 @@ export type CreatePedidoInput = {
   numeroMesa?: string | undefined;
   notas?: string | undefined;
   idempotencyKey: string;
+  turnoId?: string | undefined;
   items: Array<{
     recetaId: string;
     cantidad: number;

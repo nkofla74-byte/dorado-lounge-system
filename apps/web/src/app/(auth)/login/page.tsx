@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { getSafeNext } from '@/lib/auth/role-home';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,8 +26,8 @@ function LoginForm() {
 
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: email.trim(),
+      password: password.trim(),
     });
 
     if (authError) {
@@ -48,7 +49,7 @@ function LoginForm() {
       return;
     }
 
-    const next = searchParams.get('next') ?? '/inventario';
+    const next = getSafeNext(searchParams.get('next'), role);
     router.refresh();
     router.push(next);
   };

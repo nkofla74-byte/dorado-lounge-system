@@ -9,10 +9,7 @@ const base = {
  * para impedir que importen de infrastructure/ o usen Supabase directamente.
  */
 const hexagonalBoundaries = {
-  files: [
-    'src/modules/*/domain/**/*.ts',
-    'src/modules/*/application/**/*.ts',
-  ],
+  files: ['src/modules/*/domain/**/*.ts', 'src/modules/*/application/**/*.ts'],
   rules: {
     'no-restricted-imports': [
       'error',
@@ -25,8 +22,7 @@ const hexagonalBoundaries = {
           },
           {
             group: ['@supabase/*'],
-            message:
-              'Solo infrastructure/ puede usar Supabase directamente',
+            message: 'Solo infrastructure/ puede usar Supabase directamente',
           },
         ],
       },

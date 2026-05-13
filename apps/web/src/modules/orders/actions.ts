@@ -5,6 +5,7 @@ import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
@@ -34,12 +35,22 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const supabase = createClient();
+    const { data: turnoData } = await supabase
+      .from('turnos')
+      .select('id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('activo', true)
+      .is('deleted_at', null)
+      .maybeSingle();
+
     const repo = createOrderRepository();
     const pedido = await createPedidoUseCase(repo, ctx.tenantId, ctx.userId, {
       zona: parsed.data.zona,
       idempotencyKey: parsed.data.idempotencyKey,
       numeroMesa: parsed.data.numeroMesa,
       notas: parsed.data.notas,
+      turnoId: turnoData?.id ?? undefined,
       items: parsed.data.items.map((item) => ({
         recetaId: item.recetaId,
         cantidad: item.cantidad,
@@ -160,18 +171,22 @@ export async function despacharPedido(pedidoId: string, version: number): Promis
       payload: {},
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
-      type: 'PEDIDO_ESTADO',
+    const despachoPayload = {
+      type: 'PEDIDO_ESTADO' as const,
       payload: {
         pedidoId,
         tenantId: ctx.tenantId,
         estadoAnterior: pedido.estado,
-        estadoNuevo: 'despachado',
+        estadoNuevo: 'despachado' as const,
         zona: pedido.zona,
         updatedAt:
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
-    });
+    };
+    // KDS necesita saber que el pedido salió de cocina
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, despachoPayload);
+    // Mesero necesita saber que el pedido está listo para recoger
+    await emitEvent(ctx.tenantId, CHANNELS.AMEX, despachoPayload);
 
     return ok(updated);
   } catch (e) {
