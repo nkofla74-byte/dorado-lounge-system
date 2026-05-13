@@ -10,6 +10,47 @@ const nextConfig = {
     instrumentationHook: true,
   },
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    // Domains that vary per environment — read from env at runtime
+    const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+      : '*.supabase.co';
+    const socketHost = process.env.NEXT_PUBLIC_SOCKET_URL
+      ? new URL(process.env.NEXT_PUBLIC_SOCKET_URL).host
+      : 'localhost:3001';
+
+    const csp = [
+      "default-src 'self'",
+      // Next.js requires 'unsafe-eval' in dev for HMR; inline styles from Tailwind
+      isProd
+        ? "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://browser.sentry-cdn.com"
+        : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com",
+      "style-src 'self' 'unsafe-inline'",
+      [
+        'connect-src',
+        "'self'",
+        `https://${supabaseHost}`,
+        `wss://${supabaseHost}`,
+        `https://${socketHost}`,
+        `wss://${socketHost}`,
+        'https://challenges.cloudflare.com',
+        'https://*.ingest.sentry.io',
+        'https://*.axiom.co',
+        // Better Stack heartbeat check
+        'https://betteruptime.com',
+      ].join(' '),
+      "font-src 'self' data:",
+      "img-src 'self' data: https:",
+      // Turnstile widget renders inside an iframe from Cloudflare
+      'frame-src https://challenges.cloudflare.com',
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      ...(isProd ? ['upgrade-insecure-requests'] : []),
+    ].join('; ');
+
     return [
       {
         source: '/(.*)',
@@ -19,8 +60,8 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          // HSTS: solo activo en producción (Vercel lo agrega además por defecto)
-          ...(process.env.NODE_ENV === 'production'
+          { key: 'Content-Security-Policy', value: csp },
+          ...(isProd
             ? [
                 {
                   key: 'Strict-Transport-Security',

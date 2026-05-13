@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getSafeNext } from '@/lib/auth/role-home';
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { TurnstileWidget } from '@/components/ui/turnstile-widget';
+import { verifyTurnstile } from '@/lib/turnstile/verify';
 import { Loader2 } from 'lucide-react';
 
 function LoginForm() {
@@ -16,13 +18,39 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    const siteKeyConfigured = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+    if (siteKeyConfigured && !turnstileToken) {
+      setError('Completa la verificación de seguridad.');
+      setLoading(false);
+      return;
+    }
+
+    if (turnstileToken) {
+      const valid = await verifyTurnstile(turnstileToken);
+      if (!valid) {
+        setError('Verificación de seguridad fallida. Recarga la página e intenta de nuevo.');
+        setLoading(false);
+        return;
+      }
+    }
 
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({
@@ -103,6 +131,12 @@ function LoginForm() {
                 disabled={loading}
               />
             </div>
+
+            <TurnstileWidget
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
+              className="flex justify-center"
+            />
 
             {error && (
               <Alert variant="destructive">
