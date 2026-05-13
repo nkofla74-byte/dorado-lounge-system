@@ -58,6 +58,31 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   // Usuarios y tenants
   'users:write': ['admin'],
   'tenants:write': [], // solo superuser — manejado por el bypass
+  // Chat inter-zona
+  'chat:read': [
+    'admin',
+    'chef',
+    'sous_chef',
+    'mesero_amex',
+    'recepcion',
+    'personal_snack',
+    'personal_buffet',
+    'personal_almacen',
+    'personal_pasteleria',
+    'steward',
+  ],
+  'chat:write': [
+    'admin',
+    'chef',
+    'sous_chef',
+    'mesero_amex',
+    'recepcion',
+    'personal_snack',
+    'personal_buffet',
+    'personal_almacen',
+    'personal_pasteleria',
+    'steward',
+  ],
   // Auditoría
   'audit:read': ['admin'],
 };
