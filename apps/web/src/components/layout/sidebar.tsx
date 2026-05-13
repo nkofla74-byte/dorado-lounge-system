@@ -19,6 +19,9 @@ import {
   MonitorCheck,
   QrCode,
   UserCog,
+  Plane,
+  ShieldCheck,
+  Settings2,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -38,14 +41,14 @@ interface SidebarProps {
   user: SidebarUser;
 }
 
-// roles autorizados por ruta (espejo de la matriz PERMISSIONS en assertCan.ts).
-// superuser ve todo — se maneja en el filtro del componente, no aquí.
+// roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en middleware.ts.
+// superuser ve todo: se maneja en el filtro del componente, no aquí.
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRole[] }[] = [
   {
     href: '/almacen',
     label: 'Almacén',
     icon: Package,
-    roles: ['personal_almacen'],
+    roles: ['admin', 'personal_almacen'],
   },
   {
     href: '/inventario',
@@ -57,6 +60,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
       'sous_chef',
       'personal_snack',
       'personal_buffet',
+      'personal_almacen',
       'personal_pasteleria',
       'steward',
     ],
@@ -89,7 +93,13 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/pedidos',
     label: 'Pedidos',
     icon: ClipboardList,
-    roles: ['admin', 'mesero_amex', 'recepcion'],
+    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
+  },
+  {
+    href: '/vuelos',
+    label: 'Vuelos',
+    icon: Plane,
+    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
   },
   {
     href: '/admin/qr',
@@ -131,6 +141,18 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/admin/personal',
     label: 'Personal',
     icon: UserCog,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/feature-flags',
+    label: 'Feature Flags',
+    icon: Settings2,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/permisos',
+    label: 'Permisos',
+    icon: ShieldCheck,
     roles: ['admin'],
   },
 ];

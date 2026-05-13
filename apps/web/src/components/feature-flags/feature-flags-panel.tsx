@@ -1,0 +1,212 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { setFeatureFlag, createFeatureFlag } from '@/modules/feature-flags/actions';
+import { toast } from 'sonner';
+import { Plus, Globe, Building2 } from 'lucide-react';
+import type { FeatureFlag } from '@/modules/feature-flags/domain/feature-flag';
+
+interface FeatureFlagsPanelProps {
+  flags: FeatureFlag[];
+  canWrite: boolean;
+}
+
+function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
+  const [valor, setValor] = useState(flag.valor);
+  const [pending, startTransition] = useTransition();
+
+  const handleToggle = (checked: boolean) => {
+    if (!canWrite) return;
+    setValor(checked);
+    startTransition(async () => {
+      const result = await setFeatureFlag(flag.clave, checked);
+      if (!result.ok) {
+        setValor(!checked); // revert
+        toast.error(`Error: ${result.error.message}`);
+      } else {
+        toast.success(`Flag "${flag.clave}" ${checked ? 'activado' : 'desactivado'}`);
+      }
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b last:border-0">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className="mt-0.5 shrink-0 text-muted-foreground">
+          {flag.tenantId === null ? (
+            <Globe className="h-4 w-4" aria-label="Flag global" />
+          ) : (
+            <Building2 className="h-4 w-4" aria-label="Flag de tenant" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-mono font-medium truncate">{flag.clave}</p>
+          {flag.descripcion && (
+            <p className="text-xs text-muted-foreground mt-0.5">{flag.descripcion}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-3 shrink-0 ml-4">
+        <Badge variant={valor ? 'default' : 'secondary'} className="text-[10px]">
+          {valor ? 'ON' : 'OFF'}
+        </Badge>
+        <Switch
+          checked={valor}
+          onCheckedChange={handleToggle}
+          disabled={!canWrite || pending}
+          aria-label={`Toggle ${flag.clave}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CreateFlagDialog({ onCreated }: { onCreated: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [clave, setClave] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [pending, startTransition] = useTransition();
+
+  const handleCreate = () => {
+    if (!clave.trim()) return;
+    startTransition(async () => {
+      const trimmedDesc = descripcion.trim();
+      const result = await createFeatureFlag({
+        clave: clave.trim(),
+        ...(trimmedDesc ? { descripcion: trimmedDesc } : {}),
+      });
+      if (!result.ok) {
+        toast.error(`Error: ${result.error.message}`);
+      } else {
+        toast.success(`Flag "${clave}" creado`);
+        setClave('');
+        setDescripcion('');
+        setOpen(false);
+        onCreated();
+      }
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nuevo flag
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Crear feature flag</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="clave">Clave</Label>
+            <Input
+              id="clave"
+              placeholder="ej: kds_v2_enabled"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground">
+              Solo minúsculas, números y guion bajo (snake_case)
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="desc">Descripción</Label>
+            <Input
+              id="desc"
+              placeholder="Descripción del flag (opcional)"
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleCreate} disabled={!clave.trim() || pending} className="w-full">
+            {pending ? 'Creando…' : 'Crear flag'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlagsPanelProps) {
+  const [flags] = useState(initialFlags);
+
+  const globalFlags = flags.filter((f) => f.tenantId === null);
+  const tenantFlags = flags.filter((f) => f.tenantId !== null);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {flags.length} flag{flags.length !== 1 ? 's' : ''} configurado
+            {flags.length !== 1 ? 's' : ''}
+            {!canWrite && (
+              <span className="ml-2 text-amber-600 dark:text-amber-400">· Solo lectura</span>
+            )}
+          </p>
+        </div>
+        {canWrite && <CreateFlagDialog onCreated={() => window.location.reload()} />}
+      </div>
+
+      {tenantFlags.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Flags de tenant
+            </CardTitle>
+            <CardDescription>Activos solo en este tenant</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {tenantFlags.map((f) => (
+              <FlagRow key={f.id} flag={f} canWrite={canWrite} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {globalFlags.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Flags globales
+            </CardTitle>
+            <CardDescription>Aplican a todos los tenants</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {globalFlags.map((f) => (
+              <FlagRow key={f.id} flag={f} canWrite={canWrite} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {flags.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No hay feature flags configurados.
+            {canWrite && ' Crea el primero con el botón de arriba.'}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

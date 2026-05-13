@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Dorado Lounge">
+  <rect width="512" height="512" rx="96" fill="#016FD0"/>
+  <text
+    x="256"
+    y="330"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="196"
+    font-weight="900"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="-4"
+  >DL</text>
+  <text
+    x="256"
+    y="400"
+    font-family="Arial, sans-serif"
+    font-size="52"
+    font-weight="700"
+    text-anchor="middle"
+    fill="rgba(255,255,255,0.7)"
+    letter-spacing="6"
+  >LOUNGE</text>
+</svg>

@@ -2,7 +2,31 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { SocketProvider } from '@/lib/socket/socket-provider';
-import type { UserRole } from '@dorado/shared-types';
+import { ChatPanel } from '@/components/chat/chat-panel';
+import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
+
+// Canal de chat por rol — cada nodo habla en su sala operativa
+const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
+  chef: CHANNELS.COCINA,
+  sous_chef: CHANNELS.COCINA,
+  admin: CHANNELS.ADMIN,
+  superuser: CHANNELS.ADMIN,
+  mesero_amex: CHANNELS.AMEX,
+  recepcion: CHANNELS.AMEX,
+  personal_snack: CHANNELS.SNACK,
+  personal_buffet: CHANNELS.BUFFET,
+};
+
+const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
+  chef: 'Cocina',
+  sous_chef: 'Cocina',
+  admin: 'Admin',
+  superuser: 'Admin',
+  mesero_amex: 'Sala Amex',
+  recepcion: 'Sala Amex',
+  personal_snack: 'Snack',
+  personal_buffet: 'Buffet',
+};
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -27,6 +51,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     'Usuario';
 
   const token = sessionData.session?.access_token ?? '';
+  const chatCanal = ROLE_CHAT_CHANNEL[role] ?? null;
+  const chatTitulo = ROLE_CHAT_TITULO[role] ?? 'Chat';
 
   const sidebarUser = { name, email: user.email ?? '', role };
 
@@ -39,6 +65,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
         </div>
       </div>
+
+      {/* Chat flotante — solo para roles con canal de chat asignado */}
+      {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
     </SocketProvider>
   );
 }

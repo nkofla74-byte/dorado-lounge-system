@@ -1,0 +1,24 @@
+{
+  "name": "Dorado Lounge",
+  "short_name": "Dorado",
+  "description": "Menú y pedidos — Sala VIP Aeropuerto El Dorado, Bogotá",
+  "start_url": "/qr/es",
+  "scope": "/qr/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#016FD0",
+  "background_color": "#016FD0",
+  "lang": "es",
+  "categories": ["food", "travel"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
