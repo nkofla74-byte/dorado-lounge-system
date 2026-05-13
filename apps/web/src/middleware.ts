@@ -38,6 +38,7 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/analytics',
     '/turnos',
     '/admin',
+    '/vuelos',
   ],
   chef: [
     '/cocina',
@@ -49,6 +50,7 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/turnos',
     '/snack',
     '/buffet',
+    '/vuelos',
   ],
   sous_chef: [
     '/cocina',
@@ -60,9 +62,10 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/turnos',
     '/snack',
     '/buffet',
+    '/vuelos',
   ],
-  mesero_amex: ['/pedidos'],
-  recepcion: ['/pedidos', '/afluencia'],
+  mesero_amex: ['/pedidos', '/vuelos'],
+  recepcion: ['/pedidos', '/afluencia', '/vuelos'],
   personal_snack: ['/snack', '/inventario'],
   personal_buffet: ['/buffet', '/inventario'],
   personal_almacen: ['/almacen', '/inventario'],

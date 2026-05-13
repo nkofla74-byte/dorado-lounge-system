@@ -84,4 +84,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Feature flags
   'feature_flags:read': ['admin'],
   'feature_flags:write': [], // solo superuser — manejado por el bypass
+  // Vuelos El Dorado (Sprint 6)
+  'flights:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
 };
