@@ -24,7 +24,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "unrs-resolver"
+      "unrs-resolver",
+      "@swc/core",
+      "@sentry/cli",
+      "@parcel/watcher"
     ]
   },
   "devDependencies": {

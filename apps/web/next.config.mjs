@@ -43,6 +43,4 @@ export default withSentryConfig(withLogs, {
   silent: true,
   widenClientFileUpload: true,
   hideSourceMaps: true,
-  disableLogger: true,
-  automaticVercelMonitors: true,
 });
