@@ -27,6 +27,7 @@ import type { UserRole } from '@dorado/shared-types';
 
 const ESTADO_LABEL: Record<EstadoPedido, string> = {
   creado: 'Creado',
+  recibido_cocina: 'Recibido en cocina',
   en_preparacion: 'En preparación',
   despachado: 'Despachado',
   entregado: 'Entregado',

@@ -44,7 +44,13 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
     }
 
     const repo = createTurnoRepository();
-    const turno = await createTurnoUseCase(repo, ctx.tenantId, parsed.data.nombre, ctx.userId);
+    const turno = await createTurnoUseCase(
+      repo,
+      ctx.tenantId,
+      parsed.data.nombre,
+      parsed.data.teamlider,
+      ctx.userId,
+    );
 
     await auditLog({
       tenantId: ctx.tenantId,

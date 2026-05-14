@@ -94,6 +94,7 @@ export type EstadoTanda = (typeof EstadoTanda)[keyof typeof EstadoTanda];
 
 export const EstadoPedido = {
   creado: 'creado',
+  recibido_cocina: 'recibido_cocina',
   en_preparacion: 'en_preparacion',
   despachado: 'despachado',
   entregado: 'entregado',
@@ -103,7 +104,8 @@ export const EstadoPedido = {
 export type EstadoPedido = (typeof EstadoPedido)[keyof typeof EstadoPedido];
 
 export const PEDIDO_TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
-  creado: ['en_preparacion', 'cancelado'],
+  creado: ['recibido_cocina', 'en_preparacion', 'cancelado'],
+  recibido_cocina: ['en_preparacion', 'cancelado'],
   en_preparacion: ['despachado', 'cancelado'],
   despachado: ['entregado'],
   entregado: [],

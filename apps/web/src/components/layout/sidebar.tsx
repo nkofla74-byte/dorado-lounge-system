@@ -28,6 +28,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -39,6 +40,7 @@ interface SidebarUser {
 
 interface SidebarProps {
   user: SidebarUser;
+  locale: 'es' | 'en';
 }
 
 // roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en middleware.ts.
@@ -178,9 +180,10 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 interface SidebarContentProps extends SidebarProps {
   onNavigate?: () => void;
+  locale: 'es' | 'en';
 }
 
-function SidebarContent({ user, onNavigate }: SidebarContentProps) {
+function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -251,6 +254,7 @@ function SidebarContent({ user, onNavigate }: SidebarContentProps) {
           <p className="text-xs text-primary truncate">{ROLE_LABELS[user.role]}</p>
           <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
+        <LocaleSwitcher current={locale} />
         <ThemeToggle />
         <Button
           variant="ghost"
@@ -266,15 +270,15 @@ function SidebarContent({ user, onNavigate }: SidebarContentProps) {
   );
 }
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, locale }: SidebarProps) {
   return (
     <aside className="hidden md:flex w-60 h-screen sticky top-0 border-r border-border/50 shrink-0">
-      <SidebarContent user={user} />
+      <SidebarContent user={user} locale={locale} />
     </aside>
   );
 }
 
-export function MobileTopBar({ user }: SidebarProps) {
+export function MobileTopBar({ user, locale }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -292,7 +296,7 @@ export function MobileTopBar({ user }: SidebarProps) {
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-72 max-w-[85vw]">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-          <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+          <SidebarContent user={user} locale={locale} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
 

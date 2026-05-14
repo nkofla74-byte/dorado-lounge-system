@@ -12,6 +12,7 @@ function makeTurno(overrides: Partial<Turno> = {}): Turno {
     id: 'turno-1',
     tenantId: 'tenant-1',
     nombre: 'Turno mañana',
+    teamlider: 'Ana García',
     responsableId: 'user-1',
     iniciadoAt: new Date('2026-05-04T06:00:00Z'),
     cerradoAt: null,
@@ -71,38 +72,38 @@ describe('TurnoNoActivoError', () => {
 describe('createTurno', () => {
   it('crea un turno cuando no hay ninguno activo', async () => {
     const repo = makeRepo({ findActivo: vi.fn().mockResolvedValue(null) });
-    const turno = await createTurno(repo, 'tenant-1', 'Turno tarde', 'user-1');
-    expect(repo.create).toHaveBeenCalledWith('tenant-1', 'Turno tarde', 'user-1');
+    const turno = await createTurno(repo, 'tenant-1', 'Turno tarde', 'Ana García', 'user-1');
+    expect(repo.create).toHaveBeenCalledWith('tenant-1', 'Turno tarde', 'Ana García', 'user-1');
     expect(turno).toBeDefined();
   });
 
   it('lanza TurnoYaActivoError si ya existe un turno activo', async () => {
     const repo = makeRepo({ findActivo: vi.fn().mockResolvedValue(makeTurno()) });
-    await expect(createTurno(repo, 'tenant-1', 'Otro turno', 'user-1')).rejects.toThrow(
-      TurnoYaActivoError,
-    );
+    await expect(
+      createTurno(repo, 'tenant-1', 'Otro turno', 'Ana García', 'user-1'),
+    ).rejects.toThrow(TurnoYaActivoError);
   });
 
   it('no llama a repo.create si hay turno activo', async () => {
     const repo = makeRepo({ findActivo: vi.fn().mockResolvedValue(makeTurno()) });
     try {
-      await createTurno(repo, 'tenant-1', 'Otro turno', 'user-1');
+      await createTurno(repo, 'tenant-1', 'Otro turno', 'Ana García', 'user-1');
     } catch {
       // esperado
     }
     expect(repo.create).not.toHaveBeenCalled();
   });
 
-  it('pasa tenantId, nombre y responsableId al repositorio', async () => {
+  it('pasa tenantId, nombre, teamlider y responsableId al repositorio', async () => {
     const repo = makeRepo();
-    await createTurno(repo, 'mi-tenant', 'Turno noche', 'chef-99');
-    expect(repo.create).toHaveBeenCalledWith('mi-tenant', 'Turno noche', 'chef-99');
+    await createTurno(repo, 'mi-tenant', 'Turno noche', 'Luis Pérez', 'chef-99');
+    expect(repo.create).toHaveBeenCalledWith('mi-tenant', 'Turno noche', 'Luis Pérez', 'chef-99');
   });
 
   it('devuelve el turno creado por el repositorio', async () => {
     const turnoCreado = makeTurno({ nombre: 'Turno especial' });
     const repo = makeRepo({ create: vi.fn().mockResolvedValue(turnoCreado) });
-    const result = await createTurno(repo, 'tenant-1', 'Turno especial', 'user-1');
+    const result = await createTurno(repo, 'tenant-1', 'Turno especial', 'Ana García', 'user-1');
     expect(result).toBe(turnoCreado);
   });
 });

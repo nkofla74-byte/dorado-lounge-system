@@ -204,6 +204,7 @@ export const enviarStuartSchema = z.object({
 
 export const createTurnoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  teamlider: z.string().min(1, 'El nombre del jefe de turno es obligatorio').max(255),
 });
 
 export const registrarIngresoSchema = z.object({

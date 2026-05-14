@@ -26,6 +26,7 @@ import { iniciarTurno } from '@/modules/turnos/actions';
 
 const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  teamlider: z.string().min(1, 'El jefe de turno es obligatorio').max(255),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,12 +42,12 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { nombre: '' },
+    defaultValues: { nombre: '', teamlider: '' },
   });
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
-    const result = await iniciarTurno({ nombre: values.nombre });
+    const result = await iniciarTurno({ nombre: values.nombre, teamlider: values.teamlider });
 
     if (!result.ok) {
       setError(result.error.message);
@@ -78,6 +79,20 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
                   <FormLabel>Nombre del turno</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej: Turno A — 06:00–14:00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="teamlider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Jefe de turno (Teamlider)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nombre completo del jefe de turno" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
