@@ -26,6 +26,16 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
   }
 }
 
+export async function getPedidosAmex(): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('cocina_amex:read');
+    const repo = createOrderRepository();
+    return ok(await repo.findActiveByZona(ctx.tenantId, 'amex'));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 export async function createPedido(input: unknown): Promise<Result<PedidoWithItems>> {
   try {
     const ctx = await assertCan('orders:create');
@@ -67,8 +77,8 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       payload: { zona: pedido.zona, itemsCount: pedido.items.length },
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_CREADO',
+    const pedidoCreadoPayload = {
+      type: 'PEDIDO_CREADO' as const,
       payload: {
         pedidoId: pedido.id,
         tenantId: ctx.tenantId,
@@ -83,9 +93,63 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
         createdAt:
           pedido.createdAt instanceof Date ? pedido.createdAt.toISOString() : pedido.createdAt,
       },
-    });
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, pedidoCreadoPayload);
+    if (pedido.zona === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, pedidoCreadoPayload);
+    }
 
     return ok(pedido);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function recibirEnCocina(pedidoId: string, version: number): Promise<Result<Pedido>> {
+  try {
+    const ctx = await assertCan('cocina_amex:write');
+    const repo = createOrderRepository();
+
+    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
+    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('recibido_cocina')) {
+      return err(
+        new AppError(
+          'INVALID_TRANSITION',
+          400,
+          `No se puede recibir un pedido en estado '${pedido.estado}'`,
+        ),
+      );
+    }
+
+    const updated = await repo.transition(pedidoId, ctx.tenantId, 'recibido_cocina', version);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'orders:recibir_en_cocina',
+      resourceId: pedidoId,
+      resourceType: 'pedido',
+      payload: { zona: pedido.zona },
+    });
+
+    const eventoPayload = {
+      type: 'PEDIDO_ESTADO' as const,
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'recibido_cocina' as const,
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
+    await emitEvent(ctx.tenantId, CHANNELS.AMEX, eventoPayload);
+
+    return ok(updated);
   } catch (e) {
     return err(toAppError(e));
   }
@@ -183,9 +247,8 @@ export async function despacharPedido(pedidoId: string, version: number): Promis
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     };
-    // KDS necesita saber que el pedido salió de cocina
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, despachoPayload);
-    // Mesero necesita saber que el pedido está listo para recoger
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, despachoPayload);
     await emitEvent(ctx.tenantId, CHANNELS.AMEX, despachoPayload);
 
     return ok(updated);

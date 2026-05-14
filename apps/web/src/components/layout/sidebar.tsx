@@ -77,7 +77,13 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/cocina',
     label: 'KDS Cocina',
     icon: MonitorCheck,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef'],
+  },
+  {
+    href: '/cocina-amex',
+    label: 'KDS Amex',
+    icon: MonitorCheck,
+    roles: ['admin', 'sous_chef'],
   },
   {
     href: '/produccion',
@@ -113,13 +119,13 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/buffet',
     label: 'Buffet',
     icon: UtensilsCrossed,
-    roles: ['admin', 'chef', 'sous_chef', 'personal_buffet'],
+    roles: ['admin', 'chef', 'personal_buffet'],
   },
   {
     href: '/snack',
     label: 'Snack',
     icon: Coffee,
-    roles: ['admin', 'chef', 'sous_chef', 'personal_snack'],
+    roles: ['admin', 'chef', 'personal_snack'],
   },
   {
     href: '/turnos',
