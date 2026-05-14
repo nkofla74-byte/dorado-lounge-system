@@ -405,10 +405,11 @@ BEGIN
   -- ──────────────────────────────────────────────────────────────────────────
   -- 10. TURNO ACTIVO
   -- ──────────────────────────────────────────────────────────────────────────
-  INSERT INTO public.turnos (id, tenant_id, nombre, responsable_id, iniciado_at, activo)
+  INSERT INTO public.turnos (id, tenant_id, nombre, teamlider, responsable_id, iniciado_at, activo)
   VALUES (
     v_turno, v_tenant,
     'Turno A — 06:00–14:00',
+    'Ana García',
     u_admin,
     (CURRENT_DATE + time '06:00:00')::timestamptz,
     true
