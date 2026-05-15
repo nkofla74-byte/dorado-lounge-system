@@ -75,7 +75,13 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
 function canAccess(role: UserRole, pathname: string): boolean {
   const prefixes = ROLE_ALLOWED_PREFIXES[role];
   if (!prefixes) return false;
-  return prefixes.some((prefix) => prefix === '/' || pathname.startsWith(prefix));
+  return prefixes.some(
+    (prefix) =>
+      prefix === '/' ||
+      pathname === prefix ||
+      pathname.startsWith(prefix + '/') ||
+      pathname.startsWith(prefix + '?'),
+  );
 }
 
 export async function middleware(request: NextRequest) {

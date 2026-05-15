@@ -42,6 +42,21 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SOCKET_URL: ${{ secrets.E2E_SOCKET_URL }}
 
+      - name: Start web server
+        run: pnpm --filter apps/web exec next start &
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SOCKET_URL: ${{ secrets.E2E_SOCKET_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Wait for web server
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 && break
+            sleep 2
+          done
+
       - name: Run E2E tests
         run: pnpm --filter apps/web test:e2e
         env:
