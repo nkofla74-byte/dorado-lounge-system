@@ -18,6 +18,9 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   recepcion: CHANNELS.AMEX,
   personal_snack: CHANNELS.SNACK,
   personal_buffet: CHANNELS.BUFFET,
+  personal_pasteleria: CHANNELS.BROADCAST_COCINA,
+  steward: CHANNELS.BROADCAST_COCINA,
+  personal_almacen: CHANNELS.BROADCAST_ADMIN,
 };
 
 const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
@@ -29,6 +32,9 @@ const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
   recepcion: 'Sala Amex',
   personal_snack: 'Snack',
   personal_buffet: 'Buffet',
+  personal_pasteleria: 'Producción',
+  steward: 'Producción',
+  personal_almacen: 'Almacén',
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
