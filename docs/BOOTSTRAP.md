@@ -24,7 +24,7 @@ Cuentas necesarias (créalas antes de continuar):
 # Sistema al día
 sudo dnf upgrade -y
 
-# Toolchain (algunos paquetes npm compilan código nativo)
+# Toolchain (algunos paquetes nativos del ecosistema Node compilan código C++)
 sudo dnf groupinstall "Development Tools" -y
 sudo dnf install gcc-c++ make python3 git curl -y
 
@@ -33,14 +33,9 @@ sudo dnf module reset nodejs -y
 sudo dnf module enable nodejs:22 -y
 sudo dnf install nodejs -y
 
-# Configurar npm para evitar EACCES (sin sudo nunca)
-mkdir -p ~/.npm-global
-npm config set prefix '~/.npm-global'
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-
-# pnpm (gestor del monorepo)
-npm install -g pnpm
+# pnpm vía corepack (incluido en Node 22, sin instalación global manual)
+corepack enable
+corepack prepare pnpm@10.33.2 --activate
 
 # GitHub CLI
 sudo dnf install gh -y
@@ -360,10 +355,6 @@ gh pr create --fill
 ---
 
 ## 8. Troubleshooting Fedora 42
-
-### `EACCES: permission denied` con npm
-
-No instalaste con prefix en home. Repite paso 1.
 
 ### `node-gyp` falla compilando paquete nativo
 
