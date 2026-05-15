@@ -54,8 +54,20 @@ export function unwrap<T>(result: Result<T>): T {
 }
 
 // Convierte cualquier excepción desconocida en AppError para devolución uniforme.
+// Los errores inesperados (no AppError) se capturan en Sentry con el stacktrace completo.
 export function toAppError(e: unknown): AppError {
   if (isAppError(e)) return e;
+
+  // Capturar en Sentry solo en runtime Node.js (no en tests ni en cliente)
+  if (typeof process !== 'undefined' && process.env['NODE_ENV'] !== 'test') {
+    try {
+      // Import dinámico para evitar bundlear Sentry en paths que no lo necesitan
+      void import('@sentry/nextjs').then(({ captureException }) => captureException(e));
+    } catch {
+      // Si Sentry no está disponible, continuar sin interrumpir
+    }
+  }
+
   const message = e instanceof Error ? e.message : String(e);
   return new AppError('INTERNAL_ERROR', 500, message);
 }

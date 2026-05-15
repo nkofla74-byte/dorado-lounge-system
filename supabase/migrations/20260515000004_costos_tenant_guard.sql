@@ -26,7 +26,7 @@ BEGIN
   -- Validar que el caller pertenezca al tenant solicitado.
   -- auth.jwt() devuelve el payload del token Supabase; el campo tenant_id
   -- es inyectado vía app_metadata en el token de cada usuario.
-  v_caller_tenant := (auth.jwt() ->> 'tenant_id')::uuid;
+  v_caller_tenant := (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid;
   IF v_caller_tenant IS NULL OR v_caller_tenant != p_tenant_id THEN
     RETURN jsonb_build_object('error', 'Acceso no autorizado');
   END IF;

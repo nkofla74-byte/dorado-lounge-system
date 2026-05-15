@@ -6,6 +6,15 @@ import { authenticateHandshake, canJoinChannel } from './lib/auth';
 import { createEmitHandler } from './lib/emit-handler';
 import type { SocketData } from './lib/auth';
 
+// Validar variables de entorno críticas antes de levantar el servidor.
+// Falla rápido en lugar de fallar silenciosamente en la primera petición.
+const REQUIRED_ENV_VARS = ['SUPABASE_JWT_SECRET', 'SOCKET_EMIT_SECRET'] as const;
+const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+if (missingVars.length > 0) {
+  logger.error({ event: 'startup_missing_env', missing: missingVars });
+  process.exit(1);
+}
+
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001;
 const ALLOWED_ORIGIN = process.env['ALLOWED_ORIGIN'] ?? 'http://localhost:3000';
 

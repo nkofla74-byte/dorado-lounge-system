@@ -1,5 +1,6 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withAxiom } from 'next-axiom';
+import { withBetterStackNextConfig } from '@logtail/next';
 import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
@@ -37,7 +38,8 @@ const nextConfig = {
         'https://challenges.cloudflare.com',
         'https://*.ingest.sentry.io',
         'https://*.axiom.co',
-        // Better Stack heartbeat check
+        // Better Stack Logs + heartbeat
+        'https://in.logs.betterstack.com',
         'https://betteruptime.com',
       ].join(' '),
       "font-src 'self' data:",
@@ -77,8 +79,9 @@ const nextConfig = {
 
 const withIntl = withNextIntl(nextConfig);
 const withLogs = withAxiom(withIntl);
+const withBetterStack = withBetterStackNextConfig(withLogs);
 
-export default withSentryConfig(withLogs, {
+export default withSentryConfig(withBetterStack, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: true,

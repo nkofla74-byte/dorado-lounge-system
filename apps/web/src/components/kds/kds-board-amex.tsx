@@ -17,12 +17,12 @@ import { Button } from '@/components/ui/button';
 import { CHANNELS } from '@dorado/shared-types';
 import { useSocket } from '@/lib/socket/use-socket';
 import {
-  getPedidosAmex,
-  recibirEnCocina,
-  iniciarPreparacion,
-  despacharPedido,
-  getEventosPedido,
-} from '@/modules/orders/actions';
+  getPedidosAmexKds as getPedidosAmex,
+  recibirPedidoAmex as recibirEnCocina,
+  iniciarPreparacionAmex as iniciarPreparacion,
+  despacharPedidoAmex as despacharPedido,
+  getEventosPedidoAmex as getEventosPedido,
+} from '@/modules/cocina_amex/actions';
 import { toast } from 'sonner';
 import type { PedidoWithItems, PedidoEvento } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';

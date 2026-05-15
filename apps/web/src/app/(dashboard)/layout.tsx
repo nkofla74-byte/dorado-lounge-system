@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
+import { OfflineBanner } from '@/components/layout/offline-banner';
 import { SocketProvider } from '@/lib/socket/socket-provider';
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
@@ -17,6 +18,9 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   recepcion: CHANNELS.AMEX,
   personal_snack: CHANNELS.SNACK,
   personal_buffet: CHANNELS.BUFFET,
+  personal_pasteleria: CHANNELS.BROADCAST_COCINA,
+  steward: CHANNELS.BROADCAST_COCINA,
+  personal_almacen: CHANNELS.BROADCAST_ADMIN,
 };
 
 const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
@@ -28,6 +32,9 @@ const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
   recepcion: 'Sala Amex',
   personal_snack: 'Snack',
   personal_buffet: 'Buffet',
+  personal_pasteleria: 'Producción',
+  steward: 'Producción',
+  personal_almacen: 'Almacén',
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -67,6 +74,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Sidebar user={sidebarUser} locale={locale as 'es' | 'en'} />
           <div className="flex-1 min-w-0 flex flex-col">
             <MobileTopBar user={sidebarUser} locale={locale as 'es' | 'en'} />
+            <OfflineBanner />
             <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
           </div>
         </div>

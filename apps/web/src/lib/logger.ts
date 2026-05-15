@@ -1,4 +1,5 @@
 import { log as axiomLog } from 'next-axiom';
+import { log as bsLog } from '@logtail/next';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -10,6 +11,7 @@ function createLogger(module: string) {
   function write(level: LogLevel, message: string, fields?: LogFields) {
     const enriched = { module, ...fields };
     axiomLog[level](message, enriched);
+    bsLog[level](message, enriched);
     if (process.env.NODE_ENV !== 'production') {
       console[level === 'debug' ? 'log' : level](`[${module}] ${message}`, enriched);
     }

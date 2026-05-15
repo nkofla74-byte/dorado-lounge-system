@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNetwork } from './use-network';
-import { getQueuedOrders, removeQueuedOrder, incrementAttempts, getQueueSize } from './queue';
-import { createPedidoFromQR } from '@/app/qr/[locale]/actions';
-
-const MAX_ATTEMPTS = 3;
+import { getQueueSize } from './queue';
+import { syncPendingOrders } from './sync';
 
 export interface SyncState {
   isOnline: boolean;
@@ -34,23 +32,7 @@ export function useOfflineSync(): SyncState {
     if (syncing) return;
     setSyncing(true);
     try {
-      const orders = await getQueuedOrders();
-      for (const order of orders) {
-        if (order.attempts >= MAX_ATTEMPTS) {
-          await removeQueuedOrder(order.id);
-          continue;
-        }
-        try {
-          const result = await createPedidoFromQR(order.input);
-          if (result.ok) {
-            await removeQueuedOrder(order.id);
-          } else {
-            await incrementAttempts(order.id);
-          }
-        } catch {
-          await incrementAttempts(order.id);
-        }
-      }
+      await syncPendingOrders();
     } finally {
       setSyncing(false);
       await refreshCount();
