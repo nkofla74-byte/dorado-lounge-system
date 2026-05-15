@@ -8,7 +8,6 @@
 
 -- ── PASO 1: Desatar FKs nullable que apuntan a public.users ─────────────────
 UPDATE public.movimientos_inventario SET usuario_id     = NULL;
-UPDATE public.lotes                  SET registrado_por = NULL;
 UPDATE public.mermas                 SET registrado_por = NULL;
 UPDATE public.tandas_produccion      SET responsable_id = NULL;
 UPDATE public.pedidos                SET responsable_id = NULL;
