@@ -305,3 +305,53 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
     return err(toAppError(e));
   }
 }
+
+export interface LoteProximoVencer {
+  loteId: string;
+  insumoNombre: string;
+  fechaVencimiento: string;
+  diasRestantes: number;
+  cantidadActual: number;
+}
+
+export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProximoVencer[]>> {
+  try {
+    await assertCan('inventory:read');
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = createClient();
+
+    const limite = new Date();
+    limite.setDate(limite.getDate() + dias);
+
+    const { data, error } = await supabase
+      .from('lotes')
+      .select('id, cantidad_actual, fecha_vencimiento, insumos(nombre)')
+      .is('deleted_at', null)
+      .eq('activo', true)
+      .gt('cantidad_actual', 0)
+      .not('fecha_vencimiento', 'is', null)
+      .lte('fecha_vencimiento', limite.toISOString().split('T')[0])
+      .order('fecha_vencimiento', { ascending: true });
+
+    if (error) return err(toAppError(new Error(error.message)));
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const rows = (data ?? []).map((row: any) => {
+      const fv = new Date(row.fecha_vencimiento);
+      const diff = Math.round((fv.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        loteId: row.id,
+        insumoNombre: row.insumos?.nombre ?? '—',
+        fechaVencimiento: row.fecha_vencimiento as string,
+        diasRestantes: diff,
+        cantidadActual: Number(row.cantidad_actual),
+      };
+    });
+
+    return ok(rows);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}

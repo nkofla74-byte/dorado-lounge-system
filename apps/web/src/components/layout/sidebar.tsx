@@ -134,7 +134,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/turnos',
     label: 'Turnos',
     icon: Clock,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
   },
   {
     href: '/afluencia',

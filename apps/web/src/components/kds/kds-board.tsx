@@ -41,12 +41,22 @@ const COLUMNS: Column[] = [
   },
 ];
 
+const ZONA_TABS = [
+  { key: null, label: 'Todas' },
+  { key: 'snack', label: 'Snack' },
+  { key: 'buffet', label: 'Buffet' },
+  { key: 'amex', label: 'Amex' },
+] as const;
+
+type ZonaFiltro = null | 'snack' | 'buffet' | 'amex';
+
 interface KdsBoardProps {
   initialPedidos: PedidoWithItems[];
 }
 
 export function KdsBoard({ initialPedidos }: KdsBoardProps) {
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
+  const [zonaFiltro, setZonaFiltro] = useState<ZonaFiltro>(null);
   const socket = useSocket();
 
   // Refresca toda la lista desde el servidor (post-state-change o reconexión)
@@ -117,12 +127,14 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
     };
   }, [socket, refresh]);
 
+  const pedidosFiltrados = zonaFiltro ? pedidos.filter((p) => p.zona === zonaFiltro) : pedidos;
+
   const byState = (estado: Column['key']) =>
-    pedidos
+    pedidosFiltrados
       .filter((p) => p.estado === estado)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-  const total = pedidos.length;
+  const total = pedidosFiltrados.length;
 
   return (
     <div className="p-6 space-y-4">
@@ -142,6 +154,29 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
         >
           Actualizar
         </button>
+      </div>
+
+      {/* Filtro por zona */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {ZONA_TABS.map((tab) => (
+          <button
+            key={String(tab.key)}
+            onClick={() => setZonaFiltro(tab.key as ZonaFiltro)}
+            className={[
+              'px-3 py-1 rounded-full text-xs font-medium transition-colors border',
+              zonaFiltro === tab.key
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'text-muted-foreground border-border hover:bg-accent hover:text-foreground',
+            ].join(' ')}
+          >
+            {tab.label}
+            {tab.key !== null && (
+              <span className="ml-1.5 tabular-nums">
+                ({pedidos.filter((p) => p.zona === tab.key).length})
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Kanban */}

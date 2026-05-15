@@ -26,14 +26,28 @@ export default async function ProduccionPage() {
     user?.email?.split('@')[0] ??
     'Usuario';
 
+  const isSteward = userRole === 'steward';
+
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Producción</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isSteward ? 'Gestión de utensilios' : 'Producción'}
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Tandas de cocina — FEFO automático al completar
+          {isSteward
+            ? 'Tandas de preparación · Control de equipos y utensilios de cocina'
+            : 'Tandas de cocina — FEFO automático al completar'}
         </p>
       </div>
+
+      {isSteward && (
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          Como steward, puedes registrar tandas de limpieza y preparación de utensilios, y
+          completarlas para descontar los insumos de limpieza utilizados (FEFO automático).
+        </div>
+      )}
+
       <TandaTable
         initialData={tandasResult.ok ? tandasResult.value : []}
         recetas={recetasResult.ok ? recetasResult.value : []}
