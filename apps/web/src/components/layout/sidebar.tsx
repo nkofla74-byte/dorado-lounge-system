@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Settings2,
   Bell,
+  ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -163,6 +164,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/admin/alertas',
     label: 'Alertas',
     icon: Bell,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/auditoria',
+    label: 'Auditoría',
+    icon: ScrollText,
     roles: ['admin'],
   },
   {

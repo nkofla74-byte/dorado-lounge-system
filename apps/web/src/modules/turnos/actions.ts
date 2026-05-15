@@ -4,6 +4,7 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createTurnoRepository } from './infrastructure/turno-repository';
 import { getTurnos as getTurnosUseCase } from './application/get-turnos';
 import { createTurno as createTurnoUseCase } from './application/create-turno';
@@ -13,6 +14,27 @@ import { TurnoYaActivoError, TurnoNoActivoError } from './domain/turno';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { Turno } from './domain/turno';
+
+export interface UsuarioResumen {
+  id: string;
+  nombre: string;
+}
+
+export async function getUsuariosResumen(): Promise<Result<UsuarioResumen[]>> {
+  try {
+    const ctx = await assertCan('turnos:write');
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from('users')
+      .select('id, nombre')
+      .eq('tenant_id', ctx.tenantId)
+      .in('role', ['admin', 'chef', 'sous_chef', 'steward'])
+      .order('nombre');
+    return ok((data ?? []).map((u) => ({ id: u.id as string, nombre: u.nombre as string })));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
 
 export async function getTurnos(): Promise<Result<Turno[]>> {
   try {
