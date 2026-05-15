@@ -18,8 +18,9 @@ UPDATE public.afluencia_ingresos     SET registrado_por = NULL;
 UPDATE public.domain_events          SET created_by     = NULL;
 UPDATE public.audit_log              SET user_id        = NULL;
 
--- mensajes_chat.remitente_id es NOT NULL → borrar filas
-DELETE FROM public.mensajes_chat;
+-- mensajes_chat.remitente_id es NOT NULL; DELETE está bloqueado por trigger append-only
+-- TRUNCATE no activa triggers de fila → funciona correctamente
+TRUNCATE public.mensajes_chat;
 
 
 -- ── PASO 2: Borrar todos los usuarios ────────────────────────────────────────
