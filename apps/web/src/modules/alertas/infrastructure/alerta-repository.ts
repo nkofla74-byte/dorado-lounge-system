@@ -52,6 +52,19 @@ export function createAlertaRepository(): AlertaRepository {
       return (data as AlertaRow[]).map(toAlerta);
     },
 
+    async findAll(tenantId: string, limit = 500): Promise<Alerta[]> {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('alertas')
+        .select(SELECT)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as AlertaRow[]).map(toAlerta);
+    },
+
     async countUnread(tenantId: string): Promise<number> {
       const supabase = createClient();
       const { count, error } = await supabase

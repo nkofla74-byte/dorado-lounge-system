@@ -1,7 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Clock, ChefHat, Truck, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
+import {
+  Clock,
+  ChefHat,
+  Truck,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  History,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CHANNELS } from '@dorado/shared-types';
@@ -11,10 +21,24 @@ import {
   recibirEnCocina,
   iniciarPreparacion,
   despacharPedido,
+  getEventosPedido,
 } from '@/modules/orders/actions';
 import { toast } from 'sonner';
-import type { PedidoWithItems } from '@/modules/orders/domain/pedido';
+import type { PedidoWithItems, PedidoEvento } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';
+
+const ESTADO_LABEL: Record<string, string> = {
+  creado: 'Pedido creado',
+  recibido_cocina: 'Recibido en cocina',
+  en_preparacion: 'En preparación',
+  despachado: 'Despachado',
+  entregado: 'Entregado',
+  cancelado: 'Cancelado',
+};
+
+function formatHora(d: Date): string {
+  return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 // Threshold en minutos para mostrar alerta urgente
 const URGENCY_WARN_MINS = 8;
@@ -55,8 +79,22 @@ interface AmexCardProps {
 
 function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
   const [loading, setLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [eventos, setEventos] = useState<PedidoEvento[] | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const since = pedido.estado === 'en_preparacion' ? pedido.updatedAt : pedido.createdAt;
   const { label: elapsed, mins } = useElapsed(since);
+
+  const toggleHistory = async () => {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next && eventos === null) {
+      setLoadingHistory(true);
+      const r = await getEventosPedido(pedido.id);
+      if (r.ok) setEventos(r.value);
+      setLoadingHistory(false);
+    }
+  };
 
   const isCrit = mins >= URGENCY_CRIT_MINS && pedido.estado !== 'despachado';
   const isWarn = mins >= URGENCY_WARN_MINS && !isCrit && pedido.estado !== 'despachado';
@@ -169,6 +207,55 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
           <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
             Esperando confirmación del mesero
           </Badge>
+        )}
+      </div>
+
+      {/* Historia de trazabilidad */}
+      <div className="border-t border-border/50 pt-2">
+        <button
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+          onClick={toggleHistory}
+        >
+          {loadingHistory ? (
+            <RefreshCw className="h-3 w-3 animate-spin" />
+          ) : (
+            <History className="h-3 w-3" />
+          )}
+          <span>Historial</span>
+          {showHistory ? (
+            <ChevronUp className="h-3 w-3 ml-auto" />
+          ) : (
+            <ChevronDown className="h-3 w-3 ml-auto" />
+          )}
+        </button>
+        {showHistory && (
+          <div className="mt-2 space-y-1.5">
+            {eventos === null || loadingHistory ? (
+              <p className="text-xs text-muted-foreground pl-3">Cargando…</p>
+            ) : eventos.length === 0 ? (
+              <p className="text-xs text-muted-foreground pl-3">Sin eventos registrados</p>
+            ) : (
+              eventos.map((ev, idx) => (
+                <div key={ev.id} className="flex gap-2 text-xs">
+                  <div className="flex flex-col items-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1 shrink-0" />
+                    {idx < eventos.length - 1 && (
+                      <div className="w-px flex-1 bg-border mt-0.5 min-h-[8px]" />
+                    )}
+                  </div>
+                  <div className="pb-1.5">
+                    <p className="font-medium text-foreground leading-tight">
+                      {ESTADO_LABEL[ev.estado] ?? ev.estado}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {formatHora(ev.createdAt)}
+                      {ev.actorNombre && ` · ${ev.actorNombre}`}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -31,6 +31,16 @@ export async function getAlertasUnreadCount(): Promise<Result<number>> {
   }
 }
 
+export async function getAlertasAdmin(): Promise<Result<Alerta[]>> {
+  try {
+    const ctx = await assertCan('alertas:write');
+    const repo = createAlertaRepository();
+    return ok(await repo.findAll(ctx.tenantId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 // ── Acciones de usuario ───────────────────────────────────────────────────────
 
 export async function marcarAlertaLeida(alertaId: string): Promise<Result<void>> {

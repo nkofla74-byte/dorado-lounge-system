@@ -45,6 +45,15 @@ export interface PedidoForDelivery extends Pedido {
   items: PedidoItemConIngredientes[];
 }
 
+export interface PedidoEvento {
+  id: string;
+  pedidoId: string;
+  estado: EstadoPedido;
+  actorId: string | null;
+  actorNombre: string | null;
+  createdAt: Date;
+}
+
 export type CreatePedidoInput = {
   zona: ZonaServicio;
   numeroMesa?: string | undefined;

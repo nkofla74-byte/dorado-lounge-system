@@ -22,6 +22,7 @@ import {
   Plane,
   ShieldCheck,
   Settings2,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -157,6 +158,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     label: 'Proveedores',
     icon: Building2,
     roles: ['admin', 'personal_almacen'],
+  },
+  {
+    href: '/admin/alertas',
+    label: 'Alertas',
+    icon: Bell,
+    roles: ['admin'],
   },
   {
     href: '/admin/feature-flags',
