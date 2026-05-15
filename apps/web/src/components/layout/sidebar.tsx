@@ -22,12 +22,16 @@ import {
   Plane,
   ShieldCheck,
   Settings2,
+  Bell,
+  ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
+import { LocaleSwitcher } from '@/components/layout/locale-switcher';
+import { AlertasBell } from '@/components/alertas/alertas-bell';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -39,6 +43,7 @@ interface SidebarUser {
 
 interface SidebarProps {
   user: SidebarUser;
+  locale: 'es' | 'en';
 }
 
 // roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en middleware.ts.
@@ -75,7 +80,13 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/cocina',
     label: 'KDS Cocina',
     icon: MonitorCheck,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef'],
+  },
+  {
+    href: '/cocina-amex',
+    label: 'KDS Amex',
+    icon: MonitorCheck,
+    roles: ['admin', 'sous_chef'],
   },
   {
     href: '/produccion',
@@ -111,19 +122,19 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/buffet',
     label: 'Buffet',
     icon: UtensilsCrossed,
-    roles: ['admin', 'chef', 'sous_chef', 'personal_buffet'],
+    roles: ['admin', 'chef', 'personal_buffet'],
   },
   {
     href: '/snack',
     label: 'Snack',
     icon: Coffee,
-    roles: ['admin', 'chef', 'sous_chef', 'personal_snack'],
+    roles: ['admin', 'chef', 'personal_snack'],
   },
   {
     href: '/turnos',
     label: 'Turnos',
     icon: Clock,
-    roles: ['admin', 'chef', 'sous_chef'],
+    roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
   },
   {
     href: '/afluencia',
@@ -141,6 +152,24 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     href: '/admin/personal',
     label: 'Personal',
     icon: UserCog,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/proveedores',
+    label: 'Proveedores',
+    icon: Building2,
+    roles: ['admin', 'personal_almacen'],
+  },
+  {
+    href: '/admin/alertas',
+    label: 'Alertas',
+    icon: Bell,
+    roles: ['admin'],
+  },
+  {
+    href: '/admin/auditoria',
+    label: 'Auditoría',
+    icon: ScrollText,
     roles: ['admin'],
   },
   {
@@ -178,9 +207,10 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 interface SidebarContentProps extends SidebarProps {
   onNavigate?: () => void;
+  locale: 'es' | 'en';
 }
 
-function SidebarContent({ user, onNavigate }: SidebarContentProps) {
+function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -251,7 +281,11 @@ function SidebarContent({ user, onNavigate }: SidebarContentProps) {
           <p className="text-xs text-primary truncate">{ROLE_LABELS[user.role]}</p>
           <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
-        <ThemeToggle />
+        <LocaleSwitcher current={locale} />
+        <div className="flex items-center gap-1 px-1">
+          <AlertasBell />
+          <ThemeToggle />
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -266,15 +300,15 @@ function SidebarContent({ user, onNavigate }: SidebarContentProps) {
   );
 }
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, locale }: SidebarProps) {
   return (
     <aside className="hidden md:flex w-60 h-screen sticky top-0 border-r border-border/50 shrink-0">
-      <SidebarContent user={user} />
+      <SidebarContent user={user} locale={locale} />
     </aside>
   );
 }
 
-export function MobileTopBar({ user }: SidebarProps) {
+export function MobileTopBar({ user, locale }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -292,7 +326,7 @@ export function MobileTopBar({ user }: SidebarProps) {
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-72 max-w-[85vw]">
           <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-          <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+          <SidebarContent user={user} locale={locale} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -303,6 +337,7 @@ export function MobileTopBar({ user }: SidebarProps) {
         <p className="text-sm font-semibold truncate">Dorado Lounge</p>
       </div>
 
+      <AlertasBell />
       <ThemeToggle />
     </header>
   );

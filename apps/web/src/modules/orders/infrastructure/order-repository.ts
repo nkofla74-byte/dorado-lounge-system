@@ -121,7 +121,22 @@ export function createOrderRepository(): OrderRepository {
         .select(PEDIDO_SELECT)
         .eq('tenant_id', tenantId)
         .is('deleted_at', null)
-        .in('estado', ['creado', 'en_preparacion', 'despachado'])
+        .in('estado', ['creado', 'recibido_cocina', 'en_preparacion', 'despachado'])
+        .order('created_at', { ascending: true });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
+    async findActiveByZona(tenantId: string, zona: string): Promise<PedidoWithItems[]> {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_SELECT)
+        .eq('tenant_id', tenantId)
+        .eq('zona', zona)
+        .is('deleted_at', null)
+        .in('estado', ['creado', 'recibido_cocina', 'en_preparacion', 'despachado'])
         .order('created_at', { ascending: true });
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);

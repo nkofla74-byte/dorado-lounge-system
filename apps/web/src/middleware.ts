@@ -9,7 +9,7 @@ const ROLE_HOME: Record<UserRole, string> = {
   superuser: '/admin/tenants',
   admin: '/inventario',
   chef: '/cocina',
-  sous_chef: '/cocina',
+  sous_chef: '/cocina-amex',
   mesero_amex: '/pedidos',
   recepcion: '/pedidos',
   personal_snack: '/snack',
@@ -32,6 +32,7 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/pasteleria',
     '/pedidos',
     '/cocina',
+    '/cocina-amex',
     '/buffet',
     '/snack',
     '/afluencia',
@@ -53,22 +54,20 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/vuelos',
   ],
   sous_chef: [
-    '/cocina',
+    '/cocina-amex',
     '/produccion',
     '/pedidos',
     '/inventario',
     '/recetas',
     '/afluencia',
     '/turnos',
-    '/snack',
-    '/buffet',
     '/vuelos',
   ],
   mesero_amex: ['/pedidos', '/vuelos'],
   recepcion: ['/pedidos', '/afluencia', '/vuelos'],
   personal_snack: ['/snack', '/inventario'],
   personal_buffet: ['/buffet', '/inventario'],
-  personal_almacen: ['/almacen', '/inventario'],
+  personal_almacen: ['/almacen', '/inventario', '/admin/proveedores'],
   personal_pasteleria: ['/pasteleria', '/produccion', '/recetas', '/inventario'],
   steward: ['/produccion', '/inventario'],
 };
@@ -76,7 +75,13 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
 function canAccess(role: UserRole, pathname: string): boolean {
   const prefixes = ROLE_ALLOWED_PREFIXES[role];
   if (!prefixes) return false;
-  return prefixes.some((prefix) => prefix === '/' || pathname.startsWith(prefix));
+  return prefixes.some(
+    (prefix) =>
+      prefix === '/' ||
+      pathname === prefix ||
+      pathname.startsWith(prefix + '/') ||
+      pathname.startsWith(prefix + '?'),
+  );
 }
 
 export async function middleware(request: NextRequest) {

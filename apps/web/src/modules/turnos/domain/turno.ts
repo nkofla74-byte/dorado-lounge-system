@@ -2,6 +2,7 @@ export interface Turno {
   id: string;
   tenantId: string;
   nombre: string;
+  teamlider: string;
   responsableId: string | null;
   iniciadoAt: Date;
   cerradoAt: Date | null;
@@ -12,6 +13,7 @@ export interface Turno {
 
 export interface CreateTurnoInput {
   nombre: string;
+  teamlider: string;
 }
 
 export class TurnoYaActivoError extends Error {

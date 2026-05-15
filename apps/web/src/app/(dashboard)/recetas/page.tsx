@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getRecetas } from '@/modules/recipes/actions';
 import { getInsumos } from '@/modules/inventory/actions';
+import { getCostosRecetas } from '@/modules/costos/actions';
 import { RecipeTable } from '@/components/recipes/recipe-table';
 
 export const metadata: Metadata = {
@@ -10,17 +11,21 @@ export const metadata: Metadata = {
 export default async function RecetasPage() {
   const [recetasResult, insumosResult] = await Promise.all([getRecetas(), getInsumos()]);
 
+  const recetaIds = recetasResult.ok ? recetasResult.value.map((r) => r.id) : [];
+  const costosResult = recetaIds.length > 0 ? await getCostosRecetas(recetaIds) : null;
+
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Recetas</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Recetas de producción y servicio con ingredientes y coeficientes de merma
+          Recetas de producción y servicio con ingredientes, merma y costo en tiempo real
         </p>
       </div>
       <RecipeTable
         initialData={recetasResult.ok ? recetasResult.value : []}
         insumos={insumosResult.ok ? insumosResult.value : []}
+        initialCostos={costosResult?.ok ? costosResult.value : {}}
         error={recetasResult.ok ? undefined : recetasResult.error.message}
       />
     </div>

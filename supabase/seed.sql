@@ -405,10 +405,11 @@ BEGIN
   -- ──────────────────────────────────────────────────────────────────────────
   -- 10. TURNO ACTIVO
   -- ──────────────────────────────────────────────────────────────────────────
-  INSERT INTO public.turnos (id, tenant_id, nombre, responsable_id, iniciado_at, activo)
+  INSERT INTO public.turnos (id, tenant_id, nombre, teamlider, responsable_id, iniciado_at, activo)
   VALUES (
     v_turno, v_tenant,
     'Turno A — 06:00–14:00',
+    'Ana García',
     u_admin,
     (CURRENT_DATE + time '06:00:00')::timestamptz,
     true
@@ -475,4 +476,65 @@ BEGIN
   RAISE NOTICE '  Turno     : Turno A activo desde las 06:00';
   RAISE NOTICE '  Pedidos   : 2 pedidos en KDS (Mesa 5 creado, Mesa 3 en preparacion)';
 
+END $$;
+
+-- =============================================================================
+-- Bloque adicional — Usuarios para los 4 roles operativos extendidos
+-- (introducidos por la migración 20260512000000_extend_user_roles)
+-- Se ejecuta como bloque independiente para mantener idempotencia separada.
+-- =============================================================================
+DO $$
+DECLARE
+  v_tenant     uuid := 'd0ead0f0-1000-0000-0000-000000000001';
+  v_pwd_hash   text;
+
+  u_recepcion  uuid := 'd0ead0f0-2000-0000-0000-000000000008';
+  u_almacen    uuid := 'd0ead0f0-2000-0000-0000-000000000009';
+  u_pasteleria uuid := 'd0ead0f0-2000-0000-0000-00000000000a';
+  u_steward    uuid := 'd0ead0f0-2000-0000-0000-00000000000b';
+BEGIN
+  v_pwd_hash := crypt('DoradoTest2024!', gen_salt('bf'));
+
+  INSERT INTO auth.users (
+    id, instance_id, aud, role,
+    email, encrypted_password, email_confirmed_at,
+    raw_user_meta_data, raw_app_meta_data,
+    created_at, updated_at
+  )
+  VALUES
+    (u_recepcion, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'recepcion@doradolounge.dev', v_pwd_hash, now(),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'recepcion'),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'recepcion'),
+     now(), now()),
+
+    (u_almacen, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'almacen@doradolounge.dev', v_pwd_hash, now(),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'personal_almacen'),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'personal_almacen'),
+     now(), now()),
+
+    (u_pasteleria, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'pasteleria@doradolounge.dev', v_pwd_hash, now(),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'personal_pasteleria'),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'personal_pasteleria'),
+     now(), now()),
+
+    (u_steward, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+     'steward@doradolounge.dev', v_pwd_hash, now(),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'steward'),
+     jsonb_build_object('tenant_id', v_tenant::text, 'role', 'steward'),
+     now(), now())
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.users (id, tenant_id, nombre, role, activo)
+  VALUES
+    (u_recepcion,  v_tenant, 'Recepción Lounge',        'recepcion',           true),
+    (u_almacen,    v_tenant, 'Personal de Almacén',     'personal_almacen',    true),
+    (u_pasteleria, v_tenant, 'Personal de Pastelería',  'personal_pasteleria', true),
+    (u_steward,    v_tenant, 'Steward (Utensilios)',    'steward',             true)
+  ON CONFLICT (id) DO NOTHING;
+
+  RAISE NOTICE '✓ Seed extendido: 4 usuarios para roles operativos adicionales';
+  RAISE NOTICE '  recepcion@ | almacen@ | pasteleria@ | steward@ @doradolounge.dev';
 END $$;

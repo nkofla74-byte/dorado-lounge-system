@@ -14,13 +14,40 @@ import { cantidadConMerma } from '@/modules/inventory/domain/merma';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
-import type { Pedido, PedidoWithItems } from './domain/pedido';
+import type { Pedido, PedidoWithItems, PedidoEvento } from './domain/pedido';
+
+// ── Trazabilidad — fire-and-forget ────────────────────────────────────────────
+async function registrarEvento(
+  tenantId: string,
+  pedidoId: string,
+  estado: string,
+  actorId: string,
+): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    await admin
+      .from('pedido_eventos')
+      .insert({ tenant_id: tenantId, pedido_id: pedidoId, estado, actor_id: actorId });
+  } catch {
+    // Best-effort — no bloquea la operación principal
+  }
+}
 
 export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
   try {
     const ctx = await assertCan('orders:read');
     const repo = createOrderRepository();
     return ok(await getPedidosUseCase(repo, ctx.tenantId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getPedidosAmex(): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('cocina_amex:read');
+    const repo = createOrderRepository();
+    return ok(await repo.findActiveByZona(ctx.tenantId, 'amex'));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -67,8 +94,8 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       payload: { zona: pedido.zona, itemsCount: pedido.items.length },
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_CREADO',
+    const pedidoCreadoPayload = {
+      type: 'PEDIDO_CREADO' as const,
       payload: {
         pedidoId: pedido.id,
         tenantId: ctx.tenantId,
@@ -83,9 +110,65 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
         createdAt:
           pedido.createdAt instanceof Date ? pedido.createdAt.toISOString() : pedido.createdAt,
       },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, pedidoCreadoPayload);
+    if (pedido.zona === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, pedidoCreadoPayload);
+    }
+
+    void registrarEvento(ctx.tenantId, pedido.id, 'creado', ctx.userId);
+    return ok(pedido);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function recibirEnCocina(pedidoId: string, version: number): Promise<Result<Pedido>> {
+  try {
+    const ctx = await assertCan('cocina_amex:write');
+    const repo = createOrderRepository();
+
+    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
+    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('recibido_cocina')) {
+      return err(
+        new AppError(
+          'INVALID_TRANSITION',
+          400,
+          `No se puede recibir un pedido en estado '${pedido.estado}'`,
+        ),
+      );
+    }
+
+    const updated = await repo.transition(pedidoId, ctx.tenantId, 'recibido_cocina', version);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'orders:recibir_en_cocina',
+      resourceId: pedidoId,
+      resourceType: 'pedido',
+      payload: { zona: pedido.zona },
     });
 
-    return ok(pedido);
+    const eventoPayload = {
+      type: 'PEDIDO_ESTADO' as const,
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'recibido_cocina' as const,
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
+    await emitEvent(ctx.tenantId, CHANNELS.AMEX, eventoPayload);
+
+    void registrarEvento(ctx.tenantId, pedidoId, 'recibido_cocina', ctx.userId);
+    return ok(updated);
   } catch (e) {
     return err(toAppError(e));
   }
@@ -136,6 +219,7 @@ export async function iniciarPreparacion(
       },
     });
 
+    void registrarEvento(ctx.tenantId, pedidoId, 'en_preparacion', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -183,11 +267,11 @@ export async function despacharPedido(pedidoId: string, version: number): Promis
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     };
-    // KDS necesita saber que el pedido salió de cocina
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, despachoPayload);
-    // Mesero necesita saber que el pedido está listo para recoger
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, despachoPayload);
     await emitEvent(ctx.tenantId, CHANNELS.AMEX, despachoPayload);
 
+    void registrarEvento(ctx.tenantId, pedidoId, 'despachado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -268,6 +352,7 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       },
     });
 
+    void registrarEvento(ctx.tenantId, pedidoId, 'entregado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -316,7 +401,48 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
       },
     });
 
+    void registrarEvento(ctx.tenantId, pedidoId, 'cancelado', ctx.userId);
     return ok(updated);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// ── Trazabilidad — lectura pública ────────────────────────────────────────────
+
+export async function getEventosPedido(pedidoId: string): Promise<Result<PedidoEvento[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const admin = createAdminClient();
+
+    const { data: rows, error } = await admin
+      .from('pedido_eventos')
+      .select('id, pedido_id, estado, actor_id, created_at')
+      .eq('pedido_id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: true });
+
+    if (error) return err(toAppError(new Error(error.message)));
+
+    const actorIds = Array.from(
+      new Set((rows ?? []).map((r) => r.actor_id).filter((id): id is string => id != null)),
+    );
+    let actorMap: Record<string, string> = {};
+    if (actorIds.length > 0) {
+      const { data: users } = await admin.from('users').select('id, nombre').in('id', actorIds);
+      actorMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
+    }
+
+    return ok(
+      (rows ?? []).map((r) => ({
+        id: r.id,
+        pedidoId: r.pedido_id,
+        estado: r.estado as PedidoEvento['estado'],
+        actorId: r.actor_id,
+        actorNombre: r.actor_id ? (actorMap[r.actor_id] ?? null) : null,
+        createdAt: new Date(r.created_at),
+      })),
+    );
   } catch (e) {
     return err(toAppError(e));
   }

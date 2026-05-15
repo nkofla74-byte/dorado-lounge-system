@@ -33,7 +33,7 @@ const PASSWORD = 'Dorado2026!';
 const USERS = [
   { nombre: 'Admin Demo', email: 'admin@dorado.test', role: 'admin' },
   { nombre: 'Chef Demo', email: 'chef@dorado.test', role: 'chef' },
-  { nombre: 'Sous Chef Demo', email: 'souschef@dorado.test', role: 'sous_chef' },
+  { nombre: 'Sous Chef Demo', email: 'soushef@dorado.test', role: 'sous_chef' },
   { nombre: 'Mesero Amex Demo', email: 'mesero@dorado.test', role: 'mesero_amex' },
   { nombre: 'Recepción Demo', email: 'recepcion@dorado.test', role: 'recepcion' },
   { nombre: 'Personal Snack Demo', email: 'snack@dorado.test', role: 'personal_snack' },
@@ -74,15 +74,30 @@ async function main() {
 
   // 2. Obtener lista de auth users para detectar duplicados
   const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const existingEmails = new Set((authList?.users ?? []).map((u) => u.email));
+  const existingByEmail = new Map((authList?.users ?? []).map((u) => [u.email, u]));
 
-  // 3. Crear usuarios
-  console.log('\nCreando usuarios de prueba...\n');
+  // 3. Crear o reparar usuarios
+  console.log('\nCreando / verificando usuarios de prueba...\n');
   const results = [];
 
   for (const u of USERS) {
-    if (existingEmails.has(u.email)) {
-      console.log(`⚠  Ya existe: ${u.role.padEnd(22)} ${u.email}`);
+    const existing = existingByEmail.get(u.email);
+
+    if (existing) {
+      // Usuario ya existe — verificar que app_metadata tenga rol y tenant
+      const appMeta = existing.app_metadata ?? {};
+      if (appMeta.role && appMeta.tenant_id) {
+        console.log(`✓ ${u.role.padEnd(22)} ${u.email} (ya existe, OK)`);
+      } else {
+        const { error: fixErr } = await admin.auth.admin.updateUserById(existing.id, {
+          app_metadata: { ...appMeta, tenant_id: tenantId, role: u.role },
+        });
+        if (fixErr) {
+          console.error(`✗ ${u.role.padEnd(22)} ${u.email} — fix app_metadata: ${fixErr.message}`);
+        } else {
+          console.log(`✔ ${u.role.padEnd(22)} ${u.email} (app_metadata reparado)`);
+        }
+      }
       results.push({ ...u, status: 'existing' });
       continue;
     }
@@ -93,6 +108,7 @@ async function main() {
         password: PASSWORD,
         email_confirm: true,
         user_metadata: { tenant_id: tenantId, role: u.role },
+        app_metadata: { tenant_id: tenantId, role: u.role },
       });
       if (authErr) throw authErr;
 

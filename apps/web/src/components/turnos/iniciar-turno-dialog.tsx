@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,11 +21,23 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { iniciarTurno } from '@/modules/turnos/actions';
+import { iniciarTurno, getUsuariosResumen } from '@/modules/turnos/actions';
+import type { UsuarioResumen } from '@/modules/turnos/actions';
+
+const OTRO = '__otro__';
 
 const formSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  teamlider: z.string().min(1, 'El jefe de turno es obligatorio').max(255),
+  teamliderSelect: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -38,15 +50,24 @@ interface IniciarTurnoDialogProps {
 
 export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTurnoDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
+  const [showOtro, setShowOtro] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    getUsuariosResumen().then((r) => {
+      if (r.ok) setUsuarios(r.value);
+    });
+  }, [open]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { nombre: '' },
+    defaultValues: { nombre: '', teamlider: '', teamliderSelect: '' },
   });
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
-    const result = await iniciarTurno({ nombre: values.nombre });
+    const result = await iniciarTurno({ nombre: values.nombre, teamlider: values.teamlider });
 
     if (!result.ok) {
       setError(result.error.message);
@@ -54,8 +75,20 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
     }
 
     form.reset();
+    setShowOtro(false);
     onOpenChange(false);
     onIniciado();
+  };
+
+  const handleSelectChange = (value: string) => {
+    form.setValue('teamliderSelect', value, { shouldValidate: true });
+    if (value === OTRO) {
+      setShowOtro(true);
+      form.setValue('teamlider', '', { shouldValidate: false });
+    } else {
+      setShowOtro(false);
+      form.setValue('teamlider', value, { shouldValidate: true });
+    }
   };
 
   return (
@@ -83,6 +116,48 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="teamliderSelect"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Jefe de turno (Teamlider)</FormLabel>
+                  <Select onValueChange={handleSelectChange} value={form.watch('teamliderSelect')}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un responsable…" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {usuarios.map((u) => (
+                        <SelectItem key={u.id} value={u.nombre}>
+                          {u.nombre}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={OTRO}>Otro…</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {showOtro && (
+              <FormField
+                control={form.control}
+                name="teamlider"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre del responsable</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nombre completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 

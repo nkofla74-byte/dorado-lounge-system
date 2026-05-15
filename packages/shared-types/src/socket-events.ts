@@ -6,6 +6,7 @@ import type { UserRole, ZonaServicio, EstadoPedido } from './enums';
 
 export const CHANNELS = {
   COCINA: 'sala:cocina',
+  COCINA_AMEX: 'sala:cocina:amex',
   AMEX: 'sala:amex',
   SNACK: 'sala:snack',
   BUFFET: 'sala:buffet',
@@ -23,6 +24,7 @@ export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
 // Roles que pueden unirse a cada canal. Un rol ausente = desconexión + audit_log.
 export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:cocina': ['chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:cocina:amex': ['sous_chef', 'chef', 'admin', 'superuser'],
   'sala:amex': ['mesero_amex', 'recepcion', 'admin', 'superuser'],
   'sala:snack': ['personal_snack', 'admin', 'superuser'],
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
@@ -136,6 +138,21 @@ export interface TurnoEvent {
   };
 }
 
+export interface AlertaEvent {
+  type: 'ALERTA';
+  payload: {
+    alertaId: string;
+    tenantId: string;
+    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
+    severidad: 'info' | 'warning' | 'critical';
+    titulo: string;
+    mensaje: string;
+    resourceId?: string;
+    resourceTipo?: 'insumo' | 'lote' | 'pedido';
+    createdAt: string;
+  };
+}
+
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
@@ -144,6 +161,7 @@ export type SocketEvent =
   | MensajeChatEvent
   | BroadcastEvent
   | StuartRequestEvent
-  | TurnoEvent;
+  | TurnoEvent
+  | AlertaEvent;
 
 export type SocketEventType = SocketEvent['type'];

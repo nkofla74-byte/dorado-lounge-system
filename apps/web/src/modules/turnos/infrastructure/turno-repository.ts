@@ -7,6 +7,7 @@ type TurnoRow = {
   id: string;
   tenant_id: string;
   nombre: string;
+  teamlider: string;
   responsable_id: string | null;
   iniciado_at: string;
   cerrado_at: string | null;
@@ -20,6 +21,7 @@ function toTurno(row: TurnoRow): Turno {
     id: row.id,
     tenantId: row.tenant_id,
     nombre: row.nombre,
+    teamlider: row.teamlider,
     responsableId: row.responsable_id,
     iniciadoAt: new Date(row.iniciado_at),
     cerradoAt: row.cerrado_at ? new Date(row.cerrado_at) : null,
@@ -30,7 +32,7 @@ function toTurno(row: TurnoRow): Turno {
 }
 
 const SELECT_FIELDS =
-  'id, tenant_id, nombre, responsable_id, iniciado_at, cerrado_at, activo, created_at, updated_at';
+  'id, tenant_id, nombre, teamlider, responsable_id, iniciado_at, cerrado_at, activo, created_at, updated_at';
 
 export function createTurnoRepository(): TurnoRepository {
   return {
@@ -64,12 +66,17 @@ export function createTurnoRepository(): TurnoRepository {
       return data ? toTurno(data as TurnoRow) : null;
     },
 
-    async create(tenantId: string, nombre: string, responsableId: string): Promise<Turno> {
+    async create(
+      tenantId: string,
+      nombre: string,
+      teamlider: string,
+      responsableId: string,
+    ): Promise<Turno> {
       const supabase = createClient();
 
       const { data, error } = await supabase
         .from('turnos')
-        .insert({ tenant_id: tenantId, nombre, responsable_id: responsableId })
+        .insert({ tenant_id: tenantId, nombre, teamlider, responsable_id: responsableId })
         .select(SELECT_FIELDS)
         .single();
 

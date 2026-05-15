@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { UtensilsCrossed, Ticket, AlertTriangle, RefreshCw, Plus } from 'lucide-react';
+import { UtensilsCrossed, Ticket, AlertTriangle, RefreshCw, Plus, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -159,6 +159,47 @@ export function BuffetPanel({
           {loadError}
         </div>
       )}
+
+      {/* Stock local visible — agregado por receta del turno activo */}
+      {(() => {
+        const stockMap = new Map<string, number>();
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        for (const d of despachos) {
+          if (new Date(d.despachadoAt) >= hoy) {
+            stockMap.set(d.recetaNombre, (stockMap.get(d.recetaNombre) ?? 0) + d.cantidad);
+          }
+        }
+        const stockHoy = Array.from(stockMap.entries()).sort((a, b) => b[1] - a[1]);
+        return (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-foreground">Stock disponible hoy</h2>
+              <Badge variant="outline" className="text-xs">
+                {stockHoy.reduce((s, [, n]) => s + n, 0)} lotes
+              </Badge>
+            </div>
+            {stockHoy.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
+                Sin despachos registrados hoy
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {stockHoy.map(([nombre, cantidad]) => (
+                  <div
+                    key={nombre}
+                    className="rounded-lg border border-border bg-card px-3 py-2.5 space-y-0.5"
+                  >
+                    <p className="text-xs text-muted-foreground truncate">{nombre}</p>
+                    <p className="text-xl font-bold tabular-nums">{cantidad}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Despachos */}
       <section className="space-y-3">

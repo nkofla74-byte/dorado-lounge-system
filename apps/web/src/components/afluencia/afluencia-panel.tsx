@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Users, RefreshCw, Plane } from 'lucide-react';
+import { Users, RefreshCw, Plane, Clock, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,8 @@ const ZONA_LABELS: Record<string, string> = {
 interface TurnoActivo {
   id: string;
   nombre: string;
+  teamlider: string;
+  iniciadoAt: Date;
 }
 
 interface Props {
@@ -71,6 +73,49 @@ export function AfluenciaPanel({ turnoActivo }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Info turno activo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
+          <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
+              Apertura
+            </p>
+            <p className="text-sm font-semibold truncate">
+              {new Date(turnoActivo.iniciadoAt).toLocaleTimeString('es-CO', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              {' · '}
+              {new Date(turnoActivo.iniciadoAt).toLocaleDateString('es-CO', {
+                day: '2-digit',
+                month: 'short',
+              })}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
+          <UserCheck className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
+              Team líder
+            </p>
+            <p className="text-sm font-semibold truncate">{turnoActivo.teamlider}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 flex items-center gap-3">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
+              Turno activo
+            </p>
+            <p className="text-sm font-semibold truncate text-emerald-600 dark:text-emerald-400">
+              {turnoActivo.nombre}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* KPI — Total pasajeros */}
       <Card>
         <CardHeader className="pb-2">

@@ -4,6 +4,7 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/actions';
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
@@ -178,6 +179,9 @@ export async function stockOut(input: unknown): Promise<Result<void>> {
       payload: { cantidad: parsed.data.cantidad, idempotencyKey: parsed.data.idempotencyKey },
     });
 
+    // Fire-and-forget: verificar stock mínimo tras descuento
+    void checkStockMinimo(ctx.tenantId, parsed.data.insumoId);
+
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
@@ -291,7 +295,62 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
       },
     });
 
+    // Fire-and-forget: detectar cambio de precio vs lote anterior
+    if (lote.costoUnitario != null) {
+      void checkCambioPrecio(ctx.tenantId, lote.insumoId, lote.costoUnitario, lote.id);
+    }
+
     return ok(lote);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export interface LoteProximoVencer {
+  loteId: string;
+  insumoNombre: string;
+  fechaVencimiento: string;
+  diasRestantes: number;
+  cantidadActual: number;
+}
+
+export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProximoVencer[]>> {
+  try {
+    await assertCan('inventory:read');
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = createClient();
+
+    const limite = new Date();
+    limite.setDate(limite.getDate() + dias);
+
+    const { data, error } = await supabase
+      .from('lotes')
+      .select('id, cantidad_actual, fecha_vencimiento, insumos(nombre)')
+      .is('deleted_at', null)
+      .eq('activo', true)
+      .gt('cantidad_actual', 0)
+      .not('fecha_vencimiento', 'is', null)
+      .lte('fecha_vencimiento', limite.toISOString().split('T')[0])
+      .order('fecha_vencimiento', { ascending: true });
+
+    if (error) return err(toAppError(new Error(error.message)));
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const rows = (data ?? []).map((row: any) => {
+      const fv = new Date(row.fecha_vencimiento);
+      const diff = Math.round((fv.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        loteId: row.id,
+        insumoNombre: row.insumos?.nombre ?? '—',
+        fechaVencimiento: row.fecha_vencimiento as string,
+        diasRestantes: diff,
+        cantidadActual: Number(row.cantidad_actual),
+      };
+    });
+
+    return ok(rows);
   } catch (e) {
     return err(toAppError(e));
   }

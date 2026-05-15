@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { SocketProvider } from '@/lib/socket/socket-provider';
@@ -8,7 +10,7 @@ import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
 // Canal de chat por rol — cada nodo habla en su sala operativa
 const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   chef: CHANNELS.COCINA,
-  sous_chef: CHANNELS.COCINA,
+  sous_chef: CHANNELS.COCINA_AMEX,
   admin: CHANNELS.ADMIN,
   superuser: CHANNELS.ADMIN,
   mesero_amex: CHANNELS.AMEX,
@@ -19,7 +21,7 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
 
 const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
   chef: 'Cocina',
-  sous_chef: 'Cocina',
+  sous_chef: 'Cocina Amex',
   admin: 'Admin',
   superuser: 'Admin',
   mesero_amex: 'Sala Amex',
@@ -30,9 +32,11 @@ const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
-  const [{ data: userData }, { data: sessionData }] = await Promise.all([
+  const [{ data: userData }, { data: sessionData }, messages, locale] = await Promise.all([
     supabase.auth.getUser(),
     supabase.auth.getSession(),
+    getMessages(),
+    getLocale(),
   ]);
 
   const user = userData.user;
@@ -57,17 +61,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const sidebarUser = { name, email: user.email ?? '', role };
 
   return (
-    <SocketProvider token={token}>
-      <div className="flex min-h-screen bg-background">
-        <Sidebar user={sidebarUser} />
-        <div className="flex-1 min-w-0 flex flex-col">
-          <MobileTopBar user={sidebarUser} />
-          <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
+    <NextIntlClientProvider messages={messages} locale={locale}>
+      <SocketProvider token={token}>
+        <div className="flex min-h-screen bg-background">
+          <Sidebar user={sidebarUser} locale={locale as 'es' | 'en'} />
+          <div className="flex-1 min-w-0 flex flex-col">
+            <MobileTopBar user={sidebarUser} locale={locale as 'es' | 'en'} />
+            <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
+          </div>
         </div>
-      </div>
 
-      {/* Chat flotante — solo para roles con canal de chat asignado */}
-      {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
-    </SocketProvider>
+        {/* Chat flotante — solo para roles con canal de chat asignado */}
+        {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
+      </SocketProvider>
+    </NextIntlClientProvider>
   );
 }

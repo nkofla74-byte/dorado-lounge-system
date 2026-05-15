@@ -99,6 +99,7 @@ export const createLoteSchema = z.object({
   cantidadInicial: cantidadSchema,
   fechaVencimiento: z.string().date().optional(),
   proveedor: z.string().max(255).optional(),
+  proveedorId: uuidSchema.optional(),
   costoUnitario: precioCopSchema.optional(),
 });
 
@@ -204,6 +205,7 @@ export const enviarStuartSchema = z.object({
 
 export const createTurnoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  teamlider: z.string().min(1, 'El nombre del jefe de turno es obligatorio').max(255),
 });
 
 export const registrarIngresoSchema = z.object({
@@ -255,3 +257,25 @@ export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
 export type RegistrarIngresoInput = z.infer<typeof registrarIngresoSchema>;
 export type CrearTenantInput = z.infer<typeof crearTenantSchema>;
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
+
+// ── Proveedores ───────────────────────────────────────────────────────────────
+
+export const createProveedorSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  contacto: z.string().max(255).optional().nullable(),
+  telefono: z.string().max(30).optional().nullable(),
+  email: z.string().email('Email inválido').optional().nullable(),
+  notas: z.string().max(1000).optional().nullable(),
+});
+
+export const updateProveedorSchema = z.object({
+  nombre: z.string().min(1).max(255).optional(),
+  contacto: z.string().max(255).optional().nullable(),
+  telefono: z.string().max(30).optional().nullable(),
+  email: z.string().email('Email inválido').optional().nullable(),
+  notas: z.string().max(1000).optional().nullable(),
+  activo: z.boolean().optional(),
+});
+
+export type CreateProveedorInput = z.infer<typeof createProveedorSchema>;
+export type UpdateProveedorInput = z.infer<typeof updateProveedorSchema>;

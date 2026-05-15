@@ -15,7 +15,16 @@ export default async function AfluenciaPage() {
       </div>
 
       <AfluenciaPanel
-        turnoActivo={turnoActivo ? { id: turnoActivo.id, nombre: turnoActivo.nombre } : null}
+        turnoActivo={
+          turnoActivo
+            ? {
+                id: turnoActivo.id,
+                nombre: turnoActivo.nombre,
+                teamlider: turnoActivo.teamlider,
+                iniciadoAt: turnoActivo.iniciadoAt,
+              }
+            : null
+        }
       />
     </div>
   );

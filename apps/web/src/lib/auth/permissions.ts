@@ -86,4 +86,13 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'feature_flags:write': [], // solo superuser — manejado por el bypass
   // Vuelos El Dorado (Sprint 6)
   'flights:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
+  // Cocina AMEX — KDS exclusivo del sous_chef
+  'cocina_amex:read': ['admin', 'sous_chef'],
+  'cocina_amex:write': ['admin', 'sous_chef'],
+  // Proveedores — gestión de proveedores e historial compras
+  'proveedores:read': ['admin', 'personal_almacen'],
+  'proveedores:write': ['admin'],
+  // Alertas — motor de alertas in-app
+  'alertas:read': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
+  'alertas:write': ['admin'],
 };
