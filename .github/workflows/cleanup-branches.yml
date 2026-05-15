@@ -17,6 +17,7 @@ jobs:
         run: |
           for branch in \
             chore/rescate-pr1 \
+            claude/explore-project-structure-xZY2M \
             claude/project-analysis-ts3da \
             claude/spanish-greeting-YXwM2; do
             echo "Deleting $branch..."
