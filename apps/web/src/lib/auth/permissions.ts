@@ -89,4 +89,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],
+  // Proveedores — gestión de proveedores e historial compras
+  'proveedores:read': ['admin', 'personal_almacen'],
+  'proveedores:write': ['admin'],
 };

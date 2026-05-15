@@ -152,6 +152,12 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
     roles: ['admin'],
   },
   {
+    href: '/admin/proveedores',
+    label: 'Proveedores',
+    icon: Building2,
+    roles: ['admin', 'personal_almacen'],
+  },
+  {
     href: '/admin/feature-flags',
     label: 'Feature Flags',
     icon: Settings2,

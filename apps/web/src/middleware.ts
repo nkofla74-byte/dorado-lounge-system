@@ -67,7 +67,7 @@ const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
   recepcion: ['/pedidos', '/afluencia', '/vuelos'],
   personal_snack: ['/snack', '/inventario'],
   personal_buffet: ['/buffet', '/inventario'],
-  personal_almacen: ['/almacen', '/inventario'],
+  personal_almacen: ['/almacen', '/inventario', '/admin/proveedores'],
   personal_pasteleria: ['/pasteleria', '/produccion', '/recetas', '/inventario'],
   steward: ['/produccion', '/inventario'],
 };
