@@ -30,14 +30,29 @@ async function main() {
     .eq('activo', true);
 
   if (pubErr) throw new Error(`Error leyendo public.users: ${pubErr.message}`);
-  console.log(`\nUsuarios en public.users: ${pubUsers.length}\n`);
+
+  // 2. Leer todos los usuarios de auth para detectar los que no están en public.users
+  const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const pubIds = new Set(pubUsers.map((u) => u.id));
+  const orphans = (authList?.users ?? []).filter((u) => !pubIds.has(u.id));
+
+  console.log(`\nUsuarios en public.users : ${pubUsers.length}`);
+  console.log(`Usuarios en auth.users   : ${authList?.users?.length ?? 0}`);
+  if (orphans.length > 0) {
+    console.log(`\n⚠  Usuarios en auth sin fila en public.users (no se pueden reparar):`);
+    orphans.forEach((u) => console.log(`   ${u.email}`));
+    console.log(
+      `   → Agrégalos en el panel de Supabase: Authentication → Users → Edit → App Metadata`,
+    );
+  }
+  console.log('');
 
   let fixed = 0;
   let alreadyOk = 0;
   let errors = 0;
 
   for (const u of pubUsers) {
-    // 2. Leer el usuario en auth.users
+    // 3. Leer el usuario en auth.users
     const { data: authData, error: authErr } = await admin.auth.admin.getUserById(u.id);
     if (authErr || !authData?.user) {
       console.error(
@@ -57,7 +72,7 @@ async function main() {
       continue;
     }
 
-    // 3. Actualizar app_metadata faltante
+    // 4. Actualizar app_metadata faltante
     const { error: updateErr } = await admin.auth.admin.updateUserById(u.id, {
       app_metadata: {
         ...appMeta,

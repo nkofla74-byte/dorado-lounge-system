@@ -33,7 +33,7 @@ const PASSWORD = 'Dorado2026!';
 const USERS = [
   { nombre: 'Admin Demo', email: 'admin@dorado.test', role: 'admin' },
   { nombre: 'Chef Demo', email: 'chef@dorado.test', role: 'chef' },
-  { nombre: 'Sous Chef Demo', email: 'souschef@dorado.test', role: 'sous_chef' },
+  { nombre: 'Sous Chef Demo', email: 'soushef@dorado.test', role: 'sous_chef' },
   { nombre: 'Mesero Amex Demo', email: 'mesero@dorado.test', role: 'mesero_amex' },
   { nombre: 'Recepción Demo', email: 'recepcion@dorado.test', role: 'recepcion' },
   { nombre: 'Personal Snack Demo', email: 'snack@dorado.test', role: 'personal_snack' },
