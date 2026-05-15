@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import type { RecetaWithIngredientes, RecetaIngrediente } from '@/modules/recipes/domain/recipe';
 import type { CategoriaMenu } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
+import type { CostoReceta } from '@/modules/costos/domain/costo';
 import type { z } from 'zod';
 
 type AddIngForm = z.input<typeof addIngredienteSchema>;
@@ -50,9 +51,13 @@ const CATEGORIA_LABELS: Record<CategoriaMenu, string> = {
   acompanante: 'Acompañante',
 };
 
+const formatCOP = (n: number) =>
+  n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
 interface IngredientsSheetProps {
   receta: RecetaWithIngredientes | null;
   open: boolean;
+  costo?: CostoReceta | undefined;
   onOpenChange: (open: boolean) => void;
   insumos: InsumoWithStock[];
   onIngredienteAdded: (recetaId: string, ingrediente: RecetaIngrediente) => void;
@@ -67,6 +72,7 @@ interface IngredientsSheetProps {
 export function IngredientsSheet({
   receta,
   open,
+  costo,
   onOpenChange,
   insumos,
   onIngredienteAdded,
@@ -164,6 +170,20 @@ export function IngredientsSheet({
             {receta.ingredientes.length} ingrediente{receta.ingredientes.length !== 1 ? 's' : ''}
             {' · '}
             {receta.porciones} porción{receta.porciones !== 1 ? 'es' : ''}
+            {costo && (
+              <>
+                {' · '}
+                <span
+                  className={cn(
+                    'font-medium',
+                    costo.tieneCostoCompleto ? 'text-foreground' : 'text-amber-500',
+                  )}
+                >
+                  {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'} / porción
+                </span>
+                {!costo.tieneCostoCompleto && ' ⚠ costo parcial'}
+              </>
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -176,27 +196,55 @@ export function IngredientsSheet({
               Sin ingredientes. Agrega el primero.
             </p>
           ) : (
-            receta.ingredientes.map((ing) => (
-              <div
-                key={ing.id}
-                className="flex items-center justify-between px-3 py-2.5 rounded-md bg-muted/40 border border-border/50"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{ing.insumoNombre}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {ing.cantidad.toLocaleString('es-CO', { maximumFractionDigits: 4 })}{' '}
-                    {UNIDAD_LABEL[ing.unidadMedida] ?? ing.unidadMedida}
-                    {ing.mermaCoeficiente > 0 && (
-                      <span className="ml-2 text-amber-500/80">
-                        merma {(ing.mermaCoeficiente * 100).toFixed(1)}%
-                      </span>
-                    )}
-                  </p>
+            receta.ingredientes.map((ing) => {
+              const costoIng = costo?.ingredientes.find((ci) => ci.insumoId === ing.insumoId);
+              return (
+                <div
+                  key={ing.id}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-md bg-muted/40 border border-border/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{ing.insumoNombre}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ing.cantidad.toLocaleString('es-CO', { maximumFractionDigits: 4 })}{' '}
+                      {UNIDAD_LABEL[ing.unidadMedida] ?? ing.unidadMedida}
+                      {ing.mermaCoeficiente > 0 && (
+                        <span className="ml-2 text-amber-500/80">
+                          merma {(ing.mermaCoeficiente * 100).toFixed(1)}%
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {costoIng && (
+                    <div className="text-right shrink-0 ml-3">
+                      {costoIng.costoIngrediente != null ? (
+                        <p className="text-xs font-medium tabular-nums">
+                          {formatCOP(costoIng.costoIngrediente)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-500/70">sin precio</p>
+                      )}
+                      {costoIng.precioUnitario != null && (
+                        <p className="text-[10px] text-muted-foreground tabular-nums">
+                          {formatCOP(costoIng.precioUnitario)}/
+                          {UNIDAD_LABEL[ing.unidadMedida] ?? ing.unidadMedida}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
+
+        {/* Resumen de costo total */}
+        {costo && receta.ingredientes.length > 0 && (
+          <div className="flex items-center justify-between px-3 py-2 rounded-md bg-primary/5 border border-primary/20 text-sm">
+            <span className="text-muted-foreground">Costo total receta</span>
+            <span className="font-semibold tabular-nums">{formatCOP(costo.costoTotal)}</span>
+          </div>
+        )}
 
         {/* Formulario para agregar ingrediente */}
         {showForm ? (

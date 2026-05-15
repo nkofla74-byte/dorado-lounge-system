@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, AlertTriangle, Plus, RefreshCw, ChevronRight, QrCode } from 'lucide-react';
+import {
+  BookOpen,
+  AlertTriangle,
+  Plus,
+  RefreshCw,
+  ChevronRight,
+  QrCode,
+  TrendingUp,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,11 +22,13 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { getRecetas } from '@/modules/recipes/actions';
+import { getCostosRecetas } from '@/modules/costos/actions';
 import { CreateRecipeDialog } from './create-recipe-dialog';
 import { IngredientsSheet } from './ingredients-sheet';
 import type { RecetaWithIngredientes, RecetaIngrediente } from '@/modules/recipes/domain/recipe';
 import type { CategoriaMenu } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
+import type { CostoReceta } from '@/modules/costos/domain/costo';
 
 const ZONA_LABEL: Record<string, string> = {
   amex: 'Amex',
@@ -32,14 +42,24 @@ const CATEGORIA_LABEL: Record<CategoriaMenu, string> = {
   acompanante: 'Acompañante',
 };
 
+const formatCOP = (n: number) =>
+  n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
 interface RecipeTableProps {
   initialData: RecetaWithIngredientes[];
   insumos: InsumoWithStock[];
+  initialCostos?: Record<string, CostoReceta> | undefined;
   error?: string | undefined;
 }
 
-export function RecipeTable({ initialData, insumos, error: initialError }: RecipeTableProps) {
+export function RecipeTable({
+  initialData,
+  insumos,
+  initialCostos = {},
+  error: initialError,
+}: RecipeTableProps) {
   const [data, setData] = useState(initialData);
+  const [costos, setCostos] = useState<Record<string, CostoReceta>>(initialCostos);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
   const [createOpen, setCreateOpen] = useState(false);
@@ -53,6 +73,11 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
     const result = await getRecetas();
     if (result.ok) {
       setData(result.value);
+      const ids = result.value.map((r) => r.id);
+      if (ids.length > 0) {
+        const cr = await getCostosRecetas(ids);
+        if (cr.ok) setCostos(cr.value);
+      }
     } else {
       setFetchError(result.error.message);
     }
@@ -133,6 +158,12 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
               <TableHead className="text-center">Ingredientes</TableHead>
               <TableHead>
                 <span className="flex items-center gap-1">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Costo / porción
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="flex items-center gap-1">
                   <QrCode className="h-3.5 w-3.5" />
                   Menú QR
                 </span>
@@ -143,66 +174,95 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                   No hay recetas registradas. Crea la primera con el botón de arriba.
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((receta) => (
-                <TableRow key={receta.id} className="border-border">
-                  <TableCell className="font-medium">{receta.nombre}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={receta.tipoReceta === 'produccion' ? 'secondary' : 'outline'}
-                      className="text-xs"
-                    >
-                      {receta.tipoReceta === 'produccion' ? 'Producción' : 'Servicio'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {receta.tipoReceta === 'produccion'
-                      ? (receta.insumoDestinoNombre ?? '—')
-                      : (ZONA_LABEL[receta.zona ?? ''] ?? receta.zona ?? '—')}
-                  </TableCell>
-                  <TableCell className="text-center tabular-nums text-sm">
-                    {receta.porciones}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span
-                      className={cn(
-                        'text-sm tabular-nums',
-                        receta.ingredientes.length === 0 ? 'text-amber-500/80' : 'text-foreground',
-                      )}
-                    >
-                      {receta.ingredientes.length}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {receta.tipoReceta === 'servicio' ? (
-                      receta.categoriaMenu ? (
-                        <Badge variant="secondary" className="text-xs">
-                          {CATEGORIA_LABEL[receta.categoriaMenu]}
-                        </Badge>
+              data.map((receta) => {
+                const costo = costos[receta.id];
+                return (
+                  <TableRow key={receta.id} className="border-border">
+                    <TableCell className="font-medium">{receta.nombre}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={receta.tipoReceta === 'produccion' ? 'secondary' : 'outline'}
+                        className="text-xs"
+                      >
+                        {receta.tipoReceta === 'produccion' ? 'Producción' : 'Servicio'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {receta.tipoReceta === 'produccion'
+                        ? (receta.insumoDestinoNombre ?? '—')
+                        : (ZONA_LABEL[receta.zona ?? ''] ?? receta.zona ?? '—')}
+                    </TableCell>
+                    <TableCell className="text-center tabular-nums text-sm">
+                      {receta.porciones}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span
+                        className={cn(
+                          'text-sm tabular-nums',
+                          receta.ingredientes.length === 0
+                            ? 'text-amber-500/80'
+                            : 'text-foreground',
+                        )}
+                      >
+                        {receta.ingredientes.length}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {costo ? (
+                        <span
+                          className={cn(
+                            'text-sm tabular-nums',
+                            !costo.tieneCostoCompleto && 'text-amber-500/80',
+                          )}
+                          title={
+                            !costo.tieneCostoCompleto
+                              ? 'Faltan precios en algunos ingredientes'
+                              : undefined
+                          }
+                        >
+                          {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'}
+                          {!costo.tieneCostoCompleto && (
+                            <AlertTriangle className="inline h-3 w-3 ml-1 text-amber-500/80" />
+                          )}
+                        </span>
+                      ) : receta.ingredientes.length === 0 ? (
+                        <span className="text-xs text-muted-foreground/40">Sin ingr.</span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/60">Sin categoría</span>
-                      )
-                    ) : (
-                      <span className="text-muted-foreground/40">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => setSheetReceta(receta)}
-                      title="Ver ingredientes"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                        <span className="text-xs text-muted-foreground/40">Sin precios</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {receta.tipoReceta === 'servicio' ? (
+                        receta.categoriaMenu ? (
+                          <Badge variant="secondary" className="text-xs">
+                            {CATEGORIA_LABEL[receta.categoriaMenu]}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60">Sin categoría</span>
+                        )
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => setSheetReceta(receta)}
+                        title="Ver ingredientes y costos"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -218,11 +278,18 @@ export function RecipeTable({ initialData, insumos, error: initialError }: Recip
       <IngredientsSheet
         receta={sheetReceta}
         open={sheetReceta !== null}
+        costo={sheetReceta ? costos[sheetReceta.id] : undefined}
         onOpenChange={(open) => {
           if (!open) setSheetReceta(null);
         }}
         insumos={insumos}
-        onIngredienteAdded={handleIngredienteAdded}
+        onIngredienteAdded={(recetaId, ingrediente) => {
+          handleIngredienteAdded(recetaId, ingrediente);
+          // Refresh costs for this recipe after adding ingredient
+          void getCostosRecetas([recetaId]).then((r) => {
+            if (r.ok) setCostos((prev) => ({ ...prev, ...r.value }));
+          });
+        }}
         onMenuMetaUpdated={handleMenuMetaUpdated}
       />
     </div>
