@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { LocaleSwitcher } from '@/components/layout/locale-switcher';
+import { AlertasBell } from '@/components/alertas/alertas-bell';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -267,7 +268,10 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
           <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
         <LocaleSwitcher current={locale} />
-        <ThemeToggle />
+        <div className="flex items-center gap-1 px-1">
+          <AlertasBell />
+          <ThemeToggle />
+        </div>
         <Button
           variant="ghost"
           size="sm"
@@ -319,6 +323,7 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
         <p className="text-sm font-semibold truncate">Dorado Lounge</p>
       </div>
 
+      <AlertasBell />
       <ThemeToggle />
     </header>
   );

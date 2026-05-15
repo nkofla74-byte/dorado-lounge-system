@@ -4,6 +4,7 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/actions';
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
@@ -178,6 +179,9 @@ export async function stockOut(input: unknown): Promise<Result<void>> {
       payload: { cantidad: parsed.data.cantidad, idempotencyKey: parsed.data.idempotencyKey },
     });
 
+    // Fire-and-forget: verificar stock mínimo tras descuento
+    void checkStockMinimo(ctx.tenantId, parsed.data.insumoId);
+
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
@@ -290,6 +294,11 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
         fechaVencimiento: lote.fechaVencimiento,
       },
     });
+
+    // Fire-and-forget: detectar cambio de precio vs lote anterior
+    if (lote.costoUnitario != null) {
+      void checkCambioPrecio(ctx.tenantId, lote.insumoId, lote.costoUnitario, lote.id);
+    }
 
     return ok(lote);
   } catch (e) {

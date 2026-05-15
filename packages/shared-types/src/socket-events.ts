@@ -138,6 +138,21 @@ export interface TurnoEvent {
   };
 }
 
+export interface AlertaEvent {
+  type: 'ALERTA';
+  payload: {
+    alertaId: string;
+    tenantId: string;
+    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
+    severidad: 'info' | 'warning' | 'critical';
+    titulo: string;
+    mensaje: string;
+    resourceId?: string;
+    resourceTipo?: 'insumo' | 'lote' | 'pedido';
+    createdAt: string;
+  };
+}
+
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
@@ -146,6 +161,7 @@ export type SocketEvent =
   | MensajeChatEvent
   | BroadcastEvent
   | StuartRequestEvent
-  | TurnoEvent;
+  | TurnoEvent
+  | AlertaEvent;
 
 export type SocketEventType = SocketEvent['type'];

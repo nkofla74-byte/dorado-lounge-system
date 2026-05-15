@@ -92,4 +92,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Proveedores — gestión de proveedores e historial compras
   'proveedores:read': ['admin', 'personal_almacen'],
   'proveedores:write': ['admin'],
+  // Alertas — motor de alertas in-app
+  'alertas:read': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
+  'alertas:write': ['admin'],
 };
