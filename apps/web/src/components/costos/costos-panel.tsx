@@ -220,8 +220,10 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       {stats.incompletos > 0 && (
         <p className="text-xs text-amber-500 flex items-center gap-1.5">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          {stats.incompletos} receta{stats.incompletos !== 1 ? 's' : ''} con costo parcial — faltan
-          lotes con precio registrado para algunos insumos.
+          {t('advertenciaIncompletos', {
+            count: stats.incompletos,
+            suffix: stats.incompletos !== 1 ? 's' : '',
+          })}
         </p>
       )}
     </div>
