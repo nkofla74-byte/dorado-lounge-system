@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, QrCode, Check } from 'lucide-react';
@@ -85,6 +85,13 @@ export function IngredientsSheet({
   const [menuImagenUrl, setMenuImagenUrl] = useState('');
   const [menuSaving, setMenuSaving] = useState(false);
   const [menuSaved, setMenuSaved] = useState(false);
+  const menuSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (menuSavedTimerRef.current) clearTimeout(menuSavedTimerRef.current);
+    };
+  }, []);
 
   const {
     register,
@@ -125,7 +132,8 @@ export function IngredientsSheet({
       return;
     }
     setMenuSaved(true);
-    setTimeout(() => setMenuSaved(false), 2000);
+    if (menuSavedTimerRef.current) clearTimeout(menuSavedTimerRef.current);
+    menuSavedTimerRef.current = setTimeout(() => setMenuSaved(false), 2000);
     onMenuMetaUpdated?.(
       receta.id,
       currentCategoria,

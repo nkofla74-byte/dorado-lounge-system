@@ -1,6 +1,9 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('audit');
 
 export interface AuditParams {
   tenantId: string;
@@ -28,9 +31,9 @@ export async function auditLog(params: AuditParams): Promise<void> {
     });
 
     if (error) {
-      console.error('[audit] Error al insertar en audit_log:', error.message);
+      log.error('Error al insertar en audit_log', { message: error.message });
     }
   } catch (e) {
-    console.error('[audit] Excepción inesperada:', e);
+    log.error('Excepción inesperada', { error: String(e) });
   }
 }

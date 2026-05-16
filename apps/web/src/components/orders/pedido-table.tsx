@@ -196,6 +196,7 @@ export function PedidoTable({
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
+            aria-label="Actualizar pedidos"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>

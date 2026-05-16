@@ -338,15 +338,22 @@ export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProxi
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    const rows = (data ?? []).map((row: any) => {
-      const fv = new Date(row.fecha_vencimiento);
+    type LoteVencRow = {
+      id: string;
+      cantidad_actual: number;
+      fecha_vencimiento: string;
+      insumos: { nombre: string }[] | null;
+    };
+    const rows = (data ?? []).map((row) => {
+      const r = row as unknown as LoteVencRow;
+      const fv = new Date(r.fecha_vencimiento);
       const diff = Math.round((fv.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
       return {
-        loteId: row.id,
-        insumoNombre: row.insumos?.nombre ?? '—',
-        fechaVencimiento: row.fecha_vencimiento as string,
+        loteId: r.id,
+        insumoNombre: r.insumos?.[0]?.nombre ?? '—',
+        fechaVencimiento: r.fecha_vencimiento,
         diasRestantes: diff,
-        cantidadActual: Number(row.cantidad_actual),
+        cantidadActual: Number(r.cantidad_actual),
       };
     });
 
