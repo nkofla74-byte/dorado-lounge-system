@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Package,
   BookOpen,
@@ -49,16 +50,12 @@ interface SidebarProps {
 
 // roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en middleware.ts.
 // superuser ve todo: se maneja en el filtro del componente, no aquí.
-const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRole[] }[] = [
-  {
-    href: '/almacen',
-    label: 'Almacén',
-    icon: Package,
-    roles: ['admin', 'personal_almacen'],
-  },
+// `labelKey` referencia messages/<locale>.json → nav.<labelKey>
+const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: UserRole[] }[] = [
+  { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['admin', 'personal_almacen'] },
   {
     href: '/inventario',
-    label: 'Inventario',
+    labelKey: 'inventario',
     icon: Package,
     roles: [
       'admin',
@@ -73,143 +70,107 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon; roles: UserRol
   },
   {
     href: '/recetas',
-    label: 'Recetas',
+    labelKey: 'recetas',
     icon: BookOpen,
     roles: ['admin', 'chef', 'sous_chef', 'personal_pasteleria'],
   },
-  {
-    href: '/cocina',
-    label: 'KDS Cocina',
-    icon: MonitorCheck,
-    roles: ['admin', 'chef'],
-  },
+  { href: '/cocina', labelKey: 'cocina', icon: MonitorCheck, roles: ['admin', 'chef'] },
   {
     href: '/cocina-amex',
-    label: 'KDS Amex',
+    labelKey: 'cocinaAmex',
     icon: MonitorCheck,
     roles: ['admin', 'sous_chef'],
   },
   {
     href: '/produccion',
-    label: 'Producción',
+    labelKey: 'produccion',
     icon: ChefHat,
     roles: ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
   },
   {
     href: '/pasteleria',
-    label: 'Pastelería',
+    labelKey: 'pasteleria',
     icon: Coffee,
     roles: ['admin', 'personal_pasteleria'],
   },
   {
     href: '/pedidos',
-    label: 'Pedidos',
+    labelKey: 'pedidos',
     icon: ClipboardList,
     roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
   },
   {
     href: '/vuelos',
-    label: 'Vuelos',
+    labelKey: 'vuelos',
     icon: Plane,
     roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
   },
-  {
-    href: '/admin/qr',
-    label: 'Generador QR',
-    icon: QrCode,
-    roles: ['admin', 'mesero_amex'],
-  },
+  { href: '/admin/qr', labelKey: 'qrGenerator', icon: QrCode, roles: ['admin', 'mesero_amex'] },
   {
     href: '/buffet',
-    label: 'Buffet',
+    labelKey: 'buffet',
     icon: UtensilsCrossed,
     roles: ['admin', 'chef', 'personal_buffet'],
   },
-  {
-    href: '/snack',
-    label: 'Snack',
-    icon: Coffee,
-    roles: ['admin', 'chef', 'personal_snack'],
-  },
+  { href: '/snack', labelKey: 'snack', icon: Coffee, roles: ['admin', 'chef', 'personal_snack'] },
   {
     href: '/turnos',
-    label: 'Turnos',
+    labelKey: 'turnos',
     icon: Clock,
     roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
   },
   {
     href: '/afluencia',
-    label: 'Afluencia',
+    labelKey: 'afluencia',
     icon: Users,
     roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
   },
-  {
-    href: '/analytics',
-    label: 'Analytics',
-    icon: BarChart3,
-    roles: ['admin'],
-  },
-  {
-    href: '/admin/costos',
-    label: 'Costos',
-    icon: DollarSign,
-    roles: ['admin'],
-  },
-  {
-    href: '/admin/personal',
-    label: 'Personal',
-    icon: UserCog,
-    roles: ['admin'],
-  },
+  { href: '/analytics', labelKey: 'analytics', icon: BarChart3, roles: ['admin'] },
+  { href: '/admin/costos', labelKey: 'costos', icon: DollarSign, roles: ['admin'] },
+  { href: '/admin/personal', labelKey: 'personal', icon: UserCog, roles: ['admin'] },
   {
     href: '/admin/proveedores',
-    label: 'Proveedores',
+    labelKey: 'proveedores',
     icon: Building2,
     roles: ['admin', 'personal_almacen'],
   },
-  {
-    href: '/admin/alertas',
-    label: 'Alertas',
-    icon: Bell,
-    roles: ['admin'],
-  },
-  {
-    href: '/admin/auditoria',
-    label: 'Auditoría',
-    icon: ScrollText,
-    roles: ['admin'],
-  },
-  {
-    href: '/admin/feature-flags',
-    label: 'Feature Flags',
-    icon: Settings2,
-    roles: ['admin'],
-  },
-  {
-    href: '/admin/permisos',
-    label: 'Permisos',
-    icon: ShieldCheck,
-    roles: ['admin'],
-  },
+  { href: '/admin/alertas', labelKey: 'alertas', icon: Bell, roles: ['admin'] },
+  { href: '/admin/auditoria', labelKey: 'auditoria', icon: ScrollText, roles: ['admin'] },
+  { href: '/admin/feature-flags', labelKey: 'featureFlags', icon: Settings2, roles: ['admin'] },
+  { href: '/admin/permisos', labelKey: 'permisos', icon: ShieldCheck, roles: ['admin'] },
 ];
 
 // Ítems visibles únicamente para superuser (plataforma)
-const SUPERUSER_NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: '/admin/tenants', label: 'Tenants', icon: Building2 },
+const SUPERUSER_NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon }[] = [
+  { href: '/admin/tenants', labelKey: 'tenants', icon: Building2 },
 ];
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  superuser: 'Super Usuario',
-  admin: 'Administrador',
-  chef: 'Chef',
-  sous_chef: 'Sous Chef',
-  mesero_amex: 'Mesero Amex',
-  personal_snack: 'Personal Snack',
-  personal_buffet: 'Personal Buffet',
-  recepcion: 'Recepción',
-  personal_almacen: 'Personal Almacén',
-  personal_pasteleria: 'Personal Pastelería',
-  steward: 'Steward',
+// Color de marca por categoría operativa. Se aplica al ícono cuando el item
+// NO está activo (el activo usa primary dorado para reforzar la selección).
+const ICON_COLORS: Record<string, string> = {
+  '/almacen': 'text-sky-400',
+  '/inventario': 'text-sky-400',
+  '/recetas': 'text-amber-400',
+  '/cocina': 'text-rose-400',
+  '/cocina-amex': 'text-violet-400',
+  '/produccion': 'text-orange-400',
+  '/pasteleria': 'text-pink-400',
+  '/pedidos': 'text-emerald-400',
+  '/vuelos': 'text-cyan-400',
+  '/admin/qr': 'text-indigo-400',
+  '/buffet': 'text-lime-400',
+  '/snack': 'text-yellow-400',
+  '/turnos': 'text-blue-400',
+  '/afluencia': 'text-teal-400',
+  '/analytics': 'text-fuchsia-400',
+  '/admin/costos': 'text-primary',
+  '/admin/personal': 'text-slate-400',
+  '/admin/proveedores': 'text-sky-400',
+  '/admin/alertas': 'text-amber-400',
+  '/admin/auditoria': 'text-purple-400',
+  '/admin/feature-flags': 'text-zinc-400',
+  '/admin/permisos': 'text-red-400',
+  '/admin/tenants': 'text-violet-400',
 };
 
 interface SidebarContentProps extends SidebarProps {
@@ -220,6 +181,8 @@ interface SidebarContentProps extends SidebarProps {
 function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const tNav = useTranslations('nav');
+  const tRoles = useTranslations('roles');
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -228,22 +191,37 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
     router.push('/login');
   };
 
-  const renderItem = ({ href, label, Icon }: { href: string; label: string; Icon: LucideIcon }) => {
+  const renderItem = ({
+    href,
+    labelKey,
+    Icon,
+  }: {
+    href: string;
+    labelKey: string;
+    Icon: LucideIcon;
+  }) => {
     const isActive = pathname === href || pathname.startsWith(href + '/');
+    const iconColor = ICON_COLORS[href] ?? 'text-muted-foreground';
     return (
       <Link
         key={href}
         href={href}
         {...(onNavigate && { onClick: onNavigate })}
         className={cn(
-          'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[40px]',
+          'group flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all min-h-[40px]',
           isActive
-            ? 'bg-primary/15 text-primary'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            ? 'bg-primary/15 text-foreground ring-1 ring-primary/30 shadow-sm shadow-primary/10'
+            : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground',
         )}
       >
-        <Icon className="h-4 w-4 shrink-0" />
-        <span className="truncate">{label}</span>
+        <Icon
+          className={cn(
+            'h-4 w-4 shrink-0 transition-colors',
+            isActive ? 'text-primary' : iconColor,
+            !isActive && 'group-hover:scale-110',
+          )}
+        />
+        <span className="truncate">{tNav(labelKey)}</span>
       </Link>
     );
   };
@@ -252,11 +230,13 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
     <div className="flex flex-col h-full bg-sidebar">
       {/* Branding */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border/50">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-bold shrink-0">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-amber-600 text-primary-foreground text-sm font-bold shrink-0 shadow-md shadow-primary/20">
           DL
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate text-foreground">Dorado Lounge</p>
+          <p className="text-sm font-semibold truncate text-foreground tracking-tight">
+            Dorado Lounge
+          </p>
           <p className="text-xs text-muted-foreground truncate">El Dorado · Bogotá</p>
         </div>
       </div>
@@ -265,17 +245,17 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.filter(
           ({ roles }) => user.role === 'superuser' || roles.includes(user.role),
-        ).map(({ href, label, icon: Icon }) => renderItem({ href, label, Icon }))}
+        ).map(({ href, labelKey, icon: Icon }) => renderItem({ href, labelKey, Icon }))}
 
         {user.role === 'superuser' && (
           <>
             <div className="px-3 pt-4 pb-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                Plataforma
+                {tNav('plataforma')}
               </p>
             </div>
-            {SUPERUSER_NAV_ITEMS.map(({ href, label, icon: Icon }) =>
-              renderItem({ href, label, Icon }),
+            {SUPERUSER_NAV_ITEMS.map(({ href, labelKey, icon: Icon }) =>
+              renderItem({ href, labelKey, Icon }),
             )}
           </>
         )}
@@ -285,7 +265,7 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
       <div className="px-2 py-3 border-t border-border/50 space-y-1 safe-pb">
         <div className="px-3 py-2">
           <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-          <p className="text-xs text-primary truncate">{ROLE_LABELS[user.role]}</p>
+          <p className="text-xs text-primary truncate">{tRoles(user.role)}</p>
           <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
         <LocaleSwitcher current={locale} />
@@ -300,7 +280,7 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
-          Cerrar sesión
+          {tNav('cerrarSesion')}
         </Button>
       </div>
     </div>
@@ -338,10 +318,10 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
       </Sheet>
 
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0">
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-primary to-amber-600 text-primary-foreground text-xs font-bold shrink-0 shadow-md shadow-primary/20">
           DL
         </div>
-        <p className="text-sm font-semibold truncate">Dorado Lounge</p>
+        <p className="text-sm font-semibold truncate tracking-tight">Dorado Lounge</p>
       </div>
 
       <AlertasBell />

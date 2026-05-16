@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { HabeasDataBanner } from '@/components/privacy/habeas-data-banner';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Dorado Lounge System',
@@ -17,15 +16,19 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f5f1e6' },
-    { media: '(prefers-color-scheme: dark)', color: '#121417' },
+    { media: '(prefers-color-scheme: light)', color: '#f7f4eb' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b0f17' },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="dark" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html
+      lang="es"
+      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased">
         <ThemeProvider defaultTheme="dark">
           {children}
           <HabeasDataBanner />
