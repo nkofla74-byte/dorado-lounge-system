@@ -8,7 +8,7 @@ import { createProductionRepository } from './infrastructure/production-reposito
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
 import { createTandaSchema } from '@dorado/shared-validation';
-import { cantidadConMerma } from '@/modules/inventory/domain/merma';
+import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { TANDA_TRANSITIONS } from './domain/tanda';
 import type { Result } from '@/lib/result';
 import type { Tanda } from './domain/tanda';

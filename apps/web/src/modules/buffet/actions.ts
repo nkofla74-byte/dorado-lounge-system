@@ -5,7 +5,7 @@ import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { cantidadConMerma } from '@/modules/inventory/domain/merma';
+import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { createBuffetRepository } from './infrastructure/buffet-repository';
 import { getDespachos as getDespachoUseCase } from './application/get-despachos';
 import { getTicketsByTurno as getTicketsUseCase } from './application/get-tickets';

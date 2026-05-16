@@ -10,7 +10,7 @@ import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
-import { cantidadConMerma } from '@/modules/inventory/domain/merma';
+import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
