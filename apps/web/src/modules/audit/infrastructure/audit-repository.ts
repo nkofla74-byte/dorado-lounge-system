@@ -18,9 +18,7 @@ type AuditRow = {
 };
 
 // Supabase PostgrestFilterBuilder generics change with each chained method call,
-// making typed dynamic filter accumulation impractical. `any` is the established
-// community pattern for this specific builder-chain use case.
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// making typed dynamic filter accumulation impractical.
 type FilterChain = any;
 
 function applyFilters(q: FilterChain, filters: AuditFilters | undefined): FilterChain {
@@ -31,7 +29,6 @@ function applyFilters(q: FilterChain, filters: AuditFilters | undefined): Filter
   if (filters?.hasta) builder = builder.lte('created_at', filters.hasta);
   return builder;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function buildQuery(
   tenantId: string,
