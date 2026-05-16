@@ -4,7 +4,7 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/actions';
+import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/infrastructure/checks';
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
