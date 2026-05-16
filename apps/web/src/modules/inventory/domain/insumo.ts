@@ -33,6 +33,7 @@ export interface Lote {
   fechaRecibido: string;
   fechaVencimiento: string | null;
   proveedor: string | null;
+  proveedorId: string | null;
   costoUnitario: number | null;
   activo: boolean;
   createdAt: Date;
@@ -43,5 +44,6 @@ export type CreateLoteInput = {
   cantidadInicial: number;
   fechaVencimiento?: string | undefined;
   proveedor?: string | undefined;
+  proveedorId?: string | undefined;
   costoUnitario?: number | undefined;
 };

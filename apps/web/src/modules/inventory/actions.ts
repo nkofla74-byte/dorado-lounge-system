@@ -268,6 +268,7 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
       cantidadInicial: parsed.data.cantidadInicial,
       fechaVencimiento: parsed.data.fechaVencimiento,
       proveedor: parsed.data.proveedor,
+      proveedorId: parsed.data.proveedorId,
       costoUnitario: parsed.data.costoUnitario,
     });
 
