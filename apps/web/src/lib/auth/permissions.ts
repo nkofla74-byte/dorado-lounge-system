@@ -52,7 +52,9 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'turnos:read': ['admin', 'chef', 'sous_chef'],
   'turnos:write': ['admin'],
   // Usuarios y tenants
+  'users:read': ['admin'],
   'users:write': ['admin'],
+  'tenants:read': [], // solo superuser — manejado por el bypass en assertCan
   'tenants:write': [], // solo superuser — manejado por el bypass en assertCan
   // Chat inter-zona
   'chat:read': [

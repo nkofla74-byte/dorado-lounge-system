@@ -17,43 +17,44 @@ type AuditRow = {
   created_at: string;
 };
 
+// Supabase PostgrestFilterBuilder generics change with each chained method call,
+// making typed dynamic filter accumulation impractical.
+type FilterChain = any;
+
+function applyFilters(q: FilterChain, filters: AuditFilters | undefined): FilterChain {
+  let builder: FilterChain = q;
+  if (filters?.action) builder = builder.ilike('action', `%${filters.action}%`);
+  if (filters?.resourceType) builder = builder.eq('resource_type', filters.resourceType);
+  if (filters?.desde) builder = builder.gte('created_at', filters.desde);
+  if (filters?.hasta) builder = builder.lte('created_at', filters.hasta);
+  return builder;
+}
+
 function buildQuery(
   tenantId: string,
   filters: AuditFilters | undefined,
   admin: ReturnType<typeof createAdminClient>,
-) {
-  // eslint-disable-next-line
-  let q: any = admin
+): FilterChain {
+  const base = admin
     .from('audit_log')
     .select(
       'id, tenant_id, user_id, action, resource_type, resource_id, payload, ip_address, prev_hash, hash, created_at',
     )
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
-
-  if (filters?.action) q = q.ilike('action', `%${filters.action}%`);
-  if (filters?.resourceType) q = q.eq('resource_type', filters.resourceType);
-  if (filters?.desde) q = q.gte('created_at', filters.desde);
-  if (filters?.hasta) q = q.lte('created_at', filters.hasta);
-  return q;
+  return applyFilters(base, filters);
 }
 
 function buildCountQuery(
   tenantId: string,
   filters: AuditFilters | undefined,
   admin: ReturnType<typeof createAdminClient>,
-) {
-  // eslint-disable-next-line
-  let q: any = admin
+): FilterChain {
+  const base = admin
     .from('audit_log')
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId);
-
-  if (filters?.action) q = q.ilike('action', `%${filters.action}%`);
-  if (filters?.resourceType) q = q.eq('resource_type', filters.resourceType);
-  if (filters?.desde) q = q.gte('created_at', filters.desde);
-  if (filters?.hasta) q = q.lte('created_at', filters.hasta);
-  return q;
+  return applyFilters(base, filters);
 }
 
 async function resolveUserNames(

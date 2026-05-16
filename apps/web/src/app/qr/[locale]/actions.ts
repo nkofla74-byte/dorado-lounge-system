@@ -119,6 +119,26 @@ export async function createPedidoFromQR(
 
     const admin = createAdminClient();
 
+    // SEGURIDAD: validar que TODOS los recetaIds pertenecen al tenant de la mesa
+    // y son recetas de menú QR (servicio + categoria_menu NOT NULL).
+    // Previene cross-tenant injection con tokens válidos.
+    const recetaIds = Array.from(new Set(parsed.data.items.map((i) => i.recetaId)));
+    const { data: recetasValidas, error: recetasError } = await admin
+      .from('recetas')
+      .select('id')
+      .eq('tenant_id', mesa.tenantId)
+      .eq('tipo_receta', 'servicio')
+      .not('categoria_menu', 'is', null)
+      .is('deleted_at', null)
+      .in('id', recetaIds);
+
+    if (recetasError) return err(toAppError(new Error(recetasError.message)));
+    if (!recetasValidas || recetasValidas.length !== recetaIds.length) {
+      return err(
+        toAppError(new Error('Uno o más platos del pedido no son válidos para esta mesa')),
+      );
+    }
+
     // Insertar pedido directamente (sin assertCan — token ya autenticó la mesa)
     const { data: pedido, error: pedidoError } = await admin
       .from('pedidos')

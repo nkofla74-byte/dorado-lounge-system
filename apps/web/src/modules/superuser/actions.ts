@@ -15,7 +15,7 @@ import type { Tenant, TenantUser } from './domain/superuser';
 
 export async function getTenants(): Promise<Result<Tenant[]>> {
   try {
-    await assertCan('tenants:write');
+    await assertCan('tenants:read');
     const repo = createSuperuserRepository();
     return ok(await getTenantsFn(repo));
   } catch (e) {
@@ -25,7 +25,7 @@ export async function getTenants(): Promise<Result<Tenant[]>> {
 
 export async function getTenantById(tenantId: string): Promise<Result<Tenant | null>> {
   try {
-    await assertCan('tenants:write');
+    await assertCan('tenants:read');
     const repo = createSuperuserRepository();
     return ok(await getTenantFn(repo, tenantId));
   } catch (e) {
@@ -79,7 +79,7 @@ export async function toggleTenant(tenantId: string, activo: boolean): Promise<R
 
 export async function getUsers(tenantId?: string): Promise<Result<TenantUser[]>> {
   try {
-    await assertCan('tenants:write');
+    await assertCan('users:read');
     const repo = createSuperuserRepository();
     return ok(await getUsersFn(repo, tenantId));
   } catch (e) {

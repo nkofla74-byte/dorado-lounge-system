@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useId, useRef } from 'react';
+import { useState, useId, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChevronDown,
@@ -235,13 +235,21 @@ function DishCard({
   const [showIngredients, setShowIngredients] = useState(false);
   const [notas, setNotas] = useState('');
   const [added, setAdded] = useState(false);
+  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+    };
+  }, []);
 
   const handleAdd = () => {
     onAdd({ receta, notas });
     setAdded(true);
     setNotas('');
     setExpanded(false);
-    setTimeout(() => setAdded(false), 2000);
+    if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+    addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
   };
 
   return (
@@ -364,6 +372,13 @@ function MenuScreen({
   const t = TEXTS[locale] ?? TEXTS['es']!;
   const [cart, setCart] = useState<CartItem[]>([]);
   const [emptyWarning, setEmptyWarning] = useState(false);
+  const emptyWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (emptyWarningTimerRef.current) clearTimeout(emptyWarningTimerRef.current);
+    };
+  }, []);
 
   const byCategory = CATEGORY_ORDER.reduce<Record<string, PublicReceta[]>>((acc, cat) => {
     acc[cat] = recetas.filter((r) => r.categoriaMenu === cat);
@@ -458,7 +473,8 @@ function MenuScreen({
           onClick={() => {
             if (cart.length === 0) {
               setEmptyWarning(true);
-              setTimeout(() => setEmptyWarning(false), 3000);
+              if (emptyWarningTimerRef.current) clearTimeout(emptyWarningTimerRef.current);
+              emptyWarningTimerRef.current = setTimeout(() => setEmptyWarning(false), 3000);
               return;
             }
             setEmptyWarning(false);

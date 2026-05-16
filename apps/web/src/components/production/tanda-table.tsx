@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChefHat, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,15 +25,15 @@ import type { Tanda, EstadoTanda } from '@/modules/production/domain/tanda';
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { Turno } from '@/modules/turnos/domain/turno';
 
-const ESTADO_LABEL: Record<EstadoTanda, string> = {
-  planificada: 'Planificada',
-  en_proceso: 'En proceso',
-  completada: 'Completada',
-  cancelada: 'Cancelada',
-};
-
 function EstadoBadge({ estado }: { estado: EstadoTanda }) {
+  const t = useTranslations('tandas');
   const baseClass = 'text-xs font-medium';
+  const ESTADO_LABEL: Record<EstadoTanda, string> = {
+    planificada: t('estadoPlanificada'),
+    en_proceso: t('estadoEnProceso'),
+    completada: t('estadoCompletada'),
+    cancelada: t('estadoCancelada'),
+  };
   if (estado === 'planificada')
     return (
       <Badge variant="secondary" className={baseClass}>
@@ -104,6 +105,7 @@ export function TandaTable({
   userRole,
   defaultAreaFilter = 'todas',
 }: TandaTableProps) {
+  const t = useTranslations('tandas');
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
@@ -175,7 +177,7 @@ export function TandaTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ChefHat className="h-4 w-4" />
-          <span>{data.length} tandas</span>
+          <span>{t('tandaCount', { count: data.length })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -190,7 +192,7 @@ export function TandaTable({
           {canCreate && (
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-1.5" />
-              Nueva tanda
+              {t('nuevaTanda')}
             </Button>
           )}
         </div>
@@ -207,10 +209,10 @@ export function TandaTable({
       <div className="flex flex-wrap gap-1 p-1 bg-muted/40 rounded-md w-fit">
         {(['todas', 'cocina', 'pasteleria', 'amex'] as const).map((area) => {
           const labels = {
-            todas: 'Todas',
-            cocina: 'Cocina (Chef)',
-            pasteleria: 'Pastelería',
-            amex: 'AMEX',
+            todas: t('tabTodas'),
+            cocina: t('tabCocina'),
+            pasteleria: t('tabPasteleria'),
+            amex: t('tabAmex'),
           };
           const isActive = areaFilter === area;
           return (
@@ -235,13 +237,13 @@ export function TandaTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Receta</TableHead>
-              <TableHead className="text-center">Tandas</TableHead>
-              <TableHead>Responsable</TableHead>
-              <TableHead>Turno</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Creada</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t('colReceta')}</TableHead>
+              <TableHead className="text-center">{t('colTandas')}</TableHead>
+              <TableHead>{t('colResponsable')}</TableHead>
+              <TableHead>{t('colTurno')}</TableHead>
+              <TableHead>{t('colEstado')}</TableHead>
+              <TableHead>{t('colCreada')}</TableHead>
+              <TableHead className="text-right">{t('colAcciones')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -249,8 +251,8 @@ export function TandaTable({
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
                   {areaFilter === 'todas'
-                    ? 'No hay tandas registradas. Crea la primera con el botón de arriba.'
-                    : `No hay tandas en el área "${areaFilter}".`}
+                    ? t('sinTandasTodas')
+                    : t('sinTandasArea', { area: areaFilter })}
                 </TableCell>
               </TableRow>
             ) : (
@@ -293,7 +295,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, iniciarTanda)}
                               >
-                                Iniciar
+                                {t('iniciar')}
                               </Button>
                               <Button
                                 size="sm"
@@ -302,7 +304,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, cancelarTanda)}
                               >
-                                Cancelar
+                                {t('cancelar')}
                               </Button>
                             </>
                           )}
@@ -315,7 +317,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(tanda.id)}
                               >
-                                Completar
+                                {t('completar')}
                               </Button>
                               <Button
                                 size="sm"
@@ -324,7 +326,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, cancelarTanda)}
                               >
-                                Cancelar
+                                {t('cancelar')}
                               </Button>
                             </>
                           )}
@@ -332,7 +334,7 @@ export function TandaTable({
                           {isConfirming && (
                             <>
                               <span className="text-xs text-muted-foreground mr-1">
-                                ¿Descontar stock?
+                                {t('confirmarDescuento')}
                               </span>
                               <Button
                                 size="sm"
@@ -340,7 +342,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, completarTanda)}
                               >
-                                {isProcessing ? 'Procesando…' : 'Confirmar'}
+                                {isProcessing ? t('procesando') : t('confirmar')}
                               </Button>
                               <Button
                                 size="sm"
@@ -349,7 +351,7 @@ export function TandaTable({
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(null)}
                               >
-                                No
+                                {t('no')}
                               </Button>
                             </>
                           )}

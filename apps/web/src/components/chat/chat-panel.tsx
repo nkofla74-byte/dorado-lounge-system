@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { MessageSquare, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSocket } from '@/lib/socket/use-socket';
@@ -18,6 +19,7 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
+  const t = useTranslations('chat');
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [noLeidos, setNoLeidos] = useState(0);
@@ -94,7 +96,7 @@ export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
   const handleEnviar = async (contenido: string) => {
     const result = await enviarMensaje({ canal, contenido });
     if (!result.ok) {
-      toast.error('No se pudo enviar el mensaje');
+      toast.error(t('errorEnviar'));
       return;
     }
     // El mensaje propio llega vía Socket.io broadcast (incluido el remitente)
@@ -118,7 +120,7 @@ export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
           'bg-primary text-primary-foreground hover:bg-primary/90',
           abierto && 'opacity-0 pointer-events-none',
         )}
-        aria-label="Abrir chat"
+        aria-label={t('abrirChat')}
       >
         <MessageSquare className="h-5 w-5" />
         {noLeidos > 0 && (
@@ -146,7 +148,7 @@ export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
           <button
             onClick={() => setAbierto(false)}
             className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Cerrar chat"
+            aria-label={t('cerrarChat')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -156,12 +158,12 @@ export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
           {cargando ? (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              Cargando mensajes…
+              {t('cargandoMensajes')}
             </div>
           ) : mensajes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
               <MessageSquare className="h-8 w-8 opacity-30" />
-              <p className="text-sm">Sin mensajes aún</p>
+              <p className="text-sm">{t('sinMensajes')}</p>
             </div>
           ) : (
             mensajes.map((m) => (
@@ -176,7 +178,7 @@ export function ChatPanel({ canal, userId, titulo = 'Chat' }: ChatPanelProps) {
           <button
             onClick={scrollAlFinal}
             className="absolute bottom-16 right-3 bg-background border rounded-full p-1 shadow-md text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Ir al final"
+            aria-label={t('irAlFinal')}
           >
             <ChevronDown className="h-3 w-3" />
           </button>

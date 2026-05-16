@@ -129,7 +129,7 @@ export function RecipeTable({
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
-            title="Actualizar"
+            aria-label="Actualizar recetas"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
@@ -255,7 +255,7 @@ export function RecipeTable({
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
                         onClick={() => setSheetReceta(receta)}
-                        title="Ver ingredientes y costos"
+                        aria-label="Ver ingredientes y costos"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>

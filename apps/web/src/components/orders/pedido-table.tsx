@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ShoppingBag, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,15 +26,6 @@ import type { PedidoWithItems, Pedido, EstadoPedido } from '@/modules/orders/dom
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { UserRole } from '@dorado/shared-types';
 
-const ESTADO_LABEL: Record<EstadoPedido, string> = {
-  creado: 'Creado',
-  recibido_cocina: 'Recibido en cocina',
-  en_preparacion: 'En preparación',
-  despachado: 'Despachado',
-  entregado: 'Entregado',
-  cancelado: 'Cancelado',
-};
-
 const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
 const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'recepcion']);
 const CANCEL_ROLES = new Set<UserRole>([
@@ -46,7 +38,16 @@ const CANCEL_ROLES = new Set<UserRole>([
 ]);
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
+  const t = useTranslations('pedidos');
   const base = 'text-xs font-medium';
+  const ESTADO_LABEL: Record<EstadoPedido, string> = {
+    creado: t('estadoCreado'),
+    recibido_cocina: t('estadoRecibidoCocina'),
+    en_preparacion: t('estadoEnPreparacion'),
+    despachado: t('estadoDespachado'),
+    entregado: t('estadoEntregado'),
+    cancelado: t('estadoCancelado'),
+  };
   if (estado === 'creado')
     return (
       <Badge
@@ -88,7 +89,9 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
 }
 
 function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
-  if (items.length === 0) return <span className="text-muted-foreground text-xs">Sin ítems</span>;
+  const t = useTranslations('pedidos');
+  if (items.length === 0)
+    return <span className="text-muted-foreground text-xs">{t('sinItems')}</span>;
   const first = items[0]!;
   return (
     <span className="text-sm">
@@ -101,9 +104,9 @@ function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
   );
 }
 
-function formatElapsed(d: Date): string {
+function formatElapsed(d: Date, ahoraLabel: string): string {
   const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return 'ahora';
+  if (mins < 1) return ahoraLabel;
   if (mins < 60) return `${mins}m`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
@@ -126,6 +129,7 @@ export function PedidoTable({
   userRole,
   error: initialError,
 }: PedidoTableProps) {
+  const t = useTranslations('pedidos');
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
@@ -187,7 +191,7 @@ export function PedidoTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ShoppingBag className="h-4 w-4" />
-          <span>{data.length} pedidos activos</span>
+          <span>{t('pedidosActivos', { count: data.length })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -196,13 +200,14 @@ export function PedidoTable({
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
+            aria-label={t('actualizarPedidos')}
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
           {isMesero && (
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-1.5" />
-              Nuevo pedido
+              {t('nuevoPedido')}
             </Button>
           )}
         </div>
@@ -219,19 +224,19 @@ export function PedidoTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Mesa</TableHead>
-              <TableHead>Zona</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Ítems</TableHead>
-              <TableHead>Hace</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t('colMesa')}</TableHead>
+              <TableHead>{t('colZona')}</TableHead>
+              <TableHead>{t('colEstado')}</TableHead>
+              <TableHead>{t('colItems')}</TableHead>
+              <TableHead>{t('colHace')}</TableHead>
+              <TableHead className="text-right">{t('colAcciones')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay pedidos activos.
+                  {t('sinPedidos')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -258,7 +263,7 @@ export function PedidoTable({
                         <ItemsSummary items={pedido.items} />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatElapsed(pedido.createdAt)}
+                        {formatElapsed(pedido.createdAt, t('ahora'))}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -275,7 +280,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => iniciarPreparacion(id, v))
                                   }
                                 >
-                                  Iniciar prep.
+                                  {t('iniciarPrep')}
                                 </Button>
                               )}
                               {canCancel && (
@@ -288,7 +293,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => cancelarPedido(id, v))
                                   }
                                 >
-                                  Cancelar
+                                  {t('cancelar')}
                                 </Button>
                               )}
                             </>
@@ -306,7 +311,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => despacharPedido(id, v))
                                   }
                                 >
-                                  Despachar
+                                  {t('despachar')}
                                 </Button>
                               )}
                               {isCocina && (
@@ -319,7 +324,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => cancelarPedido(id, v))
                                   }
                                 >
-                                  Cancelar
+                                  {t('cancelar')}
                                 </Button>
                               )}
                             </>
@@ -333,7 +338,7 @@ export function PedidoTable({
                               disabled={isProcessing}
                               onClick={() => setConfirmingId(pedido.id)}
                             >
-                              Confirmar entrega
+                              {t('confirmarEntrega')}
                             </Button>
                           )}
 
@@ -341,7 +346,7 @@ export function PedidoTable({
                           {isConfirming && (
                             <>
                               <span className="text-xs text-muted-foreground mr-1">
-                                ¿Descontar stock?
+                                {t('confirmarDescuento')}
                               </span>
                               <Button
                                 size="sm"
@@ -349,7 +354,7 @@ export function PedidoTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(pedido, (id, v) => entregarPedido(id, v))}
                               >
-                                {isProcessing ? 'Procesando…' : 'Confirmar'}
+                                {isProcessing ? t('procesando') : t('confirmar')}
                               </Button>
                               <Button
                                 size="sm"
@@ -358,7 +363,7 @@ export function PedidoTable({
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(null)}
                               >
-                                No
+                                {t('no')}
                               </Button>
                             </>
                           )}

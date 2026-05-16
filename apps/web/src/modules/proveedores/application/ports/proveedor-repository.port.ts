@@ -1,5 +1,5 @@
 import type { Proveedor, CreateProveedorInput, UpdateProveedorInput } from '../../domain/proveedor';
-import type { Lote } from '@/modules/inventory/domain/insumo';
+import type { Lote } from '@/modules/inventory/utilities';
 
 export interface ProveedorRepository {
   findAll(tenantId: string): Promise<Proveedor[]>;

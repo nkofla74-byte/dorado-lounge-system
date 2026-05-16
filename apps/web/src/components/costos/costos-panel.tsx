@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, TrendingUp, CheckCircle2, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ function formatCOP(n: number | null): string {
 }
 
 export function CostosPanel({ recetas, costos }: CostosPanelProps) {
+  const t = useTranslations('costos');
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('nombre');
   const [sortAsc, setSortAsc] = useState(true);
@@ -100,19 +102,19 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Total recetas</p>
+          <p className="text-xs text-muted-foreground">{t('totalRecetas')}</p>
           <p className="text-2xl font-bold mt-1">{stats.total}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Con costo completo</p>
+          <p className="text-xs text-muted-foreground">{t('conCostoCompleto')}</p>
           <p className="text-2xl font-bold mt-1 text-green-500">{stats.completos}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Costo incompleto</p>
+          <p className="text-xs text-muted-foreground">{t('costoIncompleto')}</p>
           <p className="text-2xl font-bold mt-1 text-amber-500">{stats.incompletos}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Promedio / porción</p>
+          <p className="text-xs text-muted-foreground">{t('promedioPorcion')}</p>
           <p className="text-2xl font-bold mt-1">{formatCOP(stats.promedio)}</p>
         </div>
       </div>
@@ -120,7 +122,7 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         <Input
-          placeholder="Buscar receta…"
+          placeholder={t('buscarReceta')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs h-8 text-sm"
@@ -132,7 +134,7 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
           onClick={() => setFilterIncompleto((v) => !v)}
         >
           <AlertTriangle className="h-3.5 w-3.5" />
-          Solo incompletos
+          {t('soloIncompletos')}
         </Button>
       </div>
 
@@ -142,28 +144,28 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[40%]">
-                <SortBtn k="nombre" label="Receta" />
+                <SortBtn k="nombre" label={t('colReceta')} />
               </TableHead>
               <TableHead>
-                <SortBtn k="tipo" label="Tipo" />
+                <SortBtn k="tipo" label={t('colTipo')} />
               </TableHead>
               <TableHead className="text-right">
-                <SortBtn k="porciones" label="Porciones" />
+                <SortBtn k="porciones" label={t('colPorciones')} />
               </TableHead>
               <TableHead className="text-right">
-                <SortBtn k="costo" label="Costo total" />
+                <SortBtn k="costo" label={t('colCostoTotal')} />
               </TableHead>
               <TableHead className="text-right">
-                <SortBtn k="costo" label="Costo / porción" />
+                <SortBtn k="costo" label={t('colCostoPorcion')} />
               </TableHead>
-              <TableHead className="text-center">Estado</TableHead>
+              <TableHead className="text-center">{t('colEstado')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-10 text-sm">
-                  Sin resultados
+                  {t('sinResultados')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -174,7 +176,9 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
                     <TableCell className="font-medium">{receta.nombre}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs capitalize">
-                        {receta.tipoReceta === 'produccion' ? 'Producción' : 'Servicio'}
+                        {receta.tipoReceta === 'produccion'
+                          ? t('tipoProduccion')
+                          : t('tipoServicio')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -194,14 +198,14 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
                     <TableCell className="text-center">
                       {!costo ? (
                         <Badge variant="secondary" className="text-xs">
-                          Sin lotes
+                          {t('sinLotes')}
                         </Badge>
                       ) : costo.tieneCostoCompleto ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
                       ) : (
                         <div className="flex items-center justify-center gap-1 text-amber-500">
                           <AlertTriangle className="h-3.5 w-3.5" />
-                          <span className="text-xs">Parcial</span>
+                          <span className="text-xs">{t('parcial')}</span>
                         </div>
                       )}
                     </TableCell>
@@ -216,8 +220,10 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       {stats.incompletos > 0 && (
         <p className="text-xs text-amber-500 flex items-center gap-1.5">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          {stats.incompletos} receta{stats.incompletos !== 1 ? 's' : ''} con costo parcial — faltan
-          lotes con precio registrado para algunos insumos.
+          {t('advertenciaIncompletos', {
+            count: stats.incompletos,
+            suffix: stats.incompletos !== 1 ? 's' : '',
+          })}
         </p>
       )}
     </div>

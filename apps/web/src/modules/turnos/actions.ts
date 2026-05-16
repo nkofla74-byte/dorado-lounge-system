@@ -22,7 +22,7 @@ export interface UsuarioResumen {
 
 export async function getUsuariosResumen(): Promise<Result<UsuarioResumen[]>> {
   try {
-    const ctx = await assertCan('turnos:write');
+    const ctx = await assertCan('turnos:read');
     const admin = createAdminClient();
     const { data } = await admin
       .from('users')
