@@ -104,9 +104,9 @@ function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
   );
 }
 
-function formatElapsed(d: Date): string {
+function formatElapsed(d: Date, ahoraLabel: string): string {
   const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return 'ahora';
+  if (mins < 1) return ahoraLabel;
   if (mins < 60) return `${mins}m`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
@@ -129,6 +129,7 @@ export function PedidoTable({
   userRole,
   error: initialError,
 }: PedidoTableProps) {
+  const t = useTranslations('pedidos');
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
@@ -190,7 +191,7 @@ export function PedidoTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ShoppingBag className="h-4 w-4" />
-          <span>{data.length} pedidos activos</span>
+          <span>{t('pedidosActivos', { count: data.length })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -199,14 +200,14 @@ export function PedidoTable({
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
-            aria-label="Actualizar pedidos"
+            aria-label={t('actualizarPedidos')}
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
           {isMesero && (
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-1.5" />
-              Nuevo pedido
+              {t('nuevoPedido')}
             </Button>
           )}
         </div>
@@ -223,19 +224,19 @@ export function PedidoTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Mesa</TableHead>
-              <TableHead>Zona</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Ítems</TableHead>
-              <TableHead>Hace</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{t('colMesa')}</TableHead>
+              <TableHead>{t('colZona')}</TableHead>
+              <TableHead>{t('colEstado')}</TableHead>
+              <TableHead>{t('colItems')}</TableHead>
+              <TableHead>{t('colHace')}</TableHead>
+              <TableHead className="text-right">{t('colAcciones')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay pedidos activos.
+                  {t('sinPedidos')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -262,7 +263,7 @@ export function PedidoTable({
                         <ItemsSummary items={pedido.items} />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatElapsed(pedido.createdAt)}
+                        {formatElapsed(pedido.createdAt, t('ahora'))}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -279,7 +280,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => iniciarPreparacion(id, v))
                                   }
                                 >
-                                  Iniciar prep.
+                                  {t('iniciarPrep')}
                                 </Button>
                               )}
                               {canCancel && (
