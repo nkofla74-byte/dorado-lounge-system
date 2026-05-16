@@ -113,10 +113,10 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 | ✅     | `rbac`          | Matriz permisos, assertCan                                          |
 | ✅     | `audit`         | Hash chain SHA-256, audit_log                                       |
 | ✅     | `realtime`      | Socket.io integration                                               |
-| 🔲     | `cocina_amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
-| 🔲     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes          |
-| 🔲     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
-| 🔲     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual) |
+| ✅     | `cocina_amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
+| ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes          |
+| ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
+| ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual) |
 
 `analytics` es solo-lectura — proyecta vistas materializadas, nunca escribe.
 
@@ -161,13 +161,9 @@ Idempotente por `idempotency_key`. Obligatoria en: Stock Out, despacho, tickets.
 
 **Tablas existentes:**
 
-`tenants` · `users` · `insumos` · `lotes` · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` · `buffet_tickets_turno` · `mermas` · `mensajes_chat` · `afluencia_ingresos` · `turnos` · `domain_events` · `audit_log` · `feature_flags` · `operaciones_idempotentes`
+`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` · `pedido_eventos` (trazabilidad AMEX) · `buffet_tickets_turno` · `mermas` · `mensajes_chat` · `afluencia_ingresos` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `costos` · `domain_events` · `audit_log` · `feature_flags` · `operaciones_idempotentes`
 
-**Tablas pendientes (módulos 🔲):**
-
-`proveedores` · `lotes.proveedor_id` (FK) · `alertas` · `pedido_eventos` (trazabilidad AMEX por paso) · `turnos.teamlider` (columna nueva)
-
-Antes de crear una tabla: verificar ambas listas y el ER en `ARCHITECTURE.md §8`.
+Antes de crear una tabla: verificar la lista y el ER en `ARCHITECTURE.md §8`.
 
 `domain_events` y `audit_log` tienen triggers que bloquean UPDATE/DELETE. `audit_log` tiene hash chain SHA-256 — no mutarlas desde código.
 
@@ -204,7 +200,7 @@ Canal sin permiso → desconexión inmediata + `audit_log` (evento de seguridad,
 
 ---
 
-## Alertas (módulo pendiente)
+## Alertas
 
 Disparadores:
 
@@ -214,6 +210,8 @@ Disparadores:
 - Demora pedido AMEX > umbral → notificar Chef AMEX + Mesero.
 
 Las alertas se almacenan en tabla `alertas` y se transmiten vía Socket.io. Solo notificaciones in-app.
+
+**Cron de checks:** `pg_cron` en Supabase ejecuta cada 5 min (`*/5 * * * *`) un `net.http_post` a `/api/cron/check-alertas`, autenticado con `Bearer ${CRON_SECRET}`. El endpoint corre `runCheckVencimientos` + `runCheckDemoraAmex` por cada tenant activo. Existe también un disparo diario vía Vercel Cron (`0 3 * * *`) como fallback — la fuente real es pg_cron. Configuración post-deploy: `ALTER DATABASE postgres SET app.cron_base_url`/`app.cron_secret` en Supabase (ver migración `20260516000003_pgcron_check_alertas.sql`).
 
 ---
 
@@ -287,4 +285,4 @@ Solo lectura de vistas materializadas. Filtros obligatorios: turno, nodo, respon
 
 ---
 
-_v5.0 — Mayo 2026 · Spec completo incorporado_
+_v5.1 — Mayo 2026 · Sprints B–H integrados (cocina_amex, proveedores, alertas, costos)_
