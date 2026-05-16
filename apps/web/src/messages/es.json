@@ -39,6 +39,25 @@
     "personal_pasteleria": "Personal Pastelería",
     "steward": "Steward"
   },
+  "auth": {
+    "subtitle": "Sistema operativo de trazabilidad 24/7",
+    "title": "Iniciar sesión",
+    "description": "Ingresa tus credenciales para acceder",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "usuario@gisat.com",
+    "password": "Contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "submit": "Ingresar",
+    "submitting": "Ingresando…",
+    "footer": "GISAT S.A. · Aeropuerto El Dorado, Bogotá",
+    "errors": {
+      "turnstileRequired": "Completa la verificación de seguridad.",
+      "turnstileFailed": "Verificación de seguridad fallida. Recarga la página e intenta de nuevo.",
+      "invalidCredentials": "Credenciales inválidas. Verifica tu correo y contraseña.",
+      "missingRoleOrTenant": "Tu usuario no tiene rol o tenant asignado. Contacta al administrador."
+    }
+  },
   "turnos": {
     "title": "Turnos",
     "subtitle": "Gestión de turnos operativos del lounge",

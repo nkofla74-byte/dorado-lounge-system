@@ -39,6 +39,25 @@
     "personal_pasteleria": "Pastry Staff",
     "steward": "Steward"
   },
+  "auth": {
+    "subtitle": "Operational 24/7 traceability system",
+    "title": "Sign in",
+    "description": "Enter your credentials to continue",
+    "email": "Email",
+    "emailPlaceholder": "user@gisat.com",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "footer": "GISAT S.A. · El Dorado Airport, Bogotá",
+    "errors": {
+      "turnstileRequired": "Please complete the security verification.",
+      "turnstileFailed": "Security verification failed. Reload the page and try again.",
+      "invalidCredentials": "Invalid credentials. Check your email and password.",
+      "missingRoleOrTenant": "Your account has no role or tenant assigned. Contact your administrator."
+    }
+  },
   "turnos": {
     "title": "Shifts",
     "subtitle": "Operational shift management",
