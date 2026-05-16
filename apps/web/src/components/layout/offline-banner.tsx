@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useOfflineSync } from '@/lib/offline/use-offline-sync';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function OfflineBanner() {
+  const t = useTranslations('layout.offline');
   const { isOnline, pendingCount, syncing } = useOfflineSync();
 
   if (isOnline && pendingCount === 0) return null;
@@ -21,20 +23,15 @@ export function OfflineBanner() {
       {isOnline ? (
         <>
           <RefreshCw className={cn('h-3.5 w-3.5 shrink-0', syncing && 'animate-spin')} />
-          <span>
-            {syncing
-              ? 'Sincronizando pedidos pendientes…'
-              : `${pendingCount} pedido${pendingCount !== 1 ? 's' : ''} pendiente${pendingCount !== 1 ? 's' : ''} por sincronizar`}
-          </span>
+          <span>{syncing ? t('syncing') : t('pendingSync', { count: pendingCount })}</span>
         </>
       ) : (
         <>
           <WifiOff className="h-3.5 w-3.5 shrink-0" />
           <span>
-            Sin conexión
             {pendingCount > 0
-              ? ` — ${pendingCount} pedido${pendingCount !== 1 ? 's' : ''} guardado${pendingCount !== 1 ? 's' : ''}, se enviará${pendingCount !== 1 ? 'n' : ''} al recuperar la red`
-              : ' — los pedidos se guardarán localmente'}
+              ? t('noConnectionWithSaved', { count: pendingCount })
+              : t('noConnectionEmpty')}
           </span>
         </>
       )}

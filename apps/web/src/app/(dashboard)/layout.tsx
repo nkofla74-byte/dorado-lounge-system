@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { OfflineBanner } from '@/components/layout/offline-banner';
@@ -39,10 +38,9 @@ const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
-  const [{ data: userData }, { data: sessionData }, messages, locale] = await Promise.all([
+  const [{ data: userData }, { data: sessionData }, locale] = await Promise.all([
     supabase.auth.getUser(),
     supabase.auth.getSession(),
-    getMessages(),
     getLocale(),
   ]);
 
@@ -68,20 +66,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const sidebarUser = { name, email: user.email ?? '', role };
 
   return (
-    <NextIntlClientProvider messages={messages} locale={locale}>
-      <SocketProvider token={token}>
-        <div className="flex min-h-screen bg-background">
-          <Sidebar user={sidebarUser} locale={locale as 'es' | 'en'} />
-          <div className="flex-1 min-w-0 flex flex-col">
-            <MobileTopBar user={sidebarUser} locale={locale as 'es' | 'en'} />
-            <OfflineBanner />
-            <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
-          </div>
+    <SocketProvider token={token}>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar user={sidebarUser} locale={locale as 'es' | 'en'} />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <MobileTopBar user={sidebarUser} locale={locale as 'es' | 'en'} />
+          <OfflineBanner />
+          <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
         </div>
+      </div>
 
-        {/* Chat flotante — solo para roles con canal de chat asignado */}
-        {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
-      </SocketProvider>
-    </NextIntlClientProvider>
+      {/* Chat flotante — solo para roles con canal de chat asignado */}
+      {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
+    </SocketProvider>
   );
 }

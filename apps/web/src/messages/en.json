@@ -39,6 +39,43 @@
     "personal_pasteleria": "Pastry Staff",
     "steward": "Steward"
   },
+  "layout": {
+    "offline": {
+      "noConnectionEmpty": "Offline — orders will be saved locally",
+      "noConnectionWithSaved": "Offline — {count, plural, =1 {1 order saved, will be sent when the network is back} other {# orders saved, will be sent when the network is back}}",
+      "syncing": "Syncing pending orders…",
+      "pendingSync": "{count, plural, =1 {1 order pending sync} other {# orders pending sync}}"
+    },
+    "privacy": {
+      "messageBefore": "This system stores operational data under",
+      "law": "Law 1581 of 2012 (Habeas Data, Colombia)",
+      "messageAfter": "Your data is used solely to operate Dorado Lounge and is deleted 90 days after termination. You may request its deletion at any time.",
+      "policyLink": "Privacy policy",
+      "accept": "Accept",
+      "reject": "Reject",
+      "dialogLabel": "Privacy notice"
+    }
+  },
+  "alertas": {
+    "title": "Alerts",
+    "bellLabel": "Alerts",
+    "markAll": "Mark all",
+    "empty": "No alerts",
+    "new": "New",
+    "relative": {
+      "now": "now",
+      "minutes": "{n}m",
+      "hours": "{n}h",
+      "days": "{n}d"
+    }
+  },
+  "theme": {
+    "label": "Toggle theme",
+    "trigger": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "auth": {
     "subtitle": "Operational 24/7 traceability system",
     "title": "Sign in",

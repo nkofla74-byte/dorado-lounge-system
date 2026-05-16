@@ -39,6 +39,43 @@
     "personal_pasteleria": "Personal Pastelería",
     "steward": "Steward"
   },
+  "layout": {
+    "offline": {
+      "noConnectionEmpty": "Sin conexión — los pedidos se guardarán localmente",
+      "noConnectionWithSaved": "Sin conexión — {count, plural, =1 {1 pedido guardado, se enviará al recuperar la red} other {# pedidos guardados, se enviarán al recuperar la red}}",
+      "syncing": "Sincronizando pedidos pendientes…",
+      "pendingSync": "{count, plural, =1 {1 pedido pendiente por sincronizar} other {# pedidos pendientes por sincronizar}}"
+    },
+    "privacy": {
+      "messageBefore": "Este sistema almacena datos operativos de acuerdo con la",
+      "law": "Ley 1581 de 2012 (Habeas Data)",
+      "messageAfter": "Sus datos se usan exclusivamente para la operación del Dorado Lounge y se eliminan a los 90 días de su desvinculación. Puede solicitar su eliminación en cualquier momento.",
+      "policyLink": "Política de privacidad",
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "dialogLabel": "Aviso de privacidad"
+    }
+  },
+  "alertas": {
+    "title": "Alertas",
+    "bellLabel": "Alertas",
+    "markAll": "Marcar todas",
+    "empty": "Sin alertas",
+    "new": "Nueva",
+    "relative": {
+      "now": "ahora",
+      "minutes": "{n}m",
+      "hours": "{n}h",
+      "days": "{n}d"
+    }
+  },
+  "theme": {
+    "label": "Cambiar tema",
+    "trigger": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
   "auth": {
     "subtitle": "Sistema operativo de trazabilidad 24/7",
     "title": "Iniciar sesión",

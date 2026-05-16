@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Bell, BellRing, AlertTriangle, Info, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -24,16 +25,21 @@ function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
   return <Info className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />;
 }
 
-function formatRelativo(d: Date): string {
-  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return 'ahora';
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  return `${Math.floor(hrs / 24)}d`;
+function useFormatRelativo() {
+  const t = useTranslations('alertas.relative');
+  return (d: Date): string => {
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return t('now');
+    if (mins < 60) return t('minutes', { n: mins });
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return t('hours', { n: hrs });
+    return t('days', { n: Math.floor(hrs / 24) });
+  };
 }
 
 export function AlertasBell() {
+  const t = useTranslations('alertas');
+  const formatRelativo = useFormatRelativo();
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -97,7 +103,12 @@ export function AlertasBell() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Alertas">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-8 w-8"
+          aria-label={t('bellLabel')}
+        >
           {hasCritical ? (
             <BellRing className="h-4 w-4 text-red-500 animate-bounce" />
           ) : (
@@ -117,7 +128,7 @@ export function AlertasBell() {
       </SheetTrigger>
       <SheetContent side="right" className="w-80 p-0 flex flex-col">
         <SheetHeader className="px-4 py-3 border-b border-border flex-row items-center justify-between space-y-0">
-          <SheetTitle className="text-sm font-medium">Alertas</SheetTitle>
+          <SheetTitle className="text-sm font-medium">{t('title')}</SheetTitle>
           {unread > 0 && (
             <Button
               variant="ghost"
@@ -126,14 +137,14 @@ export function AlertasBell() {
               onClick={handleMarcarTodas}
             >
               <CheckCheck className="h-3.5 w-3.5" />
-              Marcar todas
+              {t('markAll')}
             </Button>
           )}
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto divide-y divide-border">
           {alertas.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Sin alertas</div>
+            <div className="py-12 text-center text-sm text-muted-foreground">{t('empty')}</div>
           ) : (
             alertas.map((alerta) => (
               <button
@@ -164,7 +175,7 @@ export function AlertasBell() {
                   </p>
                   {!alerta.leida && (
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4">
-                      Nueva
+                      {t('new')}
                     </Badge>
                   )}
                 </div>
