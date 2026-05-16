@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, QrCode, Check } from 'lucide-react';
@@ -45,12 +46,6 @@ const UNIDAD_LABEL: Record<string, string> = {
   porcion: 'porc',
 };
 
-const CATEGORIA_LABELS: Record<CategoriaMenu, string> = {
-  entrada: 'Entrada',
-  plato_fuerte: 'Plato fuerte',
-  acompanante: 'Acompañante',
-};
-
 const formatCOP = (n: number) =>
   n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
@@ -78,6 +73,12 @@ export function IngredientsSheet({
   onIngredienteAdded,
   onMenuMetaUpdated,
 }: IngredientsSheetProps) {
+  const t = useTranslations('ingredientes');
+  const CATEGORIA_LABELS: Record<CategoriaMenu, string> = {
+    entrada: t('categoriaEntrada'),
+    plato_fuerte: t('categoriaPlatoFuerte'),
+    acompanante: t('categoriaAcompanante'),
+  };
   const [serverError, setServerError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [menuCategoria, setMenuCategoria] = useState<CategoriaMenu | null>(null);
@@ -175,9 +176,9 @@ export function IngredientsSheet({
         <SheetHeader className="space-y-1 pb-4">
           <SheetTitle className="text-base">{receta.nombre}</SheetTitle>
           <SheetDescription className="text-xs">
-            {receta.ingredientes.length} ingrediente{receta.ingredientes.length !== 1 ? 's' : ''}
+            {t('ingredienteCount', { count: receta.ingredientes.length })}
             {' · '}
-            {receta.porciones} porción{receta.porciones !== 1 ? 'es' : ''}
+            {t('porcionCount', { count: receta.porciones ?? 0 })}
             {costo && (
               <>
                 {' · '}
@@ -187,9 +188,10 @@ export function IngredientsSheet({
                     costo.tieneCostoCompleto ? 'text-foreground' : 'text-amber-500',
                   )}
                 >
-                  {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'} / porción
+                  {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'}{' '}
+                  {t('costoPorPorcion')}
                 </span>
-                {!costo.tieneCostoCompleto && ' ⚠ costo parcial'}
+                {!costo.tieneCostoCompleto && t('costoParcial')}
               </>
             )}
           </SheetDescription>
@@ -200,9 +202,7 @@ export function IngredientsSheet({
         {/* Lista de ingredientes */}
         <div className="space-y-2 mb-4">
           {receta.ingredientes.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Sin ingredientes. Agrega el primero.
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-6">{t('sinIngredientes')}</p>
           ) : (
             receta.ingredientes.map((ing) => {
               const costoIng = costo?.ingredientes.find((ci) => ci.insumoId === ing.insumoId);
@@ -218,7 +218,7 @@ export function IngredientsSheet({
                       {UNIDAD_LABEL[ing.unidadMedida] ?? ing.unidadMedida}
                       {ing.mermaCoeficiente > 0 && (
                         <span className="ml-2 text-amber-500/80">
-                          merma {(ing.mermaCoeficiente * 100).toFixed(1)}%
+                          {t('merma', { pct: (ing.mermaCoeficiente * 100).toFixed(1) })}
                         </span>
                       )}
                     </p>
@@ -230,7 +230,7 @@ export function IngredientsSheet({
                           {formatCOP(costoIng.costoIngrediente)}
                         </p>
                       ) : (
-                        <p className="text-xs text-amber-500/70">sin precio</p>
+                        <p className="text-xs text-amber-500/70">{t('sinPrecio')}</p>
                       )}
                       {costoIng.precioUnitario != null && (
                         <p className="text-[10px] text-muted-foreground tabular-nums">
@@ -249,7 +249,7 @@ export function IngredientsSheet({
         {/* Resumen de costo total */}
         {costo && receta.ingredientes.length > 0 && (
           <div className="flex items-center justify-between px-3 py-2 rounded-md bg-primary/5 border border-primary/20 text-sm">
-            <span className="text-muted-foreground">Costo total receta</span>
+            <span className="text-muted-foreground">{t('costoTotalReceta')}</span>
             <span className="font-semibold tabular-nums">{formatCOP(costo.costoTotal)}</span>
           </div>
         )}
@@ -257,19 +257,19 @@ export function IngredientsSheet({
         {/* Formulario para agregar ingrediente */}
         {showForm ? (
           <div className="rounded-md border border-border/60 p-4 space-y-3 bg-muted/20">
-            <p className="text-sm font-medium">Agregar ingrediente</p>
+            <p className="text-sm font-medium">{t('tituloFormulario')}</p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
               <div className="space-y-1.5">
-                <Label>Insumo *</Label>
+                <Label>{t('labelInsumo')}</Label>
                 <Select onValueChange={(v) => setValue('insumoId', v, { shouldValidate: true })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar insumo" />
+                    <SelectValue placeholder={t('selectInsumoPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableInsumos.length === 0 ? (
                       <SelectItem value="_empty" disabled>
-                        Sin insumos disponibles
+                        {t('sinInsumosDisponibles')}
                       </SelectItem>
                     ) : (
                       availableInsumos.map((i) => (
@@ -290,7 +290,7 @@ export function IngredientsSheet({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="cantidad">Cantidad *</Label>
+                  <Label htmlFor="cantidad">{t('labelCantidad')}</Label>
                   <Input
                     id="cantidad"
                     type="number"
@@ -305,7 +305,7 @@ export function IngredientsSheet({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="mermaCoeficiente">Merma (0–0.9999)</Label>
+                  <Label htmlFor="mermaCoeficiente">{t('labelMerma')}</Label>
                   <Input
                     id="mermaCoeficiente"
                     type="number"
@@ -340,10 +340,10 @@ export function IngredientsSheet({
                   }}
                   disabled={isSubmitting}
                 >
-                  Cancelar
+                  {t('cancelar')}
                 </Button>
                 <Button type="submit" size="sm" className="flex-1" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Agregar'}
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('agregar')}
                 </Button>
               </div>
             </form>
@@ -357,7 +357,7 @@ export function IngredientsSheet({
             disabled={availableInsumos.length === 0}
           >
             <Plus className="h-4 w-4 mr-1.5" />
-            Agregar ingrediente
+            {t('agregarIngrediente')}
           </Button>
         )}
 
@@ -369,13 +369,13 @@ export function IngredientsSheet({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <QrCode className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Menú QR</p>
-                <span className="text-xs text-muted-foreground">(visible al pasajero)</span>
+                <p className="text-sm font-medium">{t('menuQr')}</p>
+                <span className="text-xs text-muted-foreground">{t('menuQrVisible')}</span>
               </div>
 
               {/* Categoría */}
               <div className="space-y-1.5">
-                <Label>Categoría en el menú</Label>
+                <Label>{t('labelCategoria')}</Label>
                 <div className="flex gap-2">
                   {(['entrada', 'plato_fuerte', 'acompanante'] as CategoriaMenu[]).map((cat) => (
                     <button
@@ -393,17 +393,15 @@ export function IngredientsSheet({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Sin categoría = no aparece en el menú QR
-                </p>
+                <p className="text-xs text-muted-foreground">{t('sinCategoria')}</p>
               </div>
 
               {/* Descripción */}
               <div className="space-y-1.5">
-                <Label htmlFor="descripcion-qr">Descripción corta</Label>
+                <Label htmlFor="descripcion-qr">{t('labelDescripcion')}</Label>
                 <Textarea
                   id="descripcion-qr"
-                  placeholder="Ej: Selección de quesos nacionales con mermelada de mora…"
+                  placeholder={t('descripcionPlaceholder')}
                   rows={2}
                   maxLength={500}
                   value={menuDescripcion !== '' ? menuDescripcion : (receta.descripcion ?? '')}
@@ -414,7 +412,7 @@ export function IngredientsSheet({
 
               {/* URL de imagen */}
               <div className="space-y-1.5">
-                <Label htmlFor="imagen-url">URL de foto del plato</Label>
+                <Label htmlFor="imagen-url">{t('labelUrlFoto')}</Label>
                 <Input
                   id="imagen-url"
                   type="url"
@@ -424,8 +422,7 @@ export function IngredientsSheet({
                   className="text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Sube la foto al bucket <code className="bg-muted px-1 rounded">recetas</code> en
-                  Supabase Storage y pega la URL pública aquí.
+                  {t('urlFotoHint', { bucket: 'recetas' })}
                 </p>
               </div>
 
@@ -446,7 +443,7 @@ export function IngredientsSheet({
                 ) : menuSaved ? (
                   <Check className="h-4 w-4 mr-1.5" />
                 ) : null}
-                {menuSaved ? 'Guardado' : 'Guardar configuración QR'}
+                {menuSaved ? t('guardado') : t('guardarConfigQr')}
               </Button>
             </div>
           </>

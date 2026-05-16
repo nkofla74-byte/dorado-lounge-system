@@ -293,7 +293,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => cancelarPedido(id, v))
                                   }
                                 >
-                                  Cancelar
+                                  {t('cancelar')}
                                 </Button>
                               )}
                             </>
@@ -311,7 +311,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => despacharPedido(id, v))
                                   }
                                 >
-                                  Despachar
+                                  {t('despachar')}
                                 </Button>
                               )}
                               {isCocina && (
@@ -324,7 +324,7 @@ export function PedidoTable({
                                     runAction(pedido, (id, v) => cancelarPedido(id, v))
                                   }
                                 >
-                                  Cancelar
+                                  {t('cancelar')}
                                 </Button>
                               )}
                             </>
@@ -338,7 +338,7 @@ export function PedidoTable({
                               disabled={isProcessing}
                               onClick={() => setConfirmingId(pedido.id)}
                             >
-                              Confirmar entrega
+                              {t('confirmarEntrega')}
                             </Button>
                           )}
 
@@ -346,7 +346,7 @@ export function PedidoTable({
                           {isConfirming && (
                             <>
                               <span className="text-xs text-muted-foreground mr-1">
-                                ¿Descontar stock?
+                                {t('confirmarDescuento')}
                               </span>
                               <Button
                                 size="sm"
@@ -354,7 +354,7 @@ export function PedidoTable({
                                 disabled={isProcessing}
                                 onClick={() => runAction(pedido, (id, v) => entregarPedido(id, v))}
                               >
-                                {isProcessing ? 'Procesando…' : 'Confirmar'}
+                                {isProcessing ? t('procesando') : t('confirmar')}
                               </Button>
                               <Button
                                 size="sm"
@@ -363,7 +363,7 @@ export function PedidoTable({
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(null)}
                               >
-                                No
+                                {t('no')}
                               </Button>
                             </>
                           )}
