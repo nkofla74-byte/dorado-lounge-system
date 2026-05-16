@@ -64,6 +64,7 @@ function toLoteConInsumo(row: LoteRow): LoteConInsumo {
     fechaRecibido: row.fecha_recibido,
     fechaVencimiento: row.fecha_vencimiento,
     proveedor: row.proveedor,
+    proveedorId: row.proveedor_id,
     costoUnitario: row.costo_unitario != null ? Number(row.costo_unitario) : null,
     activo: row.activo,
     createdAt: new Date(row.created_at),

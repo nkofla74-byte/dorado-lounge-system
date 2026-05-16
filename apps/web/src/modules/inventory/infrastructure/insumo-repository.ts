@@ -24,6 +24,7 @@ type LoteRow = {
   fecha_recibido: string;
   fecha_vencimiento: string | null;
   proveedor: string | null;
+  proveedor_id: string | null;
   costo_unitario: number | null;
   activo: boolean;
   created_at: string;
@@ -39,6 +40,7 @@ function toLote(row: LoteRow): Lote {
     fechaRecibido: row.fecha_recibido,
     fechaVencimiento: row.fecha_vencimiento,
     proveedor: row.proveedor,
+    proveedorId: row.proveedor_id,
     costoUnitario: row.costo_unitario !== null ? Number(row.costo_unitario) : null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
@@ -149,7 +151,7 @@ export function createInsumoRepository(): InsumoRepository {
       const { data, error } = await supabase
         .from('lotes')
         .select(
-          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, costo_unitario, activo, created_at',
+          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, proveedor_id, costo_unitario, activo, created_at',
         )
         .eq('insumo_id', insumoId)
         .is('deleted_at', null)
@@ -172,10 +174,11 @@ export function createInsumoRepository(): InsumoRepository {
           cantidad_actual: input.cantidadInicial,
           fecha_vencimiento: input.fechaVencimiento ?? null,
           proveedor: input.proveedor ?? null,
+          proveedor_id: input.proveedorId ?? null,
           costo_unitario: input.costoUnitario ?? null,
         })
         .select(
-          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, costo_unitario, activo, created_at',
+          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, proveedor_id, costo_unitario, activo, created_at',
         )
         .single();
 

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, PackagePlus } from 'lucide-react';
 import { createLoteSchema } from '@dorado/shared-validation';
 import { getLotesByInsumo, createLote } from '@/modules/inventory/actions';
+import { getProveedores } from '@/modules/proveedores/actions';
 import {
   Sheet,
   SheetContent,
@@ -19,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import type { InsumoWithStock, Lote } from '@/modules/inventory/domain/insumo';
+import type { Proveedor } from '@/modules/proveedores/domain/proveedor';
 import type { z } from 'zod';
 
 type FormInput = z.input<typeof createLoteSchema>;
@@ -63,16 +65,24 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
   const [loadingLotes, setLoadingLotes] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(createLoteSchema),
     defaultValues: { insumoId: insumo?.id ?? '' },
   });
+
+  useEffect(() => {
+    getProveedores().then((r) => {
+      if (r.ok) setProveedores(r.value.filter((p) => p.activo));
+    });
+  }, []);
 
   useEffect(() => {
     if (!insumo) return;
@@ -82,7 +92,6 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
       if (result.ok) setLotes(result.value);
       setLoadingLotes(false);
     });
-    // Reset form for new insumo
     reset({ insumoId: insumo.id });
     setShowForm(false);
     setServerError('');
@@ -210,14 +219,35 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="proveedor">
+                <Label htmlFor="proveedorId">
                   Proveedor <span className="text-muted-foreground font-normal">(opcional)</span>
                 </Label>
-                <Input
-                  id="proveedor"
-                  placeholder="Nombre del proveedor"
-                  {...register('proveedor')}
-                />
+                {proveedores.length > 0 ? (
+                  <select
+                    id="proveedorId"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    {...register('proveedorId')}
+                    onChange={(e) => {
+                      const selected = proveedores.find((p) => p.id === e.target.value);
+                      setValue('proveedorId', e.target.value || undefined);
+                      setValue('proveedor', selected?.nombre ?? '');
+                    }}
+                  >
+                    <option value="">Sin proveedor</option>
+                    {proveedores.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="proveedorId"
+                    placeholder="Nombre del proveedor"
+                    {...register('proveedor')}
+                  />
+                )}
+                <input type="hidden" {...register('proveedor')} />
               </div>
 
               <div className="space-y-1.5">
