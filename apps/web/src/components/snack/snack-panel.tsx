@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   UtensilsCrossed,
   Bell,
@@ -45,15 +46,6 @@ interface SnackPanelProps {
 
 const WRITE_ROLES = new Set<UserRole>(['superuser', 'admin', 'personal_snack']);
 
-function formatFecha(date: Date): string {
-  return new Date(date).toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function SnackPanel({
   initialDespachos,
   initialStuart,
@@ -62,6 +54,8 @@ export function SnackPanel({
   userRole,
   error,
 }: SnackPanelProps) {
+  const t = useTranslations('snack');
+  const locale = useLocale();
   const [despachos, setDespachos] = useState<DespachoSnack[]>(initialDespachos);
   const [stuartRequests, setStuartRequests] = useState<StuartRequest[]>(initialStuart);
   const [selectedTurnoId, setSelectedTurnoId] = useState<string>('');
@@ -71,6 +65,14 @@ export function SnackPanel({
   const [isPending, startTransition] = useTransition();
 
   const canWrite = userRole ? WRITE_ROLES.has(userRole) : false;
+
+  const formatFecha = (date: Date): string =>
+    new Date(date).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   const refreshDespachos = () => {
     startTransition(async () => {
@@ -107,13 +109,13 @@ export function SnackPanel({
         {turnos.length > 0 && (
           <Select value={selectedTurnoId || 'all'} onValueChange={handleTurnoChange}>
             <SelectTrigger className="w-52">
-              <SelectValue placeholder="Todos los turnos" />
+              <SelectValue placeholder={t('todosLosTurnos')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los turnos</SelectItem>
-              {turnos.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.nombre}
+              <SelectItem value="all">{t('todosLosTurnos')}</SelectItem>
+              {turnos.map((tu) => (
+                <SelectItem key={tu.id} value={tu.id}>
+                  {tu.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -128,7 +130,7 @@ export function SnackPanel({
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-          Actualizar
+          {t('actualizar')}
         </Button>
 
         <div className="flex-1" />
@@ -142,7 +144,7 @@ export function SnackPanel({
               className="gap-2"
             >
               <Bell className="h-4 w-4" />
-              Solicitar Stuart
+              {t('solicitarStuart')}
             </Button>
             <Button
               size="sm"
@@ -151,7 +153,7 @@ export function SnackPanel({
               className="gap-2"
             >
               <ArrowDownToLine className="h-4 w-4" />
-              Stock Out
+              {t('stockOut')}
             </Button>
           </>
         )}
@@ -168,7 +170,7 @@ export function SnackPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Despachos desde cocina</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('despachosTitle')}</h2>
           <Badge variant="outline" className="text-xs">
             {despachos.length}
           </Badge>
@@ -176,7 +178,7 @@ export function SnackPanel({
 
         {despachos.length === 0 ? (
           <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-            No hay despachos registrados
+            {t('sinDespachos')}
           </div>
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
@@ -184,14 +186,16 @@ export function SnackPanel({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Receta
+                    {t('colReceta')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground text-right">
-                    Batches
+                    {t('colBatches')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">Turno</TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Despachado
+                    {t('colTurno')}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">
+                    {t('colDespachado')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -201,7 +205,7 @@ export function SnackPanel({
                     <TableCell className="font-medium text-sm">{d.recetaNombre}</TableCell>
                     <TableCell className="text-right text-sm tabular-nums">{d.cantidad}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {d.turnoId ? (turnos.find((t) => t.id === d.turnoId)?.nombre ?? '—') : '—'}
+                      {d.turnoId ? (turnos.find((tu) => tu.id === d.turnoId)?.nombre ?? '—') : '—'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatFecha(d.despachadoAt)}
@@ -218,7 +222,7 @@ export function SnackPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Solicitudes Stuart recientes</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('stuartTitle')}</h2>
           <Badge variant="outline" className="text-xs">
             {stuartRequests.length}
           </Badge>
@@ -226,7 +230,7 @@ export function SnackPanel({
 
         {stuartRequests.length === 0 ? (
           <div className="text-center py-10 text-sm text-muted-foreground border border-dashed rounded-lg">
-            Sin solicitudes Stuart registradas
+            {t('sinStuart')}
           </div>
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
@@ -234,12 +238,12 @@ export function SnackPanel({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Descripción
+                    {t('colDescripcion')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Enviado
+                      {t('colEnviado')}
                     </span>
                   </TableHead>
                 </TableRow>

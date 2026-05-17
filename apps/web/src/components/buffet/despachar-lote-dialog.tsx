@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,14 +33,6 @@ import { Input } from '@/components/ui/input';
 import { despacharLoteBuffet } from '@/modules/buffet/actions';
 import type { TurnoActivo } from '@/modules/buffet/domain/ticket-turno';
 
-const formSchema = z.object({
-  recetaId: z.string().uuid('Selecciona una receta'),
-  cantidad: z.coerce.number().int().positive('La cantidad debe ser mayor que 0'),
-  turnoId: z.string().uuid().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface Receta {
   id: string;
   nombre: string;
@@ -61,7 +54,16 @@ export function DespacharLoteDialog({
   recetas,
   turnos,
 }: DespacharLoteDialogProps) {
+  const t = useTranslations('buffet.despachar');
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    recetaId: z.string().uuid(t('errorReceta')),
+    cantidad: z.coerce.number().int().positive(t('errorCantidad')),
+    turnoId: z.string().uuid().optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -93,10 +95,8 @@ export function DespacharLoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Despachar lote al buffet</DialogTitle>
-          <DialogDescription className="sr-only">
-            Registra el despacho de un lote de receta al buffet y descuenta inventario FEFO.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -106,11 +106,11 @@ export function DespacharLoteDialog({
               name="recetaId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Receta</FormLabel>
+                  <FormLabel>{t('receta')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value ?? ''}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una receta" />
+                        <SelectValue placeholder={t('recetaPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -118,7 +118,7 @@ export function DespacharLoteDialog({
                         <SelectItem key={r.id} value={r.id}>
                           {r.nombre}
                           <span className="text-muted-foreground ml-2 text-xs">
-                            ({r.porciones} porc/batch)
+                            {t('porcSuffix', { n: r.porciones })}
                           </span>
                         </SelectItem>
                       ))}
@@ -134,7 +134,7 @@ export function DespacharLoteDialog({
               name="cantidad"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cantidad de batches</FormLabel>
+                  <FormLabel>{t('cantidad')}</FormLabel>
                   <FormControl>
                     <Input type="number" min={1} step={1} {...field} />
                   </FormControl>
@@ -149,17 +149,17 @@ export function DespacharLoteDialog({
                 name="turnoId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Turno (opcional)</FormLabel>
+                    <FormLabel>{t('turno')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sin turno asignado" />
+                          <SelectValue placeholder={t('turnoPlaceholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {turnos.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.nombre}
+                        {turnos.map((tu) => (
+                          <SelectItem key={tu.id} value={tu.id}>
+                            {tu.nombre}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -174,10 +174,10 @@ export function DespacharLoteDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Despachando…' : 'Despachar'}
+                {form.formState.isSubmitting ? t('submitting') : t('submit')}
               </Button>
             </DialogFooter>
           </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,13 +33,6 @@ import { Input } from '@/components/ui/input';
 import { registrarTicketsCierre } from '@/modules/buffet/actions';
 import type { TurnoActivo } from '@/modules/buffet/domain/ticket-turno';
 
-const formSchema = z.object({
-  turnoId: z.string().uuid('Selecciona un turno'),
-  cantidadTickets: z.coerce.number().int().min(0, 'La cantidad no puede ser negativa'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface RegistrarTicketsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,7 +46,15 @@ export function RegistrarTicketsDialog({
   onRegistrado,
   turnos,
 }: RegistrarTicketsDialogProps) {
+  const t = useTranslations('buffet.tickets');
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    turnoId: z.string().uuid(t('errorTurno')),
+    cantidadTickets: z.coerce.number().int().min(0, t('errorCantidad')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -83,11 +85,8 @@ export function RegistrarTicketsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Registrar tickets al cierre</DialogTitle>
-          <DialogDescription className="sr-only">
-            Registra la cantidad de tickets recolectados al cierre del buffet. 1 ticket = 1
-            servicio.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -97,17 +96,17 @@ export function RegistrarTicketsDialog({
               name="turnoId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Turno</FormLabel>
+                  <FormLabel>{t('turno')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value ?? ''}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el turno" />
+                        <SelectValue placeholder={t('turnoPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {turnos.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.nombre}
+                      {turnos.map((tu) => (
+                        <SelectItem key={tu.id} value={tu.id}>
+                          {tu.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -122,7 +121,7 @@ export function RegistrarTicketsDialog({
               name="cantidadTickets"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cantidad de tickets</FormLabel>
+                  <FormLabel>{t('cantidad')}</FormLabel>
                   <FormControl>
                     <Input type="number" min={0} step={1} {...field} />
                   </FormControl>
@@ -135,10 +134,10 @@ export function RegistrarTicketsDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Registrando…' : 'Registrar'}
+                {form.formState.isSubmitting ? t('submitting') : t('submit')}
               </Button>
             </DialogFooter>
           </form>
