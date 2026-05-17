@@ -72,6 +72,11 @@ const TEXTS: Record<string, Record<string, string>> = {
       'El Dorado Lounge te ofrece gastronomía de calidad, bebidas premium y conectividad de primer nivel en el Aeropuerto El Dorado, Bogotá.',
     errorOrder: 'No se pudo enviar el pedido. Intenta de nuevo.',
     back: 'Volver',
+    added: 'Añadido',
+    dishSingular: 'plato',
+    dishPlural: 'platos',
+    noDishesAvailable: 'No hay platos disponibles',
+    selectAtLeastOne: 'Selecciona al menos un plato para continuar',
   },
   en: {
     selectLanguage: 'Select your language',
@@ -111,6 +116,11 @@ const TEXTS: Record<string, Record<string, string>> = {
       'Dorado Lounge offers quality cuisine, premium beverages and first-class connectivity at El Dorado Airport, Bogotá.',
     errorOrder: 'Could not send order. Please try again.',
     back: 'Back',
+    added: 'Added',
+    dishSingular: 'dish',
+    dishPlural: 'dishes',
+    noDishesAvailable: 'No dishes available',
+    selectAtLeastOne: 'Select at least one dish to continue',
   },
   fr: {
     selectLanguage: 'Sélectionnez votre langue',
@@ -150,6 +160,11 @@ const TEXTS: Record<string, Record<string, string>> = {
       "Le Dorado Lounge vous propose une gastronomie de qualité, des boissons premium et une connectivité haut de gamme à l'aéroport El Dorado, Bogotá.",
     errorOrder: "Impossible d'envoyer la commande. Veuillez réessayer.",
     back: 'Retour',
+    added: 'Ajouté',
+    dishSingular: 'plat',
+    dishPlural: 'plats',
+    noDishesAvailable: 'Aucun plat disponible',
+    selectAtLeastOne: 'Sélectionnez au moins un plat pour continuer',
   },
   pt: {
     selectLanguage: 'Selecione o seu idioma',
@@ -189,6 +204,11 @@ const TEXTS: Record<string, Record<string, string>> = {
       'O Dorado Lounge oferece gastronomia de qualidade, bebidas premium e conectividade de alto nível no Aeroporto El Dorado, Bogotá.',
     errorOrder: 'Não foi possível enviar o pedido. Tente novamente.',
     back: 'Voltar',
+    added: 'Adicionado',
+    dishSingular: 'prato',
+    dishPlural: 'pratos',
+    noDishesAvailable: 'Nenhum prato disponível',
+    selectAtLeastOne: 'Selecione pelo menos um prato para continuar',
   },
 };
 
@@ -274,7 +294,7 @@ function DishCard({
         <div className="flex items-center gap-2 shrink-0 ml-3">
           {added && (
             <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-              ✓ Añadido
+              ✓ {t['added']}
             </span>
           )}
           {expanded ? (
@@ -410,7 +430,7 @@ function MenuScreen({
           </div>
           {cart.length > 0 && (
             <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full px-2.5 py-0.5 font-medium">
-              {cart.length} {cart.length === 1 ? 'plato' : 'platos'}
+              {cart.length} {cart.length === 1 ? t['dishSingular'] : t['dishPlural']}
             </span>
           )}
         </div>
@@ -442,7 +462,7 @@ function MenuScreen({
         {(byCategory[activeCategory] ?? []).length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-3 text-muted-foreground">
             <UtensilsCrossed className="h-10 w-10 opacity-30" />
-            <p className="text-sm">No hay platos disponibles</p>
+            <p className="text-sm">{t['noDishesAvailable']}</p>
           </div>
         ) : (
           (byCategory[activeCategory] ?? []).map((receta) => (
@@ -457,13 +477,7 @@ function MenuScreen({
       <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-t px-4 py-3 safe-pb space-y-2">
         {emptyWarning && (
           <p className="text-xs text-amber-600 dark:text-amber-400 text-center font-medium">
-            {locale === 'en'
-              ? 'Select at least one dish to continue'
-              : locale === 'pt'
-                ? 'Selecione pelo menos um prato para continuar'
-                : locale === 'fr'
-                  ? 'Sélectionnez au moins un plat pour continuer'
-                  : 'Selecciona al menos un plato para continuar'}
+            {t['selectAtLeastOne']}
           </p>
         )}
         <Button

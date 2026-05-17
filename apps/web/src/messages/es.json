@@ -54,6 +54,20 @@
       "accept": "Aceptar",
       "reject": "Rechazar",
       "dialogLabel": "Aviso de privacidad"
+    },
+    "usuarioFallback": "Usuario",
+    "chatTitulo": {
+      "chef": "Cocina",
+      "sous_chef": "Cocina Amex",
+      "admin": "Admin",
+      "mesero_amex": "Sala Amex",
+      "recepcion": "Sala Amex",
+      "personal_snack": "Snack",
+      "personal_buffet": "Buffet",
+      "personal_pasteleria": "Producción",
+      "steward": "Producción",
+      "personal_almacen": "Almacén",
+      "default": "Chat"
     }
   },
   "alertas": {
@@ -233,6 +247,19 @@
       "verLotes": "Ver lotes",
       "acciones": "Acciones",
       "insumo": "Insumo"
+    },
+    "almacenPage": {
+      "metaTitle": "Almacén — Dorado Lounge",
+      "title": "Almacén",
+      "subtitle": "Ingreso de materia prima · Control de bodega",
+      "statsInsumosBodega": "Insumos bodega",
+      "statsStockBajo": "Stock bajo mínimo",
+      "statsVencen7": "Vencen en 7 días",
+      "statsOk": "OK en stock",
+      "lotesPorVencer": "Lotes próximos a vencer (7 días)",
+      "vencido": "vencido",
+      "manana": "mañana",
+      "diasShort": "{n}d"
     }
   },
   "auth": {
@@ -737,6 +764,9 @@
     }
   },
   "costos": {
+    "metaTitle": "Costos — Dorado Lounge",
+    "pageTitle": "Costos en tiempo real",
+    "pageSubtitle": "Costo por porción calculado con el precio del lote activo más próximo a vencer (FEFO)",
     "totalRecetas": "Total recetas",
     "conCostoCompleto": "Con costo completo",
     "costoIncompleto": "Costo incompleto",
@@ -999,6 +1029,37 @@
     "guardado": "Guardado",
     "guardarConfigQr": "Guardar configuración QR"
   },
+  "pasteleria": {
+    "metaTitle": "Pastelería — Dorado Lounge",
+    "pageTitle": "Pastelería",
+    "pageSubtitle": "Producción de pastelería · Pedidos especiales desde Amex",
+    "sinTurnoActivo": "Sin turno activo — contacta al administrador para abrir turno.",
+    "pedidosEspeciales": "{n, plural, =1 {1 pedido especial pendiente desde Amex} other {# pedidos especiales pendientes desde Amex}}",
+    "sinMesa": "Sin mesa",
+    "estadoNuevo": "Nuevo",
+    "estadoEnPreparacion": "En preparación"
+  },
+  "qrAdmin": {
+    "metaTitle": "Generador QR — Dorado Lounge",
+    "pageTitle": "Generador de QR",
+    "pageSubtitle": "Genera e imprime el código QR para cada mesa. Escaneable directamente por el pasajero.",
+    "mesaLabel": "Número / nombre de mesa",
+    "mesaPlaceholder": "Ej: Mesa 5, VIP-3, Puerta 23",
+    "zonaLabel": "Zona",
+    "idiomaLabel": "Idioma del pasajero",
+    "generar": "Generar QR",
+    "generando": "Generando…",
+    "imprimir": "Imprimir",
+    "descargar": "Descargar PNG",
+    "nuevoQrTitle": "Nuevo QR",
+    "scanInstrucciones": "Escanea para ordenar · Scan to order",
+    "urlLabel": "URL del QR",
+    "urlRelativaWarn": "URL relativa detectada — el QR no funcionará al escanearse. Configura {var} en Vercel.",
+    "tokenInfo": "Token válido por 4 horas · Genera uno nuevo cuando sea necesario",
+    "zonaAmex": "Amex",
+    "zonaSnack": "Snack Bar",
+    "zonaBuffet": "Buffet"
+  },
   "qr": {
     "title": "Dorado Lounge",
     "subtitle": "Aeropuerto El Dorado, Bogotá",
@@ -1022,6 +1083,9 @@
     "errorTitle": "Token inválido",
     "errorMessage": "El QR no es válido o ha expirado. Solicita uno nuevo al personal.",
     "errorOrder": "No se pudo enviar el pedido. Inténtalo de nuevo.",
-    "portions": "{n} porción | {n} porciones"
+    "portions": "{n} porción | {n} porciones",
+    "qrInvalido": "QR inválido",
+    "qrInvalidoHint": "Escanea el código QR de tu mesa para continuar.",
+    "cambiarIdiomaAria": "Cambiar idioma"
   }
 }

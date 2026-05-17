@@ -22,6 +22,9 @@
     "errorTitle": "QR invalide",
     "errorMessage": "Le QR code n'est pas valide ou a expiré. Demandez-en un nouveau au personnel.",
     "errorOrder": "Impossible d'envoyer la commande. Veuillez réessayer.",
-    "portions": "{n} portion | {n} portions"
+    "portions": "{n} portion | {n} portions",
+    "qrInvalido": "QR invalide",
+    "qrInvalidoHint": "Scannez le QR code de votre table pour continuer.",
+    "cambiarIdiomaAria": "Changer de langue"
   }
 }

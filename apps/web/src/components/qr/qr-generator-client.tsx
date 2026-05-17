@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { Printer, Download, QrCode, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,8 @@ import { Label } from '@/components/ui/label';
 import { generateQRLink } from '@/app/(dashboard)/admin/qr/actions';
 import { toast } from 'sonner';
 
-const ZONAS = [
-  { value: 'amex', label: 'Amex' },
-  { value: 'snack', label: 'Snack Bar' },
-  { value: 'buffet', label: 'Buffet' },
-] as const;
+const ZONA_KEYS = ['amex', 'snack', 'buffet'] as const;
+type ZonaKey = (typeof ZONA_KEYS)[number];
 
 const LOCALES = [
   { value: 'es', label: 'ES' },
@@ -25,18 +23,25 @@ const LOCALES = [
 interface QRResult {
   url: string;
   mesaNumero: string;
-  zona: string;
+  zona: ZonaKey;
   zonaLabel: string;
   dataUrl: string;
 }
 
 export function QRGeneratorClient() {
+  const t = useTranslations('qrAdmin');
   const [mesaNumero, setMesaNumero] = useState('');
-  const [zona, setZona] = useState<'amex' | 'snack' | 'buffet'>('amex');
+  const [zona, setZona] = useState<ZonaKey>('amex');
   const [locale, setLocale] = useState('es');
   const [result, setResult] = useState<QRResult | null>(null);
   const [loading, setLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const zonaLabels: Record<ZonaKey, string> = {
+    amex: t('zonaAmex'),
+    snack: t('zonaSnack'),
+    buffet: t('zonaBuffet'),
+  };
 
   const handleGenerate = async () => {
     if (!mesaNumero.trim()) return;
@@ -55,8 +60,13 @@ export function QRGeneratorClient() {
       errorCorrectionLevel: 'M',
     });
 
-    const zonaLabel = ZONAS.find((z) => z.value === zona)?.label ?? zona;
-    setResult({ url: res.value.url, mesaNumero: mesaNumero.trim(), zona, zonaLabel, dataUrl });
+    setResult({
+      url: res.value.url,
+      mesaNumero: mesaNumero.trim(),
+      zona,
+      zonaLabel: zonaLabels[zona],
+      dataUrl,
+    });
   };
 
   const handleDownload = () => {
@@ -108,10 +118,10 @@ export function QRGeneratorClient() {
       {/* Formulario */}
       <div className="space-y-3 border border-border rounded-xl p-4 bg-card">
         <div className="space-y-1.5">
-          <Label htmlFor="mesa">Número / nombre de mesa</Label>
+          <Label htmlFor="mesa">{t('mesaLabel')}</Label>
           <Input
             id="mesa"
-            placeholder="Ej: Mesa 5, VIP-3, Puerta 23"
+            placeholder={t('mesaPlaceholder')}
             value={mesaNumero}
             onChange={(e) => setMesaNumero(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
@@ -119,26 +129,26 @@ export function QRGeneratorClient() {
         </div>
 
         <div className="space-y-1.5">
-          <Label>Zona</Label>
+          <Label>{t('zonaLabel')}</Label>
           <div className="flex gap-2">
-            {ZONAS.map((z) => (
+            {ZONA_KEYS.map((z) => (
               <button
-                key={z.value}
-                onClick={() => setZona(z.value)}
+                key={z}
+                onClick={() => setZona(z)}
                 className={`flex-1 py-1.5 text-sm rounded-lg border transition-colors ${
-                  zona === z.value
+                  zona === z
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'border-border hover:bg-accent'
                 }`}
               >
-                {z.label}
+                {zonaLabels[z]}
               </button>
             ))}
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <Label>Idioma del pasajero</Label>
+          <Label>{t('idiomaLabel')}</Label>
           <div className="flex gap-2">
             {LOCALES.map((l) => (
               <button
@@ -162,7 +172,7 @@ export function QRGeneratorClient() {
           disabled={loading || !mesaNumero.trim()}
         >
           <QrCode className="h-4 w-4 mr-2" />
-          {loading ? 'Generando…' : 'Generar QR'}
+          {loading ? t('generando') : t('generar')}
         </Button>
       </div>
 
@@ -186,9 +196,7 @@ export function QRGeneratorClient() {
                 alt={`QR ${result.mesaNumero}`}
                 className="w-44 h-44 mx-auto"
               />
-              <p className="text-[9px] text-gray-400 mt-3 leading-snug">
-                Escanea para ordenar · Scan to order
-              </p>
+              <p className="text-[9px] text-gray-400 mt-3 leading-snug">{t('scanInstrucciones')}</p>
             </div>
           </div>
 
@@ -196,13 +204,18 @@ export function QRGeneratorClient() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 gap-2" onClick={handlePrint}>
               <Printer className="h-4 w-4" />
-              Imprimir
+              {t('imprimir')}
             </Button>
             <Button variant="outline" className="flex-1 gap-2" onClick={handleDownload}>
               <Download className="h-4 w-4" />
-              Descargar PNG
+              {t('descargar')}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setResult(null)} title="Nuevo QR">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setResult(null)}
+              title={t('nuevoQrTitle')}
+            >
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -210,22 +223,22 @@ export function QRGeneratorClient() {
           {/* URL generada (diagnóstico) */}
           <div className="rounded-md border border-dashed border-border p-2.5 bg-muted/30">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              URL del QR
+              {t('urlLabel')}
             </p>
             <p className="text-[11px] font-mono break-all text-foreground/80 leading-relaxed">
               {result.url}
             </p>
             {!result.url.startsWith('http') && (
               <p className="text-[11px] text-destructive mt-1.5">
-                ⚠ URL relativa detectada — el QR no funcionará al escanearse. Configura{' '}
-                <code>NEXT_PUBLIC_APP_URL</code> en Vercel.
+                ⚠{' '}
+                {t.rich('urlRelativaWarn', {
+                  var: () => <code>NEXT_PUBLIC_APP_URL</code>,
+                })}
               </p>
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
-            Token válido por 4 horas · Genera uno nuevo cuando sea necesario
-          </p>
+          <p className="text-xs text-muted-foreground text-center">{t('tokenInfo')}</p>
         </div>
       )}
     </div>

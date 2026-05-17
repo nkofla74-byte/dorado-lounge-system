@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { OfflineBanner } from '@/components/layout/offline-banner';
@@ -22,27 +22,43 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   personal_almacen: CHANNELS.BROADCAST_ADMIN,
 };
 
-const ROLE_CHAT_TITULO: Partial<Record<UserRole, string>> = {
-  chef: 'Cocina',
-  sous_chef: 'Cocina Amex',
-  admin: 'Admin',
-  superuser: 'Admin',
-  mesero_amex: 'Sala Amex',
-  recepcion: 'Sala Amex',
-  personal_snack: 'Snack',
-  personal_buffet: 'Buffet',
-  personal_pasteleria: 'Producción',
-  steward: 'Producción',
-  personal_almacen: 'Almacén',
+type ChatTituloKey =
+  | 'chef'
+  | 'sous_chef'
+  | 'admin'
+  | 'mesero_amex'
+  | 'recepcion'
+  | 'personal_snack'
+  | 'personal_buffet'
+  | 'personal_pasteleria'
+  | 'steward'
+  | 'personal_almacen'
+  | 'default';
+
+const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
+  chef: 'chef',
+  sous_chef: 'sous_chef',
+  admin: 'admin',
+  superuser: 'admin',
+  mesero_amex: 'mesero_amex',
+  recepcion: 'recepcion',
+  personal_snack: 'personal_snack',
+  personal_buffet: 'personal_buffet',
+  personal_pasteleria: 'personal_pasteleria',
+  steward: 'steward',
+  personal_almacen: 'personal_almacen',
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
-  const [{ data: userData }, { data: sessionData }, locale] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-    getLocale(),
-  ]);
+  const [{ data: userData }, { data: sessionData }, locale, tLayout, tChatTitulo] =
+    await Promise.all([
+      supabase.auth.getUser(),
+      supabase.auth.getSession(),
+      getLocale(),
+      getTranslations('layout'),
+      getTranslations('layout.chatTitulo'),
+    ]);
 
   const user = userData.user;
   if (!user) redirect('/login');
@@ -57,11 +73,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     user.user_metadata?.full_name ??
     user.user_metadata?.name ??
     user.email?.split('@')[0] ??
-    'Usuario';
+    tLayout('usuarioFallback');
 
   const token = sessionData.session?.access_token ?? '';
   const chatCanal = ROLE_CHAT_CHANNEL[role] ?? null;
-  const chatTitulo = ROLE_CHAT_TITULO[role] ?? 'Chat';
+  const chatTitulo = tChatTitulo(CHAT_TITULO_KEYS[role] ?? 'default');
 
   const sidebarUser = { name, email: user.email ?? '', role };
 

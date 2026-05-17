@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { getMenuPublico } from './actions';
 import { QRPassengerApp } from '@/components/qr/qr-passenger-app';
 
@@ -12,13 +13,12 @@ export default async function QRPage({ params, searchParams }: Props) {
   const locale = params.locale;
 
   if (!token) {
+    const t = await getTranslations({ locale, namespace: 'qr' });
     return (
       <div className="min-h-screen flex items-center justify-center px-6 text-center">
         <div className="space-y-2">
-          <p className="text-lg font-semibold">QR inválido</p>
-          <p className="text-sm text-muted-foreground">
-            Escanea el código QR de tu mesa para continuar.
-          </p>
+          <p className="text-lg font-semibold">{t('qrInvalido')}</p>
+          <p className="text-sm text-muted-foreground">{t('qrInvalidoHint')}</p>
         </div>
       </div>
     );
