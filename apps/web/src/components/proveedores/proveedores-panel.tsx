@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Plus,
   Pencil,
@@ -25,6 +26,7 @@ interface ProveedoresPanelProps {
 }
 
 export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProps) {
+  const t = useTranslations('proveedores');
   const [proveedores, setProveedores] = useState<Proveedor[]>(initialData);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | undefined>();
@@ -59,7 +61,7 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
       return;
     }
     handleSaved(result.value);
-    toast.success(result.value.activo ? 'Proveedor reactivado' : 'Proveedor desactivado');
+    toast.success(result.value.activo ? t('reactivado') : t('desactivado'));
   };
 
   const activos = proveedores.filter((p) => p.activo);
@@ -71,15 +73,12 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4" />
-          <span>
-            {activos.length} proveedor{activos.length !== 1 ? 'es' : ''} activo
-            {activos.length !== 1 ? 's' : ''}
-          </span>
+          <span>{t('count', { n: activos.length })}</span>
         </div>
         {canWrite && (
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1.5" />
-            Nuevo proveedor
+            {t('nuevo')}
           </Button>
         )}
       </div>
@@ -88,7 +87,7 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
       {proveedores.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm gap-2">
           <Building2 className="h-10 w-10 opacity-30" />
-          No hay proveedores registrados.
+          {t('empty')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -118,7 +117,7 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
                       </span>
                       {!p.activo && (
                         <Badge variant="outline" className="text-xs text-muted-foreground">
-                          Inactivo
+                          {t('inactivo')}
                         </Badge>
                       )}
                     </div>
@@ -160,7 +159,7 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
                         className="h-7 text-xs text-muted-foreground"
                         onClick={() => toggleActivo(p)}
                       >
-                        {p.activo ? 'Desactivar' : 'Reactivar'}
+                        {p.activo ? t('desactivar') : t('reactivar')}
                       </Button>
                     </div>
                   )}
@@ -171,7 +170,7 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
                   <div className="border-t border-border px-4 pb-4 pt-3 space-y-2">
                     {p.notas && <p className="text-xs text-muted-foreground italic">{p.notas}</p>}
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Historial de compras
+                      {t('historialTitle')}
                     </p>
                     <HistorialCompras proveedorId={p.id} />
                   </div>

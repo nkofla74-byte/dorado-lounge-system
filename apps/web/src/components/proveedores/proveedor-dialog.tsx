@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createProveedorSchema, updateProveedorSchema } from '@dorado/shared-validation';
+import { createProveedorSchema } from '@dorado/shared-validation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,6 +38,8 @@ interface ProveedorDialogProps {
 }
 
 export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: ProveedorDialogProps) {
+  const t = useTranslations('proveedores');
+  const tF = useTranslations('proveedores.form');
   const isEdit = Boolean(proveedor);
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +66,7 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
       toast.error(result.error.message);
       return;
     }
-    toast.success(isEdit ? 'Proveedor actualizado' : 'Proveedor creado');
+    toast.success(isEdit ? t('actualizado') : t('creado'));
     onSaved(result.value);
     onOpenChange(false);
     form.reset();
@@ -73,7 +76,7 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar proveedor' : 'Nuevo proveedor'}</DialogTitle>
+          <DialogTitle>{isEdit ? tF('edit') : tF('create')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -82,9 +85,9 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre *</FormLabel>
+                  <FormLabel>{tF('nombre')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej. Distribuidora La Cosecha" {...field} />
+                    <Input placeholder={tF('nombrePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,10 +99,10 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
                 name="contacto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contacto</FormLabel>
+                    <FormLabel>{tF('contacto')}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Nombre del contacto"
+                        placeholder={tF('contactoPlaceholder')}
                         {...field}
                         value={field.value ?? ''}
                       />
@@ -113,9 +116,13 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
                 name="telefono"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
+                    <FormLabel>{tF('telefono')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="+57 300 000 0000" {...field} value={field.value ?? ''} />
+                      <Input
+                        placeholder={tF('telefonoPlaceholder')}
+                        {...field}
+                        value={field.value ?? ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,11 +134,11 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{tF('email')}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="proveedor@ejemplo.com"
+                      placeholder={tF('emailPlaceholder')}
                       {...field}
                       value={field.value ?? ''}
                     />
@@ -145,10 +152,10 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
               name="notas"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notas</FormLabel>
+                  <FormLabel>{tF('notas')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Condiciones de pago, días de entrega..."
+                      placeholder={tF('notasPlaceholder')}
                       rows={3}
                       {...field}
                       value={field.value ?? ''}
@@ -160,10 +167,10 @@ export function ProveedorDialog({ open, onOpenChange, proveedor, onSaved }: Prov
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {tF('cancelar')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear proveedor'}
+                {loading ? tF('guardando') : isEdit ? tF('guardarCambios') : tF('crear')}
               </Button>
             </DialogFooter>
           </form>

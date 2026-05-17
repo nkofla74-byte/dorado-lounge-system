@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Package, TrendingDown } from 'lucide-react';
 import {
   Table,
@@ -14,22 +15,24 @@ import { Badge } from '@/components/ui/badge';
 import { getHistorialCompras } from '@/modules/proveedores/actions';
 import type { LoteConInsumo } from '@/modules/proveedores/application/ports/proveedor-repository.port';
 
-function formatCOP(n: number | null): string {
-  if (n == null) return '—';
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
 interface HistorialComprasProps {
   proveedorId: string;
 }
 
 export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
+  const t = useTranslations('proveedores.historial');
+  const locale = useLocale();
   const [lotes, setLotes] = useState<LoteConInsumo[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const formatCOP = (n: number | null): string => {
+    if (n == null) return '—';
+    return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(n);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -40,16 +43,14 @@ export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
   }, [proveedorId]);
 
   if (loading) {
-    return (
-      <div className="text-sm text-muted-foreground py-8 text-center">Cargando historial…</div>
-    );
+    return <div className="text-sm text-muted-foreground py-8 text-center">{t('loading')}</div>;
   }
 
   if (lotes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm gap-2">
         <Package className="h-8 w-8 opacity-30" />
-        Sin lotes registrados para este proveedor.
+        {t('empty')}
       </div>
     );
   }
@@ -59,12 +60,12 @@ export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border">
-            <TableHead>Insumo</TableHead>
-            <TableHead>Fecha recibido</TableHead>
-            <TableHead className="text-right">Cantidad inicial</TableHead>
-            <TableHead className="text-right">Stock actual</TableHead>
-            <TableHead className="text-right">Costo unit.</TableHead>
-            <TableHead>Estado</TableHead>
+            <TableHead>{t('colInsumo')}</TableHead>
+            <TableHead>{t('colFecha')}</TableHead>
+            <TableHead className="text-right">{t('colCantidadInicial')}</TableHead>
+            <TableHead className="text-right">{t('colStockActual')}</TableHead>
+            <TableHead className="text-right">{t('colCostoUnit')}</TableHead>
+            <TableHead>{t('colEstado')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,11 +97,11 @@ export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
                       variant="outline"
                       className="text-xs text-emerald-500 border-emerald-500/30"
                     >
-                      Activo
+                      {t('activo')}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs text-muted-foreground">
-                      Agotado
+                      {t('agotado')}
                     </Badge>
                   )}
                 </TableCell>
