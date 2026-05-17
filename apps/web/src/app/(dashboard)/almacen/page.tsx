@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { getInsumos, getLotesProximosVencer } from '@/modules/inventory/actions';
 import { AlmacenPanel } from '@/components/inventory/almacen-panel';
 import { createClient } from '@/lib/supabase/server';
 import type { UserRole } from '@dorado/shared-types';
 
-export const metadata: Metadata = {
-  title: 'Almacén — Dorado Lounge',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('inventory.almacenPage');
+  return { title: t('metaTitle') };
+}
 
 export default async function AlmacenPage() {
+  const t = await getTranslations('inventory.almacenPage');
   const supabase = createClient();
   const [
     result,
@@ -28,17 +31,15 @@ export default async function AlmacenPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Almacén</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Ingreso de materia prima · Control de bodega
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {/* Stats rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border border-border bg-card px-5 py-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-            Insumos bodega
+            {t('statsInsumosBodega')}
           </p>
           <p className="text-2xl font-bold tabular-nums">{capa1.length}</p>
         </div>
@@ -48,7 +49,7 @@ export default async function AlmacenPage() {
           }`}
         >
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-            Stock bajo mínimo
+            {t('statsStockBajo')}
           </p>
           <p
             className={`text-2xl font-bold tabular-nums ${lowStock.length > 0 ? 'text-destructive' : ''}`}
@@ -66,7 +67,7 @@ export default async function AlmacenPage() {
           }`}
         >
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-            Vencen en 7 días
+            {t('statsVencen7')}
           </p>
           <p
             className={`text-2xl font-bold tabular-nums ${
@@ -82,7 +83,7 @@ export default async function AlmacenPage() {
         </div>
         <div className="rounded-lg border border-border bg-card px-5 py-4 space-y-1">
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-            OK en stock
+            {t('statsOk')}
           </p>
           <p className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
             {capa1.length - lowStock.length}
@@ -94,7 +95,7 @@ export default async function AlmacenPage() {
       {vencimientos.length > 0 && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-2">
           <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-            Lotes próximos a vencer (7 días)
+            {t('lotesPorVencer')}
           </p>
           <div className="flex flex-wrap gap-2">
             {vencimientos.map((v) => (
@@ -111,10 +112,10 @@ export default async function AlmacenPage() {
                 {v.insumoNombre}
                 <span className="opacity-70">
                   {v.diasRestantes <= 0
-                    ? '— vencido'
+                    ? `— ${t('vencido')}`
                     : v.diasRestantes === 1
-                      ? '— mañana'
-                      : `— ${v.diasRestantes}d`}
+                      ? `— ${t('manana')}`
+                      : `— ${t('diasShort', { n: v.diasRestantes })}`}
                 </span>
               </span>
             ))}

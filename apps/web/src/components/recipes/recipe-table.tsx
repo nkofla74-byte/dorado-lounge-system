@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   BookOpen,
   AlertTriangle,
@@ -30,17 +31,7 @@ import type { CategoriaMenu } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { CostoReceta } from '@/modules/costos/domain/costo';
 
-const ZONA_LABEL: Record<string, string> = {
-  amex: 'Amex',
-  snack: 'Snack',
-  buffet: 'Buffet',
-};
-
-const CATEGORIA_LABEL: Record<CategoriaMenu, string> = {
-  entrada: 'Entrada',
-  plato_fuerte: 'Plato fuerte',
-  acompanante: 'Acompañante',
-};
+type ZonaKey = 'amex' | 'snack' | 'buffet';
 
 const formatCOP = (n: number) =>
   n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -58,6 +49,9 @@ export function RecipeTable({
   initialCostos = {},
   error: initialError,
 }: RecipeTableProps) {
+  const t = useTranslations('recipes');
+  const tZ = useTranslations('zonas');
+  const tCat = useTranslations('categoriasMenu');
   const [data, setData] = useState(initialData);
   const [costos, setCostos] = useState<Record<string, CostoReceta>>(initialCostos);
   const [loading, setLoading] = useState(false);
@@ -120,7 +114,7 @@ export function RecipeTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <BookOpen className="h-4 w-4" />
-          <span>{data.length} recetas</span>
+          <span>{t('count', { n: data.length })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -129,13 +123,13 @@ export function RecipeTable({
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
-            aria-label="Actualizar recetas"
+            aria-label={t('refreshAria')}
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-1.5" />
-            Nueva receta
+            {t('newRecipe')}
           </Button>
         </div>
       </div>
@@ -151,21 +145,21 @@ export function RecipeTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Nombre</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Destino / Zona</TableHead>
-              <TableHead className="text-center">Porciones</TableHead>
-              <TableHead className="text-center">Ingredientes</TableHead>
+              <TableHead>{t('colNombre')}</TableHead>
+              <TableHead>{t('colTipo')}</TableHead>
+              <TableHead>{t('colDestino')}</TableHead>
+              <TableHead className="text-center">{t('colPorciones')}</TableHead>
+              <TableHead className="text-center">{t('colIngredientes')}</TableHead>
               <TableHead>
                 <span className="flex items-center gap-1">
                   <TrendingUp className="h-3.5 w-3.5" />
-                  Costo / porción
+                  {t('colCostoPorcion')}
                 </span>
               </TableHead>
               <TableHead>
                 <span className="flex items-center gap-1">
                   <QrCode className="h-3.5 w-3.5" />
-                  Menú QR
+                  {t('colMenuQR')}
                 </span>
               </TableHead>
               <TableHead className="w-10" />
@@ -175,7 +169,7 @@ export function RecipeTable({
             {data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay recetas registradas. Crea la primera con el botón de arriba.
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -189,13 +183,17 @@ export function RecipeTable({
                         variant={receta.tipoReceta === 'produccion' ? 'secondary' : 'outline'}
                         className="text-xs"
                       >
-                        {receta.tipoReceta === 'produccion' ? 'Producción' : 'Servicio'}
+                        {receta.tipoReceta === 'produccion'
+                          ? t('tipoProduccion')
+                          : t('tipoServicio')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {receta.tipoReceta === 'produccion'
                         ? (receta.insumoDestinoNombre ?? '—')
-                        : (ZONA_LABEL[receta.zona ?? ''] ?? receta.zona ?? '—')}
+                        : receta.zona && tZ.has(receta.zona)
+                          ? tZ(receta.zona as ZonaKey)
+                          : (receta.zona ?? '—')}
                     </TableCell>
                     <TableCell className="text-center tabular-nums text-sm">
                       {receta.porciones}
@@ -219,11 +217,7 @@ export function RecipeTable({
                             'text-sm tabular-nums',
                             !costo.tieneCostoCompleto && 'text-amber-500/80',
                           )}
-                          title={
-                            !costo.tieneCostoCompleto
-                              ? 'Faltan precios en algunos ingredientes'
-                              : undefined
-                          }
+                          title={!costo.tieneCostoCompleto ? t('faltanPrecios') : undefined}
                         >
                           {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'}
                           {!costo.tieneCostoCompleto && (
@@ -231,19 +225,23 @@ export function RecipeTable({
                           )}
                         </span>
                       ) : receta.ingredientes.length === 0 ? (
-                        <span className="text-xs text-muted-foreground/40">Sin ingr.</span>
+                        <span className="text-xs text-muted-foreground/40">
+                          {t('sinIngredientes')}
+                        </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40">Sin precios</span>
+                        <span className="text-xs text-muted-foreground/40">{t('sinPrecios')}</span>
                       )}
                     </TableCell>
                     <TableCell>
                       {receta.tipoReceta === 'servicio' ? (
                         receta.categoriaMenu ? (
                           <Badge variant="secondary" className="text-xs">
-                            {CATEGORIA_LABEL[receta.categoriaMenu]}
+                            {tCat(receta.categoriaMenu)}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground/60">Sin categoría</span>
+                          <span className="text-xs text-muted-foreground/60">
+                            {t('sinCategoria')}
+                          </span>
                         )
                       ) : (
                         <span className="text-muted-foreground/40">—</span>
@@ -255,7 +253,7 @@ export function RecipeTable({
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
                         onClick={() => setSheetReceta(receta)}
-                        aria-label="Ver ingredientes y costos"
+                        aria-label={t('verIngredientes')}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -285,7 +283,6 @@ export function RecipeTable({
         insumos={insumos}
         onIngredienteAdded={(recetaId, ingrediente) => {
           handleIngredienteAdded(recetaId, ingrediente);
-          // Refresh costs for this recipe after adding ingredient
           void getCostosRecetas([recetaId]).then((r) => {
             if (r.ok) setCostos((prev) => ({ ...prev, ...r.value }));
           });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -49,6 +50,7 @@ export function CreateTandaDialog({
   turnoActivo,
   responsableNombre,
 }: CreateTandaDialogProps) {
+  const t = useTranslations('production.create');
   const [serverError, setServerError] = useState('');
 
   const genKey = () => `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -97,33 +99,31 @@ export function CreateTandaDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nueva tanda de producción</DialogTitle>
-          <DialogDescription className="sr-only">
-            Programa una tanda a partir de una receta de producción existente.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Receta */}
           <div className="space-y-1.5">
-            <Label>Receta *</Label>
+            <Label>{t('receta')} *</Label>
             <Select onValueChange={(v) => setValue('recetaId', v, { shouldValidate: true })}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar receta de producción" />
+                <SelectValue placeholder={t('recetaPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {(() => {
                   const con = recetas.filter((r) => r.ingredientes.length > 0);
                   return con.length === 0 ? (
                     <SelectItem value="_empty" disabled>
-                      No hay recetas con ingredientes
+                      {t('sinRecetas')}
                     </SelectItem>
                   ) : (
                     con.map((r) => (
                       <SelectItem key={r.id} value={r.id}>
                         {r.nombre}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          ({r.ingredientes.length} ing.)
+                          ({r.ingredientes.length} {t('ingShort')})
                         </span>
                       </SelectItem>
                     ))
@@ -138,7 +138,7 @@ export function CreateTandaDialog({
 
           {/* Cantidad de tandas */}
           <div className="space-y-1.5">
-            <Label htmlFor="cantidadTandas">Cantidad de tandas *</Label>
+            <Label htmlFor="cantidadTandas">{t('cantidadTandas')} *</Label>
             <Input
               id="cantidadTandas"
               type="number"
@@ -153,26 +153,24 @@ export function CreateTandaDialog({
 
           {/* Responsable (auto del usuario logueado) */}
           <div className="space-y-1.5">
-            <Label>Responsable</Label>
+            <Label>{t('responsable')}</Label>
             <div className="flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm text-muted-foreground">
               {responsableNombre}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Se registra el usuario que crea la tanda.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('responsableHint')}</p>
           </div>
 
           {/* Turno activo */}
           <div className="space-y-1.5">
-            <Label>Turno</Label>
+            <Label>{t('turno')}</Label>
             {turnoActivo ? (
               <div className="flex items-center justify-between px-3 py-2 rounded-md border bg-muted/40 text-sm">
                 <span>{turnoActivo.nombre}</span>
-                <span className="text-xs text-muted-foreground">Activo</span>
+                <span className="text-xs text-muted-foreground">{t('turnoActivo')}</span>
               </div>
             ) : (
               <div className="flex items-center px-3 py-2 rounded-md border border-amber-500/40 bg-amber-500/5 text-sm text-amber-700 dark:text-amber-300">
-                Sin turno activo — la tanda quedará sin asignar
+                {t('sinTurno')}
               </div>
             )}
           </div>
@@ -180,12 +178,13 @@ export function CreateTandaDialog({
           {/* Notas */}
           <div className="space-y-1.5">
             <Label htmlFor="notas">
-              Notas <span className="text-muted-foreground font-normal">(opcional)</span>
+              {t('notas')}{' '}
+              <span className="text-muted-foreground font-normal">{t('optional')}</span>
             </Label>
             <textarea
               id="notas"
               rows={2}
-              placeholder="Observaciones, instrucciones especiales…"
+              placeholder={t('notasPlaceholder')}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               {...register('notas')}
             />
@@ -204,7 +203,7 @@ export function CreateTandaDialog({
               onClick={() => handleClose(false)}
               disabled={isSubmitting}
             >
-              Cancelar
+              {t('cancelar')}
             </Button>
             <Button
               type="submit"
@@ -215,10 +214,10 @@ export function CreateTandaDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {t('guardando')}
                 </>
               ) : (
-                'Crear tanda'
+                t('guardar')
               )}
             </Button>
           </DialogFooter>

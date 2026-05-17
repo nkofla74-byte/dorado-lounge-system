@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,7 @@ export function CerrarTurnoDialog({
   onCerrado,
   turno,
 }: CerrarTurnoDialogProps) {
+  const t = useTranslations('turnos');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,10 +51,12 @@ export function CerrarTurnoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>¿Cerrar turno?</DialogTitle>
+          <DialogTitle>{t('cerrarTitle')}</DialogTitle>
           <DialogDescription>
-            El turno <span className="font-medium text-foreground">{turno.nombre}</span> quedará
-            cerrado y no podrá reabrirse. Esta acción queda registrada en el audit log.
+            {t.rich('cerrarDescription', {
+              nombre: turno.nombre,
+              b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -60,10 +64,10 @@ export function CerrarTurnoDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancelar
+            {t('cancelar')}
           </Button>
           <Button variant="destructive" onClick={handleCerrar} disabled={isLoading}>
-            {isLoading ? 'Cerrando…' : 'Cerrar turno'}
+            {isLoading ? t('cerrando') : t('cerrar')}
           </Button>
         </DialogFooter>
       </DialogContent>

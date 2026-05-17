@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -39,6 +40,8 @@ interface Props {
 }
 
 export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
+  const t = useTranslations('afluencia');
+  const tZ = useTranslations('zonas');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -64,9 +67,7 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(
-        `${values.cantidad} pasajero${values.cantidad !== 1 ? 's' : ''} registrado${values.cantidad !== 1 ? 's' : ''}`,
-      );
+      toast.success(t('registradoToast', { n: values.cantidad }));
       form.reset({ turnoId, cantidad: 1, zona: null, vueloNumero: null });
       setOpen(false);
       onSuccess();
@@ -80,13 +81,13 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusCircle className="h-4 w-4 mr-2" />
-          Registrar ingreso
+          {t('registrarIngreso')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar ingreso de pasajeros</DialogTitle>
+          <DialogTitle>{t('registrarTitle')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -96,12 +97,12 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
               name="cantidad"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cantidad de pasajeros</FormLabel>
+                  <FormLabel>{t('cantidad')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       min={1}
-                      placeholder="Ej. 15"
+                      placeholder={t('cantidadPlaceholder')}
                       {...field}
                       onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                     />
@@ -116,21 +117,21 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
               name="zona"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Zona (opcional)</FormLabel>
+                  <FormLabel>{t('zona')}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v === 'todas' ? null : v)}
                     defaultValue="todas"
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar zona" />
+                        <SelectValue placeholder={t('zonaPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="todas">Todas las zonas</SelectItem>
-                      <SelectItem value="amex">Amex</SelectItem>
-                      <SelectItem value="snack">Snack</SelectItem>
-                      <SelectItem value="buffet">Buffet</SelectItem>
+                      <SelectItem value="todas">{t('todasLasZonas')}</SelectItem>
+                      <SelectItem value="amex">{tZ('amex')}</SelectItem>
+                      <SelectItem value="snack">{tZ('snack')}</SelectItem>
+                      <SelectItem value="buffet">{tZ('buffet')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -143,10 +144,10 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
               name="vueloNumero"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Número de vuelo (opcional)</FormLabel>
+                  <FormLabel>{t('vuelo')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ej. AV101"
+                      placeholder={t('vueloPlaceholder')}
                       maxLength={10}
                       {...field}
                       value={field.value ?? ''}
@@ -165,10 +166,10 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
                 onClick={() => setOpen(false)}
                 disabled={loading}
               >
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Registrando...' : 'Registrar'}
+                {loading ? t('submitting') : t('submit')}
               </Button>
             </div>
           </form>

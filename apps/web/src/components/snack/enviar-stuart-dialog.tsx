@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,12 +25,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { enviarStuart } from '@/modules/snack/actions';
 
-const formSchema = z.object({
-  descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface EnviarStuartDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,7 +32,14 @@ interface EnviarStuartDialogProps {
 }
 
 export function EnviarStuartDialog({ open, onOpenChange, onEnviado }: EnviarStuartDialogProps) {
+  const t = useTranslations('snack.stuart');
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    descripcion: z.string().min(1, t('errorDescripcion')).max(500),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -63,10 +65,8 @@ export function EnviarStuartDialog({ open, onOpenChange, onEnviado }: EnviarStua
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Solicitar utensilios — Stuart</DialogTitle>
-          <DialogDescription className="sr-only">
-            Envía una solicitud de utensilios a cocina a través del canal Stuart.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -76,10 +76,10 @@ export function EnviarStuartDialog({ open, onOpenChange, onEnviado }: EnviarStua
               name="descripcion"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>¿Qué necesitas?</FormLabel>
+                  <FormLabel>{t('label')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ej: 5 platos grandes, 10 vasos de agua…"
+                      placeholder={t('placeholder')}
                       className="resize-none"
                       rows={3}
                       {...field}
@@ -94,10 +94,10 @@ export function EnviarStuartDialog({ open, onOpenChange, onEnviado }: EnviarStua
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Enviando…' : 'Enviar solicitud'}
+                {form.formState.isSubmitting ? t('submitting') : t('submit')}
               </Button>
             </DialogFooter>
           </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,16 +33,6 @@ import { Input } from '@/components/ui/input';
 import { stockOut } from '@/modules/inventory/actions';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 
-const formSchema = z.object({
-  insumoId: z.string().uuid('Selecciona un insumo'),
-  cantidad: z.coerce
-    .number()
-    .positive('La cantidad debe ser mayor que 0')
-    .multipleOf(0.0001, 'Máximo 4 decimales'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface StockOutSnackDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,7 +46,18 @@ export function StockOutSnackDialog({
   onRegistrado,
   insumos,
 }: StockOutSnackDialogProps) {
+  const t = useTranslations('snack.stockOutDialog');
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z.object({
+    insumoId: z.string().uuid(t('errorInsumo')),
+    cantidad: z.coerce
+      .number()
+      .positive(t('errorCantidad'))
+      .multipleOf(0.0001, t('errorDecimales')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -88,10 +90,8 @@ export function StockOutSnackDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Stock Out manual</DialogTitle>
-          <DialogDescription className="sr-only">
-            Descuenta manualmente insumos del inventario por FEFO.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -101,11 +101,11 @@ export function StockOutSnackDialog({
               name="insumoId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Insumo</FormLabel>
+                  <FormLabel>{t('insumo')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value ?? ''}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un insumo" />
+                        <SelectValue placeholder={t('insumoPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -113,7 +113,7 @@ export function StockOutSnackDialog({
                         <SelectItem key={ins.id} value={ins.id}>
                           {ins.nombre}
                           <span className="text-muted-foreground ml-2 text-xs">
-                            ({ins.stockActual} {ins.unidadMedida} disp.)
+                            ({ins.stockActual} {ins.unidadMedida} {t('disp')})
                           </span>
                         </SelectItem>
                       ))}
@@ -130,7 +130,7 @@ export function StockOutSnackDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Cantidad
+                    {t('cantidad')}
                     {selectedInsumo && (
                       <span className="text-muted-foreground font-normal ml-1">
                         ({selectedInsumo.unidadMedida})
@@ -149,10 +149,10 @@ export function StockOutSnackDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Registrando…' : 'Registrar'}
+                {form.formState.isSubmitting ? t('submitting') : t('submit')}
               </Button>
             </DialogFooter>
           </form>

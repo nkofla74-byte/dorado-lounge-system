@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { PackagePlus, AlertTriangle, RefreshCw, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,21 +20,14 @@ import { MermaDialog } from './merma-dialog';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { UserRole } from '@dorado/shared-types';
 
-const UNIDAD_LABEL: Record<string, string> = {
-  kg: 'kg',
-  g: 'g',
-  l: 'L',
-  ml: 'mL',
-  unidad: 'und',
-  porcion: 'porc',
-};
-
 interface AlmacenPanelProps {
   initialData: InsumoWithStock[];
   userRole?: UserRole | undefined;
 }
 
 export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelProps) {
+  const t = useTranslations('inventory');
+  const tA = useTranslations('inventory.almacen');
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
@@ -49,16 +43,14 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Materia prima en bodega · Capa 1 · Ordenado por stock
-        </p>
+        <p className="text-sm text-muted-foreground">{tA('subtitle')}</p>
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8"
           onClick={refresh}
           disabled={loading}
-          title="Actualizar"
+          title={t('refresh')}
         >
           <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
         </Button>
@@ -68,19 +60,19 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Insumo</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Unidad</TableHead>
-              <TableHead className="text-right">Stock actual</TableHead>
-              <TableHead className="text-right">Stock mínimo</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead>{tA('insumo')}</TableHead>
+              <TableHead>{t('columns.codigo')}</TableHead>
+              <TableHead>{t('columns.unidad')}</TableHead>
+              <TableHead className="text-right">{t('columns.stockActual')}</TableHead>
+              <TableHead className="text-right">{t('columns.stockMinimo')}</TableHead>
+              <TableHead className="text-right">{tA('acciones')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay insumos en bodega.
+                  {tA('empty')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -102,7 +94,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                               variant="destructive"
                               className="text-[10px] px-1.5 py-0 h-4 font-normal"
                             >
-                              Bajo mínimo
+                              {tA('bajoMinimo')}
                             </Badge>
                           )}
                         </span>
@@ -111,7 +103,17 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                         {insumo.codigo ?? '—'}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {UNIDAD_LABEL[insumo.unidadMedida] ?? insumo.unidadMedida}
+                        {t.has(`unidad.${insumo.unidadMedida}`)
+                          ? t(
+                              `unidad.${insumo.unidadMedida}` as
+                                | 'unidad.kg'
+                                | 'unidad.g'
+                                | 'unidad.l'
+                                | 'unidad.ml'
+                                | 'unidad.unidad'
+                                | 'unidad.porcion',
+                            )
+                          : insumo.unidadMedida}
                       </TableCell>
                       <TableCell
                         className={cn(
@@ -133,7 +135,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                             onClick={() => setLotesInsumo(insumo)}
                           >
                             <PackagePlus className="h-3.5 w-3.5" />
-                            Ingresar lote
+                            {tA('ingresarLote')}
                           </Button>
                           <Button
                             size="sm"
@@ -142,7 +144,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                             onClick={() => setMermaInsumo(insumo)}
                           >
                             <AlertTriangle className="h-3.5 w-3.5" />
-                            Merma
+                            {t('actions.merma')}
                           </Button>
                           <Button
                             size="sm"
@@ -151,7 +153,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                             onClick={() => setLotesInsumo(insumo)}
                           >
                             <Layers className="h-3.5 w-3.5" />
-                            Ver lotes
+                            {tA('verLotes')}
                           </Button>
                         </div>
                       </TableCell>

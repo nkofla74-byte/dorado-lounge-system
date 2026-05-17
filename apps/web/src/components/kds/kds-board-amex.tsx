@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Clock,
   ChefHat,
@@ -27,20 +28,18 @@ import { toast } from 'sonner';
 import type { PedidoWithItems, PedidoEvento } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';
 
-const ESTADO_LABEL: Record<string, string> = {
-  creado: 'Pedido creado',
-  recibido_cocina: 'Recibido en cocina',
-  en_preparacion: 'En preparación',
-  despachado: 'Despachado',
-  entregado: 'Entregado',
-  cancelado: 'Cancelado',
-};
+type EstadoEventoKey =
+  | 'creado'
+  | 'recibido_cocina'
+  | 'en_preparacion'
+  | 'despachado'
+  | 'entregado'
+  | 'cancelado';
 
 function formatHora(d: Date): string {
   return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-// Threshold en minutos para mostrar alerta urgente
 const URGENCY_WARN_MINS = 8;
 const URGENCY_CRIT_MINS = 15;
 
@@ -78,6 +77,7 @@ interface AmexCardProps {
 }
 
 function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
+  const t = useTranslations('kds');
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [eventos, setEventos] = useState<PedidoEvento[] | null>(null);
@@ -128,16 +128,16 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-1">
           <p className="font-semibold text-sm leading-tight">
-            {pedido.numeroMesa ?? <span className="text-muted-foreground">Sin mesa</span>}
+            {pedido.numeroMesa ?? <span className="text-muted-foreground">{t('sinMesa')}</span>}
           </p>
           <Badge
             variant="outline"
             className={`text-xs ${isCrit ? 'border-red-500 text-red-500' : isWarn ? 'border-amber-500 text-amber-500' : ''}`}
           >
-            {pedido.estado === 'creado' && 'Nuevo'}
-            {pedido.estado === 'recibido_cocina' && 'Recibido'}
-            {pedido.estado === 'en_preparacion' && 'Preparando'}
-            {pedido.estado === 'despachado' && 'Despachado'}
+            {pedido.estado === 'creado' && t('estadoNuevo')}
+            {pedido.estado === 'recibido_cocina' && t('estadoRecibido')}
+            {pedido.estado === 'en_preparacion' && t('estadoPreparando')}
+            {pedido.estado === 'despachado' && t('estadoDespachado')}
           </Badge>
         </div>
         <div
@@ -175,7 +175,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
             onClick={() => run(() => recibirEnCocina(pedido.id, pedido.version), 'recibido_cocina')}
           >
             <CheckCircle2 className="h-4 w-4 mr-1.5" />
-            Recibir en cocina
+            {t('recibirCocina')}
           </Button>
         )}
         {pedido.estado === 'recibido_cocina' && (
@@ -188,7 +188,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
             }
           >
             <ChefHat className="h-4 w-4 mr-1.5" />
-            Iniciar preparación
+            {t('iniciarPrep')}
           </Button>
         )}
         {pedido.estado === 'en_preparacion' && (
@@ -200,12 +200,12 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
             onClick={() => run(() => despacharPedido(pedido.id, pedido.version), 'despachado')}
           >
             <Truck className="h-4 w-4 mr-1.5" />
-            Despachar
+            {t('despachar')}
           </Button>
         )}
         {pedido.estado === 'despachado' && (
           <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
-            Esperando confirmación del mesero
+            {t('esperandoMesero')}
           </Badge>
         )}
       </div>
@@ -221,7 +221,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
           ) : (
             <History className="h-3 w-3" />
           )}
-          <span>Historial</span>
+          <span>{t('historial')}</span>
           {showHistory ? (
             <ChevronUp className="h-3 w-3 ml-auto" />
           ) : (
@@ -231,9 +231,9 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
         {showHistory && (
           <div className="mt-2 space-y-1.5">
             {eventos === null || loadingHistory ? (
-              <p className="text-xs text-muted-foreground pl-3">Cargando…</p>
+              <p className="text-xs text-muted-foreground pl-3">{t('cargando')}</p>
             ) : eventos.length === 0 ? (
-              <p className="text-xs text-muted-foreground pl-3">Sin eventos registrados</p>
+              <p className="text-xs text-muted-foreground pl-3">{t('sinEventos')}</p>
             ) : (
               eventos.map((ev, idx) => (
                 <div key={ev.id} className="flex gap-2 text-xs">
@@ -245,7 +245,9 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
                   </div>
                   <div className="pb-1.5">
                     <p className="font-medium text-foreground leading-tight">
-                      {ESTADO_LABEL[ev.estado] ?? ev.estado}
+                      {t.has(`evento.${ev.estado}`)
+                        ? t(`evento.${ev.estado as EstadoEventoKey}`)
+                        : ev.estado}
                     </p>
                     <p className="text-muted-foreground">
                       {formatHora(ev.createdAt)}
@@ -267,6 +269,7 @@ interface KdsBoardAmexProps {
 }
 
 export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
+  const t = useTranslations('kds');
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
   const [refreshing, setRefreshing] = useState(false);
   const socket = useSocket();
@@ -305,9 +308,7 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
     const handleEvent = (event: SocketEvent) => {
       if (event.type === 'PEDIDO_CREADO' && event.payload.zona === 'amex') {
         refresh();
-        toast.info(
-          `Nuevo pedido Amex${event.payload.numeroMesa ? ` — ${event.payload.numeroMesa}` : ''}`,
-        );
+        toast.info(t('nuevoPedidoAmexToast', { mesa: event.payload.numeroMesa ?? 'none' }));
       }
       if (event.type === 'PEDIDO_ESTADO' && event.payload.zona === 'amex') {
         const { pedidoId, estadoNuevo } = event.payload;
@@ -315,7 +316,7 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
           setPedidos((prev) => {
             if (estadoNuevo === 'cancelado') {
               const p = prev.find((x) => x.id === pedidoId);
-              toast.warning(`Cancelado${p?.numeroMesa ? ` — ${p.numeroMesa}` : ''}`);
+              toast.warning(t('canceladoToast', { mesa: p?.numeroMesa ?? 'none' }));
             }
             return prev.filter((p) => p.id !== pedidoId);
           });
@@ -339,9 +340,8 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
       socket.off('connect', refresh);
       socket.emit('leave', CHANNELS.COCINA_AMEX);
     };
-  }, [socket, refresh]);
+  }, [socket, refresh, t]);
 
-  // FIFO: más antiguo primero, luego por estado (nuevos arriba)
   const sorted = [...pedidos].sort((a, b) => {
     const estadoDiff = (ESTADO_ORDER[a.estado] ?? 0) - (ESTADO_ORDER[b.estado] ?? 0);
     if (estadoDiff !== 0) return estadoDiff;
@@ -360,14 +360,12 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cocina Amex — KDS</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('tituloAmex')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {total === 0
-              ? 'Sin pedidos activos'
-              : `${total} pedido${total !== 1 ? 's' : ''} activo${total !== 1 ? 's' : ''}`}
+            {total === 0 ? t('sinPedidosActivos') : t('pedidosActivos', { n: total })}
             {urgentes > 0 && (
               <span className="ml-2 text-red-500 font-medium">
-                · {urgentes} urgente{urgentes !== 1 ? 's' : ''}
+                · {t('urgentes', { n: urgentes })}
               </span>
             )}
           </p>
@@ -385,7 +383,7 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
 
       {total === 0 ? (
         <div className="flex items-center justify-center h-48 rounded-lg border border-dashed text-muted-foreground text-sm">
-          Sin pedidos Amex activos
+          {t('sinPedidosAmex')}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

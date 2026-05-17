@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   AlertTriangle,
   Info,
@@ -25,13 +26,7 @@ import { toast } from 'sonner';
 import type { Alerta } from '@/modules/alertas/domain/alerta';
 
 type Filtro = 'todas' | 'no_leidas' | 'critical';
-
-const TIPO_LABEL: Record<Alerta['tipo'], string> = {
-  stock_minimo: 'Stock mínimo',
-  vencimiento: 'Vencimiento',
-  cambio_precio: 'Cambio precio',
-  demora_amex: 'Demora Amex',
-};
+type TipoKey = 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
 
 function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
   if (severidad === 'critical')
@@ -41,24 +36,26 @@ function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
   return <Info className="h-3.5 w-3.5 text-blue-400 shrink-0" />;
 }
 
-function formatTs(d: Date): string {
-  return d.toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 interface AlertasAdminPanelProps {
   initialData: Alerta[];
 }
 
 export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
+  const t = useTranslations('alertasAdmin');
+  const tTipo = useTranslations('alertasAdmin.tipos');
+  const locale = useLocale();
   const [alertas, setAlertas] = useState<Alerta[]>(initialData);
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState<'vencimientos' | 'demoras' | null>(null);
+
+  const formatTs = (d: Date): string =>
+    d.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -82,11 +79,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
     const r = await checkVencimientos(3);
     setChecking(null);
     if (r.ok) {
-      toast.success(
-        r.value > 0
-          ? `${r.value} alerta${r.value !== 1 ? 's' : ''} de vencimiento generada${r.value !== 1 ? 's' : ''}`
-          : 'Sin lotes próximos a vencer',
-      );
+      toast.success(t('alertasVencGen', { n: r.value }));
       if (r.value > 0) await refresh();
     } else {
       toast.error(r.error.message);
@@ -98,11 +91,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
     const r = await checkDemoraAmex(15);
     setChecking(null);
     if (r.ok) {
-      toast.success(
-        r.value > 0
-          ? `${r.value} alerta${r.value !== 1 ? 's' : ''} de demora generada${r.value !== 1 ? 's' : ''}`
-          : 'Sin pedidos con demora',
-      );
+      toast.success(t('alertasDemoraGen', { n: r.value }));
       if (r.value > 0) await refresh();
     } else {
       toast.error(r.error.message);
@@ -124,13 +113,13 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Bell className="h-3.5 w-3.5" /> Total alertas
+            <Bell className="h-3.5 w-3.5" /> {t('totalAlertas')}
           </p>
           <p className="text-2xl font-bold tabular-nums">{alertas.length}</p>
         </div>
         <div className="rounded-lg border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Info className="h-3.5 w-3.5" /> No leídas
+            <Info className="h-3.5 w-3.5" /> {t('noLeidas')}
           </p>
           <p
             className={cn('text-2xl font-bold tabular-nums', noLeidas > 0 ? 'text-amber-500' : '')}
@@ -140,7 +129,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
         </div>
         <div className="rounded-lg border bg-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5" /> Críticas
+            <AlertTriangle className="h-3.5 w-3.5" /> {t('criticas')}
           </p>
           <p className={cn('text-2xl font-bold tabular-nums', criticas > 0 ? 'text-red-500' : '')}>
             {criticas}
@@ -162,7 +151,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
           ) : (
             <PackageCheck className="h-3.5 w-3.5" />
           )}
-          Verificar vencimientos (3d)
+          {t('verificarVencimientos')}
         </Button>
         <Button
           variant="outline"
@@ -176,7 +165,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
           ) : (
             <Clock className="h-3.5 w-3.5" />
           )}
-          Verificar demoras Amex (15 min)
+          {t('verificarDemoras')}
         </Button>
         <div className="flex-1" />
         <Button
@@ -187,7 +176,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
           className="gap-1.5 text-muted-foreground"
         >
           <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-          Actualizar
+          {t('actualizar')}
         </Button>
         {noLeidas > 0 && (
           <Button
@@ -197,7 +186,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
             className="gap-1.5 text-muted-foreground"
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            Marcar todas
+            {t('marcarTodas')}
           </Button>
         )}
       </div>
@@ -215,11 +204,15 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
                 : 'bg-muted hover:bg-muted/80 text-muted-foreground',
             )}
           >
-            {f === 'todas' ? 'Todas' : f === 'no_leidas' ? 'No leídas' : 'Críticas'}
+            {f === 'todas'
+              ? t('filtroTodas')
+              : f === 'no_leidas'
+                ? t('filtroNoLeidas')
+                : t('filtroCriticas')}
           </button>
         ))}
         <span className="ml-2 self-center text-xs text-muted-foreground">
-          {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}
+          {t('resultados', { n: filtered.length })}
         </span>
       </div>
 
@@ -228,7 +221,7 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
         {filtered.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
             <TrendingUp className="h-8 w-8 text-muted-foreground/30" />
-            Sin alertas{filtro !== 'todas' ? ' con este filtro' : ''}
+            {filtro !== 'todas' ? t('sinAlertasFiltro') : t('sinAlertas')}
           </div>
         ) : (
           filtered.map((alerta) => (
@@ -260,11 +253,11 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4">
-                    {TIPO_LABEL[alerta.tipo]}
+                    {tTipo(alerta.tipo as TipoKey)}
                   </Badge>
                   {!alerta.leida && (
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 text-primary">
-                      Nueva
+                      {t('nueva')}
                     </Badge>
                   )}
                 </div>

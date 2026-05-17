@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
@@ -40,11 +41,7 @@ interface CreatePedidoDialogProps {
   defaultZona?: ZonaServicio;
 }
 
-const ZONA_LABELS: Record<ZonaServicio, string> = {
-  amex: 'Amex',
-  snack: 'Snack',
-  buffet: 'Buffet',
-};
+const ZONAS: ZonaServicio[] = ['amex', 'snack', 'buffet'];
 
 const genKey = () => `ord-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -55,6 +52,8 @@ export function CreatePedidoDialog({
   recetas,
   defaultZona = 'amex',
 }: CreatePedidoDialogProps) {
+  const t = useTranslations('pedidos.create');
+  const tZ = useTranslations('zonas');
   const [serverError, setServerError] = useState('');
   const idempotencyKeyRef = useRef(genKey());
 
@@ -113,17 +112,15 @@ export function CreatePedidoDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuevo pedido</DialogTitle>
-          <DialogDescription className="sr-only">
-            Registra un pedido por zona con una o más recetas de servicio.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Zona + Mesa */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Zona *</Label>
+              <Label>{t('zona')} *</Label>
               <Select
                 defaultValue={defaultZona}
                 onValueChange={(v) => setValue('zona', v as ZonaServicio, { shouldValidate: true })}
@@ -132,9 +129,9 @@ export function CreatePedidoDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(['amex', 'snack', 'buffet'] as ZonaServicio[]).map((z) => (
+                  {ZONAS.map((z) => (
                     <SelectItem key={z} value={z}>
-                      {ZONA_LABELS[z]}
+                      {tZ(z)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -146,19 +143,23 @@ export function CreatePedidoDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="numeroMesa">
-                Mesa <span className="text-muted-foreground font-normal">(opcional)</span>
+                {t('mesa')}{' '}
+                <span className="text-muted-foreground font-normal">{t('optional')}</span>
               </Label>
-              <Input id="numeroMesa" placeholder="Ej. A3, VIP-1" {...register('numeroMesa')} />
+              <Input
+                id="numeroMesa"
+                placeholder={t('mesaPlaceholder')}
+                {...register('numeroMesa')}
+              />
             </div>
           </div>
 
           {/* Ítems */}
           <div className="space-y-2">
-            <Label>Ítems *</Label>
+            <Label>{t('items')} *</Label>
 
             {fields.map((field, index) => (
               <div key={field.id} className="flex items-start gap-2">
-                {/* Receta selector */}
                 <div className="flex-1 space-y-1">
                   <Select
                     onValueChange={(v) =>
@@ -166,12 +167,12 @@ export function CreatePedidoDialog({
                     }
                   >
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Seleccionar receta" />
+                      <SelectValue placeholder={t('recetaPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {recetas.length === 0 ? (
                         <SelectItem value="_empty" disabled>
-                          No hay recetas de servicio
+                          {t('sinRecetas')}
                         </SelectItem>
                       ) : (
                         recetas.map((r) => (
@@ -189,7 +190,6 @@ export function CreatePedidoDialog({
                   )}
                 </div>
 
-                {/* Cantidad */}
                 <div className="w-20 space-y-1">
                   <Input
                     type="number"
@@ -205,7 +205,6 @@ export function CreatePedidoDialog({
                   )}
                 </div>
 
-                {/* Remove */}
                 {fields.length > 1 && (
                   <Button
                     type="button"
@@ -228,7 +227,7 @@ export function CreatePedidoDialog({
               onClick={() => append({ recetaId: '', cantidad: 1 })}
             >
               <Plus className="h-4 w-4 mr-1.5" />
-              Agregar ítem
+              {t('agregarItem')}
             </Button>
 
             {formErrors.items && typeof formErrors.items.message === 'string' && (
@@ -239,12 +238,13 @@ export function CreatePedidoDialog({
           {/* Notas */}
           <div className="space-y-1.5">
             <Label htmlFor="notas">
-              Notas <span className="text-muted-foreground font-normal">(opcional)</span>
+              {t('notas')}{' '}
+              <span className="text-muted-foreground font-normal">{t('optional')}</span>
             </Label>
             <textarea
               id="notas"
               rows={2}
-              placeholder="Instrucciones especiales, alergias…"
+              placeholder={t('notasPlaceholder')}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               {...register('notas')}
             />
@@ -263,16 +263,16 @@ export function CreatePedidoDialog({
               onClick={() => handleClose(false)}
               disabled={isSubmitting}
             >
-              Cancelar
+              {t('cancelar')}
             </Button>
             <Button type="submit" disabled={isSubmitting || recetas.length === 0}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {t('guardando')}
                 </>
               ) : (
-                'Crear pedido'
+                t('guardar')
               )}
             </Button>
           </DialogFooter>

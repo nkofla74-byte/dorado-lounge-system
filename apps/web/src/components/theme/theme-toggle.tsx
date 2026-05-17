@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ variant = 'default' }: ThemeToggleProps) {
+  const t = useTranslations('theme');
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -27,7 +29,7 @@ export function ThemeToggle({ variant = 'default' }: ThemeToggleProps) {
         variant="ghost"
         size={variant === 'compact' ? 'icon' : 'sm'}
         className="text-muted-foreground"
-        aria-label="Cambiar tema"
+        aria-label={t('label')}
       >
         <Sun className="h-4 w-4" />
       </Button>
@@ -47,24 +49,24 @@ export function ThemeToggle({ variant = 'default' }: ThemeToggleProps) {
               ? 'h-8 w-8'
               : 'w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-accent'
           }
-          aria-label="Cambiar tema"
+          aria-label={t('label')}
         >
           <Icon className="h-4 w-4" />
-          {variant === 'default' && <span>Tema</span>}
+          {variant === 'default' && <span>{t('trigger')}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem onClick={() => setTheme('light')} className="gap-2">
           <Sun className="h-4 w-4" />
-          Claro
+          {t('light')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('dark')} className="gap-2">
           <Moon className="h-4 w-4" />
-          Oscuro
+          {t('dark')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('system')} className="gap-2">
           <Monitor className="h-4 w-4" />
-          Sistema
+          {t('system')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { getSafeNext } from '@/lib/auth/role-home';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { verifyTurnstile } from '@/lib/turnstile/verify';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 function LoginForm() {
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +41,7 @@ function LoginForm() {
     const siteKeyConfigured = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
     if (siteKeyConfigured && !turnstileToken) {
-      setError('Completa la verificación de seguridad.');
+      setError(t('errors.turnstileRequired'));
       setLoading(false);
       return;
     }
@@ -47,7 +49,7 @@ function LoginForm() {
     if (turnstileToken) {
       const valid = await verifyTurnstile(turnstileToken);
       if (!valid) {
-        setError('Verificación de seguridad fallida. Recarga la página e intenta de nuevo.');
+        setError(t('errors.turnstileFailed'));
         setLoading(false);
         return;
       }
@@ -60,7 +62,7 @@ function LoginForm() {
     });
 
     if (authError) {
-      setError('Credenciales inválidas. Verifica tu correo y contraseña.');
+      setError(t('errors.invalidCredentials'));
       setLoading(false);
       return;
     }
@@ -73,7 +75,7 @@ function LoginForm() {
 
     if (!role || !tenantId) {
       await supabase.auth.signOut();
-      setError('Tu usuario no tiene rol o tenant asignado. Contacta al administrador.');
+      setError(t('errors.missingRoleOrTenant'));
       setLoading(false);
       return;
     }
@@ -92,25 +94,23 @@ function LoginForm() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dorado Lounge</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Sistema operativo de trazabilidad 24/7
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
       </div>
 
       <Card className="shadow-sm">
         <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-xl">Iniciar sesión</CardTitle>
-          <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
+          <CardTitle className="text-xl">{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="usuario@gisat.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -121,7 +121,7 @@ function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -137,7 +137,7 @@ function LoginForm() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -161,19 +161,17 @@ function LoginForm() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Ingresando...
+                  {t('submitting')}
                 </>
               ) : (
-                'Ingresar'
+                t('submit')
               )}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground">
-        GISAT S.A. · Aeropuerto El Dorado, Bogotá
-      </p>
+      <p className="text-center text-xs text-muted-foreground">{t('footer')}</p>
     </div>
   );
 }

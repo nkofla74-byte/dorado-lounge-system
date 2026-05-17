@@ -1,12 +1,14 @@
+// Espejo de ROLE_HOME en middleware.ts — mantener sincronizado.
+// El sous_chef opera la KDS AMEX exclusiva, no la cocina general.
 export const ROLE_HOME: Record<string, string> = {
   superuser: '/admin/tenants',
   admin: '/inventario',
   chef: '/cocina',
-  sous_chef: '/cocina',
+  sous_chef: '/cocina-amex',
   mesero_amex: '/pedidos',
+  recepcion: '/pedidos',
   personal_snack: '/snack',
   personal_buffet: '/buffet',
-  recepcion: '/pedidos',
   personal_almacen: '/almacen',
   personal_pasteleria: '/pasteleria',
   steward: '/produccion',

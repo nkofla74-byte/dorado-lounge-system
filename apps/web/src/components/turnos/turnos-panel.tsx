@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Clock, Play, Square, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,25 +27,9 @@ interface TurnosPanelProps {
 
 const CAN_WRITE = new Set<UserRole>(['superuser', 'admin']);
 
-function formatFecha(date: Date): string {
-  return new Date(date).toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function duracion(inicio: Date, fin: Date | null): string {
-  const end = fin ?? new Date();
-  const diff = Math.floor((end.getTime() - inicio.getTime()) / 60000);
-  const horas = Math.floor(diff / 60);
-  const minutos = diff % 60;
-  return horas > 0 ? `${horas}h ${minutos}m` : `${minutos}m`;
-}
-
 export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps) {
+  const t = useTranslations('turnos');
+  const locale = useLocale();
   const [turnos, setTurnos] = useState<Turno[]>(initialTurnos);
   const [iniciarOpen, setIniciarOpen] = useState(false);
   const [cerrarOpen, setCerrarOpen] = useState(false);
@@ -52,7 +37,24 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
   const [isPending, startTransition] = useTransition();
 
   const canWrite = userRole ? CAN_WRITE.has(userRole) : false;
-  const turnoActivo = turnos.find((t) => t.activo) ?? null;
+  const turnoActivo = turnos.find((tu) => tu.activo) ?? null;
+
+  const formatFecha = (date: Date): string =>
+    new Date(date).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const duracion = (inicio: Date, fin: Date | null): string => {
+    const end = fin ?? new Date();
+    const diff = Math.floor((end.getTime() - inicio.getTime()) / 60000);
+    const horas = Math.floor(diff / 60);
+    const minutos = diff % 60;
+    return horas > 0 ? `${horas}h ${minutos}m` : `${minutos}m`;
+  };
 
   const refresh = () => {
     startTransition(async () => {
@@ -78,7 +80,7 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-          Actualizar
+          {t('actualizar')}
         </Button>
 
         <div className="flex-1" />
@@ -93,12 +95,12 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
                 className="gap-2"
               >
                 <Square className="h-4 w-4" />
-                Cerrar turno activo
+                {t('cerrarActivo')}
               </Button>
             ) : (
               <Button size="sm" onClick={() => setIniciarOpen(true)} className="gap-2">
                 <Play className="h-4 w-4" />
-                Iniciar turno
+                {t('iniciar')}
               </Button>
             )}
           </>
@@ -119,11 +121,13 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{turnoActivo.nombre}</p>
             <p className="text-xs text-muted-foreground">
-              Iniciado {formatFecha(turnoActivo.iniciadoAt)} · Duración:{' '}
-              {duracion(turnoActivo.iniciadoAt, null)}
+              {t('iniciadoEn', {
+                fecha: formatFecha(turnoActivo.iniciadoAt),
+                duracion: duracion(turnoActivo.iniciadoAt, null),
+              })}
             </p>
           </div>
-          <Badge className="shrink-0">Activo</Badge>
+          <Badge className="shrink-0">{t('activo')}</Badge>
         </div>
       )}
 
@@ -131,7 +135,7 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Historial de turnos</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('historialTitle')}</h2>
           <Badge variant="outline" className="text-xs">
             {turnos.length}
           </Badge>
@@ -139,7 +143,7 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
 
         {turnos.length === 0 ? (
           <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-            No hay turnos registrados
+            {t('sinTurnos')}
           </div>
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
@@ -147,41 +151,41 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Nombre
+                    {t('colNombre')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Inicio
+                    {t('colInicio')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Cierre
+                    {t('colCierre')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground text-right">
-                    Duración
+                    {t('colDuracion')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Estado
+                    {t('colEstado')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {turnos.map((t) => (
-                  <TableRow key={t.id} className="hover:bg-muted/30">
-                    <TableCell className="font-medium text-sm">{t.nombre}</TableCell>
+                {turnos.map((tu) => (
+                  <TableRow key={tu.id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium text-sm">{tu.nombre}</TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                      {formatFecha(t.iniciadoAt)}
+                      {formatFecha(tu.iniciadoAt)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                      {t.cerradoAt ? formatFecha(t.cerradoAt) : '—'}
+                      {tu.cerradoAt ? formatFecha(tu.cerradoAt) : '—'}
                     </TableCell>
                     <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
-                      {duracion(t.iniciadoAt, t.cerradoAt)}
+                      {duracion(tu.iniciadoAt, tu.cerradoAt)}
                     </TableCell>
                     <TableCell>
-                      {t.activo ? (
-                        <Badge className="text-xs">Activo</Badge>
+                      {tu.activo ? (
+                        <Badge className="text-xs">{t('activo')}</Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs text-muted-foreground">
-                          Cerrado
+                          {t('cerrado')}
                         </Badge>
                       )}
                     </TableCell>

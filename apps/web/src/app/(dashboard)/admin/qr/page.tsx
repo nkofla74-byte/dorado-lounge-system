@@ -1,5 +1,6 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { QRGeneratorClient } from '@/components/qr/qr-generator-client';
 
 export default async function QRGeneratorPage() {
@@ -9,13 +10,13 @@ export default async function QRGeneratorPage() {
     redirect('/inventario');
   }
 
+  const t = await getTranslations('qrAdmin');
+
   return (
     <div className="p-6 max-w-lg space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Generador de QR</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Genera e imprime el código QR para cada mesa. Escaneable directamente por el pasajero.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('pageTitle')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
       <QRGeneratorClient />
     </div>

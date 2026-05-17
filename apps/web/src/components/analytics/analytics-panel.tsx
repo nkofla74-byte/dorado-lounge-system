@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { RefreshCw, AlertTriangle, BarChart3, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ export function AnalyticsPanel({
   turnos,
   error,
 }: AnalyticsPanelProps) {
+  const t = useTranslations('analytics');
   const [cogs, setCogs] = useState<CogsPerPassenger[]>(initialCogs);
   const [consumo, setConsumo] = useState<ConsumoInsumo[]>(initialConsumo);
   const [turnoId, setTurnoId] = useState<string>('');
@@ -93,16 +95,16 @@ export function AnalyticsPanel({
       <div className="flex items-end gap-3 flex-wrap">
         {turnos.length > 0 && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Turno</Label>
+            <Label className="text-xs text-muted-foreground">{t('turno')}</Label>
             <Select value={turnoId || 'all'} onValueChange={handleTurnoChange}>
               <SelectTrigger className="w-52">
-                <SelectValue placeholder="Todos los turnos" />
+                <SelectValue placeholder={t('turnoPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los turnos</SelectItem>
-                {turnos.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.nombre}
+                <SelectItem value="all">{t('turnoPlaceholder')}</SelectItem>
+                {turnos.map((tu) => (
+                  <SelectItem key={tu.id} value={tu.id}>
+                    {tu.nombre}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,7 +113,7 @@ export function AnalyticsPanel({
         )}
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Desde</Label>
+          <Label className="text-xs text-muted-foreground">{t('desde')}</Label>
           <Input
             type="date"
             className="w-40"
@@ -121,7 +123,7 @@ export function AnalyticsPanel({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Hasta</Label>
+          <Label className="text-xs text-muted-foreground">{t('hasta')}</Label>
           <Input
             type="date"
             className="w-40"
@@ -138,7 +140,7 @@ export function AnalyticsPanel({
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-          Aplicar filtros
+          {t('aplicarFiltros')}
         </Button>
 
         <div className="flex-1" />
@@ -151,7 +153,7 @@ export function AnalyticsPanel({
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refrescar vistas
+          {t('refrescarVistas')}
         </Button>
       </div>
 
@@ -169,7 +171,7 @@ export function AnalyticsPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">COGS por turno</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('cogsTitle')}</h2>
         </div>
         <CogsTable data={cogs} />
       </section>
@@ -178,12 +180,10 @@ export function AnalyticsPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">
-            Consumo vs producción por insumo
-          </h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('consumoTitle')}</h2>
           {turnoId && (
             <span className="text-xs text-muted-foreground">
-              — {turnos.find((t) => t.id === turnoId)?.nombre ?? ''}
+              — {turnos.find((tu) => tu.id === turnoId)?.nombre ?? ''}
             </span>
           )}
         </div>

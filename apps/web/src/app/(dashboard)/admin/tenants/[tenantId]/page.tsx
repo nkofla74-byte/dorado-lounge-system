@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getTenantById, getUsers } from '@/modules/superuser/actions';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default async function TenantDetailPage({ params }: Props) {
+  const t = await getTranslations('admin.tenantDetail');
   const supabase = createClient();
   const {
     data: { user },
@@ -39,19 +41,19 @@ export default async function TenantDetailPage({ params }: Props) {
           <h1 className="text-2xl font-bold tracking-tight">{tenant.nombre}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{tenant.slug}</code>
-            <span className="ml-2">{tenant.activo ? '· Activo' : '· Inactivo'}</span>
+            <span className="ml-2">{tenant.activo ? t('estadoActivo') : t('estadoInactivo')}</span>
           </p>
         </div>
       </div>
 
       {!usersResult.ok && (
         <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-4 py-3">
-          Error al cargar usuarios: {usersResult.error.message}
+          {t('errorCarga', { message: usersResult.error.message })}
         </div>
       )}
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Usuarios</h2>
+        <h2 className="text-lg font-semibold">{t('usuariosTitle')}</h2>
         <UsersPanel tenantId={tenant.id} initialUsers={users} />
       </div>
     </div>

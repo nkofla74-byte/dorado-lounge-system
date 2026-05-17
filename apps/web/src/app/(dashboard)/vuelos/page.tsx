@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getFlights } from '@/modules/flights/actions';
 import { FlightsBoard } from '@/components/flights/flights-board';
@@ -8,6 +9,7 @@ import type { UserRole } from '@dorado/shared-types';
 const ALLOWED_ROLES: UserRole[] = ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'];
 
 export default async function VuelosPage() {
+  const t = await getTranslations('admin.flights');
   const supabase = createClient();
   const {
     data: { user },
@@ -29,10 +31,8 @@ export default async function VuelosPage() {
       <div className="flex items-start gap-3">
         <Plane className="h-7 w-7 mt-0.5 text-primary shrink-0" />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vuelos El Dorado</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Salidas y llegadas del Aeropuerto Internacional El Dorado · BOG · Bogotá, Colombia
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('pageTitle')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
         </div>
       </div>
 

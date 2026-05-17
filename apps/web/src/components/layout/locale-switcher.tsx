@@ -1,6 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { setLocaleCookie } from '@/lib/i18n/set-locale';
 
@@ -16,11 +17,16 @@ interface LocaleSwitcherProps {
 }
 
 export function LocaleSwitcher({ current }: LocaleSwitcherProps) {
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSwitch = (locale: Locale) => {
+    if (locale === current) return;
     startTransition(async () => {
       await setLocaleCookie(locale);
+      // Sin refresh el server component superior queda con el locale
+      // anterior (la cookie cambia pero el HTML ya fue enviado al cliente).
+      router.refresh();
     });
   };
 
@@ -33,7 +39,7 @@ export function LocaleSwitcher({ current }: LocaleSwitcherProps) {
           size="sm"
           className="h-7 px-2 text-xs"
           onClick={() => handleSwitch(code)}
-          disabled={current === code}
+          disabled={current === code || isPending}
         >
           {label}
         </Button>

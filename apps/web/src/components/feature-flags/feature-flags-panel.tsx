@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface FeatureFlagsPanelProps {
 }
 
 function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
+  const t = useTranslations('admin.featureFlags');
   const [valor, setValor] = useState(flag.valor);
   const [pending, startTransition] = useTransition();
 
@@ -34,10 +36,14 @@ function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
     startTransition(async () => {
       const result = await setFeatureFlag(flag.clave, checked);
       if (!result.ok) {
-        setValor(!checked); // revert
-        toast.error(`Error: ${result.error.message}`);
+        setValor(!checked);
+        toast.error(result.error.message);
       } else {
-        toast.success(`Flag "${flag.clave}" ${checked ? 'activado' : 'desactivado'}`);
+        toast.success(
+          checked
+            ? t('activadoToast', { clave: flag.clave })
+            : t('desactivadoToast', { clave: flag.clave }),
+        );
       }
     });
   };
@@ -47,9 +53,9 @@ function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
       <div className="flex items-start gap-3 min-w-0">
         <div className="mt-0.5 shrink-0 text-muted-foreground">
           {flag.tenantId === null ? (
-            <Globe className="h-4 w-4" aria-label="Flag global" />
+            <Globe className="h-4 w-4" aria-label={t('flagGlobal')} />
           ) : (
-            <Building2 className="h-4 w-4" aria-label="Flag de tenant" />
+            <Building2 className="h-4 w-4" aria-label={t('flagTenant')} />
           )}
         </div>
         <div className="min-w-0">
@@ -67,7 +73,7 @@ function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
           checked={valor}
           onCheckedChange={handleToggle}
           disabled={!canWrite || pending}
-          aria-label={`Toggle ${flag.clave}`}
+          aria-label={t('toggleAria', { clave: flag.clave })}
         />
       </div>
     </div>
@@ -75,6 +81,8 @@ function FlagRow({ flag, canWrite }: { flag: FeatureFlag; canWrite: boolean }) {
 }
 
 function CreateFlagDialog({ onCreated }: { onCreated: () => void }) {
+  const t = useTranslations('admin.featureFlags');
+  const tC = useTranslations('admin.featureFlags.create');
   const [open, setOpen] = useState(false);
   const [clave, setClave] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -89,9 +97,9 @@ function CreateFlagDialog({ onCreated }: { onCreated: () => void }) {
         ...(trimmedDesc ? { descripcion: trimmedDesc } : {}),
       });
       if (!result.ok) {
-        toast.error(`Error: ${result.error.message}`);
+        toast.error(result.error.message);
       } else {
-        toast.success(`Flag "${clave}" creado`);
+        toast.success(t('creadoToast', { clave }));
         setClave('');
         setDescripcion('');
         setOpen(false);
@@ -105,38 +113,36 @@ function CreateFlagDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
-          Nuevo flag
+          {t('nuevoFlag')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crear feature flag</DialogTitle>
+          <DialogTitle>{tC('title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="clave">Clave</Label>
+            <Label htmlFor="clave">{tC('clave')}</Label>
             <Input
               id="clave"
-              placeholder="ej: kds_v2_enabled"
+              placeholder={tC('clavePlaceholder')}
               value={clave}
               onChange={(e) => setClave(e.target.value)}
               className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              Solo minúsculas, números y guion bajo (snake_case)
-            </p>
+            <p className="text-xs text-muted-foreground">{tC('claveHint')}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="desc">Descripción</Label>
+            <Label htmlFor="desc">{tC('descripcion')}</Label>
             <Input
               id="desc"
-              placeholder="Descripción del flag (opcional)"
+              placeholder={tC('descripcionPlaceholder')}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
             />
           </div>
           <Button onClick={handleCreate} disabled={!clave.trim() || pending} className="w-full">
-            {pending ? 'Creando…' : 'Crear flag'}
+            {pending ? tC('creando') : tC('crear')}
           </Button>
         </div>
       </DialogContent>
@@ -145,6 +151,7 @@ function CreateFlagDialog({ onCreated }: { onCreated: () => void }) {
 }
 
 export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlagsPanelProps) {
+  const t = useTranslations('admin.featureFlags');
   const [flags] = useState(initialFlags);
 
   const globalFlags = flags.filter((f) => f.tenantId === null);
@@ -155,10 +162,9 @@ export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlag
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            {flags.length} flag{flags.length !== 1 ? 's' : ''} configurado
-            {flags.length !== 1 ? 's' : ''}
+            {t('count', { n: flags.length })}
             {!canWrite && (
-              <span className="ml-2 text-amber-600 dark:text-amber-400">· Solo lectura</span>
+              <span className="ml-2 text-amber-600 dark:text-amber-400">{t('soloLectura')}</span>
             )}
           </p>
         </div>
@@ -170,9 +176,9 @@ export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlag
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Building2 className="h-4 w-4" />
-              Flags de tenant
+              {t('tenantFlagsTitle')}
             </CardTitle>
-            <CardDescription>Activos solo en este tenant</CardDescription>
+            <CardDescription>{t('tenantFlagsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             {tenantFlags.map((f) => (
@@ -187,9 +193,9 @@ export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlag
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              Flags globales
+              {t('globalFlagsTitle')}
             </CardTitle>
-            <CardDescription>Aplican a todos los tenants</CardDescription>
+            <CardDescription>{t('globalFlagsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             {globalFlags.map((f) => (
@@ -202,8 +208,8 @@ export function FeatureFlagsPanel({ flags: initialFlags, canWrite }: FeatureFlag
       {flags.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No hay feature flags configurados.
-            {canWrite && ' Crea el primero con el botón de arriba.'}
+            {t('emptyTitle')}
+            {canWrite && ` ${t('emptyHint')}`}
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -33,21 +34,30 @@ import { crearUsuarioSchema } from '@dorado/shared-validation';
 import { crearUsuario } from '@/modules/superuser/actions';
 import type { CrearUsuarioInput } from '@dorado/shared-validation';
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador',
-  chef: 'Chef',
-  sous_chef: 'Sous Chef',
-  mesero_amex: 'Mesero Amex',
-  personal_snack: 'Personal Snack',
-  personal_buffet: 'Personal Buffet',
-  recepcion: 'Recepción',
-  personal_almacen: 'Personal Almacén',
-  personal_pasteleria: 'Personal Pastelería',
-  steward: 'Steward',
-};
+type RoleKey =
+  | 'admin'
+  | 'chef'
+  | 'sous_chef'
+  | 'mesero_amex'
+  | 'personal_snack'
+  | 'personal_buffet'
+  | 'recepcion'
+  | 'personal_almacen'
+  | 'personal_pasteleria'
+  | 'steward';
 
-// superuser no se ofrece para crear desde UI (solo configuración de plataforma)
-const ASSIGNABLE_ROLES = Object.keys(ROLE_LABELS);
+const ASSIGNABLE_ROLES: RoleKey[] = [
+  'admin',
+  'chef',
+  'sous_chef',
+  'mesero_amex',
+  'personal_snack',
+  'personal_buffet',
+  'recepcion',
+  'personal_almacen',
+  'personal_pasteleria',
+  'steward',
+];
 
 interface Props {
   tenantId: string;
@@ -55,6 +65,9 @@ interface Props {
 }
 
 export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
+  const t = useTranslations('admin.users');
+  const tF = useTranslations('admin.users.form');
+  const tR = useTranslations('roles');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -77,7 +90,7 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(`Usuario ${result.value.nombre} creado`);
+      toast.success(tF('creadoToast', { nombre: result.value.nombre }));
       form.reset({ tenantId, nombre: '', email: '', role: 'admin', password: '' });
       setOpen(false);
       onSuccess();
@@ -91,13 +104,13 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="h-4 w-4 mr-2" />
-          Nuevo usuario
+          {t('nuevo')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crear usuario</DialogTitle>
+          <DialogTitle>{tF('title')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -107,9 +120,9 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre completo</FormLabel>
+                  <FormLabel>{tF('nombre')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej. María García" {...field} />
+                    <Input placeholder={tF('nombrePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,9 +134,9 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{tF('email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="usuario@ejemplo.com" {...field} />
+                    <Input type="email" placeholder={tF('emailPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,17 +148,17 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rol</FormLabel>
+                  <FormLabel>{tF('rol')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar rol" />
+                        <SelectValue placeholder={tF('rolPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {ASSIGNABLE_ROLES.map((role) => (
                         <SelectItem key={role} value={role}>
-                          {ROLE_LABELS[role]}
+                          {tR(role)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -160,9 +173,9 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña inicial</FormLabel>
+                  <FormLabel>{tF('password')}</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
+                    <Input type="password" placeholder={tF('passwordPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -176,10 +189,10 @@ export function CrearUsuarioDialog({ tenantId, onSuccess }: Props) {
                 onClick={() => setOpen(false)}
                 disabled={loading}
               >
-                Cancelar
+                {tF('cancelar')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creando...' : 'Crear usuario'}
+                {loading ? tF('creando') : tF('crear')}
               </Button>
             </div>
           </form>

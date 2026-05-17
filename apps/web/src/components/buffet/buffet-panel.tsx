@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { UtensilsCrossed, Ticket, AlertTriangle, RefreshCw, Plus, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,15 +43,6 @@ interface BuffetPanelProps {
 
 const WRITE_ROLES = new Set<UserRole>(['superuser', 'admin', 'personal_buffet']);
 
-function formatFecha(date: Date): string {
-  return new Date(date).toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function BuffetPanel({
   initialDespachos,
   recetas,
@@ -58,6 +50,8 @@ export function BuffetPanel({
   userRole,
   error,
 }: BuffetPanelProps) {
+  const t = useTranslations('buffet');
+  const locale = useLocale();
   const [despachos, setDespachos] = useState<DespachoBuffet[]>(initialDespachos);
   const [tickets, setTickets] = useState<TicketTurno[]>([]);
   const [selectedTurnoId, setSelectedTurnoId] = useState<string>('');
@@ -67,6 +61,14 @@ export function BuffetPanel({
   const [isPending, startTransition] = useTransition();
 
   const canWrite = userRole ? WRITE_ROLES.has(userRole) : false;
+
+  const formatFecha = (date: Date): string =>
+    new Date(date).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   const refreshDespachos = () => {
     startTransition(async () => {
@@ -108,13 +110,13 @@ export function BuffetPanel({
         {turnos.length > 0 && (
           <Select value={selectedTurnoId || 'all'} onValueChange={handleTurnoChange}>
             <SelectTrigger className="w-52">
-              <SelectValue placeholder="Todos los turnos" />
+              <SelectValue placeholder={t('todosLosTurnos')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los turnos</SelectItem>
-              {turnos.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.nombre}
+              <SelectItem value="all">{t('todosLosTurnos')}</SelectItem>
+              {turnos.map((tu) => (
+                <SelectItem key={tu.id} value={tu.id}>
+                  {tu.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -129,7 +131,7 @@ export function BuffetPanel({
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-          Actualizar
+          {t('actualizar')}
         </Button>
 
         <div className="flex-1" />
@@ -143,11 +145,11 @@ export function BuffetPanel({
               className="gap-2"
             >
               <Ticket className="h-4 w-4" />
-              Registrar tickets al cierre
+              {t('registrarTickets')}
             </Button>
             <Button size="sm" onClick={() => setDespacharOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              Despachar lote
+              {t('despacharLote')}
             </Button>
           </>
         )}
@@ -171,18 +173,19 @@ export function BuffetPanel({
           }
         }
         const stockHoy = Array.from(stockMap.entries()).sort((a, b) => b[1] - a[1]);
+        const totalLotes = stockHoy.reduce((s, [, n]) => s + n, 0);
         return (
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <BarChart2 className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Stock disponible hoy</h2>
+              <h2 className="text-sm font-semibold text-foreground">{t('stockHoyTitle')}</h2>
               <Badge variant="outline" className="text-xs">
-                {stockHoy.reduce((s, [, n]) => s + n, 0)} lotes
+                {t('lotesCount', { n: totalLotes })}
               </Badge>
             </div>
             {stockHoy.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
-                Sin despachos registrados hoy
+                {t('sinDespachosHoy')}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -205,7 +208,7 @@ export function BuffetPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Despachos al buffet</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('despachosTitle')}</h2>
           <Badge variant="outline" className="text-xs">
             {despachos.length}
           </Badge>
@@ -213,7 +216,7 @@ export function BuffetPanel({
 
         {despachos.length === 0 ? (
           <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-            No hay despachos registrados
+            {t('sinDespachos')}
           </div>
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
@@ -221,14 +224,16 @@ export function BuffetPanel({
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Receta
+                    {t('colReceta')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground text-right">
-                    Batches
+                    {t('colBatches')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">Turno</TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    Despachado
+                    {t('colTurno')}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">
+                    {t('colDespachado')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -238,7 +243,7 @@ export function BuffetPanel({
                     <TableCell className="font-medium text-sm">{d.recetaNombre}</TableCell>
                     <TableCell className="text-right text-sm tabular-nums">{d.cantidad}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {d.turnoId ? (turnos.find((t) => t.id === d.turnoId)?.nombre ?? '—') : '—'}
+                      {d.turnoId ? (turnos.find((tu) => tu.id === d.turnoId)?.nombre ?? '—') : '—'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatFecha(d.despachadoAt)}
@@ -256,15 +261,15 @@ export function BuffetPanel({
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Ticket className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Tickets de cierre</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t('ticketsTitle')}</h2>
             <Badge variant="outline" className="text-xs">
-              {tickets.reduce((acc, t) => acc + t.cantidadTickets, 0)} total
+              {t('totalTickets', { n: tickets.reduce((acc, ti) => acc + ti.cantidadTickets, 0) })}
             </Badge>
           </div>
 
           {tickets.length === 0 ? (
             <div className="text-center py-10 text-sm text-muted-foreground border border-dashed rounded-lg">
-              Sin registros de tickets para este turno
+              {t('sinTickets')}
             </div>
           ) : (
             <div className="rounded-lg border border-border overflow-hidden">
@@ -272,25 +277,25 @@ export function BuffetPanel({
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="text-xs font-medium text-muted-foreground">
-                      Turno
+                      {t('colTurno')}
                     </TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-right">
-                      Tickets
+                      {t('colTickets')}
                     </TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground">
-                      Registrado
+                      {t('colRegistrado')}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tickets.map((t) => (
-                    <TableRow key={t.id} className="hover:bg-muted/30">
-                      <TableCell className="text-sm font-medium">{t.turnoNombre}</TableCell>
+                  {tickets.map((ti) => (
+                    <TableRow key={ti.id} className="hover:bg-muted/30">
+                      <TableCell className="text-sm font-medium">{ti.turnoNombre}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">
-                        {t.cantidadTickets}
+                        {ti.cantidadTickets}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {formatFecha(t.createdAt)}
+                        {formatFecha(ti.createdAt)}
                       </TableCell>
                     </TableRow>
                   ))}

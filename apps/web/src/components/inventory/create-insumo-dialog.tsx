@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -30,6 +31,12 @@ import type { z } from 'zod';
 type FormInput = z.input<typeof createInsumoSchema>;
 type FormOutput = z.output<typeof createInsumoSchema>;
 
+type CapaKey = 'capa_1' | 'capa_2';
+type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
+
+const CAPAS: CapaKey[] = ['capa_1', 'capa_2'];
+const UNIDADES: UnidadKey[] = ['kg', 'g', 'l', 'ml', 'unidad', 'porcion'];
+
 interface CreateInsumoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,6 +44,7 @@ interface CreateInsumoDialogProps {
 }
 
 export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsumoDialogProps) {
+  const t = useTranslations('inventory.createInsumo');
   const [serverError, setServerError] = useState('');
 
   const {
@@ -70,20 +78,18 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nuevo insumo</DialogTitle>
-          <DialogDescription className="sr-only">
-            Registra un insumo con capa, unidad de medida y stock mínimo.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Nombre */}
           <div className="space-y-1.5">
-            <Label htmlFor="nombre">Nombre *</Label>
+            <Label htmlFor="nombre">{t('nombre')} *</Label>
             <Input
               id="nombre"
               {...register('nombre')}
-              placeholder="Ej: Harina de trigo"
+              placeholder={t('nombrePlaceholder')}
               autoFocus
             />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
@@ -92,33 +98,37 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
           {/* Código */}
           <div className="space-y-1.5">
             <Label htmlFor="codigo">
-              Código interno <span className="text-muted-foreground font-normal">(opcional)</span>
+              {t('codigo')}{' '}
+              <span className="text-muted-foreground font-normal">{t('optional')}</span>
             </Label>
-            <Input id="codigo" {...register('codigo')} placeholder="Ej: HRN-001" />
+            <Input id="codigo" {...register('codigo')} placeholder={t('codigoPlaceholder')} />
           </div>
 
           {/* Capa + Unidad */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Capa *</Label>
+              <Label>{t('capa')} *</Label>
               <Select
                 onValueChange={(v) =>
                   setValue('capa', v as FormInput['capa'], { shouldValidate: true })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
+                  <SelectValue placeholder={t('seleccionar')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="capa_1">Bodega (Capa 1)</SelectItem>
-                  <SelectItem value="capa_2">Producción (Capa 2)</SelectItem>
+                  {CAPAS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {t(`capas.${c}`)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.capa && <p className="text-xs text-destructive">{errors.capa.message}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <Label>Unidad *</Label>
+              <Label>{t('unidad')} *</Label>
               <Select
                 onValueChange={(v) =>
                   setValue('unidadMedida', v as FormInput['unidadMedida'], {
@@ -127,15 +137,14 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
+                  <SelectValue placeholder={t('seleccionar')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="kg">Kilogramos (kg)</SelectItem>
-                  <SelectItem value="g">Gramos (g)</SelectItem>
-                  <SelectItem value="l">Litros (L)</SelectItem>
-                  <SelectItem value="ml">Mililitros (mL)</SelectItem>
-                  <SelectItem value="unidad">Unidad</SelectItem>
-                  <SelectItem value="porcion">Porción</SelectItem>
+                  {UNIDADES.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {t(`unidades.${u}`)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.unidadMedida && (
@@ -146,7 +155,7 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
 
           {/* Stock mínimo */}
           <div className="space-y-1.5">
-            <Label htmlFor="stockMinimo">Stock mínimo</Label>
+            <Label htmlFor="stockMinimo">{t('stockMinimo')}</Label>
             <Input
               id="stockMinimo"
               type="number"
@@ -173,16 +182,16 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
               onClick={() => handleClose(false)}
               disabled={isSubmitting}
             >
-              Cancelar
+              {t('cancelar')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {t('guardando')}
                 </>
               ) : (
-                'Guardar insumo'
+                t('guardar')
               )}
             </Button>
           </DialogFooter>

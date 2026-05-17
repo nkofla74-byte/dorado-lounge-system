@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function QRLanguageSwitcher({ currentLocale }: Props) {
+  const t = useTranslations('qr');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,7 +39,7 @@ export function QRLanguageSwitcher({ currentLocale }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Cambiar idioma">
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('cambiarIdiomaAria')}>
           <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

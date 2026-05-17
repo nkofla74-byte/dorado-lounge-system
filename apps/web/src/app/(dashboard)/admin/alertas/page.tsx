@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { assertCan } from '@/lib/auth/assertCan';
 import { getAlertasAdmin } from '@/modules/alertas/actions';
 import { AlertasAdminPanel } from '@/components/alertas/alertas-admin-panel';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Alertas — Dorado Lounge',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('alertasAdmin');
+  return { title: t('metaTitle') };
+}
 
 export default async function AlertasAdminPage() {
+  const t = await getTranslations('alertasAdmin');
   try {
     await assertCan('alertas:write');
   } catch {
@@ -22,11 +25,8 @@ export default async function AlertasAdminPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Alertas</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Historial completo de alertas operativas. Ejecuta verificaciones manuales de vencimientos
-          y demoras.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
       <AlertasAdminPanel initialData={result.ok ? result.value : []} />
     </div>

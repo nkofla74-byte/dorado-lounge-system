@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,14 +35,6 @@ import type { UsuarioResumen } from '@/modules/turnos/actions';
 
 const OTRO = '__otro__';
 
-const formSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
-  teamlider: z.string().min(1, 'El jefe de turno es obligatorio').max(255),
-  teamliderSelect: z.string().min(1),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface IniciarTurnoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,6 +42,7 @@ interface IniciarTurnoDialogProps {
 }
 
 export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTurnoDialogProps) {
+  const t = useTranslations('turnos');
   const [error, setError] = useState<string | null>(null);
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
   const [showOtro, setShowOtro] = useState(false);
@@ -59,6 +53,14 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
       if (r.ok) setUsuarios(r.value);
     });
   }, [open]);
+
+  const formSchema = z.object({
+    nombre: z.string().min(1, t('errorNombre')).max(255),
+    teamlider: z.string().min(1, t('errorTeamlider')).max(255),
+    teamliderSelect: z.string().min(1),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,10 +97,8 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Iniciar turno</DialogTitle>
-          <DialogDescription className="sr-only">
-            Crea un nuevo turno operativo. Solo puede haber un turno activo a la vez.
-          </DialogDescription>
+          <DialogTitle>{t('iniciar')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('iniciarSrDescription')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -108,9 +108,9 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre del turno</FormLabel>
+                  <FormLabel>{t('nombre')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: Turno A — 06:00–14:00" {...field} />
+                    <Input placeholder={t('nombrePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,11 +122,11 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
               name="teamliderSelect"
               render={() => (
                 <FormItem>
-                  <FormLabel>Jefe de turno (Teamlider)</FormLabel>
+                  <FormLabel>{t('teamlider')}</FormLabel>
                   <Select onValueChange={handleSelectChange} value={form.watch('teamliderSelect')}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un responsable…" />
+                        <SelectValue placeholder={t('teamliderSelectPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -135,7 +135,7 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
                           {u.nombre}
                         </SelectItem>
                       ))}
-                      <SelectItem value={OTRO}>Otro…</SelectItem>
+                      <SelectItem value={OTRO}>{t('teamliderOtro')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -149,9 +149,9 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
                 name="teamlider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre del responsable</FormLabel>
+                    <FormLabel>{t('teamliderOtroLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nombre completo" {...field} />
+                      <Input placeholder={t('teamliderOtroPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,10 +163,10 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t('cancelar')}
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Iniciando…' : 'Iniciar turno'}
+                {form.formState.isSubmitting ? t('iniciando') : t('iniciar')}
               </Button>
             </DialogFooter>
           </form>

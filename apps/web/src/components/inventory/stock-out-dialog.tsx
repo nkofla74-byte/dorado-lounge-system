@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, TrendingDown } from 'lucide-react';
@@ -24,15 +25,6 @@ import type { z } from 'zod';
 type FormInput = z.input<typeof stockOutSchema>;
 type FormOutput = z.output<typeof stockOutSchema>;
 
-const UNIDAD_LABEL: Record<string, string> = {
-  kg: 'kg',
-  g: 'g',
-  l: 'L',
-  ml: 'mL',
-  unidad: 'und',
-  porcion: 'porc',
-};
-
 const genKey = () => `so-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 interface StockOutDialogProps {
@@ -42,6 +34,8 @@ interface StockOutDialogProps {
 }
 
 export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDialogProps) {
+  const t = useTranslations('inventory');
+  const tSO = useTranslations('inventory.stockOut');
   const [serverError, setServerError] = useState('');
   const idempotencyKeyRef = useRef(genKey());
 
@@ -79,7 +73,20 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
     onSuccess?.();
   };
 
-  const unidad = insumo ? (UNIDAD_LABEL[insumo.unidadMedida] ?? insumo.unidadMedida) : '';
+  const unidad = insumo
+    ? t.has(`unidad.${insumo.unidadMedida}`)
+      ? t(
+          `unidad.${insumo.unidadMedida}` as
+            | 'unidad.kg'
+            | 'unidad.g'
+            | 'unidad.l'
+            | 'unidad.ml'
+            | 'unidad.unidad'
+            | 'unidad.porcion',
+        )
+      : insumo.unidadMedida
+    : '';
+  const stockFormatted = insumo?.stockActual.toLocaleString('es-CO', { maximumFractionDigits: 4 });
 
   return (
     <Dialog open={!!insumo} onOpenChange={handleOpenChange}>
@@ -87,13 +94,14 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-destructive" />
-            Stock Out
+            {tSO('title')}
           </DialogTitle>
           <DialogDescription>
-            {insumo?.nombre} — Stock actual:{' '}
-            <span className="font-semibold text-foreground">
-              {insumo?.stockActual.toLocaleString('es-CO', { maximumFractionDigits: 4 })} {unidad}
-            </span>
+            {tSO.rich('subtitle', {
+              insumo: insumo?.nombre ?? '',
+              stock: stockFormatted ?? '',
+              unidad,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +111,7 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
 
           <div className="space-y-1.5">
             <Label htmlFor="cantidad">
-              Cantidad a retirar *{' '}
+              {tSO('cantidad')} *{' '}
               <span className="text-muted-foreground font-normal">({unidad})</span>
             </Label>
             <Input
@@ -111,7 +119,7 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
               type="number"
               step="0.0001"
               min="0.0001"
-              placeholder="0.00"
+              placeholder={tSO('cantidadPlaceholder')}
               autoFocus
               {...register('cantidad', { valueAsNumber: true })}
             />
@@ -134,16 +142,16 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
               disabled={isSubmitting}
               onClick={() => handleOpenChange(false)}
             >
-              Cancelar
+              {tSO('cancelar')}
             </Button>
             <Button type="submit" size="sm" variant="destructive" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Descontando…
+                  {tSO('procesando')}
                 </>
               ) : (
-                'Confirmar Stock Out'
+                tSO('confirmar')
               )}
             </Button>
           </div>
