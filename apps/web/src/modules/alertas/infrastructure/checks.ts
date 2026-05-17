@@ -7,6 +7,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createAlertaRepository } from './alerta-repository';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Alerta, CreateAlertaInput } from '../domain/alerta';
+import {
+  severidadStockMinimo,
+  severidadCambioPrecio,
+  severidadVencimiento,
+  severidadDemoraAmex,
+} from '../domain/alerta';
 
 export async function crearAlerta(
   tenantId: string,
@@ -76,10 +82,9 @@ export async function checkStockMinimo(tenantId: string, insumoId: string): Prom
 
     if ((count ?? 0) > 0) return;
 
-    const severidad = stockActual === 0 ? 'critical' : 'warning';
     await crearAlerta(tenantId, {
       tipo: 'stock_minimo',
-      severidad,
+      severidad: severidadStockMinimo(stockActual),
       titulo: `Stock bajo: ${insumo.nombre}`,
       mensaje: `Stock actual (${stockActual.toFixed(2)}) está por debajo del mínimo (${Number(insumo.stock_minimo).toFixed(2)}).`,
       resourceId: insumoId,
@@ -115,17 +120,18 @@ export async function checkCambioPrecio(
     const costoAnterior = Number(anterior.costo_unitario);
     if (costoAnterior === 0) return;
 
-    const cambio = Math.abs((nuevoCosto - costoAnterior) / costoAnterior);
-    if (cambio < 0.1) return;
+    const cambio = (nuevoCosto - costoAnterior) / costoAnterior;
+    const severidad = severidadCambioPrecio(cambio);
+    if (!severidad) return;
 
     const insumoNombre =
       (anterior.insumo as unknown as { nombre: string } | null)?.nombre ?? 'insumo';
-    const pct = (cambio * 100).toFixed(1);
+    const pct = (Math.abs(cambio) * 100).toFixed(1);
     const direccion = nuevoCosto > costoAnterior ? 'subió' : 'bajó';
 
     await crearAlerta(tenantId, {
       tipo: 'cambio_precio',
-      severidad: cambio >= 0.25 ? 'critical' : 'warning',
+      severidad,
       titulo: `Precio ${direccion}: ${insumoNombre}`,
       mensaje: `El costo unitario ${direccion} un ${pct}% (anterior: $${costoAnterior.toLocaleString('es-CO')} → nuevo: $${nuevoCosto.toLocaleString('es-CO')}).`,
       resourceId: loteId,
@@ -175,11 +181,10 @@ export async function runCheckVencimientos(tenantId: string, diasUmbral = 3): Pr
       (lote.insumo as unknown as { nombre: string } | null)?.nombre ?? 'desconocido';
     const fechaVenc = lote.fecha_vencimiento!;
     const diasRestantes = Math.ceil((new Date(fechaVenc).getTime() - Date.now()) / 86400000);
-    const severidad = diasRestantes <= 0 ? 'critical' : diasRestantes <= 1 ? 'warning' : 'info';
 
     await crearAlerta(tenantId, {
       tipo: 'vencimiento',
-      severidad,
+      severidad: severidadVencimiento(diasRestantes),
       titulo: `Vencimiento: ${insumoNombre}`,
       mensaje:
         diasRestantes <= 0
@@ -229,7 +234,7 @@ export async function runCheckDemoraAmex(tenantId: string, umbralMins = 15): Pro
 
     await crearAlerta(tenantId, {
       tipo: 'demora_amex',
-      severidad: mins >= 25 ? 'critical' : 'warning',
+      severidad: severidadDemoraAmex(mins),
       titulo: `Demora Amex — ${mesa}`,
       mensaje: `Pedido ${mesa} lleva ${mins} minutos sin ser despachado.`,
       resourceId: pedido.id,
