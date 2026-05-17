@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations, useLocale } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -13,30 +16,32 @@ interface CogsTableProps {
   data: CogsPerPassenger[];
 }
 
-function formatCop(value: number): string {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatFecha(date: Date): string {
-  return new Date(date).toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function CogsTable({ data }: CogsTableProps) {
+  const t = useTranslations('analytics');
+  const locale = useLocale();
+  const dateLocale = locale === 'en' ? 'en-US' : 'es-CO';
+
+  const formatCop = (value: number): string =>
+    new Intl.NumberFormat(dateLocale, {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const formatFecha = (date: Date): string =>
+    new Date(date).toLocaleString(dateLocale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
   if (data.length === 0) {
     return (
       <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-        Sin datos — refresca las vistas o selecciona otro período
+        {t('cogsEmpty')}
       </div>
     );
   }
@@ -46,18 +51,24 @@ export function CogsTable({ data }: CogsTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="text-xs font-medium text-muted-foreground">Turno</TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">Inicio</TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              Pasajeros
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('colTurno')}
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('colInicio')}
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              COGS total
+              {t('colPasajeros')}
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              COGS / pasajero
+              {t('colCogsTotal')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">Estado</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+              {t('colCogsPorPasajero')}
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('colEstado')}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,7 +79,7 @@ export function CogsTable({ data }: CogsTableProps) {
                 {formatFecha(row.iniciadoAt)}
               </TableCell>
               <TableCell className="text-right text-sm tabular-nums">
-                {row.totalPasajeros.toLocaleString('es-CO')}
+                {row.totalPasajeros.toLocaleString(dateLocale)}
               </TableCell>
               <TableCell className="text-right text-sm tabular-nums">
                 {formatCop(row.cogsTotalCop)}
@@ -79,10 +90,10 @@ export function CogsTable({ data }: CogsTableProps) {
               <TableCell>
                 {row.cerradoAt ? (
                   <Badge variant="outline" className="text-xs text-muted-foreground">
-                    Cerrado
+                    {t('estadoCerrado')}
                   </Badge>
                 ) : (
-                  <Badge className="text-xs">Activo</Badge>
+                  <Badge className="text-xs">{t('estadoActivo')}</Badge>
                 )}
               </TableCell>
             </TableRow>

@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations, useLocale } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -13,18 +16,21 @@ interface ConsumoTableProps {
   data: ConsumoInsumo[];
 }
 
-function fmt(n: number, decimals = 4): string {
-  return n.toLocaleString('es-CO', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-  });
-}
-
 export function ConsumoTable({ data }: ConsumoTableProps) {
+  const t = useTranslations('analytics');
+  const locale = useLocale();
+  const numLocale = locale === 'en' ? 'en-US' : 'es-CO';
+
+  const fmt = (n: number, decimals = 4): string =>
+    n.toLocaleString(numLocale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals,
+    });
+
   if (data.length === 0) {
     return (
       <div className="text-center py-12 text-sm text-muted-foreground border border-dashed rounded-lg">
-        Sin datos de consumo para el filtro seleccionado
+        {t('consumoEmpty')}
       </div>
     );
   }
@@ -34,19 +40,23 @@ export function ConsumoTable({ data }: ConsumoTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="text-xs font-medium text-muted-foreground">Insumo</TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">Capa</TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              Entradas
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('colInsumo')}
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('colCapa')}
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              Consumo
+              {t('colEntradas')}
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              Merma
+              {t('colConsumo')}
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground text-right">
-              Ajustes
+              {t('colMerma')}
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+              {t('colAjustes')}
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -56,7 +66,7 @@ export function ConsumoTable({ data }: ConsumoTableProps) {
               <TableCell className="font-medium text-sm">{row.insumoNombre}</TableCell>
               <TableCell>
                 <Badge variant="outline" className="text-xs">
-                  {row.capa === 'capa_1' ? 'Bodega' : 'Producción'}
+                  {row.capa === 'capa_1' ? t('capa1') : t('capa2')}
                 </Badge>
               </TableCell>
               <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
