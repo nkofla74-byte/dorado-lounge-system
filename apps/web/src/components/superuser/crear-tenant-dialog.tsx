@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -31,6 +32,8 @@ interface Props {
 }
 
 export function CrearTenantDialog({ onSuccess }: Props) {
+  const t = useTranslations('admin.tenants');
+  const tF = useTranslations('admin.tenants.form');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +50,7 @@ export function CrearTenantDialog({ onSuccess }: Props) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(`Tenant "${result.value.nombre}" creado`);
+      toast.success(tF('creadoToast', { nombre: result.value.nombre }));
       form.reset();
       setOpen(false);
       onSuccess();
@@ -77,13 +80,13 @@ export function CrearTenantDialog({ onSuccess }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusCircle className="h-4 w-4 mr-2" />
-          Nuevo tenant
+          {t('nuevo')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crear tenant</DialogTitle>
+          <DialogTitle>{tF('title')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -93,10 +96,10 @@ export function CrearTenantDialog({ onSuccess }: Props) {
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre</FormLabel>
+                  <FormLabel>{tF('nombre')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ej. Dorado Lounge El Dorado"
+                      placeholder={tF('nombrePlaceholder')}
                       {...field}
                       onChange={(e) => handleNombreChange(e.target.value)}
                     />
@@ -111,9 +114,9 @@ export function CrearTenantDialog({ onSuccess }: Props) {
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Slug (URL amigable)</FormLabel>
+                  <FormLabel>{tF('slug')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="ej. dorado-lounge" {...field} />
+                    <Input placeholder={tF('slugPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,10 +130,10 @@ export function CrearTenantDialog({ onSuccess }: Props) {
                 onClick={() => setOpen(false)}
                 disabled={loading}
               >
-                Cancelar
+                {tF('cancelar')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creando...' : 'Crear'}
+                {loading ? tF('creando') : tF('crear')}
               </Button>
             </div>
           </form>

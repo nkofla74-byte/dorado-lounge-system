@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,46 +34,61 @@ import {
 import { crearPersonal } from '@/app/(dashboard)/admin/personal/actions';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
 
-const formSchema = z.object({
-  nombre: z.string().min(2, 'Nombre muy corto').max(100),
-  email: z.string().email('Email inválido'),
-  role: z.enum([
-    'admin',
-    'chef',
-    'sous_chef',
-    'mesero_amex',
-    'personal_snack',
-    'personal_buffet',
-    'recepcion',
-    'personal_almacen',
-    'personal_pasteleria',
-    'steward',
-  ]),
-  password: z.string().min(8, 'Mínimo 8 caracteres').max(100),
-});
+type RoleKey =
+  | 'admin'
+  | 'chef'
+  | 'sous_chef'
+  | 'mesero_amex'
+  | 'personal_snack'
+  | 'personal_buffet'
+  | 'recepcion'
+  | 'personal_almacen'
+  | 'personal_pasteleria'
+  | 'steward';
 
-type FormValues = z.infer<typeof formSchema>;
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador',
-  chef: 'Chef',
-  sous_chef: 'Sous Chef',
-  mesero_amex: 'Mesero Amex',
-  personal_snack: 'Personal Snack',
-  personal_buffet: 'Personal Buffet',
-  recepcion: 'Recepción',
-  personal_almacen: 'Personal Almacén',
-  personal_pasteleria: 'Personal Pastelería',
-  steward: 'Steward',
-};
+const ASSIGNABLE_ROLES: RoleKey[] = [
+  'admin',
+  'chef',
+  'sous_chef',
+  'mesero_amex',
+  'personal_snack',
+  'personal_buffet',
+  'recepcion',
+  'personal_almacen',
+  'personal_pasteleria',
+  'steward',
+];
 
 interface Props {
   onSuccess: (user: TenantUser) => void;
 }
 
 export function CrearPersonalDialog({ onSuccess }: Props) {
+  const t = useTranslations('admin.personal');
+  const tF = useTranslations('admin.users.form');
+  const tR = useTranslations('roles');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const formSchema = z.object({
+    nombre: z.string().min(2).max(100),
+    email: z.string().email(),
+    role: z.enum([
+      'admin',
+      'chef',
+      'sous_chef',
+      'mesero_amex',
+      'personal_snack',
+      'personal_buffet',
+      'recepcion',
+      'personal_almacen',
+      'personal_pasteleria',
+      'steward',
+    ]),
+    password: z.string().min(8).max(100),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,7 +103,7 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(`Usuario ${result.value.nombre} creado`);
+      toast.success(tF('creadoToast', { nombre: result.value.nombre }));
       form.reset();
       setOpen(false);
       onSuccess(result.value);
@@ -101,13 +117,13 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="h-4 w-4 mr-2" />
-          Nuevo usuario
+          {t('nuevo')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crear usuario</DialogTitle>
+          <DialogTitle>{tF('title')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -117,9 +133,9 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
               name="nombre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre completo</FormLabel>
+                  <FormLabel>{tF('nombre')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej. María García" {...field} />
+                    <Input placeholder={tF('nombrePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,9 +147,9 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{tF('email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="usuario@ejemplo.com" {...field} />
+                    <Input type="email" placeholder={tF('emailPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -145,17 +161,17 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rol</FormLabel>
+                  <FormLabel>{tF('rol')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar rol" />
+                        <SelectValue placeholder={tF('rolPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
+                      {ASSIGNABLE_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {tR(role)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -170,9 +186,9 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña inicial</FormLabel>
+                  <FormLabel>{tF('password')}</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Mínimo 8 caracteres" {...field} />
+                    <Input type="password" placeholder={tF('passwordPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -186,10 +202,10 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
                 onClick={() => setOpen(false)}
                 disabled={loading}
               >
-                Cancelar
+                {tF('cancelar')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creando...' : 'Crear usuario'}
+                {loading ? tF('creando') : tF('crear')}
               </Button>
             </div>
           </form>

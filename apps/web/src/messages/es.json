@@ -289,6 +289,95 @@
     "cerrarTitle": "¿Cerrar turno?",
     "cerrarDescription": "El turno <b>{nombre}</b> quedará cerrado y no podrá reabrirse. Esta acción queda registrada en el audit log."
   },
+  "admin": {
+    "common": {
+      "activo": "Activo",
+      "inactivo": "Inactivo",
+      "activar": "Activar",
+      "desactivar": "Desactivar",
+      "creado": "Creado",
+      "actualizado": "Actualizado",
+      "rolActualizado": "Rol actualizado",
+      "usuarioActivado": "Usuario activado",
+      "usuarioDesactivado": "Usuario desactivado",
+      "tenantActivado": "Tenant activado",
+      "tenantDesactivado": "Tenant desactivado",
+      "colNombre": "Nombre",
+      "colEmail": "Email",
+      "colRol": "Rol",
+      "colEstado": "Estado",
+      "colCreado": "Creado",
+      "colAcciones": "Acciones",
+      "colSlug": "Slug"
+    },
+    "tenants": {
+      "metaTitle": "Tenants — Dorado Lounge",
+      "pageTitle": "Tenants",
+      "pageSubtitle": "Administra los tenants registrados en el sistema",
+      "count": "{n, plural, =1 {1 tenant} other {# tenants}}",
+      "nuevo": "Nuevo tenant",
+      "emptyTitle": "No hay tenants registrados",
+      "emptyHint": "Crea el primer tenant para comenzar",
+      "form": {
+        "title": "Crear tenant",
+        "nombre": "Nombre",
+        "nombrePlaceholder": "Ej. Dorado Lounge El Dorado",
+        "slug": "Slug (URL amigable)",
+        "slugPlaceholder": "ej. dorado-lounge",
+        "cancelar": "Cancelar",
+        "creando": "Creando...",
+        "crear": "Crear",
+        "creadoToast": "Tenant \"{nombre}\" creado"
+      }
+    },
+    "users": {
+      "metaTitle": "Usuarios — Dorado Lounge",
+      "pageTitle": "Usuarios",
+      "pageSubtitle": "Gestiona los usuarios del tenant",
+      "count": "{n, plural, =1 {1 usuario} other {# usuarios}}",
+      "nuevo": "Nuevo usuario",
+      "emptyTitle": "Sin usuarios en este tenant",
+      "emptyHint": "Crea el primer usuario para comenzar",
+      "form": {
+        "title": "Crear usuario",
+        "nombre": "Nombre completo",
+        "nombrePlaceholder": "Ej. María García",
+        "email": "Email",
+        "emailPlaceholder": "usuario@ejemplo.com",
+        "rol": "Rol",
+        "rolPlaceholder": "Seleccionar rol",
+        "password": "Contraseña inicial",
+        "passwordPlaceholder": "Mínimo 8 caracteres",
+        "cancelar": "Cancelar",
+        "creando": "Creando...",
+        "crear": "Crear usuario",
+        "creadoToast": "Usuario {nombre} creado"
+      }
+    },
+    "personal": {
+      "metaTitle": "Personal — Dorado Lounge",
+      "pageTitle": "Personal",
+      "pageSubtitle": "Gestiona los usuarios y roles de tu organización",
+      "errorCarga": "Error al cargar usuarios: {message}",
+      "count": "{n, plural, =1 {1 usuario} other {# usuarios}}",
+      "nuevo": "Nuevo usuario",
+      "emptyTitle": "Sin usuarios registrados",
+      "emptyHint": "Crea el primer usuario para comenzar",
+      "tu": "(tú)"
+    },
+    "tenantDetail": {
+      "errorCarga": "Error al cargar usuarios: {message}",
+      "usuariosTitle": "Usuarios",
+      "estadoActivo": "· Activo",
+      "estadoInactivo": "· Inactivo"
+    },
+    "tenantsPage": {
+      "metaTitle": "Tenants — Dorado Lounge",
+      "title": "Gestión de tenants",
+      "subtitle": "Crea y administra los tenants de la plataforma",
+      "errorCarga": "Error al cargar tenants: {message}"
+    }
+  },
   "proveedores": {
     "metaTitle": "Proveedores — Dorado Lounge",
     "pageTitle": "Proveedores",

@@ -254,6 +254,95 @@
       "missingRoleOrTenant": "Your account has no role or tenant assigned. Contact your administrator."
     }
   },
+  "admin": {
+    "common": {
+      "activo": "Active",
+      "inactivo": "Inactive",
+      "activar": "Activate",
+      "desactivar": "Deactivate",
+      "creado": "Created",
+      "actualizado": "Updated",
+      "rolActualizado": "Role updated",
+      "usuarioActivado": "User activated",
+      "usuarioDesactivado": "User deactivated",
+      "tenantActivado": "Tenant activated",
+      "tenantDesactivado": "Tenant deactivated",
+      "colNombre": "Name",
+      "colEmail": "Email",
+      "colRol": "Role",
+      "colEstado": "Status",
+      "colCreado": "Created",
+      "colAcciones": "Actions",
+      "colSlug": "Slug"
+    },
+    "tenants": {
+      "metaTitle": "Tenants — Dorado Lounge",
+      "pageTitle": "Tenants",
+      "pageSubtitle": "Manage tenants registered in the system",
+      "count": "{n, plural, =1 {1 tenant} other {# tenants}}",
+      "nuevo": "New tenant",
+      "emptyTitle": "No tenants registered",
+      "emptyHint": "Create the first tenant to get started",
+      "form": {
+        "title": "Create tenant",
+        "nombre": "Name",
+        "nombrePlaceholder": "e.g. Dorado Lounge El Dorado",
+        "slug": "Slug (URL-friendly)",
+        "slugPlaceholder": "e.g. dorado-lounge",
+        "cancelar": "Cancel",
+        "creando": "Creating...",
+        "crear": "Create",
+        "creadoToast": "Tenant \"{nombre}\" created"
+      }
+    },
+    "users": {
+      "metaTitle": "Users — Dorado Lounge",
+      "pageTitle": "Users",
+      "pageSubtitle": "Manage tenant users",
+      "count": "{n, plural, =1 {1 user} other {# users}}",
+      "nuevo": "New user",
+      "emptyTitle": "No users in this tenant",
+      "emptyHint": "Create the first user to get started",
+      "form": {
+        "title": "Create user",
+        "nombre": "Full name",
+        "nombrePlaceholder": "e.g. María García",
+        "email": "Email",
+        "emailPlaceholder": "user@example.com",
+        "rol": "Role",
+        "rolPlaceholder": "Select role",
+        "password": "Initial password",
+        "passwordPlaceholder": "At least 8 characters",
+        "cancelar": "Cancel",
+        "creando": "Creating...",
+        "crear": "Create user",
+        "creadoToast": "User {nombre} created"
+      }
+    },
+    "personal": {
+      "metaTitle": "Staff — Dorado Lounge",
+      "pageTitle": "Staff",
+      "pageSubtitle": "Manage the users and roles of your organization",
+      "errorCarga": "Failed to load users: {message}",
+      "count": "{n, plural, =1 {1 user} other {# users}}",
+      "nuevo": "New user",
+      "emptyTitle": "No users registered",
+      "emptyHint": "Create the first user to get started",
+      "tu": "(you)"
+    },
+    "tenantDetail": {
+      "errorCarga": "Failed to load users: {message}",
+      "usuariosTitle": "Users",
+      "estadoActivo": "· Active",
+      "estadoInactivo": "· Inactive"
+    },
+    "tenantsPage": {
+      "metaTitle": "Tenants — Dorado Lounge",
+      "title": "Tenants management",
+      "subtitle": "Create and manage platform tenants",
+      "errorCarga": "Failed to load tenants: {message}"
+    }
+  },
   "proveedores": {
     "metaTitle": "Suppliers — Dorado Lounge",
     "pageTitle": "Suppliers",

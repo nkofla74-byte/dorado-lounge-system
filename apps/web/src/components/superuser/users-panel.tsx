@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,17 +25,15 @@ import { CrearUsuarioDialog } from './crear-usuario-dialog';
 import { toggleUser, cambiarRolUsuario } from '@/modules/superuser/actions';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
 
-const ROLE_LABELS: Record<string, string> = {
-  superuser: 'Super Usuario',
-  admin: 'Administrador',
-  chef: 'Chef',
-  sous_chef: 'Sous Chef',
-  mesero_amex: 'Mesero Amex',
-  personal_snack: 'Personal Snack',
-  personal_buffet: 'Personal Buffet',
-};
+type RoleKey =
+  | 'admin'
+  | 'chef'
+  | 'sous_chef'
+  | 'mesero_amex'
+  | 'personal_snack'
+  | 'personal_buffet';
 
-const ASSIGNABLE_ROLES = [
+const ASSIGNABLE_ROLES: RoleKey[] = [
   'admin',
   'chef',
   'sous_chef',
@@ -49,6 +48,10 @@ interface Props {
 }
 
 export function UsersPanel({ tenantId, initialUsers }: Props) {
+  const t = useTranslations('admin.users');
+  const tC = useTranslations('admin.common');
+  const tR = useTranslations('roles');
+  const locale = useLocale();
   const [users, setUsers] = useState<TenantUser[]>(initialUsers);
   const [isPending, startTransition] = useTransition();
 
@@ -62,7 +65,7 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, activo: result.value.activo } : u)),
       );
-      toast.success(activo ? 'Usuario activado' : 'Usuario desactivado');
+      toast.success(activo ? tC('usuarioActivado') : tC('usuarioDesactivado'));
     });
   };
 
@@ -76,7 +79,7 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, role: result.value.role } : u)),
       );
-      toast.success('Rol actualizado');
+      toast.success(tC('rolActualizado'));
     });
   };
 
@@ -85,9 +88,7 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
-          <span>
-            {users.length} usuario{users.length !== 1 ? 's' : ''}
-          </span>
+          <span>{t('count', { n: users.length })}</span>
         </div>
         <CrearUsuarioDialog tenantId={tenantId} onSuccess={() => window.location.reload()} />
       </div>
@@ -95,20 +96,20 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
       {users.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20">
           <Users className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">Sin usuarios en este tenant</p>
-          <p className="text-xs text-muted-foreground mt-1">Crea el primer usuario para comenzar</p>
+          <p className="text-sm font-medium text-muted-foreground">{t('emptyTitle')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('emptyHint')}</p>
         </div>
       ) : (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Rol</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Creado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>{tC('colNombre')}</TableHead>
+                <TableHead>{tC('colEmail')}</TableHead>
+                <TableHead>{tC('colRol')}</TableHead>
+                <TableHead>{tC('colEstado')}</TableHead>
+                <TableHead>{tC('colCreado')}</TableHead>
+                <TableHead className="text-right">{tC('colAcciones')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -128,7 +129,7 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
                       <SelectContent>
                         {ASSIGNABLE_ROLES.map((role) => (
                           <SelectItem key={role} value={role} className="text-xs">
-                            {ROLE_LABELS[role]}
+                            {tR(role)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -138,17 +139,19 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
                     {user.activo ? (
                       <Badge variant="default" className="gap-1">
                         <CheckCircle2 className="h-3 w-3" />
-                        Activo
+                        {tC('activo')}
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="gap-1">
                         <XCircle className="h-3 w-3" />
-                        Inactivo
+                        {tC('inactivo')}
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {new Date(user.createdAt).toLocaleDateString('es-CO')}
+                    {new Date(user.createdAt).toLocaleDateString(
+                      locale === 'en' ? 'en-US' : 'es-CO',
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
@@ -160,9 +163,9 @@ export function UsersPanel({ tenantId, initialUsers }: Props) {
                       {isPending ? (
                         <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                       ) : user.activo ? (
-                        'Desactivar'
+                        tC('desactivar')
                       ) : (
-                        'Activar'
+                        tC('activar')
                       )}
                     </Button>
                   </TableCell>
