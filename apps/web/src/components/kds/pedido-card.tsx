@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Clock, ChefHat, Truck, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,11 +9,7 @@ import { iniciarPreparacion, despacharPedido } from '@/modules/orders/actions';
 import { toast } from 'sonner';
 import type { PedidoWithItems } from '@/modules/orders/domain/pedido';
 
-const ZONA_LABEL: Record<string, string> = {
-  amex: 'Amex',
-  snack: 'Snack Bar',
-  buffet: 'Buffet',
-};
+type ZonaKey = 'amex' | 'snack' | 'buffet';
 
 const ZONA_COLOR: Record<string, string> = {
   amex: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300',
@@ -54,6 +51,8 @@ interface PedidoCardProps {
 }
 
 export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps) {
+  const t = useTranslations('kds');
+  const tZ = useTranslations('zonas');
   const [loading, setLoading] = useState(false);
   const elapsed = useElapsed(
     pedido.estado === 'en_preparacion' ? pedido.updatedAt : pedido.createdAt,
@@ -68,7 +67,7 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
       if (result.error.code === 'VERSION_CONFLICT') onRefresh?.();
       return;
     }
-    toast.success('Preparación iniciada');
+    toast.success(t('iniciarPrepOk'));
     onStateChange(pedido.id, 'en_preparacion');
   };
 
@@ -81,9 +80,11 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
       if (result.error.code === 'VERSION_CONFLICT') onRefresh?.();
       return;
     }
-    toast.success('Pedido despachado');
+    toast.success(t('despacharOk'));
     onStateChange(pedido.id, 'despachado');
   };
+
+  const zonaLabel = tZ.has(pedido.zona) ? tZ(pedido.zona as ZonaKey) : pedido.zona;
 
   return (
     <div
@@ -93,13 +94,13 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-0.5">
           <p className="font-semibold text-sm leading-tight">
-            {pedido.numeroMesa ? pedido.numeroMesa : 'Sin mesa'}
+            {pedido.numeroMesa ? pedido.numeroMesa : t('sinMesa')}
           </p>
           <span
             className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${ZONA_COLOR[pedido.zona] ?? ''}`}
           >
             <UtensilsCrossed className="h-3 w-3" />
-            {ZONA_LABEL[pedido.zona] ?? pedido.zona}
+            {zonaLabel}
           </span>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-xs shrink-0">
@@ -130,7 +131,7 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
         {pedido.estado === 'creado' && (
           <Button size="sm" className="w-full" onClick={handleIniciar} disabled={loading}>
             <ChefHat className="h-4 w-4 mr-1.5" />
-            Iniciar preparación
+            {t('iniciarPrep')}
           </Button>
         )}
         {pedido.estado === 'en_preparacion' && (
@@ -142,12 +143,12 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
             disabled={loading}
           >
             <Truck className="h-4 w-4 mr-1.5" />
-            Despachar
+            {t('despachar')}
           </Button>
         )}
         {pedido.estado === 'despachado' && (
           <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
-            Esperando confirmación del mesero
+            {t('esperandoMesero')}
           </Badge>
         )}
       </div>

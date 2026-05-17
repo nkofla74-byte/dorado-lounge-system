@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { CHANNELS } from '@dorado/shared-types';
 import { useSocket } from '@/lib/socket/use-socket';
 import { PedidoCard } from './pedido-card';
@@ -9,63 +10,58 @@ import { toast } from 'sonner';
 import type { PedidoWithItems } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';
 
-interface Column {
+type ZonaFiltro = null | 'snack' | 'buffet' | 'amex';
+
+interface ColumnDef {
   key: 'creado' | 'en_preparacion' | 'despachado';
-  label: string;
-  emptyText: string;
+  labelKey: 'colNuevos' | 'colEnPreparacion' | 'colDespachados';
+  emptyKey: 'emptyNuevos' | 'emptyPreparacion' | 'emptyDespachados';
   headerClass: string;
   countClass: string;
 }
 
-const COLUMNS: Column[] = [
+const COLUMNS: ColumnDef[] = [
   {
     key: 'creado',
-    label: 'Nuevos',
-    emptyText: 'Sin pedidos nuevos',
+    labelKey: 'colNuevos',
+    emptyKey: 'emptyNuevos',
     headerClass: 'border-amber-500/40 bg-amber-500/5',
     countClass: 'bg-amber-500 text-white',
   },
   {
     key: 'en_preparacion',
-    label: 'En preparación',
-    emptyText: 'Nada en cocina',
+    labelKey: 'colEnPreparacion',
+    emptyKey: 'emptyPreparacion',
     headerClass: 'border-blue-500/40 bg-blue-500/5',
     countClass: 'bg-blue-500 text-white',
   },
   {
     key: 'despachado',
-    label: 'Despachados',
-    emptyText: 'Nada esperando entrega',
+    labelKey: 'colDespachados',
+    emptyKey: 'emptyDespachados',
     headerClass: 'border-emerald-500/40 bg-emerald-500/5',
     countClass: 'bg-emerald-500 text-white',
   },
 ];
 
-const ZONA_TABS = [
-  { key: null, label: 'Todas' },
-  { key: 'snack', label: 'Snack' },
-  { key: 'buffet', label: 'Buffet' },
-  { key: 'amex', label: 'Amex' },
-] as const;
-
-type ZonaFiltro = null | 'snack' | 'buffet' | 'amex';
+const ZONA_KEYS: ZonaFiltro[] = [null, 'snack', 'buffet', 'amex'];
 
 interface KdsBoardProps {
   initialPedidos: PedidoWithItems[];
 }
 
 export function KdsBoard({ initialPedidos }: KdsBoardProps) {
+  const t = useTranslations('kds');
+  const tZ = useTranslations('zonas');
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
   const [zonaFiltro, setZonaFiltro] = useState<ZonaFiltro>(null);
   const socket = useSocket();
 
-  // Refresca toda la lista desde el servidor (post-state-change o reconexión)
   const refresh = useCallback(async () => {
     const result = await getPedidos();
     if (result.ok) setPedidos(result.value);
   }, []);
 
-  // Actualización optimista de estado al hacer clic en un botón
   const handleStateChange = useCallback((pedidoId: string, nuevoEstado: string) => {
     setPedidos((prev) =>
       prev.map((p) =>
@@ -81,7 +77,6 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
     );
   }, []);
 
-  // Socket: suscribir a COCINA para PEDIDO_CREADO y PEDIDO_ESTADO
   useEffect(() => {
     if (!socket) return;
 
@@ -89,9 +84,11 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
 
     const handleEvent = (event: SocketEvent) => {
       if (event.type === 'PEDIDO_CREADO') {
-        // El evento tiene info básica; hacemos refresh para obtener el objeto completo
         refresh();
-        toast.info(`Nuevo pedido — ${event.payload.zona} ${event.payload.numeroMesa ?? ''}`);
+        const zona = tZ.has(event.payload.zona)
+          ? tZ(event.payload.zona as 'amex' | 'snack' | 'buffet')
+          : event.payload.zona;
+        toast.info(t('nuevoPedidoToast', { zona, mesa: event.payload.numeroMesa ?? '' }));
       }
       if (event.type === 'PEDIDO_ESTADO') {
         const { pedidoId, estadoNuevo } = event.payload;
@@ -99,7 +96,7 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
           setPedidos((prev) => {
             if (estadoNuevo === 'cancelado') {
               const p = prev.find((x) => x.id === pedidoId);
-              toast.warning(`Pedido cancelado${p?.numeroMesa ? ` — ${p.numeroMesa}` : ''}`);
+              toast.warning(t('pedidoCanceladoToast', { mesa: p?.numeroMesa ?? 'none' }));
             }
             return prev.filter((p) => p.id !== pedidoId);
           });
@@ -116,8 +113,6 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
     };
 
     socket.on('event', handleEvent);
-
-    // Refrescar en reconexión
     socket.on('connect', refresh);
 
     return () => {
@@ -125,11 +120,11 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
       socket.off('connect', refresh);
       socket.emit('leave', CHANNELS.COCINA);
     };
-  }, [socket, refresh]);
+  }, [socket, refresh, t, tZ]);
 
   const pedidosFiltrados = zonaFiltro ? pedidos.filter((p) => p.zona === zonaFiltro) : pedidos;
 
-  const byState = (estado: Column['key']) =>
+  const byState = (estado: ColumnDef['key']) =>
     pedidosFiltrados
       .filter((p) => p.estado === estado)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -141,38 +136,36 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cocina — KDS</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('titulo')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {total === 0
-              ? 'Sin pedidos activos'
-              : `${total} pedido${total > 1 ? 's' : ''} activo${total > 1 ? 's' : ''}`}
+            {total === 0 ? t('sinPedidosActivos') : t('pedidosActivos', { n: total })}
           </p>
         </div>
         <button
           onClick={refresh}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Actualizar
+          {t('actualizar')}
         </button>
       </div>
 
       {/* Filtro por zona */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        {ZONA_TABS.map((tab) => (
+        {ZONA_KEYS.map((tabKey) => (
           <button
-            key={String(tab.key)}
-            onClick={() => setZonaFiltro(tab.key as ZonaFiltro)}
+            key={String(tabKey)}
+            onClick={() => setZonaFiltro(tabKey)}
             className={[
               'px-3 py-1 rounded-full text-xs font-medium transition-colors border',
-              zonaFiltro === tab.key
+              zonaFiltro === tabKey
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'text-muted-foreground border-border hover:bg-accent hover:text-foreground',
             ].join(' ')}
           >
-            {tab.label}
-            {tab.key !== null && (
+            {tabKey === null ? t('filtrosTodas') : tZ(tabKey)}
+            {tabKey !== null && (
               <span className="ml-1.5 tabular-nums">
-                ({pedidos.filter((p) => p.zona === tab.key).length})
+                ({pedidos.filter((p) => p.zona === tabKey).length})
               </span>
             )}
           </button>
@@ -185,21 +178,19 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
           const items = byState(col.key);
           return (
             <div key={col.key} className="space-y-3">
-              {/* Column header */}
               <div
                 className={`flex items-center justify-between px-3 py-2 rounded-lg border ${col.headerClass}`}
               >
-                <span className="font-medium text-sm">{col.label}</span>
+                <span className="font-medium text-sm">{t(col.labelKey)}</span>
                 <span className={`text-xs font-bold rounded-full px-2 py-0.5 ${col.countClass}`}>
                   {items.length}
                 </span>
               </div>
 
-              {/* Cards */}
               <div className="space-y-3 min-h-[120px]">
                 {items.length === 0 ? (
                   <div className="flex items-center justify-center h-24 rounded-lg border border-dashed text-sm text-muted-foreground">
-                    {col.emptyText}
+                    {t(col.emptyKey)}
                   </div>
                 ) : (
                   items.map((pedido) => (
