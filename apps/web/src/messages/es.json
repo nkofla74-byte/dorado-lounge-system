@@ -113,6 +113,88 @@
       "stockOut": "Stock Out",
       "merma": "Merma"
     },
+    "stockOut": {
+      "title": "Stock Out",
+      "subtitle": "{insumo} — Stock actual: {stock} {unidad}",
+      "cantidad": "Cantidad a retirar",
+      "cantidadPlaceholder": "0.00",
+      "confirmar": "Confirmar Stock Out",
+      "procesando": "Descontando…",
+      "cancelar": "Cancelar"
+    },
+    "merma": {
+      "title": "Registrar merma",
+      "subtitle": "{insumo} — Stock actual: {stock} {unidad}",
+      "cantidad": "Cantidad",
+      "cantidadPlaceholder": "0.00",
+      "categoria": "Categoría",
+      "categoriaPlaceholder": "Seleccionar",
+      "categorias": {
+        "operativa": "Operativa",
+        "vencimiento": "Vencimiento",
+        "accidente": "Accidente",
+        "calidad": "Calidad",
+        "otro": "Otro"
+      },
+      "descripcion": "Descripción",
+      "descripcionPlaceholder": "Describe la causa de la merma",
+      "optional": "(opcional)",
+      "registrar": "Registrar merma",
+      "procesando": "Registrando…",
+      "cancelar": "Cancelar"
+    },
+    "createInsumo": {
+      "title": "Nuevo insumo",
+      "srDescription": "Registra un insumo con capa, unidad de medida y stock mínimo.",
+      "nombre": "Nombre",
+      "nombrePlaceholder": "Ej: Harina de trigo",
+      "codigo": "Código interno",
+      "codigoPlaceholder": "Ej: HRN-001",
+      "optional": "(opcional)",
+      "capa": "Capa",
+      "unidad": "Unidad",
+      "stockMinimo": "Stock mínimo",
+      "seleccionar": "Seleccionar",
+      "capas": {
+        "capa_1": "Bodega (Capa 1)",
+        "capa_2": "Producción (Capa 2)"
+      },
+      "unidades": {
+        "kg": "Kilogramos (kg)",
+        "g": "Gramos (g)",
+        "l": "Litros (L)",
+        "ml": "Mililitros (mL)",
+        "unidad": "Unidad",
+        "porcion": "Porción"
+      },
+      "guardar": "Guardar insumo",
+      "guardando": "Guardando…",
+      "cancelar": "Cancelar"
+    },
+    "bulkImport": {
+      "title": "Carga masiva de insumos",
+      "subtitle": "Importá múltiples insumos en una sola operación. Acepta archivo CSV o pegado directo.",
+      "headersInfo": "Encabezados:",
+      "plantilla": "Plantilla",
+      "plantillaFileName": "plantilla-insumos.csv",
+      "uploadTitle": "Cargar archivo CSV",
+      "uploadHint": "o pegá el contenido abajo",
+      "csvPlaceholder": "nombre,codigo,capa,unidad_medida,stock_minimo\nHarina,HAR-001,capa_1,kg,10",
+      "validRows": "{n, plural, =1 {1 válida} other {# válidas}}",
+      "errorRows": "{n, plural, =1 {1 con errores} other {# con errores}}",
+      "filaPrefix": "[fila {n}]",
+      "andMore": "...y {n} más",
+      "createdOk": "{n, plural, =1 {1 insumo creado correctamente} other {# insumos creados correctamente}}",
+      "failedHeader": "{n, plural, =1 {1 fila con error:} other {# filas con error:}}",
+      "missingName": "Falta \"nombre\"",
+      "invalidCapa": "Capa inválida: \"{value}\" (capa_1 o capa_2)",
+      "invalidUnidad": "Unidad inválida: \"{value}\" ({allowed})",
+      "invalidStockMin": "Stock mínimo inválido: \"{value}\"",
+      "importar": "{n, plural, =1 {Importar 1 insumo} other {Importar # insumos}}",
+      "importando": "Importando…",
+      "cerrar": "Cerrar",
+      "cancelar": "Cancelar"
+    },
     "lotes": {
       "title": "Lotes de {insumo}",
       "subtitle": "Trazabilidad FEFO — el lote con vencimiento más próximo se descuenta primero",

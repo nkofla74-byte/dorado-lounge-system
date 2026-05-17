@@ -113,6 +113,88 @@
       "stockOut": "Stock out",
       "merma": "Waste"
     },
+    "stockOut": {
+      "title": "Stock out",
+      "subtitle": "{insumo} — Current stock: {stock} {unidad}",
+      "cantidad": "Amount to remove",
+      "cantidadPlaceholder": "0.00",
+      "confirmar": "Confirm stock out",
+      "procesando": "Removing…",
+      "cancelar": "Cancel"
+    },
+    "merma": {
+      "title": "Register waste",
+      "subtitle": "{insumo} — Current stock: {stock} {unidad}",
+      "cantidad": "Amount",
+      "cantidadPlaceholder": "0.00",
+      "categoria": "Category",
+      "categoriaPlaceholder": "Select",
+      "categorias": {
+        "operativa": "Operational",
+        "vencimiento": "Expiration",
+        "accidente": "Accident",
+        "calidad": "Quality",
+        "otro": "Other"
+      },
+      "descripcion": "Description",
+      "descripcionPlaceholder": "Describe the cause of the waste",
+      "optional": "(optional)",
+      "registrar": "Register waste",
+      "procesando": "Saving…",
+      "cancelar": "Cancel"
+    },
+    "createInsumo": {
+      "title": "New item",
+      "srDescription": "Register an item with layer, unit of measure and minimum stock.",
+      "nombre": "Name",
+      "nombrePlaceholder": "e.g. Wheat flour",
+      "codigo": "Internal code",
+      "codigoPlaceholder": "e.g. HRN-001",
+      "optional": "(optional)",
+      "capa": "Layer",
+      "unidad": "Unit",
+      "stockMinimo": "Minimum stock",
+      "seleccionar": "Select",
+      "capas": {
+        "capa_1": "Storage (Layer 1)",
+        "capa_2": "Production (Layer 2)"
+      },
+      "unidades": {
+        "kg": "Kilograms (kg)",
+        "g": "Grams (g)",
+        "l": "Liters (L)",
+        "ml": "Milliliters (mL)",
+        "unidad": "Unit",
+        "porcion": "Portion"
+      },
+      "guardar": "Save item",
+      "guardando": "Saving…",
+      "cancelar": "Cancel"
+    },
+    "bulkImport": {
+      "title": "Bulk import items",
+      "subtitle": "Import multiple items in a single operation. Accepts CSV file or direct paste.",
+      "headersInfo": "Headers:",
+      "plantilla": "Template",
+      "plantillaFileName": "items-template.csv",
+      "uploadTitle": "Upload CSV file",
+      "uploadHint": "or paste the content below",
+      "csvPlaceholder": "nombre,codigo,capa,unidad_medida,stock_minimo\nFlour,HAR-001,capa_1,kg,10",
+      "validRows": "{n, plural, =1 {1 valid} other {# valid}}",
+      "errorRows": "{n, plural, =1 {1 with errors} other {# with errors}}",
+      "filaPrefix": "[row {n}]",
+      "andMore": "...and {n} more",
+      "createdOk": "{n, plural, =1 {1 item created successfully} other {# items created successfully}}",
+      "failedHeader": "{n, plural, =1 {1 row with error:} other {# rows with errors:}}",
+      "missingName": "Missing \"nombre\"",
+      "invalidCapa": "Invalid capa: \"{value}\" (capa_1 or capa_2)",
+      "invalidUnidad": "Invalid unit: \"{value}\" ({allowed})",
+      "invalidStockMin": "Invalid minimum stock: \"{value}\"",
+      "importar": "{n, plural, =1 {Import 1 item} other {Import # items}}",
+      "importando": "Importing…",
+      "cerrar": "Close",
+      "cancelar": "Cancel"
+    },
     "lotes": {
       "title": "Batches of {insumo}",
       "subtitle": "FEFO traceability — the batch expiring first is dispatched first",

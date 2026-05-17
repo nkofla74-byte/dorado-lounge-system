@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Upload, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { createInsumosBulk } from '@/modules/inventory/actions';
 import {
@@ -55,7 +56,9 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function parseCSV(text: string): ParsedRow[] {
+type ParseT = (key: string, values?: Record<string, string | number>) => string;
+
+function parseCSV(text: string, t: ParseT): ParsedRow[] {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -80,14 +83,14 @@ function parseCSV(text: string): ParsedRow[] {
     const unidad = raw['unidad_medida'] ?? '';
     const stockRaw = raw['stock_minimo'] ?? '0';
 
-    if (!nombre) errors.push('Falta "nombre"');
-    if (!VALID_CAPAS.includes(capa)) errors.push(`Capa inválida: "${capa}" (capa_1 o capa_2)`);
+    if (!nombre) errors.push(t('missingName'));
+    if (!VALID_CAPAS.includes(capa)) errors.push(t('invalidCapa', { value: capa }));
     if (!VALID_UNIDADES.includes(unidad))
-      errors.push(`Unidad inválida: "${unidad}" (${VALID_UNIDADES.join(', ')})`);
+      errors.push(t('invalidUnidad', { value: unidad, allowed: VALID_UNIDADES.join(', ') }));
 
     const stockNum = Number(stockRaw);
     if (!Number.isFinite(stockNum) || stockNum < 0)
-      errors.push(`Stock mínimo inválido: "${stockRaw}"`);
+      errors.push(t('invalidStockMin', { value: stockRaw }));
 
     rows.push({
       raw,
@@ -112,6 +115,7 @@ interface BulkImportDialogProps {
 }
 
 export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportDialogProps) {
+  const t = useTranslations('inventory.bulkImport');
   const [csvText, setCsvText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -120,7 +124,7 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
     failed: { row: number; message: string }[];
   } | null>(null);
 
-  const rows = csvText ? parseCSV(csvText) : [];
+  const rows = csvText ? parseCSV(csvText, t as unknown as ParseT) : [];
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidRows = rows.filter((r) => r.errors.length > 0);
 
@@ -159,7 +163,7 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'plantilla-insumos.csv';
+    a.download = t('plantillaFileName');
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -168,10 +172,8 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Carga masiva de insumos</DialogTitle>
-          <DialogDescription>
-            Importá múltiples insumos en una sola operación. Acepta archivo CSV o pegado directo.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('subtitle')}</DialogDescription>
         </DialogHeader>
 
         {!result ? (
@@ -181,12 +183,12 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <span>
-                  Encabezados:{' '}
+                  {t('headersInfo')}{' '}
                   <code className="text-xs">nombre, codigo, capa, unidad_medida, stock_minimo</code>
                 </span>
               </div>
               <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                Plantilla
+                {t('plantilla')}
               </Button>
             </div>
 
@@ -194,8 +196,8 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
             <div className="space-y-2">
               <label className="flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-md cursor-pointer hover:bg-accent/50 transition-colors">
                 <Upload className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">Cargar archivo CSV</span>
-                <span className="text-xs text-muted-foreground">o pegá el contenido abajo</span>
+                <span className="text-sm font-medium">{t('uploadTitle')}</span>
+                <span className="text-xs text-muted-foreground">{t('uploadHint')}</span>
                 <input
                   type="file"
                   accept=".csv,text/csv"
@@ -215,7 +217,7 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
                   setServerError('');
                 }}
                 rows={6}
-                placeholder="nombre,codigo,capa,unidad_medida,stock_minimo&#10;Harina,HAR-001,capa_1,kg,10"
+                placeholder={t('csvPlaceholder')}
                 className="w-full font-mono text-xs rounded-md border border-input bg-background px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
               />
             </div>
@@ -226,12 +228,12 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
                 <div className="flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    {validRows.length} válidas
+                    {t('validRows', { n: validRows.length })}
                   </span>
                   {invalidRows.length > 0 && (
                     <span className="flex items-center gap-1 text-destructive">
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      {invalidRows.length} con errores
+                      {t('errorRows', { n: invalidRows.length })}
                     </span>
                   )}
                 </div>
@@ -241,13 +243,15 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
                     <ul className="space-y-1 text-xs">
                       {invalidRows.slice(0, 10).map((r, idx) => (
                         <li key={idx} className="text-destructive">
-                          <span className="font-mono">[fila {rows.indexOf(r) + 2}]</span>{' '}
+                          <span className="font-mono">
+                            {t('filaPrefix', { n: rows.indexOf(r) + 2 })}
+                          </span>{' '}
                           {r.errors.join('; ')}
                         </li>
                       ))}
                       {invalidRows.length > 10 && (
                         <li className="text-muted-foreground italic">
-                          ...y {invalidRows.length - 10} más
+                          {t('andMore', { n: invalidRows.length - 10 })}
                         </li>
                       )}
                     </ul>
@@ -267,20 +271,18 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
           <div className="space-y-3">
             <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <p className="text-sm">
-                <strong>{result.created}</strong> insumo{result.created !== 1 ? 's' : ''} creado
-                {result.created !== 1 ? 's' : ''} correctamente
-              </p>
+              <p className="text-sm">{t('createdOk', { n: result.created })}</p>
             </div>
             {result.failed.length > 0 && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 max-h-40 overflow-y-auto">
                 <p className="text-xs font-medium text-destructive mb-1.5">
-                  {result.failed.length} fila{result.failed.length !== 1 ? 's' : ''} con error:
+                  {t('failedHeader', { n: result.failed.length })}
                 </p>
                 <ul className="space-y-0.5 text-xs">
                   {result.failed.map((f, idx) => (
                     <li key={idx} className="text-destructive">
-                      <span className="font-mono">[fila {f.row + 1}]</span> {f.message}
+                      <span className="font-mono">{t('filaPrefix', { n: f.row + 1 })}</span>{' '}
+                      {f.message}
                     </li>
                   ))}
                 </ul>
@@ -291,17 +293,17 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting}>
-            {result ? 'Cerrar' : 'Cancelar'}
+            {result ? t('cerrar') : t('cancelar')}
           </Button>
           {!result && (
             <Button onClick={handleSubmit} disabled={submitting || validRows.length === 0}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importando...
+                  {t('importando')}
                 </>
               ) : (
-                `Importar ${validRows.length} insumo${validRows.length !== 1 ? 's' : ''}`
+                t('importar', { n: validRows.length })
               )}
             </Button>
           )}
