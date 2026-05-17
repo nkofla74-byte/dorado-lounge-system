@@ -76,6 +76,69 @@
     "dark": "Dark",
     "system": "System"
   },
+  "inventory": {
+    "count": "{n, plural, =1 {1 item} other {# items}}",
+    "refresh": "Refresh",
+    "bulkImport": "Bulk import",
+    "bulkImportTooltip": "Upload multiple items from CSV",
+    "newInsumo": "New item",
+    "empty": "No items registered. Create the first one with the button above.",
+    "columns": {
+      "nombre": "Name",
+      "codigo": "Code",
+      "capa": "Layer",
+      "unidad": "Unit",
+      "stockActual": "Current stock",
+      "stockMinimo": "Minimum stock",
+      "vencimiento": "Expiration",
+      "cantidad": "Quantity",
+      "fechaRecibido": "Received",
+      "proveedor": "Supplier",
+      "precio": "Unit price"
+    },
+    "capa": {
+      "capa_1": "Warehouse",
+      "capa_2": "Production"
+    },
+    "unidad": {
+      "kg": "kg",
+      "g": "g",
+      "l": "L",
+      "ml": "mL",
+      "unidad": "unit",
+      "porcion": "portion"
+    },
+    "actions": {
+      "lotes": "Batches",
+      "stockOut": "Stock out",
+      "merma": "Waste"
+    },
+    "lotes": {
+      "title": "Batches of {insumo}",
+      "subtitle": "FEFO traceability — the batch expiring first is dispatched first",
+      "empty": "No batches registered yet",
+      "nuevoLote": "New batch",
+      "guardar": "Save batch",
+      "guardando": "Saving…",
+      "fechaRecibido": "Received date",
+      "fechaVencimiento": "Expiration date",
+      "vencimientoOpcional": "No expiration",
+      "venceHoy": "Expires today",
+      "venceManana": "Expires tomorrow",
+      "venceEnDias": "Expires in {n} days",
+      "vencidoHaceDias": "Expired {n} days ago"
+    },
+    "almacen": {
+      "title": "Batch reception",
+      "subtitle": "Raw materials in warehouse · Layer 1 · Sorted by stock",
+      "empty": "No items in warehouse.",
+      "bajoMinimo": "Below minimum",
+      "ingresarLote": "Receive batch",
+      "verLotes": "View batches",
+      "acciones": "Actions",
+      "insumo": "Item"
+    }
+  },
   "auth": {
     "subtitle": "Operational 24/7 traceability system",
     "title": "Sign in",

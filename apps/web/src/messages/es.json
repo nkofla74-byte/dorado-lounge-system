@@ -76,6 +76,69 @@
     "dark": "Oscuro",
     "system": "Sistema"
   },
+  "inventory": {
+    "count": "{n, plural, =1 {1 insumo} other {# insumos}}",
+    "refresh": "Actualizar",
+    "bulkImport": "Carga masiva",
+    "bulkImportTooltip": "Cargar varios insumos desde CSV",
+    "newInsumo": "Nuevo insumo",
+    "empty": "No hay insumos registrados. Crea el primero con el botón de arriba.",
+    "columns": {
+      "nombre": "Nombre",
+      "codigo": "Código",
+      "capa": "Capa",
+      "unidad": "Unidad",
+      "stockActual": "Stock actual",
+      "stockMinimo": "Stock mínimo",
+      "vencimiento": "Vencimiento",
+      "cantidad": "Cantidad",
+      "fechaRecibido": "Recibido",
+      "proveedor": "Proveedor",
+      "precio": "Precio unitario"
+    },
+    "capa": {
+      "capa_1": "Bodega",
+      "capa_2": "Producción"
+    },
+    "unidad": {
+      "kg": "kg",
+      "g": "g",
+      "l": "L",
+      "ml": "mL",
+      "unidad": "und",
+      "porcion": "porc"
+    },
+    "actions": {
+      "lotes": "Lotes",
+      "stockOut": "Stock Out",
+      "merma": "Merma"
+    },
+    "lotes": {
+      "title": "Lotes de {insumo}",
+      "subtitle": "Trazabilidad FEFO — el lote con vencimiento más próximo se descuenta primero",
+      "empty": "Sin lotes registrados todavía",
+      "nuevoLote": "Nuevo lote",
+      "guardar": "Guardar lote",
+      "guardando": "Guardando…",
+      "fechaRecibido": "Fecha de recepción",
+      "fechaVencimiento": "Fecha de vencimiento",
+      "vencimientoOpcional": "Sin vencimiento",
+      "venceHoy": "Vence hoy",
+      "venceManana": "Vence mañana",
+      "venceEnDias": "Vence en {n} días",
+      "vencidoHaceDias": "Vencido hace {n} días"
+    },
+    "almacen": {
+      "title": "Recepción de lotes",
+      "subtitle": "Materia prima en bodega · Capa 1 · Ordenado por stock",
+      "empty": "No hay insumos en bodega.",
+      "bajoMinimo": "Bajo mínimo",
+      "ingresarLote": "Ingresar lote",
+      "verLotes": "Ver lotes",
+      "acciones": "Acciones",
+      "insumo": "Insumo"
+    }
+  },
   "auth": {
     "subtitle": "Sistema operativo de trazabilidad 24/7",
     "title": "Iniciar sesión",

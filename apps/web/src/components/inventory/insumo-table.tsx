@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Package,
   AlertTriangle,
@@ -38,20 +39,6 @@ import { MermaDialog } from './merma-dialog';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { UserRole } from '@dorado/shared-types';
 
-const CAPA_LABEL: Record<string, string> = {
-  capa_1: 'Bodega',
-  capa_2: 'Producción',
-};
-
-const UNIDAD_LABEL: Record<string, string> = {
-  kg: 'kg',
-  g: 'g',
-  l: 'L',
-  ml: 'mL',
-  unidad: 'und',
-  porcion: 'porc',
-};
-
 const WRITE_ROLES = new Set<UserRole | string>(['superuser', 'admin', 'chef', 'sous_chef']);
 const STOCK_OUT_ROLES = new Set<UserRole | string>([
   'superuser',
@@ -78,6 +65,7 @@ interface InsumoTableProps {
 }
 
 export function InsumoTable({ initialData, error: initialError, userRole }: InsumoTableProps) {
+  const t = useTranslations('inventory');
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
@@ -114,7 +102,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="h-4 w-4" />
-          <span>{data.length} insumos</span>
+          <span>{t('count', { n: data.length })}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -123,7 +111,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
             className="h-8 w-8"
             onClick={refresh}
             disabled={loading}
-            title="Actualizar"
+            title={t('refresh')}
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
@@ -133,14 +121,14 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                 variant="outline"
                 size="sm"
                 onClick={() => setBulkOpen(true)}
-                title="Cargar varios insumos desde CSV"
+                title={t('bulkImportTooltip')}
               >
                 <Upload className="h-4 w-4 mr-1.5" />
-                Carga masiva
+                {t('bulkImport')}
               </Button>
               <Button size="sm" onClick={() => setDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-1.5" />
-                Nuevo insumo
+                {t('newInsumo')}
               </Button>
             </>
           )}
@@ -160,12 +148,12 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
-              <TableHead>Nombre</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Capa</TableHead>
-              <TableHead>Unidad</TableHead>
-              <TableHead className="text-right">Stock actual</TableHead>
-              <TableHead className="text-right">Stock mínimo</TableHead>
+              <TableHead>{t('columns.nombre')}</TableHead>
+              <TableHead>{t('columns.codigo')}</TableHead>
+              <TableHead>{t('columns.capa')}</TableHead>
+              <TableHead>{t('columns.unidad')}</TableHead>
+              <TableHead className="text-right">{t('columns.stockActual')}</TableHead>
+              <TableHead className="text-right">{t('columns.stockMinimo')}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -173,7 +161,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
             {data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
-                  No hay insumos registrados. Crea el primero con el botón de arriba.
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -197,11 +185,21 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                         variant={insumo.capa === 'capa_1' ? 'secondary' : 'outline'}
                         className="text-xs"
                       >
-                        {CAPA_LABEL[insumo.capa] ?? insumo.capa}
+                        {t(`capa.${insumo.capa}` as 'capa.capa_1' | 'capa.capa_2')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {UNIDAD_LABEL[insumo.unidadMedida] ?? insumo.unidadMedida}
+                      {t.has(`unidad.${insumo.unidadMedida}`)
+                        ? t(
+                            `unidad.${insumo.unidadMedida}` as
+                              | 'unidad.kg'
+                              | 'unidad.g'
+                              | 'unidad.l'
+                              | 'unidad.ml'
+                              | 'unidad.unidad'
+                              | 'unidad.porcion',
+                          )
+                        : insumo.unidadMedida}
                     </TableCell>
                     <TableCell
                       className={cn(
@@ -224,7 +222,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setLotesInsumo(insumo)}>
                             <Layers className="h-3.5 w-3.5 mr-2" />
-                            Lotes
+                            {t('actions.lotes')}
                           </DropdownMenuItem>
                           {canStockOut && (
                             <DropdownMenuItem
@@ -232,7 +230,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                               className="text-destructive focus:text-destructive"
                             >
                               <TrendingDown className="h-3.5 w-3.5 mr-2" />
-                              Stock Out
+                              {t('actions.stockOut')}
                             </DropdownMenuItem>
                           )}
                           {canMerma && (
@@ -241,7 +239,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                               className="text-amber-500 focus:text-amber-500"
                             >
                               <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              Merma
+                              {t('actions.merma')}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
