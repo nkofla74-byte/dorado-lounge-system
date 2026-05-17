@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Search,
   RefreshCw,
@@ -42,17 +43,6 @@ function shortHash(h: string | null): string {
   return h ? h.slice(-8) : '—';
 }
 
-function formatTs(d: Date): string {
-  return d.toLocaleString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
 function actionColor(action: string): string {
   if (action.includes('create') || action.includes('crear') || action.includes('iniciar'))
     return 'text-emerald-600 dark:text-emerald-400';
@@ -64,7 +54,6 @@ function actionColor(action: string): string {
 }
 
 function verifyChain(entries: AuditEntry[]): boolean {
-  // entries están en orden DESC (más nuevo primero); la cadena va ASC
   const asc = [...entries].reverse();
   for (let i = 1; i < asc.length; i++) {
     if (asc[i]!.prevHash !== asc[i - 1]!.hash) return false;
@@ -77,13 +66,14 @@ interface ExpandedRowProps {
 }
 
 function ExpandedRow({ entry }: ExpandedRowProps) {
+  const t = useTranslations('admin.audit');
   return (
     <TableRow className="bg-muted/30 hover:bg-muted/30">
       <TableCell colSpan={7} className="p-4">
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
             <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">
-              Payload
+              {t('labelPayload')}
             </p>
             <pre className="bg-muted rounded p-2 overflow-auto max-h-40 text-[11px] leading-relaxed">
               {JSON.stringify(entry.payload, null, 2)}
@@ -92,7 +82,7 @@ function ExpandedRow({ entry }: ExpandedRowProps) {
           <div className="space-y-2">
             <div>
               <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
-                Integridad
+                {t('labelIntegridad')}
               </p>
               <p className="font-mono break-all text-[10px] text-muted-foreground">
                 hash: {entry.hash ?? '—'}
@@ -104,7 +94,7 @@ function ExpandedRow({ entry }: ExpandedRowProps) {
             {entry.ipAddress && (
               <div>
                 <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
-                  IP
+                  {t('labelIp')}
                 </p>
                 <p className="font-mono text-[11px]">{entry.ipAddress}</p>
               </div>
@@ -112,7 +102,7 @@ function ExpandedRow({ entry }: ExpandedRowProps) {
             {entry.resourceId && (
               <div>
                 <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px] mb-1">
-                  Resource ID
+                  {t('labelResourceId')}
                 </p>
                 <p className="font-mono text-[10px] text-muted-foreground break-all">
                   {entry.resourceId}
@@ -132,15 +122,26 @@ interface AuditTableProps {
 }
 
 export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
+  const t = useTranslations('admin.audit');
+  const locale = useLocale();
   const [entries, setEntries] = useState<AuditEntry[]>(initialData);
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(initialData.length);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  // Filtros client-side sobre los datos cargados
   const [actionFilter, setActionFilter] = useState('');
   const [resourceTypeFilter, setResourceTypeFilter] = useState('');
+
+  const formatTs = (d: Date): string =>
+    d.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
 
   const loadMore = useCallback(async () => {
     setLoading(true);
@@ -165,7 +166,6 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
     if (r.ok) {
       setEntries(r.value);
       setOffset(r.value.length);
-      // Count is approximate — total based on loaded
       setTotal(r.value.length < PAGE_SIZE ? r.value.length : total);
     }
     setLoading(false);
@@ -182,7 +182,7 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Filtrar por acción…"
+            placeholder={t('filtroAccion')}
             className="pl-8 h-8 text-sm"
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
@@ -194,15 +194,15 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
           value={resourceTypeFilter}
           onChange={(e) => setResourceTypeFilter(e.target.value)}
         >
-          <option value="">Todos los tipos</option>
-          {RESOURCE_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
+          <option value="">{t('todosLosTipos')}</option>
+          {RESOURCE_TYPES.map((rt) => (
+            <option key={rt} value={rt}>
+              {rt}
             </option>
           ))}
         </select>
         <Button size="sm" className="h-8" onClick={applyFilters} disabled={loading}>
-          {loading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : 'Aplicar'}
+          {loading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : t('aplicar')}
         </Button>
       </div>
 
@@ -220,11 +220,11 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
         ) : (
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         )}
-        {chainOk
-          ? `Cadena de integridad verificada — ${entries.length} entradas en pantalla`
-          : 'Advertencia: se detectó una ruptura en la cadena de hashes'}
+        {chainOk ? t('cadenaOk', { n: entries.length }) : t('cadenaError')}
         <span className="ml-auto text-muted-foreground tabular-nums">
-          {total > entries.length ? `${entries.length} de ${total}+` : entries.length} registros
+          {total > entries.length
+            ? t('registrosCountMore', { n: entries.length, total })
+            : t('registrosCount', { n: entries.length })}
         </span>
       </div>
 
@@ -234,18 +234,18 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border">
               <TableHead className="w-8" />
-              <TableHead className="text-xs">Fecha</TableHead>
-              <TableHead className="text-xs">Acción</TableHead>
-              <TableHead className="text-xs">Tipo</TableHead>
-              <TableHead className="text-xs">Usuario</TableHead>
-              <TableHead className="text-xs text-right">Hash</TableHead>
+              <TableHead className="text-xs">{t('colFecha')}</TableHead>
+              <TableHead className="text-xs">{t('colAccion')}</TableHead>
+              <TableHead className="text-xs">{t('colTipo')}</TableHead>
+              <TableHead className="text-xs">{t('colUsuario')}</TableHead>
+              <TableHead className="text-xs text-right">{t('colHash')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayed.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-10 text-sm text-muted-foreground">
-                  Sin registros de auditoría
+                  {t('sinRegistros')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -305,7 +305,7 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
         <div className="flex justify-center">
           <Button variant="outline" size="sm" onClick={loadMore} disabled={loading}>
             {loading ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
-            Cargar más registros
+            {t('cargarMas')}
           </Button>
         </div>
       )}

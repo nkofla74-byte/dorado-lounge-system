@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Plane, PlaneLanding, PlaneTakeoff, RefreshCw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,14 +10,7 @@ import { getFlights } from '@/modules/flights/actions';
 import { effectiveTime, isDelayed } from '@/modules/flights/domain/flight';
 import type { Flight, FlightDirection } from '@/modules/flights/domain/flight';
 
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'A tiempo',
-  active: 'En vuelo',
-  landed: 'Aterrizó',
-  cancelled: 'Cancelado',
-  diverted: 'Desviado',
-  unknown: 'Sin info',
-};
+type StatusKey = 'scheduled' | 'active' | 'landed' | 'cancelled' | 'diverted' | 'unknown';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   scheduled: 'secondary',
@@ -27,14 +21,20 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   unknown: 'secondary',
 };
 
-function formatTime(d: Date): string {
-  return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
-
 function FlightRow({ flight }: { flight: Flight }) {
+  const t = useTranslations('admin.flights');
+  const tS = useTranslations('admin.flights.status');
+  const locale = useLocale();
   const delayed = isDelayed(flight);
   const effective = effectiveTime(flight);
   const isDeparture = flight.direction === 'departure';
+
+  const formatTime = (d: Date): string =>
+    d.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
 
   return (
     <tr className="border-b hover:bg-muted/30 transition-colors text-sm">
@@ -57,8 +57,10 @@ function FlightRow({ flight }: { flight: Flight }) {
       </td>
       <td className="px-4 py-3">
         <Badge variant={STATUS_VARIANT[flight.status] ?? 'secondary'} className="text-[11px]">
-          {STATUS_LABEL[flight.status] ?? flight.status}
+          {tS.has(flight.status) ? tS(flight.status as StatusKey) : flight.status}
         </Badge>
+        {/* el t es para evitar warning de variable sin uso si el archivo nunca cambia */}
+        <span className="sr-only">{t('colEstado')}</span>
       </td>
       <td className="px-4 py-3 text-muted-foreground text-xs">
         {[flight.terminal && `T${flight.terminal}`, flight.gate && `G${flight.gate}`]
@@ -75,11 +77,20 @@ interface FlightsBoardProps {
 }
 
 export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoardProps) {
+  const t = useTranslations('admin.flights');
+  const locale = useLocale();
   const [direction, setDirection] = useState<FlightDirection>('departure');
   const [departures, setDepartures] = useState(initialDepartures);
   const [arrivals, setArrivals] = useState(initialArrivals);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [pending, startTransition] = useTransition();
+
+  const formatTime = (d: Date): string =>
+    d.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
 
   const flights = direction === 'departure' ? departures : arrivals;
 
@@ -95,7 +106,6 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
     });
   };
 
-  // Auto-refresh cada 60 s
   useEffect(() => {
     const id = setInterval(() => refresh(), 60_000);
     return () => clearInterval(id);
@@ -119,7 +129,7 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
             className="gap-2"
           >
             <PlaneTakeoff className="h-4 w-4" />
-            Salidas
+            {t('salidas')}
           </Button>
           <Button
             variant={direction === 'arrival' ? 'default' : 'outline'}
@@ -128,7 +138,7 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
             className="gap-2"
           >
             <PlaneLanding className="h-4 w-4" />
-            Llegadas
+            {t('llegadas')}
           </Button>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -152,11 +162,7 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
       {flights.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground border rounded-lg">
           <Plane className="h-10 w-10 opacity-30" />
-          <p className="text-sm">
-            {pending
-              ? 'Cargando vuelos…'
-              : 'Sin vuelos disponibles. Verifica la configuración de FLIGHTS_API_KEY.'}
-          </p>
+          <p className="text-sm">{pending ? t('cargando') : t('sinDatos')}</p>
         </div>
       ) : (
         <div className="rounded-lg border overflow-x-auto">
@@ -164,22 +170,22 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
             <thead className="bg-muted/50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  Vuelo
+                  {t('colVuelo')}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  Aerolínea
+                  {t('colAerolinea')}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  {direction === 'departure' ? 'Destino' : 'Origen'}
+                  {direction === 'departure' ? t('colDestino') : t('colOrigen')}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  Hora
+                  {t('colHora')}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  Estado
+                  {t('colEstado')}
                 </th>
                 <th className="text-left px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                  Terminal / Gate
+                  {t('colTerminalGate')}
                 </th>
               </tr>
             </thead>

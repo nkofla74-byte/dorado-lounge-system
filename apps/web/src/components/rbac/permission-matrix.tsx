@@ -1,11 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { cn } from '@/lib/utils';
 import { Check, Minus } from 'lucide-react';
 import type { UserRole } from '@dorado/shared-types';
 
-// Roles que aparecen en la matriz (superuser se omite — tiene bypass total)
 const ROLES: UserRole[] = [
   'admin',
   'chef',
@@ -19,21 +19,6 @@ const ROLES: UserRole[] = [
   'steward',
 ];
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  superuser: 'Superuser',
-  admin: 'Admin',
-  chef: 'Chef',
-  sous_chef: 'Sous Chef',
-  mesero_amex: 'Mesero Amex',
-  recepcion: 'Recepción',
-  personal_snack: 'Snack',
-  personal_buffet: 'Buffet',
-  personal_almacen: 'Almacén',
-  personal_pasteleria: 'Pastelería',
-  steward: 'Steward',
-};
-
-// Agrupar permisos por módulo
 const PERMISSION_GROUPS: Record<string, string[]> = {
   Inventario: Object.keys(PERMISSIONS).filter((p) => p.startsWith('inventory:')),
   Recetas: Object.keys(PERMISSIONS).filter((p) => p.startsWith('recipes:')),
@@ -52,6 +37,8 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
   'Feature Flags': Object.keys(PERMISSIONS).filter((p) => p.startsWith('feature_flags:')),
 };
 
+type GroupKey = keyof typeof PERMISSION_GROUPS;
+
 function PermissionCell({ allowed }: { allowed: boolean }) {
   return (
     <td className="px-3 py-2 text-center">
@@ -65,13 +52,16 @@ function PermissionCell({ allowed }: { allowed: boolean }) {
 }
 
 export function PermissionMatrix() {
+  const t = useTranslations('admin.permisos');
+  const tR = useTranslations('roles');
+
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="text-xs w-full min-w-max border-collapse">
         <thead>
           <tr className="bg-muted/50 border-b">
             <th className="text-left px-4 py-3 font-semibold text-sm sticky left-0 bg-muted/50 min-w-[180px]">
-              Permiso
+              {t('colPermiso')}
             </th>
             {ROLES.map((role) => (
               <th
@@ -79,7 +69,7 @@ export function PermissionMatrix() {
                 className="px-3 py-3 font-semibold text-center whitespace-nowrap"
                 title={role}
               >
-                {ROLE_LABELS[role]}
+                {tR(role)}
               </th>
             ))}
           </tr>
@@ -92,7 +82,7 @@ export function PermissionMatrix() {
                   colSpan={ROLES.length + 1}
                   className="px-4 py-1.5 font-semibold text-xs text-muted-foreground uppercase tracking-wide"
                 >
-                  {group}
+                  {t(`grupos.${group as GroupKey}`)}
                 </td>
               </tr>
               {permissions.map((perm) => {
