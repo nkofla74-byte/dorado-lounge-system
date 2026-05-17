@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { getRecetas } from '@/modules/recipes/actions';
 import { getInsumos } from '@/modules/inventory/actions';
 import { getCostosRecetas } from '@/modules/costos/actions';
 import { RecipeTable } from '@/components/recipes/recipe-table';
 
-export const metadata: Metadata = {
-  title: 'Recetas — Dorado Lounge',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('recipes');
+  return { title: t('metaTitle') };
+}
 
 export default async function RecetasPage() {
+  const t = await getTranslations('recipes');
   const [recetasResult, insumosResult] = await Promise.all([getRecetas(), getInsumos()]);
 
   const recetaIds = recetasResult.ok ? recetasResult.value.map((r) => r.id) : [];
@@ -17,10 +20,8 @@ export default async function RecetasPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Recetas</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Recetas de producción y servicio con ingredientes, merma y costo en tiempo real
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
       <RecipeTable
         initialData={recetasResult.ok ? recetasResult.value : []}

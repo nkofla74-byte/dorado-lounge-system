@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -38,11 +39,8 @@ interface CreateRecipeDialogProps {
   insumosCapa2: InsumoWithStock[];
 }
 
-const ZONA_LABEL: Record<string, string> = {
-  amex: 'Amex',
-  snack: 'Snack',
-  buffet: 'Buffet',
-};
+type ZonaKey = 'amex' | 'snack' | 'buffet';
+const ZONAS: ZonaKey[] = ['amex', 'snack', 'buffet'];
 
 export function CreateRecipeDialog({
   open,
@@ -50,6 +48,8 @@ export function CreateRecipeDialog({
   onCreated,
   insumosCapa2,
 }: CreateRecipeDialogProps) {
+  const t = useTranslations('recipes.create');
+  const tZ = useTranslations('zonas');
   const [serverError, setServerError] = useState('');
   const [tipoReceta, setTipoReceta] = useState<'produccion' | 'servicio' | ''>('');
 
@@ -90,17 +90,20 @@ export function CreateRecipeDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nueva receta</DialogTitle>
-          <DialogDescription className="sr-only">
-            Crea una receta de producción o servicio con su configuración base.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Nombre */}
           <div className="space-y-1.5">
-            <Label htmlFor="nombre">Nombre *</Label>
-            <Input id="nombre" {...register('nombre')} placeholder="Ej: Pandebono x12" autoFocus />
+            <Label htmlFor="nombre">{t('nombre')} *</Label>
+            <Input
+              id="nombre"
+              {...register('nombre')}
+              placeholder={t('nombrePlaceholder')}
+              autoFocus
+            />
             {formErrors.nombre && (
               <p className="text-xs text-destructive">{formErrors.nombre.message}</p>
             )}
@@ -108,7 +111,7 @@ export function CreateRecipeDialog({
 
           {/* Tipo de receta */}
           <div className="space-y-1.5">
-            <Label>Tipo *</Label>
+            <Label>{t('tipo')} *</Label>
             <Select
               onValueChange={(v: 'produccion' | 'servicio') => {
                 setTipoReceta(v);
@@ -116,11 +119,11 @@ export function CreateRecipeDialog({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo" />
+                <SelectValue placeholder={t('tipoPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="produccion">Producción (Capa 1 → Capa 2)</SelectItem>
-                <SelectItem value="servicio">Servicio (despacho a zona)</SelectItem>
+                <SelectItem value="produccion">{t('tipoProduccionLabel')}</SelectItem>
+                <SelectItem value="servicio">{t('tipoServicioLabel')}</SelectItem>
               </SelectContent>
             </Select>
             {formErrors.tipoReceta && (
@@ -128,10 +131,9 @@ export function CreateRecipeDialog({
             )}
           </div>
 
-          {/* Condicional: Producción → insumo destino | Servicio → zona */}
           {tipoReceta === 'produccion' && (
             <div className="space-y-1.5">
-              <Label>Insumo destino (Capa 2) *</Label>
+              <Label>{t('insumoDestino')} *</Label>
               <Select
                 onValueChange={(v) =>
                   setValue('insumoDestinoId' as keyof FormInput, v as never, {
@@ -140,12 +142,12 @@ export function CreateRecipeDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar insumo" />
+                  <SelectValue placeholder={t('insumoPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {insumosCapa2.length === 0 ? (
                     <SelectItem value="_empty" disabled>
-                      No hay insumos en Capa 2
+                      {t('sinInsumosCapa2')}
                     </SelectItem>
                   ) : (
                     insumosCapa2.map((i) => (
@@ -164,19 +166,19 @@ export function CreateRecipeDialog({
 
           {tipoReceta === 'servicio' && (
             <div className="space-y-1.5">
-              <Label>Zona de servicio *</Label>
+              <Label>{t('zona')} *</Label>
               <Select
                 onValueChange={(v) =>
                   setValue('zona' as keyof FormInput, v as never, { shouldValidate: true })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar zona" />
+                  <SelectValue placeholder={t('zonaPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(ZONA_LABEL).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
+                  {ZONAS.map((z) => (
+                    <SelectItem key={z} value={z}>
+                      {tZ(z)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -189,13 +191,13 @@ export function CreateRecipeDialog({
 
           {/* Porciones */}
           <div className="space-y-1.5">
-            <Label htmlFor="porciones">Porciones *</Label>
+            <Label htmlFor="porciones">{t('porciones')} *</Label>
             <Input
               id="porciones"
               type="number"
               min="1"
               step="1"
-              placeholder="1"
+              placeholder={t('porcionesPlaceholder')}
               {...register('porciones', { valueAsNumber: true })}
             />
             {formErrors.porciones && (
@@ -216,16 +218,16 @@ export function CreateRecipeDialog({
               onClick={() => handleClose(false)}
               disabled={isSubmitting}
             >
-              Cancelar
+              {t('cancelar')}
             </Button>
             <Button type="submit" disabled={isSubmitting || tipoReceta === ''}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {t('guardando')}
                 </>
               ) : (
-                'Guardar receta'
+                t('guardar')
               )}
             </Button>
           </DialogFooter>
