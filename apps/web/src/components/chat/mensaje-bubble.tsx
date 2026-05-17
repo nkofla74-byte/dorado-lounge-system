@@ -1,3 +1,6 @@
+'use client';
+
+import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import type { Mensaje } from '@/modules/chat/domain/mensaje';
 
@@ -6,12 +9,15 @@ interface MensajeBubbleProps {
   esPropio: boolean;
 }
 
-function formatHora(date: Date): string {
-  return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-}
-
 export function MensajeBubble({ mensaje, esPropio }: MensajeBubbleProps) {
+  const locale = useLocale();
   const esAlerta = mensaje.tipo === 'alert' || mensaje.tipo === 'broadcast';
+
+  const formatHora = (date: Date): string =>
+    date.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   if (esAlerta) {
     return (
@@ -26,7 +32,6 @@ export function MensajeBubble({ mensaje, esPropio }: MensajeBubbleProps) {
 
   return (
     <div className={cn('flex gap-2 mb-1', esPropio ? 'flex-row-reverse' : 'flex-row')}>
-      {/* Avatar inicial */}
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground mt-1">
         {mensaje.remitenteNombre.charAt(0).toUpperCase()}
       </div>

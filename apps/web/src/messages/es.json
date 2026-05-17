@@ -642,7 +642,18 @@
     "cargandoMensajes": "Cargando mensajes…",
     "sinMensajes": "Sin mensajes aún",
     "irAlFinal": "Ir al final",
-    "errorEnviar": "No se pudo enviar el mensaje"
+    "errorEnviar": "No se pudo enviar el mensaje",
+    "inputPlaceholder": "Mensaje… (Enter para enviar)",
+    "enviar": "Enviar"
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "volverInicio": "Volver al inicio",
+    "criticoTitle": "Error crítico del sistema",
+    "criticoDesc": "El error fue reportado automáticamente. Intentá recargar.",
+    "recargar": "Recargar",
+    "dashboardTitle": "Ocurrió un error inesperado",
+    "intentarDeNuevo": "Intentar de nuevo"
   },
   "zonas": {
     "amex": "Amex",

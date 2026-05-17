@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, type KeyboardEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { SendHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onEnviar, disabled }: ChatInputProps) {
+  const t = useTranslations('chat');
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -30,7 +32,6 @@ export function ChatInput({ onEnviar, disabled }: ChatInputProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter envía; Shift+Enter hace salto de línea
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void handleEnviar();
@@ -44,7 +45,7 @@ export function ChatInput({ onEnviar, disabled }: ChatInputProps) {
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Mensaje… (Enter para enviar)"
+        placeholder={t('inputPlaceholder')}
         disabled={disabled || enviando}
         rows={1}
         maxLength={1000}
@@ -62,7 +63,7 @@ export function ChatInput({ onEnviar, disabled }: ChatInputProps) {
         className="flex-shrink-0"
       >
         <SendHorizontal className="h-4 w-4" />
-        <span className="sr-only">Enviar</span>
+        <span className="sr-only">{t('enviar')}</span>
       </Button>
     </div>
   );

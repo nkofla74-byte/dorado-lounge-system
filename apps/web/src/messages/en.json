@@ -717,13 +717,24 @@
       "cancelar": "Cancel"
     }
   },
+  "errors": {
+    "notFound": "Page not found",
+    "volverInicio": "Back to home",
+    "criticoTitle": "Critical system error",
+    "criticoDesc": "The error was reported automatically. Try reloading.",
+    "recargar": "Reload",
+    "dashboardTitle": "An unexpected error occurred",
+    "intentarDeNuevo": "Try again"
+  },
   "chat": {
     "abrirChat": "Open chat",
     "cerrarChat": "Close chat",
     "cargandoMensajes": "Loading messages…",
     "sinMensajes": "No messages yet",
     "irAlFinal": "Go to bottom",
-    "errorEnviar": "Could not send message"
+    "errorEnviar": "Could not send message",
+    "inputPlaceholder": "Message… (Enter to send)",
+    "enviar": "Send"
   },
   "costos": {
     "totalRecetas": "Total recipes",
