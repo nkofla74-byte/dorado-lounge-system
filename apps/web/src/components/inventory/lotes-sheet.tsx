@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, PackagePlus } from 'lucide-react';
@@ -32,14 +33,7 @@ interface LotesSheetProps {
   onLoteCreated?: () => void;
 }
 
-const UNIDAD_LABEL: Record<string, string> = {
-  kg: 'kg',
-  g: 'g',
-  l: 'L',
-  ml: 'mL',
-  unidad: 'und',
-  porcion: 'porc',
-};
+type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
 
 function expiryClass(fechaVencimiento: string | null): string {
   if (!fechaVencimiento) return 'text-muted-foreground';
@@ -50,17 +44,9 @@ function expiryClass(fechaVencimiento: string | null): string {
   return 'text-muted-foreground';
 }
 
-function expiryLabel(fechaVencimiento: string | null): string {
-  if (!fechaVencimiento) return 'Sin vencimiento';
-  const diff = new Date(fechaVencimiento).getTime() - Date.now();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days < 0) return `Vencido hace ${Math.abs(days)}d`;
-  if (days === 0) return 'Vence hoy';
-  if (days === 1) return 'Vence mañana';
-  return fechaVencimiento;
-}
-
 export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetProps) {
+  const tInv = useTranslations('inventory');
+  const t = useTranslations('inventory.lotes');
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [loadingLotes, setLoadingLotes] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -110,7 +96,21 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
     onLoteCreated?.();
   };
 
-  const unidad = insumo ? (UNIDAD_LABEL[insumo.unidadMedida] ?? insumo.unidadMedida) : '';
+  const unidad = insumo
+    ? tInv.has(`unidad.${insumo.unidadMedida}`)
+      ? tInv(`unidad.${insumo.unidadMedida as UnidadKey}`)
+      : insumo.unidadMedida
+    : '';
+
+  const expiryLabel = (fechaVencimiento: string | null): string => {
+    if (!fechaVencimiento) return t('vencimientoOpcional');
+    const diff = new Date(fechaVencimiento).getTime() - Date.now();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    if (days < 0) return t('vencidoHaceDias', { n: Math.abs(days) });
+    if (days === 0) return t('venceHoy');
+    if (days === 1) return t('venceManana');
+    return fechaVencimiento;
+  };
 
   return (
     <Sheet open={!!insumo} onOpenChange={onOpenChange}>
@@ -118,10 +118,10 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
         <SheetHeader className="mb-4">
           <SheetTitle className="flex items-center gap-2">
             <PackagePlus className="h-5 w-5 text-primary" />
-            Lotes — {insumo?.nombre}
+            {t('title', { insumo: insumo?.nombre ?? '' })}
           </SheetTitle>
           <SheetDescription>
-            Stock actual:{' '}
+            {t('stockActual')}{' '}
             <span className="font-semibold text-foreground">
               {insumo?.stockActual.toLocaleString('es-CO', { maximumFractionDigits: 4 })} {unidad}
             </span>
@@ -133,12 +133,10 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
           {loadingLotes ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Cargando lotes…
+              {t('loading')}
             </div>
           ) : lotes.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No hay lotes activos. Agrega el primero.
-            </p>
+            <p className="text-sm text-muted-foreground py-4 text-center">{t('empty')}</p>
           ) : (
             lotes.map((lote) => (
               <div
@@ -179,21 +177,21 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
             onClick={() => setShowForm(true)}
           >
             <Plus className="h-4 w-4 mr-1.5" />
-            Agregar lote
+            {t('agregarLote')}
           </Button>
         ) : (
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-3 border border-border rounded-md p-4"
           >
-            <p className="text-sm font-medium">Nuevo lote</p>
+            <p className="text-sm font-medium">{t('nuevoLote')}</p>
 
             <input type="hidden" {...register('insumoId')} />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="cantidadInicial">
-                  Cantidad inicial *{' '}
+                  {t('cantidadInicial')} *{' '}
                   <span className="text-muted-foreground font-normal">({unidad})</span>
                 </Label>
                 <Input
@@ -201,7 +199,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                   type="number"
                   step="0.0001"
                   min="0.0001"
-                  placeholder="0.00"
+                  placeholder={t('cantidadPlaceholder')}
                   {...register('cantidadInicial', { valueAsNumber: true })}
                 />
                 {errors.cantidadInicial && (
@@ -211,7 +209,8 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
 
               <div className="space-y-1.5">
                 <Label htmlFor="fechaVencimiento">
-                  Vencimiento <span className="text-muted-foreground font-normal">(opcional)</span>
+                  {t('fechaVencimiento')}{' '}
+                  <span className="text-muted-foreground font-normal">{t('optional')}</span>
                 </Label>
                 <Input id="fechaVencimiento" type="date" {...register('fechaVencimiento')} />
               </div>
@@ -220,7 +219,8 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="proveedorId">
-                  Proveedor <span className="text-muted-foreground font-normal">(opcional)</span>
+                  {t('proveedor')}{' '}
+                  <span className="text-muted-foreground font-normal">{t('optional')}</span>
                 </Label>
                 {proveedores.length > 0 ? (
                   <select
@@ -233,7 +233,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                       setValue('proveedor', selected?.nombre ?? '');
                     }}
                   >
-                    <option value="">Sin proveedor</option>
+                    <option value="">{t('sinProveedor')}</option>
                     {proveedores.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nombre}
@@ -243,7 +243,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                 ) : (
                   <Input
                     id="proveedorId"
-                    placeholder="Nombre del proveedor"
+                    placeholder={t('proveedorPlaceholder')}
                     {...register('proveedor')}
                   />
                 )}
@@ -252,14 +252,15 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
 
               <div className="space-y-1.5">
                 <Label htmlFor="costoUnitario">
-                  Costo / {unidad} <span className="text-muted-foreground font-normal">(COP)</span>
+                  {t('costo')} / {unidad}{' '}
+                  <span className="text-muted-foreground font-normal">{t('costoMoneda')}</span>
                 </Label>
                 <Input
                   id="costoUnitario"
                   type="number"
                   step="0.01"
                   min="0.01"
-                  placeholder="0.00"
+                  placeholder={t('cantidadPlaceholder')}
                   {...register('costoUnitario', { valueAsNumber: true })}
                 />
               </div>
@@ -276,10 +277,10 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Guardando…
+                    {t('guardando')}
                   </>
                 ) : (
-                  'Guardar lote'
+                  t('guardar')
                 )}
               </Button>
               <Button
@@ -293,7 +294,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                   reset({ insumoId: insumo?.id ?? '' });
                 }}
               >
-                Cancelar
+                {t('cancelar')}
               </Button>
             </div>
           </form>
