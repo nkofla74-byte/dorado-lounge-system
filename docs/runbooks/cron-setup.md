@@ -39,6 +39,7 @@ El sistema tiene dos crons que disparan `/api/cron/check-alertas`:
    ```
 
 5. **Esperar 5 min y revisar ejecuciones**:
+
    ```sql
    SELECT jobname, status, return_message, start_time
    FROM cron.job_run_details
