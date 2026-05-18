@@ -59,7 +59,7 @@ export function createAnalyticsRepository(): AnalyticsRepository {
       tenantId: string,
       filters: AnalyticsFilters,
     ): Promise<CogsPerPassenger[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       let query = supabase
         .from('mv_cogs_per_passenger')
@@ -83,7 +83,7 @@ export function createAnalyticsRepository(): AnalyticsRepository {
       tenantId: string,
       filters: AnalyticsFilters,
     ): Promise<ConsumoInsumo[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       let query = supabase
         .from('mv_consumo_vs_produccion_turno')

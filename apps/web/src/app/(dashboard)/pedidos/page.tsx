@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PedidosPage() {
   const t = await getTranslations('pedidos');
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [pedidosResult, recetasResult, { data: authData }] = await Promise.all([
     getPedidos(),

@@ -185,7 +185,7 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
   const tRoles = useTranslations('roles');
 
   const handleLogout = async () => {
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.auth.signOut();
     router.refresh();
     router.push('/login');

@@ -68,7 +68,7 @@ function toTandaWithIngredientes(row: TandaWithIngsRow): TandaWithIngredientes {
 export function createProductionRepository(): ProductionRepository {
   return {
     async findAll(tenantId: string): Promise<Tanda[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('tandas_produccion')
@@ -90,7 +90,7 @@ export function createProductionRepository(): ProductionRepository {
     },
 
     async create(tenantId: string, input: CreateTandaInput): Promise<Tanda> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('tandas_produccion')
@@ -131,7 +131,7 @@ export function createProductionRepository(): ProductionRepository {
       id: string,
       tenantId: string,
     ): Promise<TandaWithIngredientes | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('tandas_produccion')
@@ -159,7 +159,7 @@ export function createProductionRepository(): ProductionRepository {
     },
 
     async updateEstado(id: string, tenantId: string, estado: EstadoTanda): Promise<Tanda> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('tandas_produccion')

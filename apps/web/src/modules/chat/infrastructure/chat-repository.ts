@@ -30,7 +30,7 @@ function toMensaje(row: MensajeRow): Mensaje {
 export function createChatRepository(): ChatRepository {
   return {
     async getMensajes(tenantId, canal, limit = 50) {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('mensajes_chat')
         .select('*, users(full_name, email)')
@@ -44,7 +44,7 @@ export function createChatRepository(): ChatRepository {
     },
 
     async enviarMensaje(tenantId, remitenteId, _remitenteNombre, input) {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('mensajes_chat')
         .insert({

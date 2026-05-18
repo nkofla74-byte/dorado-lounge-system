@@ -319,7 +319,7 @@ export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProxi
   try {
     await assertCan('inventory:read');
     const { createClient } = await import('@/lib/supabase/server');
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const limite = new Date();
     limite.setDate(limite.getDate() + dias);

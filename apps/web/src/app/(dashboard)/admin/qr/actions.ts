@@ -7,7 +7,7 @@ import { ok, err, toAppError } from '@/lib/result';
 import type { Result } from '@/lib/result';
 import type { ZonaServicio } from '@dorado/shared-types';
 
-function resolveBaseUrl(): string {
+async function resolveBaseUrl(): Promise<string> {
   // 1. Variable explícita (puede venir con o sin protocolo)
   const explicit = process.env['NEXT_PUBLIC_APP_URL'];
   if (explicit && explicit.trim()) {
@@ -21,7 +21,7 @@ function resolveBaseUrl(): string {
 
   // 3. Headers del request actual (custom domains, dev local)
   try {
-    const h = headers();
+    const h = await headers();
     const host = h.get('x-forwarded-host') ?? h.get('host');
     if (host) {
       const proto = h.get('x-forwarded-proto') ?? 'https';
@@ -52,7 +52,7 @@ export async function generateQRLink(input: {
       mesaNumero: input.mesaNumero,
     });
 
-    const baseUrl = resolveBaseUrl();
+    const baseUrl = await resolveBaseUrl();
     const url = `${baseUrl}/qr/${input.locale}?t=${token}`;
 
     return ok({ url, token });

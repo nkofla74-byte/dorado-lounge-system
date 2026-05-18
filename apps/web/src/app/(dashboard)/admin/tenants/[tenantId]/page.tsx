@@ -12,7 +12,7 @@ interface Props {
 
 export default async function TenantDetailPage({ params }: Props) {
   const t = await getTranslations('admin.tenantDetail');
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

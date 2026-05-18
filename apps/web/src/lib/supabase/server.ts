@@ -3,8 +3,9 @@ import { cookies } from 'next/headers';
 
 // Cliente para Server Components, Server Actions y Route Handlers.
 // Usa anon key + cookies de sesión del usuario.
-export function createClient() {
-  const cookieStore = cookies();
+// En Next 15 cookies() es async — todos los callers deben hacer `await createClient()`.
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env['NEXT_PUBLIC_SUPABASE_URL']!,

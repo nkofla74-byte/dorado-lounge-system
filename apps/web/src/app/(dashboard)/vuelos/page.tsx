@@ -10,7 +10,7 @@ const ALLOWED_ROLES: UserRole[] = ['admin', 'chef', 'sous_chef', 'mesero_amex', 
 
 export default async function VuelosPage() {
   const t = await getTranslations('admin.flights');
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

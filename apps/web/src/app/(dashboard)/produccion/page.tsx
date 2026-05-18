@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProduccionPage() {
   const t = await getTranslations('production');
-  const supabase = createClient();
+  const supabase = await createClient();
   const [tandasResult, recetasResult, turnoResult, { data: userData }] = await Promise.all([
     getTandas(),
     getRecetas(),

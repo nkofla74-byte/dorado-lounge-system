@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SnackPage() {
   const t = await getTranslations('snack');
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [despachosResult, turnosResult, stuartResult, insumosResult, { data: authData }] =
     await Promise.all([

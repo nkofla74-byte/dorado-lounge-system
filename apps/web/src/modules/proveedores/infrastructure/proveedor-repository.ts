@@ -76,7 +76,7 @@ function toLoteConInsumo(row: LoteRow): LoteConInsumo {
 export function createProveedorRepository(): ProveedorRepository {
   return {
     async findAll(tenantId: string): Promise<Proveedor[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('proveedores')
         .select(SELECT_FIELDS)
@@ -89,7 +89,7 @@ export function createProveedorRepository(): ProveedorRepository {
     },
 
     async findById(id: string, tenantId: string): Promise<Proveedor | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('proveedores')
         .select(SELECT_FIELDS)
@@ -103,7 +103,7 @@ export function createProveedorRepository(): ProveedorRepository {
     },
 
     async create(tenantId: string, input: CreateProveedorInput): Promise<Proveedor> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('proveedores')
         .insert({
@@ -122,7 +122,7 @@ export function createProveedorRepository(): ProveedorRepository {
     },
 
     async update(id: string, tenantId: string, input: UpdateProveedorInput): Promise<Proveedor> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const patch: Record<string, unknown> = {};
       if (input.nombre !== undefined) patch['nombre'] = input.nombre;
       if ('contacto' in input) patch['contacto'] = input.contacto ?? null;
@@ -146,7 +146,7 @@ export function createProveedorRepository(): ProveedorRepository {
     },
 
     async findLotesByProveedor(proveedorId: string, tenantId: string): Promise<LoteConInsumo[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('lotes')
         .select(

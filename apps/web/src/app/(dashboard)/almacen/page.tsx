@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AlmacenPage() {
   const t = await getTranslations('inventory.almacenPage');
-  const supabase = createClient();
+  const supabase = await createClient();
   const [
     result,
     vencimientosResult,

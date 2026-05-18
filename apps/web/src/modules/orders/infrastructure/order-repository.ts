@@ -115,7 +115,7 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
 export function createOrderRepository(): OrderRepository {
   return {
     async findActive(tenantId: string): Promise<PedidoWithItems[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .select(PEDIDO_SELECT)
@@ -129,7 +129,7 @@ export function createOrderRepository(): OrderRepository {
     },
 
     async findActiveByZona(tenantId: string, zona: string): Promise<PedidoWithItems[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .select(PEDIDO_SELECT)
@@ -148,7 +148,7 @@ export function createOrderRepository(): OrderRepository {
       userId: string,
       input: CreatePedidoInput,
     ): Promise<PedidoWithItems> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos')
@@ -197,7 +197,7 @@ export function createOrderRepository(): OrderRepository {
     },
 
     async findByIdForDelivery(id: string, tenantId: string): Promise<PedidoForDelivery | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .select(
@@ -227,7 +227,7 @@ export function createOrderRepository(): OrderRepository {
       estado: EstadoPedido,
       version: number,
     ): Promise<Pedido> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .update({ estado, version: version + 1 })

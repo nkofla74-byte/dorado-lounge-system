@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PersonalPage() {
   const t = await getTranslations('admin.personal');
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

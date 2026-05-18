@@ -63,7 +63,7 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: turnoData } = await supabase
       .from('turnos')
       .select('id')

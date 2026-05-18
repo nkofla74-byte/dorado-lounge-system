@@ -30,7 +30,11 @@
       "@swc/core",
       "@sentry/cli",
       "@parcel/watcher"
-    ]
+    ],
+    "overrides": {
+      "fast-uri": ">=3.1.2",
+      "postcss": ">=8.5.10"
+    }
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",

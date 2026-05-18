@@ -50,7 +50,7 @@ const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: userData }, { data: sessionData }, locale, tLayout, tChatTitulo] =
     await Promise.all([
       supabase.auth.getUser(),

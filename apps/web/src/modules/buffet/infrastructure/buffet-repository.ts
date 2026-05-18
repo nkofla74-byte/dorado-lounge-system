@@ -91,7 +91,7 @@ const DESPACHO_SELECT = `
 export function createBuffetRepository(): BuffetRepository {
   return {
     async findDespachos(tenantId: string, turnoId?: string): Promise<DespachoBuffet[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       let query = supabase
         .from('despachos')
@@ -112,7 +112,7 @@ export function createBuffetRepository(): BuffetRepository {
       recetaId: string,
       tenantId: string,
     ): Promise<RecetaServicioBuffet | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('recetas')
@@ -144,7 +144,7 @@ export function createBuffetRepository(): BuffetRepository {
       tenantId: string,
       input: CreateDespachoBuffetInput & { responsableId: string },
     ): Promise<DespachoBuffet> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('despachos')
@@ -171,7 +171,7 @@ export function createBuffetRepository(): BuffetRepository {
     },
 
     async findTicketsByTurno(tenantId: string, turnoId: string): Promise<TicketTurno[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('buffet_tickets_turno')
@@ -191,7 +191,7 @@ export function createBuffetRepository(): BuffetRepository {
       tenantId: string,
       input: CreateTicketsTurnoInput & { registradoPor: string },
     ): Promise<TicketTurno> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('buffet_tickets_turno')
@@ -219,7 +219,7 @@ export function createBuffetRepository(): BuffetRepository {
     },
 
     async findTurnosActivos(tenantId: string): Promise<TurnoActivo[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')
@@ -241,7 +241,7 @@ export function createBuffetRepository(): BuffetRepository {
     async findRecetasServicioBuffet(
       tenantId: string,
     ): Promise<Pick<RecetaServicioBuffet, 'id' | 'nombre' | 'porciones'>[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('recetas')

@@ -68,7 +68,7 @@ function toStuart(row: MensajeRow): StuartRequest {
 export function createSnackRepository(): SnackRepository {
   return {
     async findDespachos(tenantId: string, turnoId?: string): Promise<DespachoSnack[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       let query = supabase
         .from('despachos')
@@ -86,7 +86,7 @@ export function createSnackRepository(): SnackRepository {
     },
 
     async findTurnosActivos(tenantId: string): Promise<TurnoActivo[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')
@@ -106,7 +106,7 @@ export function createSnackRepository(): SnackRepository {
     },
 
     async findStuartRequests(tenantId: string, limit = 20): Promise<StuartRequest[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('mensajes_chat')
@@ -124,7 +124,7 @@ export function createSnackRepository(): SnackRepository {
       tenantId: string,
       input: { remitenteId: string; descripcion: string },
     ): Promise<StuartRequest> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('mensajes_chat')

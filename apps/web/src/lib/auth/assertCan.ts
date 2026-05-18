@@ -12,7 +12,7 @@ export interface SessionContext {
 }
 
 export async function assertCan(permission: string): Promise<SessionContext> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

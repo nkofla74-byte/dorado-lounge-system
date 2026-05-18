@@ -65,7 +65,7 @@ function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
 export function createCocinaAmexRepository(): CocinaAmexRepository {
   return {
     async findActivosAmex(tenantId: string): Promise<PedidoWithItems[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .select(PEDIDO_SELECT)
@@ -80,7 +80,7 @@ export function createCocinaAmexRepository(): CocinaAmexRepository {
     },
 
     async findById(tenantId: string, pedidoId: string): Promise<Pedido | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .select(PEDIDO_FLAT_SELECT)
@@ -99,7 +99,7 @@ export function createCocinaAmexRepository(): CocinaAmexRepository {
       estado: EstadoPedido,
       version: number,
     ): Promise<Pedido> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('pedidos')
         .update({ estado, version: version + 1 })

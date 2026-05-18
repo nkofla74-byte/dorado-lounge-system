@@ -37,7 +37,7 @@ const SELECT_FIELDS =
 export function createTurnoRepository(): TurnoRepository {
   return {
     async findAll(tenantId: string): Promise<Turno[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')
@@ -51,7 +51,7 @@ export function createTurnoRepository(): TurnoRepository {
     },
 
     async findActivo(tenantId: string): Promise<Turno | null> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')
@@ -72,7 +72,7 @@ export function createTurnoRepository(): TurnoRepository {
       teamlider: string,
       responsableId: string,
     ): Promise<Turno> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')
@@ -85,7 +85,7 @@ export function createTurnoRepository(): TurnoRepository {
     },
 
     async cerrar(turnoId: string, tenantId: string): Promise<Turno> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('turnos')

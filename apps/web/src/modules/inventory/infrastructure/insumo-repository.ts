@@ -96,7 +96,7 @@ function toInsumo(row: Omit<InsumoRow, 'lotes'>): Insumo {
 export function createInsumoRepository(): InsumoRepository {
   return {
     async findAll(): Promise<InsumoWithStock[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('insumos')
@@ -115,7 +115,7 @@ export function createInsumoRepository(): InsumoRepository {
     },
 
     async create(tenantId: string, input: CreateInsumoInput): Promise<Insumo> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('insumos')
@@ -147,7 +147,7 @@ export function createInsumoRepository(): InsumoRepository {
     },
 
     async findLotesByInsumo(insumoId: string): Promise<Lote[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('lotes')
         .select(
@@ -164,7 +164,7 @@ export function createInsumoRepository(): InsumoRepository {
     },
 
     async createLote(tenantId: string, input: CreateLoteInput): Promise<Lote> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('lotes')
         .insert({

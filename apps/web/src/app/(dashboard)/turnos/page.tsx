@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TurnosPage() {
   const t = await getTranslations('turnos');
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [turnosResult, { data: authData }] = await Promise.all([
     getTurnos(),

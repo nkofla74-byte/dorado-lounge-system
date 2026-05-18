@@ -20,7 +20,7 @@ export default async function ProveedoresPage() {
   let canWrite = false;
   try {
     await assertCan('proveedores:read');
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     const role = data.user?.app_metadata?.role as UserRole | undefined;
     canWrite = role ? (PERMISSIONS['proveedores:write']?.includes(role) ?? false) : false;

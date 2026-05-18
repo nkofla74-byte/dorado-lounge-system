@@ -29,7 +29,7 @@ function toFeatureFlag(row: FeatureFlagRow): FeatureFlag {
 export function createFeatureFlagRepository(): FeatureFlagRepository {
   return {
     async getAll(tenantId: string): Promise<FeatureFlag[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('feature_flags')
         .select('*')

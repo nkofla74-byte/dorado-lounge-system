@@ -89,7 +89,7 @@ function toReceta(row: Omit<RecetaRow, 'receta_ingredientes' | 'insumo_destino'>
 export function createRecipeRepository(): RecipeRepository {
   return {
     async findAll(tenantId: string): Promise<RecetaWithIngredientes[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('recetas')
@@ -116,7 +116,7 @@ export function createRecipeRepository(): RecipeRepository {
     },
 
     async create(tenantId: string, input: CreateRecetaInput): Promise<Receta> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const insert =
         input.tipoReceta === 'produccion'
@@ -151,7 +151,7 @@ export function createRecipeRepository(): RecipeRepository {
     },
 
     async addIngrediente(tenantId: string, input: AddIngredienteInput): Promise<RecetaIngrediente> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { data, error } = await supabase
         .from('receta_ingredientes')
@@ -191,7 +191,7 @@ export function createRecipeRepository(): RecipeRepository {
     },
 
     async updateMenuMeta(tenantId: string, input: UpdateMenuMetaInput): Promise<void> {
-      const supabase = createClient();
+      const supabase = await createClient();
 
       const { error } = await supabase
         .from('recetas')

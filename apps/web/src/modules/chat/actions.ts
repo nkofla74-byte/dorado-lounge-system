@@ -25,7 +25,7 @@ export async function enviarMensaje(input: EnviarMensajeInput): Promise<Result<M
   try {
     const ctx = await assertCan('chat:write');
     const { createClient } = await import('@/lib/supabase/server');
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

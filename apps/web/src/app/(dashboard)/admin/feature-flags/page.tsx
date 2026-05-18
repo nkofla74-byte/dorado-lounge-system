@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FeatureFlagsPage() {
   const t = await getTranslations('admin.featureFlags');
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

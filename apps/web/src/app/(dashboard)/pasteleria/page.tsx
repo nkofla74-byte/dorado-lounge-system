@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PasteleriaPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const t = await getTranslations('pasteleria');
   const tLayout = await getTranslations('layout');
 

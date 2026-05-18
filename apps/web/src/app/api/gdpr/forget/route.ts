@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { auditLog } from '@/lib/audit';
 
 export async function POST() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

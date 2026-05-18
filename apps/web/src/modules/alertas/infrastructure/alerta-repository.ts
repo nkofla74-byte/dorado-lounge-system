@@ -40,7 +40,7 @@ function toAlerta(row: AlertaRow): Alerta {
 export function createAlertaRepository(): AlertaRepository {
   return {
     async findRecent(tenantId: string, limit = 30): Promise<Alerta[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('alertas')
         .select(SELECT)
@@ -53,7 +53,7 @@ export function createAlertaRepository(): AlertaRepository {
     },
 
     async findAll(tenantId: string, limit = 500): Promise<Alerta[]> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase
         .from('alertas')
         .select(SELECT)
@@ -66,7 +66,7 @@ export function createAlertaRepository(): AlertaRepository {
     },
 
     async countUnread(tenantId: string): Promise<number> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { count, error } = await supabase
         .from('alertas')
         .select('id', { count: 'exact', head: true })
@@ -99,7 +99,7 @@ export function createAlertaRepository(): AlertaRepository {
     },
 
     async marcarLeida(id: string, tenantId: string, userId: string): Promise<void> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { error } = await supabase
         .from('alertas')
         .update({ leida: true, leida_at: new Date().toISOString(), leida_por: userId })
@@ -110,7 +110,7 @@ export function createAlertaRepository(): AlertaRepository {
     },
 
     async marcarTodasLeidas(tenantId: string, userId: string): Promise<void> {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { error } = await supabase
         .from('alertas')
         .update({ leida: true, leida_at: new Date().toISOString(), leida_por: userId })
