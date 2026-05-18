@@ -1,6 +1,7 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
+import { auditLog } from '@/lib/audit';
 import { ok, err, toAppError } from '@/lib/result';
 import { createAlertaRepository } from './infrastructure/alerta-repository';
 import { runCheckVencimientos, runCheckDemoraAmex } from './infrastructure/checks';
@@ -46,6 +47,13 @@ export async function marcarAlertaLeida(alertaId: string): Promise<Result<void>>
     const ctx = await assertCan('alertas:read');
     const repo = createAlertaRepository();
     await repo.marcarLeida(alertaId, ctx.tenantId, ctx.userId);
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'alertas.read',
+      resourceType: 'alerta',
+      resourceId: alertaId,
+    });
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
@@ -57,6 +65,12 @@ export async function marcarTodasLeidas(): Promise<Result<void>> {
     const ctx = await assertCan('alertas:read');
     const repo = createAlertaRepository();
     await repo.marcarTodasLeidas(ctx.tenantId, ctx.userId);
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'alertas.read_all',
+      resourceType: 'alerta',
+    });
     return ok(undefined);
   } catch (e) {
     return err(toAppError(e));
@@ -68,7 +82,15 @@ export async function marcarTodasLeidas(): Promise<Result<void>> {
 export async function checkVencimientos(diasUmbral = 3): Promise<Result<number>> {
   try {
     const ctx = await assertCan('alertas:write');
-    return ok(await runCheckVencimientos(ctx.tenantId, diasUmbral));
+    const count = await runCheckVencimientos(ctx.tenantId, diasUmbral);
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'alertas.check_vencimientos',
+      resourceType: 'alerta',
+      payload: { diasUmbral, generadas: count },
+    });
+    return ok(count);
   } catch (e) {
     return err(toAppError(e));
   }
@@ -77,7 +99,15 @@ export async function checkVencimientos(diasUmbral = 3): Promise<Result<number>>
 export async function checkDemoraAmex(umbralMins = 15): Promise<Result<number>> {
   try {
     const ctx = await assertCan('cocina_amex:read');
-    return ok(await runCheckDemoraAmex(ctx.tenantId, umbralMins));
+    const count = await runCheckDemoraAmex(ctx.tenantId, umbralMins);
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'alertas.check_demora_amex',
+      resourceType: 'alerta',
+      payload: { umbralMins, generadas: count },
+    });
+    return ok(count);
   } catch (e) {
     return err(toAppError(e));
   }
