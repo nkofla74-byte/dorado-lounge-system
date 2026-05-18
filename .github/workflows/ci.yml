@@ -11,12 +11,11 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────
-  # E2E — corre solo en PRs para ahorrar minutos
+  # E2E — corre en PRs y push a main (gate de release)
   # ──────────────────────────────────────────────
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -139,3 +138,24 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit (HIGH+ falla el job)
+        run: pnpm audit --audit-level=high --prod
