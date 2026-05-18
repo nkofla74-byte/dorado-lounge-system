@@ -975,7 +975,27 @@
     "confirmarDescuento": "Deduct stock?",
     "procesando": "Processing…",
     "confirmar": "Confirm",
-    "no": "No"
+    "no": "No",
+    "metaTitle": "Orders — Dorado Lounge",
+    "pageTitle": "Orders",
+    "pageSubtitle": "Active orders — Amex zone",
+    "create": {
+      "title": "New order",
+      "srDescription": "Register an order per zone with one or more service recipes.",
+      "zona": "Zone",
+      "mesa": "Table",
+      "optional": "(optional)",
+      "mesaPlaceholder": "Ex. A3, VIP-1",
+      "items": "Items",
+      "recetaPlaceholder": "Select recipe",
+      "sinRecetas": "No service recipes available",
+      "agregarItem": "Add item",
+      "notas": "Notes",
+      "notasPlaceholder": "Special instructions, allergies…",
+      "guardar": "Create order",
+      "guardando": "Saving…",
+      "cancelar": "Cancel"
+    }
   },
   "ingredientes": {
     "categoriaEntrada": "Starter",
