@@ -16,7 +16,7 @@ pnpm lint && pnpm typecheck           # obligatorio antes de commit
 pnpm test                             # vitest (todos los paquetes)
 pnpm --filter apps/web test:e2e       # playwright
 pnpm --filter apps/web tsc --noEmit   # type-check sin build
-pnpm seed:test-users                  # crea usuarios de prueba en Supabase
+pnpm reset:test-users                 # reconcilia el set canónico de test users (idempotente)
 ```
 
 DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **Nunca `supabase start` ni Docker local.**
@@ -27,7 +27,7 @@ DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **
 
 | Capa           | Tecnología                                                |
 | -------------- | --------------------------------------------------------- |
-| Framework      | Next.js 14 App Router · TypeScript strict                 |
+| Framework      | Next.js 15 App Router · TypeScript strict                 |
 | UI             | React · Tailwind CSS · shadcn/ui                          |
 | DB / Auth      | Supabase (PostgreSQL 15 + Auth + Storage)                 |
 | Real-time      | Socket.io en Node.js independiente (Render.com Starter)   |
@@ -74,7 +74,7 @@ apps/socket-server/   Node.js — Socket.io con JWT auth
 packages/shared-types/       Contratos web ↔ socket-server (fuente de verdad)
 packages/shared-validation/  Schemas Zod reutilizables
 supabase/migrations/         SQL idempotente
-scripts/                     Utilidades: seed-test-users.mjs
+scripts/                     Utilidades: reset-test-users.mjs (set canónico idempotente)
 ```
 
 Cambiar un evento Socket.io → cambiar `packages/shared-types` primero.
@@ -110,15 +110,20 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 | ✅     | `analytics`     | KPIs, vistas materializadas (solo lectura)                          |
 | ✅     | `feature-flags` | Flags por tenant                                                    |
 | ✅     | `superuser`     | CRUD tenants y usuarios                                             |
-| ✅     | `rbac`          | Matriz permisos, assertCan                                          |
 | ✅     | `audit`         | Hash chain SHA-256, audit_log                                       |
-| ✅     | `realtime`      | Socket.io integration                                               |
 | ✅     | `cocina_amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
 | ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes          |
 | ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
 | ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual) |
 
 `analytics` es solo-lectura — proyecta vistas materializadas, nunca escribe.
+
+> **No son módulos hexagonales** (pero existen como libs auxiliares):
+>
+> - `lib/auth/assertCan.ts` + `lib/auth/permissions.ts` — RBAC (matriz de permisos).
+> - `lib/socket/use-realtime.ts` — integración Socket.io client.
+> - `lib/audit.ts` — wrapper de inserción en `audit_log` (el hash chain vive en Postgres).
+> - `lib/rate-limit.ts` — buckets Upstash (login/cron/heartbeat/gdpr).
 
 ---
 
@@ -161,7 +166,9 @@ Idempotente por `idempotency_key`. Obligatoria en: Stock Out, despacho, tickets.
 
 **Tablas existentes:**
 
-`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` · `pedido_eventos` (trazabilidad AMEX) · `buffet_tickets_turno` · `mermas` · `mensajes_chat` · `afluencia_ingresos` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `costos` · `domain_events` · `audit_log` · `feature_flags` · `operaciones_idempotentes`
+`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` · `pedido_eventos` (trazabilidad AMEX) · `buffet_tickets_turno` · `mermas` · `mensajes_chat` · `afluencia_ingresos` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `domain_events` · `audit_log` · `feature_flags` · `operaciones_idempotentes`
+
+> `costos` no es tabla — es la RPC `fn_costo_receta(p_tenant_id, p_receta_id)` que calcula en tiempo real desde `lotes` (FEFO-next por costo). Validación de tenant vía `auth.jwt() -> 'app_metadata' ->> 'tenant_id'` (migración 0004).
 
 Antes de crear una tabla: verificar la lista y el ER en `ARCHITECTURE.md §8`.
 
@@ -254,6 +261,10 @@ BETTERSTACK_SOURCE_TOKEN=
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
 
+# Rate limiting (Upstash Redis) — fail-open si no están seteadas
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
 # Vuelos
 FLIGHTS_API_KEY=
 FLIGHTS_API_URL=
@@ -285,4 +296,4 @@ Solo lectura de vistas materializadas. Filtros obligatorios: turno, nodo, respon
 
 ---
 
-_v5.1 — Mayo 2026 · Sprints B–H integrados (cocina_amex, proveedores, alertas, costos)_
+_v5.2 — Mayo 2026 · Hardening pre-deploy: Next.js 15 (0 CVEs), rate limit Upstash, auditLog completo en alertas, coverage v8 wired (75% global, 100% en merma)_
