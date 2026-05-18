@@ -277,6 +277,7 @@
     "errors": {
       "turnstileRequired": "Please complete the security verification.",
       "turnstileFailed": "Security verification failed. Reload the page and try again.",
+      "tooManyAttempts": "Too many attempts. Wait a few minutes and try again.",
       "invalidCredentials": "Invalid credentials. Check your email and password.",
       "missingRoleOrTenant": "Your account has no role or tenant assigned. Contact your administrator."
     }

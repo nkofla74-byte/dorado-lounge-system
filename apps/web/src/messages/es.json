@@ -277,6 +277,7 @@
     "errors": {
       "turnstileRequired": "Completa la verificación de seguridad.",
       "turnstileFailed": "Verificación de seguridad fallida. Recarga la página e intenta de nuevo.",
+      "tooManyAttempts": "Demasiados intentos. Espera unos minutos e intenta de nuevo.",
       "invalidCredentials": "Credenciales inválidas. Verifica tu correo y contraseña.",
       "missingRoleOrTenant": "Tu usuario no tiene rol o tenant asignado. Contacta al administrador."
     }

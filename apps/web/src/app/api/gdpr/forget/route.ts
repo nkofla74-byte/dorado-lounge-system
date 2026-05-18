@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { auditLog } from '@/lib/audit';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST() {
   const supabase = await createClient();
@@ -11,6 +12,11 @@ export async function POST() {
 
   if (!user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+
+  const rl = await rateLimit('gdpr', user.id);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes — vuelve en 24 h' }, { status: 429 });
   }
 
   const tenantId = user.app_metadata?.tenant_id as string | undefined;

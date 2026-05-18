@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Vercel Cron: corre cada 5 minutos (configurado en vercel.json).
 // Hace ping al heartbeat de Better Stack para confirmar que el servicio está vivo.
@@ -6,6 +7,11 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const rl = await rateLimit('heartbeat', getClientIp(request));
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  }
+
   // Vercel Cron envía el header Authorization con el secret configurado
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

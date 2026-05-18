@@ -47,15 +47,19 @@ function LoginForm() {
     }
 
     if (turnstileToken) {
-      const valid = await verifyTurnstile(turnstileToken);
-      if (!valid) {
-        setError(t('errors.turnstileFailed'));
+      const result = await verifyTurnstile(turnstileToken);
+      if (!result.ok) {
+        setError(
+          result.reason === 'rate_limited'
+            ? t('errors.tooManyAttempts')
+            : t('errors.turnstileFailed'),
+        );
         setLoading(false);
         return;
       }
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password: password.trim(),

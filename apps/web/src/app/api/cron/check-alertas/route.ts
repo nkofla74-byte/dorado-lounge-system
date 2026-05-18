@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { runCheckVencimientos, runCheckDemoraAmex } from '@/modules/alertas/infrastructure/checks';
 import { createLogger } from '@/lib/logger';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const log = createLogger('cron:check-alertas');
 
@@ -10,6 +11,11 @@ const log = createLogger('cron:check-alertas');
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const rl = await rateLimit('cron', getClientIp(request));
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  }
+
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
