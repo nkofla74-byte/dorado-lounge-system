@@ -43,17 +43,6 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
   }
 }
 
-/** @deprecated Use `getPedidosAmexKds` from `@/modules/cocina_amex/actions` instead. */
-export async function getPedidosAmex(): Promise<Result<PedidoWithItems[]>> {
-  try {
-    const ctx = await assertCan('cocina_amex:read');
-    const repo = createOrderRepository();
-    return ok(await repo.findActiveByZona(ctx.tenantId, 'amex'));
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}
-
 export async function createPedido(input: unknown): Promise<Result<PedidoWithItems>> {
   try {
     const ctx = await assertCan('orders:create');
