@@ -270,6 +270,9 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
       proveedor: parsed.data.proveedor,
       proveedorId: parsed.data.proveedorId,
       costoUnitario: parsed.data.costoUnitario,
+      cantidadEmpaques: parsed.data.cantidadEmpaques,
+      pesoUnitario: parsed.data.pesoUnitario,
+      unidadPeso: parsed.data.unidadPeso,
     });
 
     // Registra movimiento de entrada (movimientos_inventario no tiene INSERT RLS)

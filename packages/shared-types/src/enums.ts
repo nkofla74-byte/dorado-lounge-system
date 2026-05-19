@@ -24,6 +24,7 @@ export type CapaInventario = (typeof CapaInventario)[keyof typeof CapaInventario
 export const UnidadMedida = {
   kg: 'kg',
   g: 'g',
+  lb: 'lb',
   l: 'l',
   ml: 'ml',
   unidad: 'unidad',

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getInsumos, getLotesProximosVencer } from '@/modules/inventory/actions';
 import { AlmacenPanel } from '@/components/inventory/almacen-panel';
+import { NuevoIngresoDialog } from '@/components/inventory/nuevo-ingreso-dialog';
 import { createClient } from '@/lib/supabase/server';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -28,11 +29,17 @@ export default async function AlmacenPage() {
   const vencimientos = vencimientosResult.ok ? vencimientosResult.value : [];
   const vencenHoy = vencimientos.filter((v) => v.diasRestantes <= 0);
 
+  const canIngresar =
+    userRole === 'admin' || userRole === 'superuser' || userRole === 'personal_almacen';
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        </div>
+        {canIngresar && <NuevoIngresoDialog insumos={insumos} />}
       </div>
 
       {/* Stats rápidas */}

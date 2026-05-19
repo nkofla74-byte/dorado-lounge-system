@@ -23,6 +23,7 @@ type LoteRow = {
   id: string;
   tenant_id: string;
   insumo_id: string;
+  codigo: string;
   cantidad_inicial: number;
   cantidad_actual: number;
   fecha_recibido: string;
@@ -30,6 +31,9 @@ type LoteRow = {
   proveedor: string | null;
   proveedor_id: string | null;
   costo_unitario: number | null;
+  cantidad_empaques: number | null;
+  peso_unitario: number | null;
+  unidad_peso: string | null;
   activo: boolean;
   created_at: string;
   insumo: { nombre: string } | null;
@@ -59,6 +63,7 @@ function toLoteConInsumo(row: LoteRow): LoteConInsumo {
     id: row.id,
     tenantId: row.tenant_id,
     insumoId: row.insumo_id,
+    codigo: row.codigo,
     cantidadInicial: Number(row.cantidad_inicial),
     cantidadActual: Number(row.cantidad_actual),
     fechaRecibido: row.fecha_recibido,
@@ -66,6 +71,9 @@ function toLoteConInsumo(row: LoteRow): LoteConInsumo {
     proveedor: row.proveedor,
     proveedorId: row.proveedor_id,
     costoUnitario: row.costo_unitario != null ? Number(row.costo_unitario) : null,
+    cantidadEmpaques: row.cantidad_empaques != null ? Number(row.cantidad_empaques) : null,
+    pesoUnitario: row.peso_unitario != null ? Number(row.peso_unitario) : null,
+    unidadPeso: (row.unidad_peso as LoteConInsumo['unidadPeso']) ?? null,
     activo: row.activo,
     createdAt: new Date(row.created_at),
     insumoNombre: row.insumo?.nombre ?? '',
@@ -150,7 +158,7 @@ export function createProveedorRepository(): ProveedorRepository {
       const { data, error } = await supabase
         .from('lotes')
         .select(
-          'id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, proveedor_id, costo_unitario, activo, created_at, insumo:insumos(nombre), proveedor_rel:proveedores(nombre)',
+          'id, tenant_id, insumo_id, codigo, cantidad_inicial, cantidad_actual, fecha_recibido, fecha_vencimiento, proveedor, proveedor_id, costo_unitario, cantidad_empaques, peso_unitario, unidad_peso, activo, created_at, insumo:insumos(nombre), proveedor_rel:proveedores(nombre)',
         )
         .eq('tenant_id', tenantId)
         .eq('proveedor_id', proveedorId)
