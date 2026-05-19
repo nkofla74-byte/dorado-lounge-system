@@ -110,3 +110,21 @@
     font-size: clamp(0.875rem, 0.5vw + 0.75rem, 1rem);
   }
 }
+
+/* QR Passenger — entrada suave de tarjetas (delay viene inline desde React) */
+@keyframes dishFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dish-card {
+    animation: none !important;
+  }
+}

@@ -230,12 +230,12 @@ function AmexLogo({ className = '' }: { className?: string }) {
     <div className={`flex flex-col items-center ${className}`}>
       <div
         className="rounded-xl px-6 py-3 flex flex-col items-center gap-0"
-        style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}
+        style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.3)' }}
       >
-        <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase opacity-80">
+        <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.25em] uppercase opacity-80">
           American
         </span>
-        <span className="text-white text-xl font-black tracking-[0.1em] leading-tight">
+        <span className="text-[#FAF7F0] text-xl font-black tracking-[0.1em] leading-tight">
           EXPRESS
         </span>
       </div>
@@ -243,134 +243,191 @@ function AmexLogo({ className = '' }: { className?: string }) {
   );
 }
 
-// ─── Componente plato expandible ──────────────────────────────────────────────
+// ─── Componente plato — tarjeta colapsada con expand animado ──────────────────
 function DishCard({
   receta,
   locale,
   onAdd,
+  selected,
+  index,
 }: {
   receta: PublicReceta;
   locale: string;
   onAdd: (item: CartItem) => void;
+  selected: boolean;
+  index: number;
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   const [expanded, setExpanded] = useState(false);
-  const [showIngredients, setShowIngredients] = useState(false);
   const [notas, setNotas] = useState('');
-  const [added, setAdded] = useState(false);
-  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pulseBadge, setPulseBadge] = useState(false);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
     };
   }, []);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    if (selected) {
+      setPulseBadge(true);
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+      pulseTimerRef.current = setTimeout(() => setPulseBadge(false), 400);
+    }
+  }, [selected]);
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onAdd({ receta, notas });
-    setAdded(true);
-    setNotas('');
     setExpanded(false);
-    if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
-    addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
   };
 
+  // Delay escalonado calculado dinámicamente
+  const animDelay = Math.min(index * 70, 350);
+
   return (
-    <div
-      className={`border rounded-2xl overflow-hidden transition-all ${
-        expanded ? 'border-blue-400 shadow-md' : 'border-border'
+    <article
+      className={`dish-card rounded-2xl overflow-hidden border bg-[#1C1C24] cursor-pointer select-none transition-all duration-300 active:scale-[0.99] ${
+        selected
+          ? 'border-[#D4AF37] shadow-[0_0_24px_-6px_rgba(212,175,55,0.45)]'
+          : expanded
+            ? 'border-[#D4AF37]/60 shadow-[0_0_24px_-6px_rgba(212,175,55,0.35)]'
+            : 'border-[#2a2a33] hover:border-[#D4AF37]/30 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.5)]'
       }`}
+      style={{
+        animation: `dishFadeIn 0.45s cubic-bezier(0.22,1,0.36,1) ${animDelay}ms both`,
+      }}
+      onClick={() => setExpanded((v) => !v)}
     >
-      {/* Fila principal — siempre visible */}
-      <button
-        className="w-full flex items-center justify-between px-4 py-3.5 text-left bg-card hover:bg-accent/40 transition-colors"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="min-w-0">
-          <p className="font-semibold text-sm leading-snug">{receta.nombre}</p>
+      {/* Foto banner 16:5 */}
+      <div className="relative w-full aspect-[16/5] overflow-hidden bg-[#0B0B0F]">
+        {receta.imagenUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={receta.imagenUrl}
+            alt={receta.nombre}
+            className={`w-full h-full object-cover transition-transform duration-700 ${
+              expanded ? 'scale-105' : 'scale-100'
+            }`}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1C1C24] via-[#2a2418] to-[#3a2f15]">
+            <UtensilsCrossed className="h-6 w-6 text-[#D4AF37]/40" />
+            <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/60 font-medium">
+              Dorado Lounge
+            </span>
+          </div>
+        )}
+        {selected && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
+            <div
+              className={`absolute top-2 right-2 bg-[#D4AF37] text-[#0B0B0F] text-[11px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 transition-transform duration-300 ${
+                pulseBadge ? 'scale-125' : 'scale-100'
+              }`}
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              {t['added']}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Cabecera siempre visible */}
+      <div className="px-3.5 pt-2.5 pb-3 flex items-start gap-2.5">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[#FAF7F0] text-[14px] font-bold leading-tight">{receta.nombre}</h3>
           {receta.descripcion && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+            <p
+              className={`text-[#FAF7F0]/55 text-[11.5px] mt-0.5 leading-snug ${expanded ? '' : 'line-clamp-1'}`}
+            >
               {receta.descripcion}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-3">
-          {added && (
-            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-              ✓ {t['added']}
+        <button
+          onClick={handleAdd}
+          className={`shrink-0 h-7 px-3 rounded-full font-semibold text-[11px] transition-all active:scale-90 ${
+            selected
+              ? 'bg-[#0B0B0F] border border-[#D4AF37]/60 text-[#D4AF37]'
+              : 'text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_14px_-3px_rgba(212,175,55,0.7)]'
+          }`}
+        >
+          {selected ? (
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {t['added']}
             </span>
-          )}
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            t['addDish']
           )}
-        </div>
-      </button>
+        </button>
+        <ChevronDown
+          className={`h-4 w-4 mt-0.5 text-[#D4AF37]/60 transition-transform duration-300 ${
+            expanded ? 'rotate-180' : ''
+          }`}
+        />
+      </div>
 
-      {/* Detalle expandido */}
-      {expanded && (
-        <div className="px-4 pb-4 pt-1 bg-card border-t border-border space-y-3">
-          {/* Imagen del plato */}
-          {receta.imagenUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={receta.imagenUrl}
-              alt={receta.nombre}
-              className="w-full h-48 rounded-xl object-cover"
-            />
-          ) : (
-            <div className="w-full h-40 rounded-xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-zinc-800 dark:to-zinc-700 flex flex-col items-center justify-center gap-2">
-              <UtensilsCrossed className="h-12 w-12 text-amber-300 dark:text-amber-600" />
-              <span className="text-xs text-amber-400 dark:text-amber-600 font-medium tracking-wide uppercase">
-                Dorado Lounge
-              </span>
-            </div>
-          )}
-
-          {/* Ingredientes */}
-          {receta.ingredientes.length > 0 && (
-            <div>
-              <button
-                className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400"
-                onClick={() => setShowIngredients((v) => !v)}
-              >
-                {showIngredients ? t['hideIngredients'] : t['viewIngredients']}
-                {showIngredients ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-              </button>
-              {showIngredients && (
-                <ul className="mt-1.5 space-y-0.5 pl-2">
+      {/* Detalle expandible */}
+      <div
+        className="grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3.5 pb-3.5 pt-1 space-y-2.5 border-t border-[#2a2a33]/60">
+            {/* Ingredientes */}
+            {receta.ingredientes.length > 0 && (
+              <div className="pt-2">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4AF37]/70 font-semibold mb-1.5">
+                  {t['viewIngredients']}
+                </p>
+                <div className="flex flex-wrap gap-1">
                   {receta.ingredientes.map((ing, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
-                      <span className="text-blue-400">·</span>
+                    <span
+                      key={i}
+                      className="text-[10px] text-[#FAF7F0]/75 bg-[#0B0B0F] border border-[#2a2a33] rounded-full px-2 py-0.5"
+                      style={{
+                        animation: expanded ? `dishFadeIn 0.3s ease-out ${i * 25}ms both` : 'none',
+                      }}
+                    >
                       {ing.nombre}
-                    </li>
+                    </span>
                   ))}
-                </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Nota */}
+            <textarea
+              rows={1}
+              placeholder={t['notePlaceholder']}
+              value={notas}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setNotas(e.target.value)}
+              className="w-full text-[12px] bg-[#0B0B0F] border border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] resize-none transition-colors"
+            />
+
+            {/* CTA principal */}
+            <button
+              onClick={handleAdd}
+              className="w-full h-9 rounded-full font-semibold text-[13px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all"
+            >
+              {selected ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t['added']}
+                </span>
+              ) : (
+                t['addDish']
               )}
-            </div>
-          )}
-
-          {/* Nota */}
-          <textarea
-            rows={2}
-            placeholder={t['notePlaceholder']}
-            value={notas}
-            onChange={(e) => setNotas(e.target.value)}
-            className="w-full text-sm border border-border rounded-xl px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-          />
-
-          {/* Botón agregar */}
-          <Button className="w-full" style={{ background: '#016FD0' }} onClick={handleAdd}>
-            {t['addDish']}
-          </Button>
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </article>
   );
 }
 
@@ -413,80 +470,90 @@ function MenuScreen({
     availableCategories[0] ?? 'entrada',
   );
 
+  // Regla: 1 plato por categoría (entrada, plato fuerte, acompañante).
+  // Agregar uno nuevo de la misma categoría reemplaza al anterior.
   const addItem = (item: CartItem) => {
     setCart((prev) => {
-      const idx = prev.findIndex((c) => c.receta.id === item.receta.id);
-      if (idx >= 0) return prev.map((c, i) => (i === idx ? item : c));
-      return [...prev, item];
+      const filtered = prev.filter((c) => c.receta.categoriaMenu !== item.receta.categoriaMenu);
+      return [...filtered, item];
     });
   };
 
+  const totalItems = cart.length;
+  const inCartIds = new Set(cart.map((c) => c.receta.id));
+
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b px-4 py-3">
+      <header className="sticky top-0 z-10 bg-[#0B0B0F]/95 backdrop-blur-md border-b border-[#1C1C24] px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="font-bold text-sm" style={{ color: '#016FD0' }}>
+            <p
+              className="text-[10px] tracking-[0.3em] uppercase font-bold"
+              style={{ color: '#D4AF37' }}
+            >
               {t['guestLabel']} {currentComensal} {t['of']} {totalComensales}
             </p>
           </div>
-          {cart.length > 0 && (
-            <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full px-2.5 py-0.5 font-medium">
-              {cart.length} {cart.length === 1 ? t['dishSingular'] : t['dishPlural']}
+          {totalItems > 0 && (
+            <span className="text-xs bg-[#D4AF37] text-[#0B0B0F] rounded-full px-3 py-1 font-bold tabular-nums shadow-[0_0_12px_-2px_rgba(212,175,55,0.5)]">
+              {totalItems} {totalItems === 1 ? t['dishSingular'] : t['dishPlural']}
             </span>
           )}
         </div>
         {/* Tabs de categoría */}
         {availableCategories.length > 0 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-0.5">
-            {availableCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                  activeCategory === cat
-                    ? 'text-white border-transparent'
-                    : 'border-border text-muted-foreground hover:bg-accent'
-                }`}
-                style={
-                  activeCategory === cat ? { background: '#016FD0', borderColor: '#016FD0' } : {}
-                }
-              >
-                {t[`categories_${cat}`]}
-              </button>
-            ))}
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-0.5 -mx-1 px-1">
+            {availableCategories.map((cat) => {
+              const active = activeCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95 ${
+                    active
+                      ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37] shadow-[0_0_16px_-4px_rgba(212,175,55,0.5)]'
+                      : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40'
+                  }`}
+                >
+                  {t[`categories_${cat}`]}
+                </button>
+              );
+            })}
           </div>
         )}
       </header>
 
-      {/* Lista de platos */}
-      <main className="flex-1 px-4 py-4 space-y-2">
+      {/* Lista de platos — key compuesto fuerza re-animación al cambiar categoría */}
+      <main key={activeCategory} className="flex-1 px-4 py-4 space-y-2.5">
         {(byCategory[activeCategory] ?? []).length === 0 ? (
-          <div className="flex flex-col items-center py-16 gap-3 text-muted-foreground">
-            <UtensilsCrossed className="h-10 w-10 opacity-30" />
+          <div className="flex flex-col items-center py-20 gap-3 text-[#FAF7F0]/40">
+            <UtensilsCrossed className="h-10 w-10 opacity-50" />
             <p className="text-sm">{t['noDishesAvailable']}</p>
           </div>
         ) : (
-          (byCategory[activeCategory] ?? []).map((receta) => (
-            <DishCard key={receta.id} receta={receta} locale={locale} onAdd={addItem} />
+          (byCategory[activeCategory] ?? []).map((receta, idx) => (
+            <DishCard
+              key={`${activeCategory}-${receta.id}`}
+              receta={receta}
+              locale={locale}
+              onAdd={addItem}
+              selected={inCartIds.has(receta.id)}
+              index={idx}
+            />
           ))
         )}
       </main>
 
-      {error && <p className="px-4 pb-2 text-sm text-destructive text-center">{error}</p>}
+      {error && <p className="px-4 pb-2 text-sm text-red-400 text-center">{error}</p>}
 
       {/* CTA fijo */}
-      <div className="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-t px-4 py-3 safe-pb space-y-2">
+      <div className="sticky bottom-0 bg-[#0B0B0F]/95 backdrop-blur-md border-t border-[#1C1C24] px-4 py-3 safe-pb space-y-2">
         {emptyWarning && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 text-center font-medium">
-            {t['selectAtLeastOne']}
-          </p>
+          <p className="text-xs text-[#D4AF37] text-center font-medium">{t['selectAtLeastOne']}</p>
         )}
-        <Button
-          className="w-full text-white font-semibold"
-          style={{ background: '#016FD0' }}
-          size="lg"
+        <button
+          className="w-full h-12 rounded-full font-bold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:shadow-none"
           onClick={() => {
             if (cart.length === 0) {
               setEmptyWarning(true);
@@ -500,17 +567,17 @@ function MenuScreen({
           disabled={loading}
         >
           {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
               {t['sending']}
-            </>
+            </span>
           ) : (
-            <>
+            <span className="flex items-center justify-center gap-1.5">
               {t['confirmOrder']}
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </>
+              <ChevronRight className="h-4 w-4" />
+            </span>
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -638,32 +705,33 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div
-          className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
-          style={{ background: '#016FD0' }}
-        >
+        <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
+          {/* Halo dorado decorativo */}
+          <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-[#D4AF37]/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-[#D4AF37]/5 blur-3xl" />
+
           {/* Logo top */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-white/60 text-[9px] font-bold tracking-[0.25em] uppercase">
+          <div className="relative flex flex-col items-center gap-1">
+            <span className="text-[#D4AF37]/70 text-[9px] font-bold tracking-[0.25em] uppercase">
               American
             </span>
-            <span className="text-white text-3xl font-black tracking-[0.08em]">EXPRESS</span>
+            <span className="text-[#FAF7F0] text-3xl font-black tracking-[0.08em]">EXPRESS</span>
           </div>
 
-          <div className="w-full space-y-6 text-center">
+          <div className="relative w-full space-y-6 text-center">
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">{t['byAmex']}</h1>
-              <p className="text-white/70 text-sm mt-1">{t['selectLanguage']}</p>
+              <h1 className="text-2xl font-black tracking-tight">{t['byAmex']}</h1>
+              <p className="text-[#FAF7F0]/60 text-sm mt-1">{t['selectLanguage']}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {LOCALES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => handleLocaleSelect(l.code)}
-                  className={`py-4 rounded-2xl font-semibold text-base transition-all ${
+                  className={`py-4 rounded-2xl font-semibold text-base transition-all active:scale-95 ${
                     locale === l.code
-                      ? 'bg-white text-[#016FD0] shadow-lg'
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] text-[#0B0B0F] shadow-[0_0_24px_-4px_rgba(212,175,55,0.55)]'
+                      : 'bg-[#1C1C24] border border-[#2a2a33] text-[#FAF7F0]/80 hover:border-[#D4AF37]/40 hover:text-[#D4AF37]'
                   }`}
                 >
                   {l.label}
@@ -673,11 +741,11 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           </div>
 
           {/* Logo bottom */}
-          <div className="flex flex-col items-center gap-1 opacity-60">
-            <span className="text-white text-[9px] font-bold tracking-[0.25em] uppercase">
+          <div className="relative flex flex-col items-center gap-1 opacity-50">
+            <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.25em] uppercase">
               American
             </span>
-            <span className="text-white text-lg font-black tracking-[0.1em]">EXPRESS</span>
+            <span className="text-[#FAF7F0] text-lg font-black tracking-[0.1em]">EXPRESS</span>
           </div>
         </div>
       </>
@@ -697,10 +765,12 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           />
           <HubCard title={t['wifi_title'] ?? ''} onBack={() => setHubView('main')} locale={locale}>
             <div className="space-y-4 text-center">
-              <Wifi className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
+                <Wifi className="h-8 w-8 text-[#D4AF37]" />
+              </div>
               <div>
                 <p className="font-bold text-lg">{t['wifi_name']}</p>
-                <p className="text-sm text-muted-foreground mt-1">{t['wifi_pass']}</p>
+                <p className="text-sm text-[#FAF7F0]/60 mt-1">{t['wifi_pass']}</p>
               </div>
             </div>
           </HubCard>
@@ -721,7 +791,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             onBack={() => setHubView('main')}
             locale={locale}
           >
-            <p className="text-sm text-muted-foreground leading-relaxed">{t['benefits_text']}</p>
+            <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['benefits_text']}</p>
           </HubCard>
         </>
       );
@@ -740,7 +810,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             onBack={() => setHubView('main')}
             locale={locale}
           >
-            <p className="text-sm text-muted-foreground leading-relaxed">{t['experience_text']}</p>
+            <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['experience_text']}</p>
           </HubCard>
         </>
       );
@@ -754,14 +824,17 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div className="min-h-[100dvh] flex flex-col bg-background">
+        <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
           {/* Header */}
-          <div className="px-6 pt-10 pb-6 text-center" style={{ background: '#016FD0' }}>
-            <AmexLogo className="mb-4" />
-            <h1 className="text-2xl font-black text-white">{t['welcome']}</h1>
-            <p className="text-white/80 text-sm mt-1">
-              {mesa.mesaNumero} · {mesa.zona.toUpperCase()}
-            </p>
+          <div className="relative px-6 pt-10 pb-8 text-center bg-gradient-to-b from-[#1C1C24] to-[#0B0B0F] border-b border-[#2a2a33] overflow-hidden">
+            <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-[#D4AF37]/10 blur-3xl" />
+            <div className="relative">
+              <AmexLogo className="mb-4" />
+              <h1 className="text-2xl font-black">{t['welcome']}</h1>
+              <p className="text-[#D4AF37] text-xs tracking-[0.3em] uppercase mt-2 font-semibold">
+                {mesa.mesaNumero} · {mesa.zona}
+              </p>
+            </div>
           </div>
 
           {/* Opciones */}
@@ -809,12 +882,15 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8">
-          <div className="text-center space-y-2">
-            <Users className="h-12 w-12 mx-auto" style={{ color: '#016FD0' }} />
+        <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
+          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full bg-[#D4AF37]/8 blur-3xl" />
+          <div className="relative text-center space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
+              <Users className="h-8 w-8 text-[#D4AF37]" />
+            </div>
             <h2 className="text-xl font-bold">{t['howManyGuests']}</h2>
           </div>
-          <div className="w-full max-w-xs space-y-4">
+          <div className="relative w-full max-w-xs space-y-4">
             <input
               type="number"
               inputMode="numeric"
@@ -824,21 +900,18 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
               value={guestInput}
               onChange={(e) => setGuestInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && valid && handleGuestsConfirm()}
-              className="w-full text-center text-2xl font-bold border-2 border-border rounded-2xl px-4 py-4 bg-background focus:outline-none focus:border-blue-400"
-              style={{ '--tw-ring-color': '#016FD0' } as React.CSSProperties}
+              className="w-full text-center text-2xl font-bold bg-[#1C1C24] border-2 border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#D4AF37] transition-colors"
             />
-            <Button
-              className="w-full font-semibold text-white"
-              style={{ background: '#016FD0' }}
-              size="lg"
+            <button
+              className="w-full h-12 rounded-2xl font-semibold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all disabled:opacity-40 disabled:hover:shadow-none flex items-center justify-center gap-1.5"
               disabled={!valid}
               onClick={handleGuestsConfirm}
             >
               {t['continueCta']}
-              <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
+              <ArrowRight className="h-4 w-4" />
+            </button>
             <button
-              className="w-full text-sm text-muted-foreground py-2"
+              className="w-full text-sm text-[#FAF7F0]/50 hover:text-[#FAF7F0] transition-colors py-2"
               onClick={() => setStep('hub')}
             >
               {t['back']}
@@ -891,17 +964,21 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
         syncing={syncing}
         locale={locale}
       />
-      <div
-        className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12"
-        style={{ background: '#016FD0' }}
-      >
-        <AmexLogo />
-        <div className="text-center space-y-4">
-          <CheckCircle2 className="h-20 w-20 mx-auto text-white" />
-          <h2 className="text-2xl font-black text-white">{t['allDone']}</h2>
-          <p className="text-white/80 text-sm max-w-xs mx-auto">{t['enjoyMessage']}</p>
+      <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/12 blur-3xl" />
+        <div className="relative">
+          <AmexLogo />
+        </div>
+        <div className="relative text-center space-y-4">
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-[0_0_40px_-8px_rgba(212,175,55,0.5)]">
+            <CheckCircle2 className="h-12 w-12 text-[#D4AF37]" />
+          </div>
+          <h2 className="text-2xl font-black">{t['allDone']}</h2>
+          <p className="text-[#FAF7F0]/70 text-sm max-w-xs mx-auto leading-relaxed">
+            {t['enjoyMessage']}
+          </p>
           <button
-            className="mt-4 text-white/60 text-sm underline underline-offset-4"
+            className="mt-4 text-[#D4AF37] text-sm font-medium underline underline-offset-4 hover:text-[#E8C76A] transition-colors"
             onClick={() => {
               setStep('welcome');
               setGuestInput('');
@@ -912,7 +989,9 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             {t['newSession']}
           </button>
         </div>
-        <AmexLogo />
+        <div className="relative">
+          <AmexLogo />
+        </div>
       </div>
     </>
   );
@@ -933,18 +1012,17 @@ function HubButton({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-semibold text-left transition-all ${
+      className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-semibold text-left transition-all active:scale-[0.98] ${
         primary
-          ? 'text-white shadow-md'
-          : 'bg-card border border-border text-foreground hover:bg-accent'
+          ? 'text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] shadow-[0_0_24px_-6px_rgba(212,175,55,0.55)]'
+          : 'bg-[#1C1C24] border border-[#2a2a33] text-[#FAF7F0] hover:border-[#D4AF37]/40'
       }`}
-      style={primary ? { background: '#016FD0' } : {}}
     >
       <span className="flex items-center gap-3">
-        {icon}
+        <span className={primary ? 'text-[#0B0B0F]' : 'text-[#D4AF37]'}>{icon}</span>
         {label}
       </span>
-      <ChevronRight className="h-4 w-4 opacity-60" />
+      <ChevronRight className={`h-4 w-4 ${primary ? 'opacity-70' : 'opacity-40'}`} />
     </button>
   );
 }
@@ -962,9 +1040,12 @@ function HubCard({
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background">
-      <div className="px-5 py-4 border-b flex items-center gap-3">
-        <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground">
+    <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
+      <div className="px-5 py-4 border-b border-[#2a2a33] flex items-center gap-3 bg-[#1C1C24]/40">
+        <button
+          onClick={onBack}
+          className="text-sm text-[#D4AF37] hover:text-[#E8C76A] transition-colors font-medium"
+        >
           ← {t['back']}
         </button>
         <h2 className="font-bold text-base">{title}</h2>
