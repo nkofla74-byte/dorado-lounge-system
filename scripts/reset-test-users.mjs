@@ -1,15 +1,16 @@
 /**
  * Reconcilia el set canónico de usuarios de prueba contra el estado actual de Supabase.
  *
- * Garantiza que existan exactamente estos 11 usuarios, todos con password Admin123:
- *   - superuser@gisat.com (rol superuser, tenant "plataforma")
- *   - admin@gisat.com + 10 roles operativos (tenant "dorado-lounge")
+ * Garantiza que existan exactamente estos 11 usuarios, todos con password Admin123,
+ * todos en el tenant operativo "dorado-lounge":
+ *   - superuser@gisat.com (rol superuser — bypass total, prepara apertura a más tenants)
+ *   - admin@gisat.com + 9 roles operativos
  *
  * Pasos:
- *   1. Limpia el tenant legacy "dorado-demo" + admin@dorado.test si quedaron.
+ *   1. Limpieza idempotente de legacy: tenants "dorado-demo"/"plataforma" sin usuarios,
+ *      usuarios huérfanos admin@dorado.test / pipe@gisat.com si reaparecieran.
  *   2. Crea cualquier usuario faltante del set canónico.
  *   3. Resetea password + app_metadata (role, tenant_id) en los existentes.
- *   4. No toca pipe@gisat.com (cuenta personal del desarrollador).
  *
  * Idempotente: corre las veces que quieras.
  *
@@ -18,7 +19,16 @@
  *   # equivalente a: node --env-file=apps/web/.env.local scripts/reset-test-users.mjs
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+// El paquete @supabase/supabase-js vive en apps/web/node_modules (no en root),
+// así que resolvemos contra el package.json de la app web para que el script
+// funcione invocado desde cualquier cwd.
+const here = path.dirname(fileURLToPath(import.meta.url));
+const requireFromWeb = createRequire(path.resolve(here, '..', 'apps', 'web', 'package.json'));
+const { createClient } = requireFromWeb('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,17 +44,16 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 const PASSWORD = 'Admin123';
 
 const TENANT_OPERATIVO_SLUG = 'dorado-lounge';
-const TENANT_PLATAFORMA_SLUG = 'plataforma';
-const TENANT_DEMO_SLUG = 'dorado-demo'; // a borrar
-const PROTECTED_EMAIL = 'pipe@gisat.com';
+const LEGACY_TENANT_SLUGS = ['dorado-demo', 'plataforma']; // se borran si quedan vacíos
+const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com']; // se borran si reaparecen
 
-// Set de test: 11 usuarios, uno por rol del enum
+// Set de test: 11 usuarios, todos en el tenant operativo.
 const TEST_USERS = [
   {
     email: 'superuser@gisat.com',
     nombre: 'Superuser Plataforma',
     role: 'superuser',
-    tenantSlug: TENANT_PLATAFORMA_SLUG,
+    tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
     email: 'admin@gisat.com',
@@ -115,38 +124,40 @@ async function main() {
   const tenantBySlug = new Map(tenants.map((t) => [t.slug, t]));
 
   const tenantOp = tenantBySlug.get(TENANT_OPERATIVO_SLUG);
-  const tenantPlat = tenantBySlug.get(TENANT_PLATAFORMA_SLUG);
   if (!tenantOp) throw new Error('Falta tenant operativo "dorado-lounge"');
-  if (!tenantPlat) throw new Error('Falta tenant "plataforma"');
 
   // ── 2. Listar auth users ─────────────────────────────────────────────────
   const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const authByEmail = new Map((authList?.users ?? []).map((u) => [u.email, u]));
 
-  // ── 3. Borrar admin@dorado.test (mi error) ───────────────────────────────
-  const stray = authByEmail.get('admin@dorado.test');
-  if (stray) {
+  // ── 3. Borrar emails legacy si reaparecieran ─────────────────────────────
+  for (const email of LEGACY_EMAILS) {
+    const stray = authByEmail.get(email);
+    if (!stray) continue;
     await admin.from('users').delete().eq('id', stray.id);
     const { error } = await admin.auth.admin.deleteUser(stray.id);
-    if (error) console.error(`✗ No se pudo borrar admin@dorado.test: ${error.message}`);
-    else console.log('🗑  admin@dorado.test (auth + public.users)');
-    authByEmail.delete('admin@dorado.test');
+    if (error) console.error(`✗ No se pudo borrar ${email}: ${error.message}`);
+    else console.log(`🗑  ${email} (auth + public.users)`);
+    authByEmail.delete(email);
   }
 
-  // ── 4. Borrar tenant dorado-demo si no tiene usuarios ────────────────────
-  const tenantDemo = tenantBySlug.get(TENANT_DEMO_SLUG);
-  if (tenantDemo) {
+  // ── 4. Borrar tenants legacy si quedan vacíos ────────────────────────────
+  for (const slug of LEGACY_TENANT_SLUGS) {
+    const t = tenantBySlug.get(slug);
+    if (!t) continue;
     const { count } = await admin
       .from('users')
       .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantDemo.id);
-    if ((count ?? 0) === 0) {
-      const { error } = await admin.from('tenants').delete().eq('id', tenantDemo.id);
-      if (error) console.error(`✗ No se pudo borrar tenant dorado-demo: ${error.message}`);
-      else console.log(`🗑  tenant ${TENANT_DEMO_SLUG}`);
-    } else {
-      console.log(`⏭  tenant ${TENANT_DEMO_SLUG} todavía tiene ${count} usuarios — no se borra`);
+      .eq('tenant_id', t.id);
+    if ((count ?? 0) > 0) {
+      console.log(`⏭  tenant ${slug} todavía tiene ${count} usuarios — no se borra`);
+      continue;
     }
+    // Limpiar receta(s) huérfana(s) antes de tirar el tenant
+    await admin.from('recetas').delete().eq('tenant_id', t.id);
+    const { error } = await admin.from('tenants').delete().eq('id', t.id);
+    if (error) console.error(`✗ No se pudo borrar tenant ${slug}: ${error.message}`);
+    else console.log(`🗑  tenant ${slug}`);
   }
 
   // ── 5. Procesar test users ───────────────────────────────────────────────
@@ -225,11 +236,6 @@ async function main() {
       created++;
       console.log(`✨ ${u.role.padEnd(22)} ${u.email}`);
     }
-  }
-
-  // ── 6. Verificar pipe@gisat.com intacto ──────────────────────────────────
-  if (authByEmail.has(PROTECTED_EMAIL)) {
-    console.log(`\n🛡  ${PROTECTED_EMAIL} se mantuvo intacto (cuenta personal).`);
   }
 
   console.log('\n────────────────────────────────────────────────────');

@@ -16,7 +16,7 @@ pnpm lint && pnpm typecheck           # obligatorio antes de commit
 pnpm test                             # vitest (todos los paquetes)
 pnpm --filter apps/web test:e2e       # playwright
 pnpm --filter apps/web tsc --noEmit   # type-check sin build
-pnpm reset:test-users                 # reconcilia el set canónico de test users (idempotente)
+pnpm run reset:test-users             # reconcilia el set canónico de test users (idempotente)
 ```
 
 DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **Nunca `supabase start` ni Docker local.**
