@@ -16,8 +16,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
   }
 
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    log.error('CRON_SECRET no configurado');
+    return NextResponse.json({ error: 'SERVER_MISCONFIGURED' }, { status: 500 });
+  }
+
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

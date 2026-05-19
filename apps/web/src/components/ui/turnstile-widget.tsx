@@ -27,6 +27,9 @@ interface TurnstileWidgetProps {
   onExpire?: () => void;
   theme?: 'light' | 'dark' | 'auto';
   className?: string;
+  // Cuando cambia, fuerza un reset del widget para obtener un token nuevo.
+  // Útil tras consumir el token en un server action (Cloudflare lo invalida tras siteverify).
+  resetKey?: number | string;
 }
 
 export function TurnstileWidget({
@@ -34,6 +37,7 @@ export function TurnstileWidget({
   onExpire,
   theme = 'auto',
   className,
+  resetKey,
 }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
@@ -73,6 +77,13 @@ export function TurnstileWidget({
       }
     };
   }, [siteKey, renderWidget]);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    if (widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, [resetKey]);
 
   if (!siteKey) return null;
 

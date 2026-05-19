@@ -2,9 +2,8 @@ services:
   - type: web
     name: dorado-lounge-socket
     env: node
-    # NOTA: plan free hiberna ~15min y mata WebSockets. Migrar a starter
-    # antes de salir a producción real (sala 24/7).
-    plan: free
+    # Sala 24/7: plan starter — sin hibernación, mantiene WebSockets vivos.
+    plan: starter
     # Build de todo el monorepo: garantiza que workspace deps (@dorado/shared-types)
     # se compilen antes que socket-server las consuma.
     buildCommand: corepack enable && corepack prepare pnpm@10.33.2 --activate && pnpm install --frozen-lockfile && pnpm build

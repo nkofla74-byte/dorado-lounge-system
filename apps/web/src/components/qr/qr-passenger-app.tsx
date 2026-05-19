@@ -20,6 +20,9 @@ import type { PublicReceta, MesaInfo, CategoriaMenu } from '@/app/qr/[locale]/ac
 import { useOfflineSync } from '@/lib/offline/use-offline-sync';
 import { enqueueOrder } from '@/lib/offline/queue';
 import { OfflineBanner } from '@/components/qr/offline-banner';
+import { TurnstileWidget } from '@/components/ui/turnstile-widget';
+
+const TURNSTILE_ENABLED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -534,6 +537,8 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   const [orderError, setOrderError] = useState('');
   const orderCountRef = useRef(0);
   const { isOnline, pendingCount, syncing } = useOfflineSync();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   const t = TEXTS[locale] ?? TEXTS['es']!;
 
@@ -559,6 +564,13 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     const idempotencyKey = `${idPrefix}-c${currentComensal}-${orderCountRef.current}`;
 
     if (items.length > 0) {
+      // Online + Turnstile activo: exigir token. Offline encola sin token (rate limit + idempotencia cubren).
+      if (isOnline && TURNSTILE_ENABLED && !turnstileToken) {
+        setOrderError(t['errorOrder'] ?? '');
+        setLoading(false);
+        return;
+      }
+
       const orderInput = {
         token,
         items: items.map((i) => ({
@@ -568,6 +580,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
         })),
         notas: `Comensal ${currentComensal} de ${totalComensales}`,
         idempotencyKey,
+        ...(turnstileToken ? { turnstileToken } : {}),
       };
 
       if (!isOnline) {
@@ -596,6 +609,11 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             setLoading(false);
             return;
           }
+        }
+        // Token Turnstile es de un solo uso — pedir uno nuevo para el siguiente pedido.
+        if (TURNSTILE_ENABLED) {
+          setTurnstileToken(null);
+          setTurnstileResetKey((k) => k + 1);
         }
       }
     }
@@ -851,6 +869,15 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           loading={loading}
           error={orderError}
         />
+        {TURNSTILE_ENABLED ? (
+          <div className="fixed bottom-2 right-2 z-50">
+            <TurnstileWidget
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              resetKey={turnstileResetKey}
+            />
+          </div>
+        ) : null}
       </>
     );
   }

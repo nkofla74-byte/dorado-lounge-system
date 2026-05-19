@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyMesaToken } from '@/lib/qr/token';
 import { rateLimit } from '@/lib/rate-limit';
+import { verifyTurnstile } from '@/lib/turnstile/verify';
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { ok, err, toAppError } from '@/lib/result';
 import { headers } from 'next/headers';
@@ -37,6 +38,7 @@ export interface PedidoQRInput {
   items: Array<{ recetaId: string; cantidad: number; notas?: string }>;
   notas?: string;
   idempotencyKey: string;
+  turnstileToken?: string;
 }
 
 function getHeaderIp(h: Headers): string {
@@ -124,6 +126,18 @@ export async function createPedidoFromQR(
       return err(
         toAppError(new Error('Demasiados pedidos desde esta mesa. Intenta en unos minutos.')),
       );
+    }
+
+    // Turnstile: cuando el secret está configurado, exigir token válido en cada pedido.
+    // Bloquea bots que reutilicen un JWT de mesa válido para spam de pedidos.
+    if (process.env['TURNSTILE_SECRET_KEY']) {
+      if (!input.turnstileToken) {
+        return err(toAppError(new Error('Verificación anti-bot requerida')));
+      }
+      const turnstile = await verifyTurnstile(input.turnstileToken);
+      if (!turnstile.ok) {
+        return err(toAppError(new Error('Verificación anti-bot inválida')));
+      }
     }
 
     const parsed = createPedidoSchema.safeParse({
