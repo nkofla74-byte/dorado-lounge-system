@@ -4,13 +4,12 @@ import { getMenuPublico } from './actions';
 import { QRPassengerApp } from '@/components/qr/qr-passenger-app';
 
 interface Props {
-  params: { locale: string };
-  searchParams: { t?: string };
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ t?: string }>;
 }
 
 export default async function QRPage({ params, searchParams }: Props) {
-  const token = searchParams.t ?? '';
-  const locale = params.locale;
+  const [{ locale }, { t: token = '' }] = await Promise.all([params, searchParams]);
 
   if (!token) {
     const t = await getTranslations({ locale, namespace: 'qr' });

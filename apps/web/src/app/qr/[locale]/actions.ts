@@ -2,8 +2,10 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyMesaToken } from '@/lib/qr/token';
+import { rateLimit } from '@/lib/rate-limit';
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { ok, err, toAppError } from '@/lib/result';
+import { headers } from 'next/headers';
 import type { Result } from '@/lib/result';
 import type { ZonaServicio } from '@dorado/shared-types';
 
@@ -35,6 +37,15 @@ export interface PedidoQRInput {
   items: Array<{ recetaId: string; cantidad: number; notas?: string }>;
   notas?: string;
   idempotencyKey: string;
+}
+
+function getHeaderIp(h: Headers): string {
+  const forwarded = h.get('x-forwarded-for');
+  if (forwarded) {
+    const first = forwarded.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return h.get('x-real-ip') ?? 'unknown';
 }
 
 export async function getMenuPublico(
@@ -104,6 +115,15 @@ export async function createPedidoFromQR(
     const mesa = await verifyMesaToken(input.token);
     if (!mesa) {
       return err(toAppError(new Error('QR inválido o expirado')));
+    }
+
+    const h = await headers();
+    const ip = getHeaderIp(h);
+    const rl = await rateLimit('qrOrder', `${mesa.tenantId}:${mesa.mesaNumero}:${ip}`);
+    if (!rl.allowed) {
+      return err(
+        toAppError(new Error('Demasiados pedidos desde esta mesa. Intenta en unos minutos.')),
+      );
     }
 
     const parsed = createPedidoSchema.safeParse({

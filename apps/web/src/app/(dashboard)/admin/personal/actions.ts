@@ -15,8 +15,12 @@ const adminRoleSchema = z.enum([
   'chef',
   'sous_chef',
   'mesero_amex',
+  'recepcion',
   'personal_snack',
   'personal_buffet',
+  'personal_almacen',
+  'personal_pasteleria',
+  'steward',
 ]);
 
 const crearPersonalSchema = z.object({

@@ -156,12 +156,14 @@ class SupabaseSuperuserRepository implements SuperuserRepository {
       .single();
     if (error) throw new Error(error.message);
 
-    // Propagate role change to JWT claims via app_metadata
+    const { data: authData } = await admin.auth.admin.getUserById(userId);
+    const appMetadata = authData?.user?.app_metadata ?? {};
+
+    // Propagate role change to JWT claims without dropping tenant_id.
     await admin.auth.admin.updateUserById(userId, {
-      app_metadata: { role },
+      app_metadata: { ...appMetadata, tenant_id: data.tenant_id, role },
     });
 
-    const { data: authData } = await admin.auth.admin.getUserById(userId);
     return mapUser(data, authData?.user?.email ?? '');
   }
 }

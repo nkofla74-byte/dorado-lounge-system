@@ -1,8 +1,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import type { Server } from 'socket.io';
+import { CHANNELS } from '@dorado/shared-types';
 import { logger } from './logger';
 
 const EMIT_SECRET = process.env['SOCKET_EMIT_SECRET'];
+const VALID_CHANNELS = new Set<string>(Object.values(CHANNELS));
+const MAX_BODY_BYTES = 64 * 1024;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Sliding-window rate limiter: máximo 120 peticiones por IP en 60 segundos.
 // Protege el endpoint /emit de abuso (DoS, spam de eventos).
@@ -30,6 +35,20 @@ setInterval(() => {
   }
 }, 5 * 60_000);
 
+function isAuthorized(auth: string | string[] | undefined): boolean {
+  if (!EMIT_SECRET || typeof auth !== 'string') return false;
+
+  const expected = Buffer.from(`Bearer ${EMIT_SECRET}`);
+  const actual = Buffer.from(auth);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
+function isValidEvent(event: unknown): event is { type: string; payload: unknown } {
+  if (!event || typeof event !== 'object') return false;
+  const maybeEvent = event as { type?: unknown; payload?: unknown };
+  return typeof maybeEvent.type === 'string' && maybeEvent.payload !== undefined;
+}
+
 export function createEmitHandler(io: Server) {
   return function handleEmit(req: IncomingMessage, res: ServerResponse): void {
     if (!EMIT_SECRET) {
@@ -47,7 +66,7 @@ export function createEmitHandler(io: Server) {
     }
 
     const auth = req.headers['authorization'];
-    if (auth !== `Bearer ${EMIT_SECRET}`) {
+    if (!isAuthorized(auth)) {
       logger.warn({ event: 'emit_unauthorized', ip });
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'UNAUTHORIZED' }));
@@ -55,7 +74,16 @@ export function createEmitHandler(io: Server) {
     }
 
     let body = '';
+    let bodyBytes = 0;
     req.on('data', (chunk: Buffer) => {
+      bodyBytes += chunk.byteLength;
+      if (bodyBytes > MAX_BODY_BYTES) {
+        logger.warn({ event: 'emit_body_too_large', ip, bytes: bodyBytes });
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'PAYLOAD_TOO_LARGE' }));
+        req.destroy();
+        return;
+      }
       body += chunk.toString();
     });
     req.on('end', () => {
@@ -66,7 +94,7 @@ export function createEmitHandler(io: Server) {
           event: unknown;
         };
 
-        if (!channel || !tenantId || !event) {
+        if (!UUID_RE.test(tenantId) || !VALID_CHANNELS.has(channel) || !isValidEvent(event)) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'BAD_REQUEST' }));
           return;

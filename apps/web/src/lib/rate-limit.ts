@@ -35,6 +35,11 @@ const limiters = {
   gdpr: redis
     ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(3, '1 d'), prefix: 'rl:gdpr' })
     : null,
+
+  // QR público: evita spam de pedidos desde un token de mesa válido.
+  qrOrder: redis
+    ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(6, '10 m'), prefix: 'rl:qr-order' })
+    : null,
 } as const;
 
 export type RateLimitBucket = keyof typeof limiters;
@@ -45,13 +50,19 @@ export interface RateLimitResult {
   reset: number; // ms epoch when the window resets
 }
 
+const failClosedBuckets = new Set<RateLimitBucket>(['login', 'gdpr', 'qrOrder']);
+
 export async function rateLimit(
   bucket: RateLimitBucket,
   identifier: string,
 ): Promise<RateLimitResult> {
   const rl = limiters[bucket];
   if (!rl) {
-    // No Upstash configurado — fail-open con valores neutros.
+    if (process.env['NODE_ENV'] === 'production' && failClosedBuckets.has(bucket)) {
+      return { allowed: false, remaining: 0, reset: 0 };
+    }
+
+    // No Upstash configurado en dev — fail-open con valores neutros.
     return { allowed: true, remaining: 999, reset: 0 };
   }
   const result = await rl.limit(identifier);

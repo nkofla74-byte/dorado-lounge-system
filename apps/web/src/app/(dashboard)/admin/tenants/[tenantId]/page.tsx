@@ -7,10 +7,11 @@ import { getTenantById, getUsers } from '@/modules/superuser/actions';
 import { UsersPanel } from '@/components/superuser/users-panel';
 
 interface Props {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
 export default async function TenantDetailPage({ params }: Props) {
+  const { tenantId } = await params;
   const t = await getTranslations('admin.tenantDetail');
   const supabase = await createClient();
   const {
@@ -19,8 +20,8 @@ export default async function TenantDetailPage({ params }: Props) {
   if (user?.app_metadata?.role !== 'superuser') redirect('/');
 
   const [tenantResult, usersResult] = await Promise.all([
-    getTenantById(params.tenantId),
-    getUsers(params.tenantId),
+    getTenantById(tenantId),
+    getUsers(tenantId),
   ]);
 
   if (!tenantResult.ok || !tenantResult.value) notFound();

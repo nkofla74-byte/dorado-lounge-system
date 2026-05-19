@@ -23,9 +23,10 @@ export default async function QRLocaleLayout({
   params,
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const locale = params.locale as Locale;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   if (!LOCALES.includes(locale)) notFound();
 
   const messages = await loadMessages(locale);

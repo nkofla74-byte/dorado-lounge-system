@@ -35,7 +35,7 @@ export const zonaServicioSchema = z.enum(['amex', 'snack', 'buffet']);
 
 export const capaInventarioSchema = z.enum(['capa_1', 'capa_2']);
 
-export const unidadMedidaSchema = z.enum(['kg', 'g', 'l', 'ml', 'unidad', 'porcion']);
+export const unidadMedidaSchema = z.enum(['kg', 'g', 'lb', 'l', 'ml', 'unidad', 'porcion']);
 
 export const tipoMovimientoSchema = z.enum([
   'entrada',
@@ -55,6 +55,7 @@ export const categoriaMermaSchema = z.enum([
 
 export const estadoPedidoSchema = z.enum([
   'creado',
+  'recibido_cocina',
   'en_preparacion',
   'despachado',
   'entregado',
@@ -94,14 +95,36 @@ export const createInsumoSchema = z.object({
   stockMinimo: z.number().min(0).default(0),
 });
 
-export const createLoteSchema = z.object({
-  insumoId: uuidSchema,
-  cantidadInicial: cantidadSchema,
-  fechaVencimiento: z.string().date().optional(),
-  proveedor: z.string().max(255).optional(),
-  proveedorId: uuidSchema.optional(),
-  costoUnitario: precioCopSchema.optional(),
-});
+export const createLoteSchema = z
+  .object({
+    insumoId: uuidSchema,
+    cantidadInicial: cantidadSchema,
+    fechaVencimiento: z.string().date().optional(),
+    proveedor: z.string().max(255).optional(),
+    proveedorId: uuidSchema.optional(),
+    costoUnitario: precioCopSchema.optional(),
+    cantidadEmpaques: z
+      .number()
+      .int()
+      .positive('La cantidad de empaques debe ser mayor que 0')
+      .optional(),
+    pesoUnitario: cantidadSchema.optional(),
+    unidadPeso: unidadMedidaSchema.optional(),
+  })
+  .refine(
+    (v) => {
+      const hasEmpaques = v.cantidadEmpaques !== undefined;
+      const hasPeso = v.pesoUnitario !== undefined;
+      const hasUnidadPeso = v.unidadPeso !== undefined;
+      return (
+        (hasEmpaques && hasPeso && hasUnidadPeso) || (!hasEmpaques && !hasPeso && !hasUnidadPeso)
+      );
+    },
+    {
+      message: 'cantidadEmpaques, pesoUnitario y unidadPeso deben venir juntos o ninguno',
+      path: ['cantidadEmpaques'],
+    },
+  );
 
 export const createRecetaSchema = z.discriminatedUnion('tipoReceta', [
   z.object({
