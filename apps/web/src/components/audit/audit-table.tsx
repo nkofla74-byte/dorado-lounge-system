@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { Fragment, useState, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   Search,
@@ -268,9 +268,8 @@ export function AuditTable({ initialData, initialTotal, showTenant = false }: Au
               </TableRow>
             ) : (
               displayed.map((entry) => (
-                <>
+                <Fragment key={entry.id}>
                   <TableRow
-                    key={entry.id}
                     className={cn(
                       'border-border cursor-pointer',
                       expanded === entry.id && 'bg-muted/20',
@@ -324,13 +323,9 @@ export function AuditTable({ initialData, initialTotal, showTenant = false }: Au
                     </TableCell>
                   </TableRow>
                   {expanded === entry.id && (
-                    <ExpandedRow
-                      key={`${entry.id}-exp`}
-                      entry={entry}
-                      colSpan={showTenant ? 7 : 6}
-                    />
+                    <ExpandedRow entry={entry} colSpan={showTenant ? 7 : 6} />
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>
