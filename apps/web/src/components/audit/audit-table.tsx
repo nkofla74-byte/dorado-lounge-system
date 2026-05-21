@@ -294,7 +294,9 @@ export function AuditTable({ initialData, initialTotal, showTenant = false }: Au
                             {entry.tenantNombre}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground/40 text-xs italic">global</span>
+                          <span className="text-muted-foreground/40 text-xs italic">
+                            {t('tenantGlobal')}
+                          </span>
                         )}
                       </TableCell>
                     )}

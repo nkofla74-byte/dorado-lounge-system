@@ -518,7 +518,8 @@
       "labelPayload": "Payload",
       "labelIntegridad": "Integrity",
       "labelIp": "IP",
-      "labelResourceId": "Resource ID"
+      "labelResourceId": "Resource ID",
+      "tenantGlobal": "global"
     },
     "flights": {
       "pageTitle": "El Dorado flights",

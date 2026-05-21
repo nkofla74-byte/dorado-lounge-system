@@ -1,7 +1,6 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { setLocaleCookie } from '@/lib/i18n/set-locale';
 
@@ -18,15 +17,15 @@ interface LocaleSwitcherProps {
 
 export function LocaleSwitcher({ current }: LocaleSwitcherProps) {
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const handleSwitch = (locale: Locale) => {
     if (locale === current) return;
     startTransition(async () => {
       await setLocaleCookie(locale);
-      // Sin refresh el server component superior queda con el locale
-      // anterior (la cookie cambia pero el HTML ya fue enviado al cliente).
-      router.refresh();
+      // router.refresh() en Next.js 15 no siempre re-renderiza el layout que
+      // depende de cookies(); usamos reload duro para garantizar que TODO el
+      // árbol re-fetche con la nueva cookie NEXT_LOCALE.
+      window.location.reload();
     });
   };
 
