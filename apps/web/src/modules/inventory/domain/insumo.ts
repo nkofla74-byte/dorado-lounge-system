@@ -26,6 +26,13 @@ export interface CreateInsumoInput {
   mermaDefault: number;
 }
 
+export interface UpdateInsumoInput {
+  id: string;
+  nombre: string;
+  stockMinimo: number;
+  mermaDefault: number;
+}
+
 export interface Lote {
   id: string;
   tenantId: string;

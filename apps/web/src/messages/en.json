@@ -152,8 +152,15 @@
     },
     "actions": {
       "lotes": "Batches",
+      "edit": "Edit",
       "stockOut": "Stock out",
       "merma": "Waste"
+    },
+    "editInsumo": {
+      "title": "Edit item — {nombre}",
+      "srDescription": "Edit name, minimum stock and approximate waste of the item.",
+      "guardar": "Save changes",
+      "guardando": "Saving…"
     },
     "stockOut": {
       "title": "Stock out",

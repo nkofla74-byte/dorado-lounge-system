@@ -152,8 +152,15 @@
     },
     "actions": {
       "lotes": "Lotes",
+      "edit": "Editar",
       "stockOut": "Stock Out",
       "merma": "Merma"
+    },
+    "editInsumo": {
+      "title": "Editar insumo — {nombre}",
+      "srDescription": "Edita nombre, stock mínimo y merma aproximada del insumo.",
+      "guardar": "Guardar cambios",
+      "guardando": "Guardando…"
     },
     "stockOut": {
       "title": "Stock Out",

@@ -6,6 +6,7 @@ import type {
   Insumo,
   InsumoWithStock,
   CreateInsumoInput,
+  UpdateInsumoInput,
   Lote,
   CreateLoteInput,
 } from '../domain/insumo';
@@ -166,6 +167,31 @@ export function createInsumoRepository(): InsumoRepository {
             `El código '${codigo}' ya existe para este tenant`,
           );
         }
+        throw new AppError('DB_ERROR', 500, error.message);
+      }
+
+      return toInsumo(data as unknown as Omit<InsumoRow, 'lotes'>);
+    },
+
+    async update(tenantId: string, input: UpdateInsumoInput): Promise<Insumo> {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('insumos')
+        .update({
+          nombre: input.nombre,
+          stock_minimo: input.stockMinimo,
+          merma_default: input.mermaDefault,
+        })
+        .eq('id', input.id)
+        .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
+        .select(
+          'id, tenant_id, nombre, codigo, capa, unidad_medida, stock_minimo, merma_default, activo, created_at',
+        )
+        .single();
+
+      if (error) {
         throw new AppError('DB_ERROR', 500, error.message);
       }
 

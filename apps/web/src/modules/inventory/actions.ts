@@ -8,9 +8,11 @@ import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/infrastru
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
+import { updateInsumo as updateInsumoUseCase } from './application/update-insumo';
 import { createLote as createLoteUseCase } from './application/create-lote';
 import {
   createInsumoSchema,
+  updateInsumoSchema,
   createLoteSchema,
   createMermaSchema,
   stockOutSchema,
@@ -50,6 +52,37 @@ export async function createInsumo(input: unknown): Promise<Result<Insumo>> {
       resourceId: insumo.id,
       resourceType: 'insumo',
       payload: { nombre: insumo.nombre, capa: insumo.capa },
+    });
+
+    return ok(insumo);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function updateInsumo(input: unknown): Promise<Result<Insumo>> {
+  try {
+    const ctx = await assertCan('inventory:write');
+
+    const parsed = updateInsumoSchema.safeParse(input);
+    if (!parsed.success) {
+      return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
+    }
+
+    const repo = createInsumoRepository();
+    const insumo = await updateInsumoUseCase(repo, ctx.tenantId, parsed.data);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'inventory:update_insumo',
+      resourceId: insumo.id,
+      resourceType: 'insumo',
+      payload: {
+        nombre: insumo.nombre,
+        stockMinimo: insumo.stockMinimo,
+        mermaDefault: insumo.mermaDefault,
+      },
     });
 
     return ok(insumo);

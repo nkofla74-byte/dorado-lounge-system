@@ -12,6 +12,7 @@ import {
   TrendingDown,
   Trash2,
   Upload,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getInsumos } from '@/modules/inventory/actions';
 import { CreateInsumoDialog } from './create-insumo-dialog';
+import { EditInsumoDialog } from './edit-insumo-dialog';
 import { BulkImportDialog } from './bulk-import-dialog';
 import { LotesSheet } from './lotes-sheet';
 import { StockOutDialog } from './stock-out-dialog';
@@ -74,6 +76,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
   const [lotesInsumo, setLotesInsumo] = useState<InsumoWithStock | null>(null);
   const [stockOutInsumo, setStockOutInsumo] = useState<InsumoWithStock | null>(null);
   const [mermaInsumo, setMermaInsumo] = useState<InsumoWithStock | null>(null);
+  const [editInsumo, setEditInsumo] = useState<InsumoWithStock | null>(null);
 
   const canWrite = WRITE_ROLES.has(userRole ?? '');
   const canStockOut = STOCK_OUT_ROLES.has(userRole ?? '');
@@ -224,6 +227,12 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                             <Layers className="h-3.5 w-3.5 mr-2" />
                             {t('actions.lotes')}
                           </DropdownMenuItem>
+                          {canWrite && (
+                            <DropdownMenuItem onClick={() => setEditInsumo(insumo)}>
+                              <Pencil className="h-3.5 w-3.5 mr-2" />
+                              {t('actions.edit')}
+                            </DropdownMenuItem>
+                          )}
                           {canStockOut && (
                             <DropdownMenuItem
                               onClick={() => setStockOutInsumo(insumo)}
@@ -258,6 +267,16 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onCreated={handleCreated}
+        />
+      )}
+
+      {canWrite && (
+        <EditInsumoDialog
+          insumo={editInsumo}
+          onOpenChange={(open) => {
+            if (!open) setEditInsumo(null);
+          }}
+          onSaved={refresh}
         />
       )}
 

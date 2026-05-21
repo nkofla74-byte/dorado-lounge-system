@@ -96,6 +96,13 @@ export const createInsumoSchema = z.object({
   mermaDefault: coeficienteMermaSchema.default(0),
 });
 
+export const updateInsumoSchema = z.object({
+  id: uuidSchema,
+  nombre: z.string().min(1).max(255),
+  stockMinimo: z.number().min(0),
+  mermaDefault: coeficienteMermaSchema,
+});
+
 export const createLoteSchema = z
   .object({
     insumoId: uuidSchema,
