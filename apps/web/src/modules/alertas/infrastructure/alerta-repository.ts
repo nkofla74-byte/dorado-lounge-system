@@ -21,10 +21,28 @@ type AlertaRow = {
 const SELECT =
   'id, tenant_id, tipo, severidad, titulo, mensaje, resource_id, resource_tipo, leida, leida_at, created_at';
 
-function toAlerta(row: AlertaRow): Alerta {
+async function resolveTenantInfo(
+  admin: ReturnType<typeof createAdminClient>,
+  rows: AlertaRow[],
+): Promise<Record<string, { nombre: string; slug: string }>> {
+  const ids = Array.from(new Set(rows.map((r) => r.tenant_id)));
+  if (ids.length === 0) return {};
+  const { data } = await admin.from('tenants').select('id, nombre, slug').in('id', ids);
+  return Object.fromEntries(
+    (data ?? []).map((t) => [t.id, { nombre: t.nombre as string, slug: t.slug as string }]),
+  );
+}
+
+function toAlerta(
+  row: AlertaRow,
+  tenantMap: Record<string, { nombre: string; slug: string }>,
+): Alerta {
+  const tenant = tenantMap[row.tenant_id];
   return {
     id: row.id,
     tenantId: row.tenant_id,
+    tenantNombre: tenant?.nombre ?? null,
+    tenantSlug: tenant?.slug ?? null,
     tipo: row.tipo as Alerta['tipo'],
     severidad: row.severidad as Alerta['severidad'],
     titulo: row.titulo,
@@ -37,47 +55,56 @@ function toAlerta(row: AlertaRow): Alerta {
   };
 }
 
+// Cuando tenantId=null usamos admin (bypassea RLS) — el rol superuser ya fue
+// validado en la action vía assertCan.
 export function createAlertaRepository(): AlertaRepository {
   return {
-    async findRecent(tenantId: string, limit = 30): Promise<Alerta[]> {
-      const supabase = await createClient();
-      const { data, error } = await supabase
-        .from('alertas')
-        .select(SELECT)
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
+    async findRecent(tenantId, limit = 30): Promise<Alerta[]> {
+      const admin = createAdminClient();
+      let q: any =
+        tenantId === null
+          ? admin.from('alertas').select(SELECT)
+          : (await createClient()).from('alertas').select(SELECT).eq('tenant_id', tenantId);
+      const { data, error } = await q.order('created_at', { ascending: false }).limit(limit);
       if (error) throw new AppError('DB_ERROR', 500, error.message);
-      return (data as AlertaRow[]).map(toAlerta);
+      const rows = (data ?? []) as AlertaRow[];
+      const tenantMap = await resolveTenantInfo(admin, rows);
+      return rows.map((r) => toAlerta(r, tenantMap));
     },
 
-    async findAll(tenantId: string, limit = 500): Promise<Alerta[]> {
-      const supabase = await createClient();
-      const { data, error } = await supabase
-        .from('alertas')
-        .select(SELECT)
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
+    async findAll(tenantId, limit = 500): Promise<Alerta[]> {
+      const admin = createAdminClient();
+      let q: any =
+        tenantId === null
+          ? admin.from('alertas').select(SELECT)
+          : (await createClient()).from('alertas').select(SELECT).eq('tenant_id', tenantId);
+      const { data, error } = await q.order('created_at', { ascending: false }).limit(limit);
       if (error) throw new AppError('DB_ERROR', 500, error.message);
-      return (data as AlertaRow[]).map(toAlerta);
+      const rows = (data ?? []) as AlertaRow[];
+      const tenantMap = await resolveTenantInfo(admin, rows);
+      return rows.map((r) => toAlerta(r, tenantMap));
     },
 
-    async countUnread(tenantId: string): Promise<number> {
+    async countUnread(tenantId): Promise<number> {
+      if (tenantId === null) {
+        const admin = createAdminClient();
+        const { count, error } = await admin
+          .from('alertas')
+          .select('id', { count: 'exact', head: true })
+          .eq('leida', false);
+        if (error) throw new AppError('DB_ERROR', 500, error.message);
+        return count ?? 0;
+      }
       const supabase = await createClient();
       const { count, error } = await supabase
         .from('alertas')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .eq('leida', false);
-
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       return count ?? 0;
     },
 
-    // Usa admin client para poder insertar desde Server Actions sin restricción de RLS de rol
     async create(tenantId: string, input: CreateAlertaInput): Promise<Alerta> {
       const admin = createAdminClient();
       const { data, error } = await admin
@@ -95,10 +122,22 @@ export function createAlertaRepository(): AlertaRepository {
         .single();
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);
-      return toAlerta(data as AlertaRow);
+      const row = data as AlertaRow;
+      const tenantMap = await resolveTenantInfo(admin, [row]);
+      return toAlerta(row, tenantMap);
     },
 
-    async marcarLeida(id: string, tenantId: string, userId: string): Promise<void> {
+    async marcarLeida(id, tenantId, userId): Promise<void> {
+      // tenantId=null (superuser): admin client + solo filtra por id.
+      if (tenantId === null) {
+        const admin = createAdminClient();
+        const { error } = await admin
+          .from('alertas')
+          .update({ leida: true, leida_at: new Date().toISOString(), leida_por: userId })
+          .eq('id', id);
+        if (error) throw new AppError('DB_ERROR', 500, error.message);
+        return;
+      }
       const supabase = await createClient();
       const { error } = await supabase
         .from('alertas')
@@ -109,7 +148,17 @@ export function createAlertaRepository(): AlertaRepository {
       if (error) throw new AppError('DB_ERROR', 500, error.message);
     },
 
-    async marcarTodasLeidas(tenantId: string, userId: string): Promise<void> {
+    async marcarTodasLeidas(tenantId, userId): Promise<void> {
+      // tenantId=null (superuser): marca todas no-leídas de TODOS los tenants.
+      if (tenantId === null) {
+        const admin = createAdminClient();
+        const { error } = await admin
+          .from('alertas')
+          .update({ leida: true, leida_at: new Date().toISOString(), leida_por: userId })
+          .eq('leida', false);
+        if (error) throw new AppError('DB_ERROR', 500, error.message);
+        return;
+      }
       const supabase = await createClient();
       const { error } = await supabase
         .from('alertas')

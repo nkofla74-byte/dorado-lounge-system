@@ -14,9 +14,10 @@ import type { CogsPerPassenger } from '@/modules/analytics/domain/kpi';
 
 interface CogsTableProps {
   data: CogsPerPassenger[];
+  showTenant?: boolean;
 }
 
-export function CogsTable({ data }: CogsTableProps) {
+export function CogsTable({ data, showTenant = false }: CogsTableProps) {
   const t = useTranslations('analytics');
   const locale = useLocale();
   const dateLocale = locale === 'en' ? 'en-US' : 'es-CO';
@@ -51,6 +52,11 @@ export function CogsTable({ data }: CogsTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
+            {showTenant && (
+              <TableHead className="text-xs font-medium text-muted-foreground">
+                {t('colTenant')}
+              </TableHead>
+            )}
             <TableHead className="text-xs font-medium text-muted-foreground">
               {t('colTurno')}
             </TableHead>
@@ -73,7 +79,18 @@ export function CogsTable({ data }: CogsTableProps) {
         </TableHeader>
         <TableBody>
           {data.map((row) => (
-            <TableRow key={row.turnoId} className="hover:bg-muted/30">
+            <TableRow key={`${row.tenantId}-${row.turnoId}`} className="hover:bg-muted/30">
+              {showTenant && (
+                <TableCell>
+                  {row.tenantNombre ? (
+                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                      {row.tenantNombre}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-xs">—</span>
+                  )}
+                </TableCell>
+              )}
               <TableCell className="font-medium text-sm">{row.turnoNombre}</TableCell>
               <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                 {formatFecha(row.iniciadoAt)}

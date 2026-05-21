@@ -8,6 +8,9 @@ import type { AnalyticsRepository } from '../application/ports/analytics-reposit
 
 function makeCogs(overrides: Partial<CogsPerPassenger> = {}): CogsPerPassenger {
   return {
+    tenantId: 'tenant-1',
+    tenantNombre: null,
+    tenantSlug: null,
     turnoId: 'turno-1',
     turnoNombre: 'Turno mañana',
     iniciadoAt: new Date('2026-05-04T06:00:00Z'),
@@ -21,6 +24,9 @@ function makeCogs(overrides: Partial<CogsPerPassenger> = {}): CogsPerPassenger {
 
 function makeConsumo(overrides: Partial<ConsumoInsumo> = {}): ConsumoInsumo {
   return {
+    tenantId: 'tenant-1',
+    tenantNombre: null,
+    tenantSlug: null,
     turnoId: 'turno-1',
     turnoNombre: 'Turno mañana',
     insumoId: 'ins-1',

@@ -14,8 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AlertasAdminPage() {
   const t = await getTranslations('alertasAdmin');
+  let role: string;
   try {
-    await assertCan('alertas:write');
+    const ctx = await assertCan('alertas:write');
+    role = ctx.role;
   } catch {
     redirect('/inventario');
   }
@@ -28,7 +30,10 @@ export default async function AlertasAdminPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
-      <AlertasAdminPanel initialData={result.ok ? result.value : []} />
+      <AlertasAdminPanel
+        initialData={result.ok ? result.value : []}
+        showTenant={role === 'superuser'}
+      />
     </div>
   );
 }

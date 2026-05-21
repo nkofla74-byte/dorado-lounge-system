@@ -13,6 +13,8 @@ describe('audit domain — AuditEntry shape', () => {
     const entry: AuditEntry = {
       id: '00000000-0000-0000-0000-000000000001',
       tenantId: '00000000-0000-0000-0000-000000000002',
+      tenantNombre: 'Dorado Lounge',
+      tenantSlug: 'dorado-lounge',
       userId: '00000000-0000-0000-0000-000000000003',
       userNombre: 'Test User',
       action: 'pedido.created',
@@ -33,6 +35,8 @@ describe('audit domain — AuditEntry shape', () => {
     const entry: AuditEntry = {
       id: '00000000-0000-0000-0000-000000000001',
       tenantId: null,
+      tenantNombre: null,
+      tenantSlug: null,
       userId: null,
       userNombre: null,
       action: 'system.heartbeat',

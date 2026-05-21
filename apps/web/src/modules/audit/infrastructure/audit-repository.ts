@@ -31,29 +31,27 @@ function applyFilters(q: FilterChain, filters: AuditFilters | undefined): Filter
 }
 
 function buildQuery(
-  tenantId: string,
+  tenantId: string | null,
   filters: AuditFilters | undefined,
   admin: ReturnType<typeof createAdminClient>,
 ): FilterChain {
-  const base = admin
+  let base: FilterChain = admin
     .from('audit_log')
     .select(
       'id, tenant_id, user_id, action, resource_type, resource_id, payload, ip_address, prev_hash, hash, created_at',
     )
-    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
+  if (tenantId !== null) base = base.eq('tenant_id', tenantId);
   return applyFilters(base, filters);
 }
 
 function buildCountQuery(
-  tenantId: string,
+  tenantId: string | null,
   filters: AuditFilters | undefined,
   admin: ReturnType<typeof createAdminClient>,
 ): FilterChain {
-  const base = admin
-    .from('audit_log')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId);
+  let base: FilterChain = admin.from('audit_log').select('id', { count: 'exact', head: true });
+  if (tenantId !== null) base = base.eq('tenant_id', tenantId);
   return applyFilters(base, filters);
 }
 
@@ -69,10 +67,31 @@ async function resolveUserNames(
   return Object.fromEntries((data ?? []).map((u) => [u.id, u.nombre as string]));
 }
 
-function toEntry(row: AuditRow, nameMap: Record<string, string>): AuditEntry {
+async function resolveTenantInfo(
+  admin: ReturnType<typeof createAdminClient>,
+  rows: AuditRow[],
+): Promise<Record<string, { nombre: string; slug: string }>> {
+  const ids = Array.from(
+    new Set(rows.map((r) => r.tenant_id).filter((id): id is string => id != null)),
+  );
+  if (ids.length === 0) return {};
+  const { data } = await admin.from('tenants').select('id, nombre, slug').in('id', ids);
+  return Object.fromEntries(
+    (data ?? []).map((t) => [t.id, { nombre: t.nombre as string, slug: t.slug as string }]),
+  );
+}
+
+function toEntry(
+  row: AuditRow,
+  nameMap: Record<string, string>,
+  tenantMap: Record<string, { nombre: string; slug: string }>,
+): AuditEntry {
+  const tenant = row.tenant_id ? tenantMap[row.tenant_id] : undefined;
   return {
     id: row.id,
     tenantId: row.tenant_id,
+    tenantNombre: tenant?.nombre ?? null,
+    tenantSlug: tenant?.slug ?? null,
     userId: row.user_id,
     userNombre: row.user_id ? (nameMap[row.user_id] ?? null) : null,
     action: row.action,
@@ -100,8 +119,11 @@ export function createAuditRepository(): AuditRepository {
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       const rows = (data ?? []) as AuditRow[];
-      const nameMap = await resolveUserNames(admin, rows);
-      return rows.map((r) => toEntry(r, nameMap));
+      const [nameMap, tenantMap] = await Promise.all([
+        resolveUserNames(admin, rows),
+        resolveTenantInfo(admin, rows),
+      ]);
+      return rows.map((r) => toEntry(r, nameMap, tenantMap));
     },
 
     async count(tenantId, filters) {

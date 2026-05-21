@@ -10,11 +10,14 @@ import type { Alerta } from './domain/alerta';
 
 // ── Lectura ───────────────────────────────────────────────────────────────────
 
+// Superuser opera cross-tenant: lecturas y marcados se hacen sin filtro de tenant.
+// Cualquier otro rol queda acotado a su propio tenant.
 export async function getAlertas(): Promise<Result<Alerta[]>> {
   try {
     const ctx = await assertCan('alertas:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAlertaRepository();
-    return ok(await repo.findRecent(ctx.tenantId));
+    return ok(await repo.findRecent(scope));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -23,8 +26,9 @@ export async function getAlertas(): Promise<Result<Alerta[]>> {
 export async function getAlertasUnreadCount(): Promise<Result<number>> {
   try {
     const ctx = await assertCan('alertas:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAlertaRepository();
-    return ok(await repo.countUnread(ctx.tenantId));
+    return ok(await repo.countUnread(scope));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -33,8 +37,9 @@ export async function getAlertasUnreadCount(): Promise<Result<number>> {
 export async function getAlertasAdmin(): Promise<Result<Alerta[]>> {
   try {
     const ctx = await assertCan('alertas:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAlertaRepository();
-    return ok(await repo.findAll(ctx.tenantId));
+    return ok(await repo.findAll(scope));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -45,8 +50,9 @@ export async function getAlertasAdmin(): Promise<Result<Alerta[]>> {
 export async function marcarAlertaLeida(alertaId: string): Promise<Result<void>> {
   try {
     const ctx = await assertCan('alertas:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAlertaRepository();
-    await repo.marcarLeida(alertaId, ctx.tenantId, ctx.userId);
+    await repo.marcarLeida(alertaId, scope, ctx.userId);
     await auditLog({
       tenantId: ctx.tenantId,
       userId: ctx.userId,
@@ -63,8 +69,9 @@ export async function marcarAlertaLeida(alertaId: string): Promise<Result<void>>
 export async function marcarTodasLeidas(): Promise<Result<void>> {
   try {
     const ctx = await assertCan('alertas:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAlertaRepository();
-    await repo.marcarTodasLeidas(ctx.tenantId, ctx.userId);
+    await repo.marcarTodasLeidas(scope, ctx.userId);
     await auditLog({
       tenantId: ctx.tenantId,
       userId: ctx.userId,

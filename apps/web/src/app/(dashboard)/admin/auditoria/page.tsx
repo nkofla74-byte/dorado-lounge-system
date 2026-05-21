@@ -14,8 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AuditoriaPage() {
   const t = await getTranslations('admin.audit');
+  let role: string;
   try {
-    await assertCan('audit:read');
+    const ctx = await assertCan('audit:read');
+    role = ctx.role;
   } catch {
     redirect('/inventario');
   }
@@ -34,6 +36,7 @@ export default async function AuditoriaPage() {
       <AuditTable
         initialData={dataResult.ok ? dataResult.value : []}
         initialTotal={countResult.ok ? countResult.value : 0}
+        showTenant={role === 'superuser'}
       />
     </div>
   );

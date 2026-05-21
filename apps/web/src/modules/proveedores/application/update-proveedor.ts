@@ -5,7 +5,7 @@ import { ProveedorNotFoundError } from '../domain/proveedor';
 export async function updateProveedor(
   repo: ProveedorRepository,
   id: string,
-  tenantId: string,
+  tenantId: string | null,
   input: UpdateProveedorInput,
 ): Promise<Proveedor> {
   const existing = await repo.findById(id, tenantId);

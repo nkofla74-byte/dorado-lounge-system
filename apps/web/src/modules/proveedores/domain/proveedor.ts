@@ -1,6 +1,8 @@
 export interface Proveedor {
   id: string;
   tenantId: string;
+  tenantNombre: string | null;
+  tenantSlug: string | null;
   nombre: string;
   contacto: string | null;
   telefono: string | null;

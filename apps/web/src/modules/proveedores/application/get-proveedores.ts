@@ -3,7 +3,7 @@ import type { Proveedor } from '../domain/proveedor';
 
 export async function getProveedores(
   repo: ProveedorRepository,
-  tenantId: string,
+  tenantId: string | null,
 ): Promise<Proveedor[]> {
   return repo.findAll(tenantId);
 }

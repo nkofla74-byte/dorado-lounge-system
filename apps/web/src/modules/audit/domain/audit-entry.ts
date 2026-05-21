@@ -1,6 +1,8 @@
 export interface AuditEntry {
   id: string;
   tenantId: string | null;
+  tenantNombre: string | null;
+  tenantSlug: string | null;
   userId: string | null;
   userNombre: string | null;
   action: string;

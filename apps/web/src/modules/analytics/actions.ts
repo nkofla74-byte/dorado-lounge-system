@@ -9,13 +9,15 @@ import { getConsumoVsProduccion as getConsumoUseCase } from './application/get-c
 import type { Result } from '@/lib/result';
 import type { CogsPerPassenger, ConsumoInsumo, AnalyticsFilters } from './domain/kpi';
 
+// Superuser opera cross-tenant; cualquier otro rol queda acotado a su tenant.
 export async function fetchCogsPerPassenger(
   filters: AnalyticsFilters = {},
 ): Promise<Result<CogsPerPassenger[]>> {
   try {
     const ctx = await assertCan('analytics:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAnalyticsRepository();
-    return ok(await getCogsUseCase(repo, ctx.tenantId, filters));
+    return ok(await getCogsUseCase(repo, scope, filters));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -26,8 +28,9 @@ export async function fetchConsumoVsProduccion(
 ): Promise<Result<ConsumoInsumo[]>> {
   try {
     const ctx = await assertCan('analytics:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createAnalyticsRepository();
-    return ok(await getConsumoUseCase(repo, ctx.tenantId, filters));
+    return ok(await getConsumoUseCase(repo, scope, filters));
   } catch (e) {
     return err(toAppError(e));
   }

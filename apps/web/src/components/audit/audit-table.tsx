@@ -53,23 +53,36 @@ function actionColor(action: string): string {
   return 'text-foreground';
 }
 
+// El hash chain es per-tenant: cada tenant tiene su propia secuencia. Cuando
+// el listado es cross-tenant (superuser) hay que verificar por grupo, no la
+// secuencia mezclada — el orden global por fecha no garantiza prev_hash contiguo.
 function verifyChain(entries: AuditEntry[]): boolean {
-  const asc = [...entries].reverse();
-  for (let i = 1; i < asc.length; i++) {
-    if (asc[i]!.prevHash !== asc[i - 1]!.hash) return false;
+  const byTenant = new Map<string, AuditEntry[]>();
+  for (const e of entries) {
+    const key = e.tenantId ?? '__global__';
+    const list = byTenant.get(key) ?? [];
+    list.push(e);
+    byTenant.set(key, list);
+  }
+  for (const list of byTenant.values()) {
+    const asc = [...list].reverse();
+    for (let i = 1; i < asc.length; i++) {
+      if (asc[i]!.prevHash !== asc[i - 1]!.hash) return false;
+    }
   }
   return true;
 }
 
 interface ExpandedRowProps {
   entry: AuditEntry;
+  colSpan: number;
 }
 
-function ExpandedRow({ entry }: ExpandedRowProps) {
+function ExpandedRow({ entry, colSpan }: ExpandedRowProps) {
   const t = useTranslations('admin.audit');
   return (
     <TableRow className="bg-muted/30 hover:bg-muted/30">
-      <TableCell colSpan={7} className="p-4">
+      <TableCell colSpan={colSpan} className="p-4">
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
             <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -119,9 +132,10 @@ function ExpandedRow({ entry }: ExpandedRowProps) {
 interface AuditTableProps {
   initialData: AuditEntry[];
   initialTotal: number;
+  showTenant?: boolean;
 }
 
-export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
+export function AuditTable({ initialData, initialTotal, showTenant = false }: AuditTableProps) {
   const t = useTranslations('admin.audit');
   const locale = useLocale();
   const [entries, setEntries] = useState<AuditEntry[]>(initialData);
@@ -235,6 +249,7 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
             <TableRow className="hover:bg-transparent border-border">
               <TableHead className="w-8" />
               <TableHead className="text-xs">{t('colFecha')}</TableHead>
+              {showTenant && <TableHead className="text-xs">{t('colTenant')}</TableHead>}
               <TableHead className="text-xs">{t('colAccion')}</TableHead>
               <TableHead className="text-xs">{t('colTipo')}</TableHead>
               <TableHead className="text-xs">{t('colUsuario')}</TableHead>
@@ -244,7 +259,10 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
           <TableBody>
             {displayed.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={showTenant ? 7 : 6}
+                  className="text-center py-10 text-sm text-muted-foreground"
+                >
                   {t('sinRegistros')}
                 </TableCell>
               </TableRow>
@@ -269,6 +287,17 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
                     <TableCell className="text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                       {formatTs(entry.createdAt)}
                     </TableCell>
+                    {showTenant && (
+                      <TableCell className="text-xs">
+                        {entry.tenantNombre ? (
+                          <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                            {entry.tenantNombre}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground/40 text-xs italic">global</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <span className={cn('text-xs font-mono', actionColor(entry.action))}>
                         {entry.action}
@@ -292,7 +321,13 @@ export function AuditTable({ initialData, initialTotal }: AuditTableProps) {
                       </span>
                     </TableCell>
                   </TableRow>
-                  {expanded === entry.id && <ExpandedRow key={`${entry.id}-exp`} entry={entry} />}
+                  {expanded === entry.id && (
+                    <ExpandedRow
+                      key={`${entry.id}-exp`}
+                      entry={entry}
+                      colSpan={showTenant ? 7 : 6}
+                    />
+                  )}
                 </>
               ))
             )}

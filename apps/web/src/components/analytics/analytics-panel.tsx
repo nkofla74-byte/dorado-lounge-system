@@ -28,6 +28,7 @@ interface AnalyticsPanelProps {
   initialCogs: CogsPerPassenger[];
   initialConsumo: ConsumoInsumo[];
   turnos: Turno[];
+  showTenant?: boolean;
   error?: string | undefined;
 }
 
@@ -35,6 +36,7 @@ export function AnalyticsPanel({
   initialCogs,
   initialConsumo,
   turnos,
+  showTenant = false,
   error,
 }: AnalyticsPanelProps) {
   const t = useTranslations('analytics');
@@ -173,7 +175,7 @@ export function AnalyticsPanel({
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">{t('cogsTitle')}</h2>
         </div>
-        <CogsTable data={cogs} />
+        <CogsTable data={cogs} showTenant={showTenant} />
       </section>
 
       {/* Consumo vs producción */}
@@ -187,7 +189,7 @@ export function AnalyticsPanel({
             </span>
           )}
         </div>
-        <ConsumoTable data={consumo} />
+        <ConsumoTable data={consumo} showTenant={showTenant} />
       </section>
     </div>
   );

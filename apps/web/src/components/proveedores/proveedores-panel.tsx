@@ -23,9 +23,14 @@ import type { Proveedor } from '@/modules/proveedores/domain/proveedor';
 interface ProveedoresPanelProps {
   initialData: Proveedor[];
   canWrite: boolean;
+  showTenant?: boolean;
 }
 
-export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProps) {
+export function ProveedoresPanel({
+  initialData,
+  canWrite,
+  showTenant = false,
+}: ProveedoresPanelProps) {
   const t = useTranslations('proveedores');
   const [proveedores, setProveedores] = useState<Proveedor[]>(initialData);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,6 +120,11 @@ export function ProveedoresPanel({ initialData, canWrite }: ProveedoresPanelProp
                       >
                         {p.nombre}
                       </span>
+                      {showTenant && p.tenantNombre && (
+                        <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                          {p.tenantNombre}
+                        </Badge>
+                      )}
                       {!p.activo && (
                         <Badge variant="outline" className="text-xs text-muted-foreground">
                           {t('inactivo')}

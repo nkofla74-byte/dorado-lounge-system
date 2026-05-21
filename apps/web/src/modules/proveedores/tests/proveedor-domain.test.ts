@@ -12,6 +12,8 @@ function makeProveedor(overrides: Partial<Proveedor> = {}): Proveedor {
   return {
     id: 'prov-1',
     tenantId: 'tenant-1',
+    tenantNombre: null,
+    tenantSlug: null,
     nombre: 'Distribuidora La Cosecha',
     contacto: null,
     telefono: null,

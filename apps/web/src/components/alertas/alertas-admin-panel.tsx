@@ -38,9 +38,10 @@ function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
 
 interface AlertasAdminPanelProps {
   initialData: Alerta[];
+  showTenant?: boolean;
 }
 
-export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
+export function AlertasAdminPanel({ initialData, showTenant = false }: AlertasAdminPanelProps) {
   const t = useTranslations('alertasAdmin');
   const tTipo = useTranslations('alertasAdmin.tipos');
   const locale = useLocale();
@@ -251,10 +252,15 @@ export function AlertasAdminPanel({ initialData }: AlertasAdminPanelProps) {
                 <p className="text-xs text-muted-foreground line-clamp-1 text-left">
                   {alerta.mensaje}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4">
                     {tTipo(alerta.tipo as TipoKey)}
                   </Badge>
+                  {showTenant && alerta.tenantNombre && (
+                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                      {alerta.tenantNombre}
+                    </Badge>
+                  )}
                   {!alerta.leida && (
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 text-primary">
                       {t('nueva')}

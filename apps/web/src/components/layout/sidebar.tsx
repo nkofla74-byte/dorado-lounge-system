@@ -26,6 +26,7 @@ import {
   Settings2,
   Bell,
   ScrollText,
+  Store,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -140,9 +141,16 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
   { href: '/admin/permisos', labelKey: 'permisos', icon: ShieldCheck, roles: ['admin'] },
 ];
 
-// Ítems visibles únicamente para superuser (plataforma)
+// Menú curado para superuser: gobierno de plataforma + visibilidad cross-tenant.
+// Nota: el superuser NO ve el menú operativo (cocina, almacén, etc.) — para entrar
+// como un rol operativo debe impersonar o cambiar de cuenta.
 const SUPERUSER_NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon }[] = [
   { href: '/admin/tenants', labelKey: 'tenants', icon: Building2 },
+  { href: '/admin/proveedores', labelKey: 'proveedores', icon: Store },
+  { href: '/analytics', labelKey: 'analytics', icon: BarChart3 },
+  { href: '/admin/alertas', labelKey: 'alertas', icon: Bell },
+  { href: '/admin/auditoria', labelKey: 'auditoria', icon: ScrollText },
+  { href: '/admin/permisos', labelKey: 'permisos', icon: ShieldCheck },
 ];
 
 // Color de marca por categoría operativa. Se aplica al ícono cuando el item
@@ -243,13 +251,9 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
 
       {/* Navegación */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.filter(
-          ({ roles }) => user.role === 'superuser' || roles.includes(user.role),
-        ).map(({ href, labelKey, icon: Icon }) => renderItem({ href, labelKey, Icon }))}
-
-        {user.role === 'superuser' && (
+        {user.role === 'superuser' ? (
           <>
-            <div className="px-3 pt-4 pb-1">
+            <div className="px-3 pt-1 pb-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {tNav('plataforma')}
               </p>
@@ -258,6 +262,10 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
               renderItem({ href, labelKey, Icon }),
             )}
           </>
+        ) : (
+          NAV_ITEMS.filter(({ roles }) => roles.includes(user.role)).map(
+            ({ href, labelKey, icon: Icon }) => renderItem({ href, labelKey, Icon }),
+          )
         )}
       </nav>
 

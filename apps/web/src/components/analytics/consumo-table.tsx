@@ -14,9 +14,10 @@ import type { ConsumoInsumo } from '@/modules/analytics/domain/kpi';
 
 interface ConsumoTableProps {
   data: ConsumoInsumo[];
+  showTenant?: boolean;
 }
 
-export function ConsumoTable({ data }: ConsumoTableProps) {
+export function ConsumoTable({ data, showTenant = false }: ConsumoTableProps) {
   const t = useTranslations('analytics');
   const locale = useLocale();
   const numLocale = locale === 'en' ? 'en-US' : 'es-CO';
@@ -40,6 +41,11 @@ export function ConsumoTable({ data }: ConsumoTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
+            {showTenant && (
+              <TableHead className="text-xs font-medium text-muted-foreground">
+                {t('colTenant')}
+              </TableHead>
+            )}
             <TableHead className="text-xs font-medium text-muted-foreground">
               {t('colInsumo')}
             </TableHead>
@@ -62,7 +68,21 @@ export function ConsumoTable({ data }: ConsumoTableProps) {
         </TableHeader>
         <TableBody>
           {data.map((row) => (
-            <TableRow key={`${row.turnoId}-${row.insumoId}`} className="hover:bg-muted/30">
+            <TableRow
+              key={`${row.tenantId}-${row.turnoId}-${row.insumoId}`}
+              className="hover:bg-muted/30"
+            >
+              {showTenant && (
+                <TableCell>
+                  {row.tenantNombre ? (
+                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
+                      {row.tenantNombre}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-xs">—</span>
+                  )}
+                </TableCell>
+              )}
               <TableCell className="font-medium text-sm">{row.insumoNombre}</TableCell>
               <TableCell>
                 <Badge variant="outline" className="text-xs">

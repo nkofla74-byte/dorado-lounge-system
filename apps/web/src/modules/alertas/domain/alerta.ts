@@ -5,6 +5,8 @@ export type ResourceTipoAlerta = 'insumo' | 'lote' | 'pedido';
 export interface Alerta {
   id: string;
   tenantId: string;
+  tenantNombre: string | null;
+  tenantSlug: string | null;
   tipo: TipoAlerta;
   severidad: SeveridadAlerta;
   titulo: string;

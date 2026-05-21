@@ -18,12 +18,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProveedoresPage() {
   const t = await getTranslations('proveedores');
   let canWrite = false;
+  let isSuperuser = false;
   try {
     await assertCan('proveedores:read');
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     const role = data.user?.app_metadata?.role as UserRole | undefined;
     canWrite = role ? (PERMISSIONS['proveedores:write']?.includes(role) ?? false) : false;
+    isSuperuser = role === 'superuser';
+    if (isSuperuser) canWrite = true;
   } catch {
     redirect('/inventario');
   }
@@ -37,7 +40,7 @@ export default async function ProveedoresPage() {
         <h1 className="text-2xl font-bold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{t('pageSubtitle')}</p>
       </div>
-      <ProveedoresPanel initialData={proveedores} canWrite={canWrite} />
+      <ProveedoresPanel initialData={proveedores} canWrite={canWrite} showTenant={isSuperuser} />
     </div>
   );
 }

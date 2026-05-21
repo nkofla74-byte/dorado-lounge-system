@@ -13,11 +13,13 @@ import type { Result } from '@/lib/result';
 import type { Proveedor } from './domain/proveedor';
 import type { LoteConInsumo } from './application/ports/proveedor-repository.port';
 
+// Superuser ve cross-tenant; cualquier otro rol queda acotado a su tenant.
 export async function getProveedores(): Promise<Result<Proveedor[]>> {
   try {
     const ctx = await assertCan('proveedores:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createProveedorRepository();
-    return ok(await getProveedoresUseCase(repo, ctx.tenantId));
+    return ok(await getProveedoresUseCase(repo, scope));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -59,8 +61,9 @@ export async function updateProveedor(id: string, input: unknown): Promise<Resul
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createProveedorRepository();
-    const proveedor = await updateProveedorUseCase(repo, id, ctx.tenantId, parsed.data);
+    const proveedor = await updateProveedorUseCase(repo, id, scope, parsed.data);
 
     await auditLog({
       tenantId: ctx.tenantId,
@@ -83,8 +86,9 @@ export async function updateProveedor(id: string, input: unknown): Promise<Resul
 export async function getHistorialCompras(proveedorId: string): Promise<Result<LoteConInsumo[]>> {
   try {
     const ctx = await assertCan('proveedores:read');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
     const repo = createProveedorRepository();
-    return ok(await repo.findLotesByProveedor(proveedorId, ctx.tenantId));
+    return ok(await repo.findLotesByProveedor(proveedorId, scope));
   } catch (e) {
     return err(toAppError(e));
   }
