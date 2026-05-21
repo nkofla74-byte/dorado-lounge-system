@@ -1,4 +1,10 @@
-import type { TipoReceta, ZonaServicio, AreaProduccion, CategoriaMenu } from '@dorado/shared-types';
+import type {
+  TipoReceta,
+  ZonaServicio,
+  AreaProduccion,
+  CategoriaMenu,
+  UnidadMedida,
+} from '@dorado/shared-types';
 
 export interface Receta {
   id: string;
@@ -24,6 +30,7 @@ export interface RecetaIngrediente {
   insumoNombre: string;
   unidadMedida: string;
   cantidad: number;
+  unidadDisplay: UnidadMedida | null;
   mermaCoeficiente: number;
 }
 
@@ -32,24 +39,37 @@ export interface RecetaWithIngredientes extends Receta {
   insumoDestinoNombre: string | null;
 }
 
+export interface RecipeIngredientInput {
+  insumoId: string;
+  cantidad: number;
+  unidad?: UnidadMedida | undefined;
+  mermaCoeficiente: number;
+}
+
 export type CreateRecetaInput =
   | {
       tipoReceta: 'produccion';
       nombre: string;
       insumoDestinoId: string;
       porciones: number;
+      descripcion?: string | null | undefined;
+      ingredientes?: RecipeIngredientInput[] | undefined;
     }
   | {
       tipoReceta: 'servicio';
       nombre: string;
       zona: ZonaServicio;
       porciones: number;
+      descripcion?: string | null | undefined;
+      categoriaMenu?: CategoriaMenu | null | undefined;
+      ingredientes?: RecipeIngredientInput[] | undefined;
     };
 
 export interface AddIngredienteInput {
   recetaId: string;
   insumoId: string;
   cantidad: number;
+  unidadDisplay: UnidadMedida | null;
   mermaCoeficiente: number;
 }
 

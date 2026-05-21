@@ -270,6 +270,7 @@ export function RecipeTable({
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={handleCreated}
+        insumos={insumos}
         insumosCapa2={insumosCapa2}
       />
 

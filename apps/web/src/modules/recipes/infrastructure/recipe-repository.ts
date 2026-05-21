@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
+import type { UnidadMedida } from '@dorado/shared-types';
 import type { RecipeRepository } from '../application/ports/recipe-repository.port';
 import type {
   Receta,
@@ -15,6 +16,7 @@ type IngredienteRow = {
   receta_id: string;
   insumo_id: string;
   cantidad: number;
+  unidad_display: string | null;
   merma_coeficiente: number;
   insumo: { nombre: string; unidad_medida: string } | null;
 };
@@ -62,6 +64,7 @@ function toRecetaWithIngredientes(row: RecetaRow): RecetaWithIngredientes {
       insumoNombre: ri.insumo?.nombre ?? '',
       unidadMedida: ri.insumo?.unidad_medida ?? '',
       cantidad: Number(ri.cantidad),
+      unidadDisplay: (ri.unidad_display as UnidadMedida | null) ?? null,
       mermaCoeficiente: Number(ri.merma_coeficiente),
     })),
   };
@@ -98,7 +101,7 @@ export function createRecipeRepository(): RecipeRepository {
           id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at,
           insumo_destino:insumos!recetas_insumo_destino_id_fkey(nombre),
           receta_ingredientes(
-            id, receta_id, insumo_id, cantidad, merma_coeficiente,
+            id, receta_id, insumo_id, cantidad, unidad_display, merma_coeficiente,
             insumo:insumos(nombre, unidad_medida)
           )
         `,
@@ -118,21 +121,24 @@ export function createRecipeRepository(): RecipeRepository {
     async create(tenantId: string, input: CreateRecetaInput): Promise<Receta> {
       const supabase = await createClient();
 
+      const base = {
+        tenant_id: tenantId,
+        nombre: input.nombre,
+        porciones: input.porciones,
+        descripcion: input.descripcion ?? null,
+      };
       const insert =
         input.tipoReceta === 'produccion'
           ? {
-              tenant_id: tenantId,
-              nombre: input.nombre,
+              ...base,
               tipo_receta: 'produccion' as const,
               insumo_destino_id: input.insumoDestinoId,
-              porciones: input.porciones,
             }
           : {
-              tenant_id: tenantId,
-              nombre: input.nombre,
+              ...base,
               tipo_receta: 'servicio' as const,
               zona: input.zona,
-              porciones: input.porciones,
+              categoria_menu: input.categoriaMenu ?? null,
             };
 
       const { data, error } = await supabase
@@ -160,10 +166,11 @@ export function createRecipeRepository(): RecipeRepository {
           receta_id: input.recetaId,
           insumo_id: input.insumoId,
           cantidad: input.cantidad,
+          unidad_display: input.unidadDisplay,
           merma_coeficiente: input.mermaCoeficiente,
         })
         .select(
-          'id, receta_id, insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre, unidad_medida)',
+          'id, receta_id, insumo_id, cantidad, unidad_display, merma_coeficiente, insumo:insumos(nombre, unidad_medida)',
         )
         .single();
 
@@ -186,6 +193,7 @@ export function createRecipeRepository(): RecipeRepository {
         insumoNombre: row.insumo?.nombre ?? '',
         unidadMedida: row.insumo?.unidad_medida ?? '',
         cantidad: Number(row.cantidad),
+        unidadDisplay: (row.unidad_display as UnidadMedida | null) ?? null,
         mermaCoeficiente: Number(row.merma_coeficiente),
       };
     },

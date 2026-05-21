@@ -34,6 +34,7 @@ function makeIngrediente(overrides: Partial<RecetaIngrediente> = {}): RecetaIngr
     insumoNombre: 'Harina de maíz',
     unidadMedida: 'kg',
     cantidad: 0.5,
+    unidadDisplay: null,
     mermaCoeficiente: 0.05,
     ...overrides,
   };

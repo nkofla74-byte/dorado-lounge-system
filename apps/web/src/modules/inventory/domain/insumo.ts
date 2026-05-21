@@ -8,6 +8,7 @@ export interface Insumo {
   capa: CapaInventario;
   unidadMedida: UnidadMedida;
   stockMinimo: number;
+  mermaDefault: number;
   activo: boolean;
   createdAt: Date;
 }
@@ -22,6 +23,7 @@ export interface CreateInsumoInput {
   capa: CapaInventario;
   unidadMedida: UnidadMedida;
   stockMinimo: number;
+  mermaDefault: number;
 }
 
 export interface Lote {

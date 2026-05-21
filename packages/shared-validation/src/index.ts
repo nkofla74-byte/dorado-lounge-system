@@ -93,6 +93,7 @@ export const createInsumoSchema = z.object({
   capa: capaInventarioSchema,
   unidadMedida: unidadMedidaSchema,
   stockMinimo: z.number().min(0).default(0),
+  mermaDefault: coeficienteMermaSchema.default(0),
 });
 
 export const createLoteSchema = z
@@ -126,18 +127,32 @@ export const createLoteSchema = z
     },
   );
 
+// Item de ingrediente inline al crear/editar receta — separado del schema
+// addIngredienteSchema (que requiere recetaId) porque acá la receta aún no existe.
+export const recetaIngredienteInputSchema = z.object({
+  insumoId: uuidSchema,
+  cantidad: cantidadSchema,
+  unidad: unidadMedidaSchema.optional(),
+  mermaCoeficiente: coeficienteMermaSchema.default(0),
+});
+
 export const createRecetaSchema = z.discriminatedUnion('tipoReceta', [
   z.object({
     tipoReceta: z.literal('produccion'),
     nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
     insumoDestinoId: uuidSchema,
     porciones: z.number().int().positive('Las porciones deben ser mayor que 0'),
+    descripcion: z.string().max(500).optional().nullable(),
+    ingredientes: z.array(recetaIngredienteInputSchema).optional(),
   }),
   z.object({
     tipoReceta: z.literal('servicio'),
     nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
     zona: zonaServicioSchema,
     porciones: z.number().int().positive('Las porciones deben ser mayor que 0'),
+    descripcion: z.string().max(500).optional().nullable(),
+    categoriaMenu: categoriaMenuSchema.optional().nullable(),
+    ingredientes: z.array(recetaIngredienteInputSchema).optional(),
   }),
 ]);
 
@@ -156,6 +171,7 @@ export const addIngredienteSchema = z.object({
   recetaId: uuidSchema,
   insumoId: uuidSchema,
   cantidad: cantidadSchema,
+  unidad: unidadMedidaSchema.optional(),
   mermaCoeficiente: coeficienteMermaSchema.default(0),
 });
 
@@ -265,6 +281,7 @@ export const crearUsuarioSchema = z.object({
 export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
 export type CreateLoteInput = z.infer<typeof createLoteSchema>;
 export type CreateRecetaInput = z.infer<typeof createRecetaSchema>;
+export type RecetaIngredienteInput = z.infer<typeof recetaIngredienteInputSchema>;
 export type UpdateRecetaMenuInput = z.infer<typeof updateRecetaMenuSchema>;
 export type AddIngredienteInput = z.infer<typeof addIngredienteSchema>;
 export type CreateTandaInput = z.infer<typeof createTandaSchema>;

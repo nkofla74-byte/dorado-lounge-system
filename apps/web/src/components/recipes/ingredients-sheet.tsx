@@ -28,8 +28,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { convertirCantidad, sonCompatibles } from '@/lib/units';
 import type { RecetaWithIngredientes, RecetaIngrediente } from '@/modules/recipes/domain/recipe';
-import type { CategoriaMenu } from '@dorado/shared-types';
+import type { CategoriaMenu, UnidadMedida } from '@dorado/shared-types';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { CostoReceta } from '@/modules/costos/domain/costo';
 import type { z } from 'zod';
@@ -206,6 +207,15 @@ export function IngredientsSheet({
           ) : (
             receta.ingredientes.map((ing) => {
               const costoIng = costo?.ingredientes.find((ci) => ci.insumoId === ing.insumoId);
+              // Si el usuario eligió mostrar en una unidad distinta a la del insumo,
+              // re-convertimos para visualizar en esa unidad (cantidad está almacenada en unidad base).
+              const base = ing.unidadMedida as UnidadMedida;
+              const display: UnidadMedida =
+                ing.unidadDisplay && sonCompatibles(ing.unidadDisplay, base)
+                  ? ing.unidadDisplay
+                  : base;
+              const cantidadDisplay =
+                display === base ? ing.cantidad : convertirCantidad(ing.cantidad, base, display);
               return (
                 <div
                   key={ing.id}
@@ -214,8 +224,8 @@ export function IngredientsSheet({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{ing.insumoNombre}</p>
                     <p className="text-xs text-muted-foreground">
-                      {ing.cantidad.toLocaleString('es-CO', { maximumFractionDigits: 4 })}{' '}
-                      {UNIDAD_LABEL[ing.unidadMedida] ?? ing.unidadMedida}
+                      {cantidadDisplay.toLocaleString('es-CO', { maximumFractionDigits: 4 })}{' '}
+                      {UNIDAD_LABEL[display] ?? display}
                       {ing.mermaCoeficiente > 0 && (
                         <span className="ml-2 text-amber-500/80">
                           {t('merma', { pct: (ing.mermaCoeficiente * 100).toFixed(1) })}

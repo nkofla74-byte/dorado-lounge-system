@@ -124,7 +124,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                 title={t('bulkImportTooltip')}
               >
                 <Upload className="h-4 w-4 mr-1.5" />
-                {t('bulkImport')}
+                {t('bulkImportButton')}
               </Button>
               <Button size="sm" onClick={() => setDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-1.5" />

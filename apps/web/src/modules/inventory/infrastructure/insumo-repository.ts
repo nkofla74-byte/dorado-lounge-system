@@ -67,6 +67,7 @@ type InsumoRow = {
   capa: string;
   unidad_medida: string;
   stock_minimo: number;
+  merma_default: number;
   activo: boolean;
   created_at: string;
   lotes: LoteStockRow[] | null;
@@ -85,6 +86,7 @@ function toInsumoWithStock(row: InsumoRow): InsumoWithStock {
     capa: row.capa as InsumoWithStock['capa'],
     unidadMedida: row.unidad_medida as InsumoWithStock['unidadMedida'],
     stockMinimo: Number(row.stock_minimo),
+    mermaDefault: Number(row.merma_default),
     activo: row.activo,
     createdAt: new Date(row.created_at),
     stockActual,
@@ -100,6 +102,7 @@ function toInsumo(row: Omit<InsumoRow, 'lotes'>): Insumo {
     capa: row.capa as Insumo['capa'],
     unidadMedida: row.unidad_medida as Insumo['unidadMedida'],
     stockMinimo: Number(row.stock_minimo),
+    mermaDefault: Number(row.merma_default),
     activo: row.activo,
     createdAt: new Date(row.created_at),
   };
@@ -113,7 +116,7 @@ export function createInsumoRepository(): InsumoRepository {
       const { data, error } = await supabase
         .from('insumos')
         .select(
-          'id, tenant_id, nombre, codigo, capa, unidad_medida, stock_minimo, activo, created_at, lotes(cantidad_actual, activo, deleted_at)',
+          'id, tenant_id, nombre, codigo, capa, unidad_medida, stock_minimo, merma_default, activo, created_at, lotes(cantidad_actual, activo, deleted_at)',
         )
         .is('deleted_at', null)
         .eq('activo', true)
@@ -148,9 +151,10 @@ export function createInsumoRepository(): InsumoRepository {
           capa: input.capa,
           unidad_medida: input.unidadMedida,
           stock_minimo: input.stockMinimo,
+          merma_default: input.mermaDefault,
         })
         .select(
-          'id, tenant_id, nombre, codigo, capa, unidad_medida, stock_minimo, activo, created_at',
+          'id, tenant_id, nombre, codigo, capa, unidad_medida, stock_minimo, merma_default, activo, created_at',
         )
         .single();
 

@@ -12,3 +12,4 @@ test-results/
 coverage/
 .vercel
 *.tsbuildinfo
+.claude/scheduled_tasks.lock

@@ -55,8 +55,18 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(createInsumoSchema),
-    defaultValues: { stockMinimo: 0 },
+    defaultValues: { stockMinimo: 0, mermaDefault: 0 },
   });
+
+  const [mermaPct, setMermaPct] = useState('0');
+
+  const handleMermaChange = (raw: string) => {
+    setMermaPct(raw);
+    const num = Number(raw);
+    if (Number.isFinite(num) && num >= 0 && num < 100) {
+      setValue('mermaDefault', num / 100, { shouldValidate: true });
+    }
+  };
 
   const onSubmit = async (values: FormOutput) => {
     setServerError('');
@@ -66,11 +76,15 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
       return;
     }
     reset();
+    setMermaPct('0');
     onCreated();
   };
 
   const handleClose = (open: boolean) => {
-    if (!open) reset();
+    if (!open) {
+      reset();
+      setMermaPct('0');
+    }
     onOpenChange(open);
   };
 
@@ -153,19 +167,44 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
             </div>
           </div>
 
-          {/* Stock mínimo */}
-          <div className="space-y-1.5">
-            <Label htmlFor="stockMinimo">{t('stockMinimo')}</Label>
-            <Input
-              id="stockMinimo"
-              type="number"
-              step="0.0001"
-              min="0"
-              {...register('stockMinimo', { valueAsNumber: true })}
-            />
-            {errors.stockMinimo && (
-              <p className="text-xs text-destructive">{errors.stockMinimo.message}</p>
-            )}
+          {/* Stock mínimo + Merma aprox */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="stockMinimo">{t('stockMinimo')}</Label>
+              <Input
+                id="stockMinimo"
+                type="number"
+                step="0.0001"
+                min="0"
+                {...register('stockMinimo', { valueAsNumber: true })}
+              />
+              {errors.stockMinimo && (
+                <p className="text-xs text-destructive">{errors.stockMinimo.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="mermaDefault">{t('mermaDefault')}</Label>
+              <div className="relative">
+                <Input
+                  id="mermaDefault"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="99.99"
+                  value={mermaPct}
+                  onChange={(e) => handleMermaChange(e.target.value)}
+                  className="pr-7"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  %
+                </span>
+              </div>
+              {errors.mermaDefault && (
+                <p className="text-xs text-destructive">{errors.mermaDefault.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">{t('mermaDefaultHint')}</p>
+            </div>
           </div>
 
           {/* Error del servidor */}
