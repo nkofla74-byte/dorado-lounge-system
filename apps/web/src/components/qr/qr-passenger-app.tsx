@@ -13,6 +13,7 @@ import {
   Users,
   ArrowRight,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPedidoFromQR } from '@/app/qr/[locale]/actions';
@@ -39,7 +40,8 @@ type Step = 'welcome' | 'hub' | 'comensales' | 'menu' | 'done';
 const TEXTS: Record<string, Record<string, string>> = {
   es: {
     selectLanguage: 'Selecciona tu idioma',
-    byAmex: 'Dorado Lounge, by Amex',
+    tagline: 'Sala VIP · El Dorado',
+    cardholderLegal: 'Acceso para tarjetahabientes American Express',
     welcome: '¡Bienvenido!',
     hub_menu: 'Menú',
     hub_wifi: 'Conéctate a Wi-Fi',
@@ -65,11 +67,16 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Disfruta tu experiencia en el Dorado Lounge.',
     newSession: 'Nueva sesión',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'Dorado-Lounge',
-    wifi_pass: 'Consulta contraseña con el personal',
+    wifi_name: 'American Express',
+    wifi_pass: 'AmexLounge2025.',
+    wifi_connect_title: 'Conéctate',
+    wifi_connect_subtitle: 'desde nuestra sala VIP',
+    wifi_network_label: 'Nombre de la red',
+    wifi_password_label: 'Contraseña',
     benefits_title: 'Beneficios American Express',
     benefits_text:
       'Como titular de American Express disfruta de acceso prioritario, menú exclusivo y atención preferencial en el Dorado Lounge.',
+    benefits_cta: 'Ver ofertas y beneficios',
     experience_title: 'Tu experiencia con nosotros',
     experience_text:
       'El Dorado Lounge te ofrece gastronomía de calidad, bebidas premium y conectividad de primer nivel en el Aeropuerto El Dorado, Bogotá.',
@@ -83,7 +90,8 @@ const TEXTS: Record<string, Record<string, string>> = {
   },
   en: {
     selectLanguage: 'Select your language',
-    byAmex: 'Dorado Lounge, by Amex',
+    tagline: 'VIP Lounge · El Dorado',
+    cardholderLegal: 'Access for American Express cardholders',
     welcome: 'Welcome!',
     hub_menu: 'Menu',
     hub_wifi: 'Connect to Wi-Fi',
@@ -109,11 +117,16 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Enjoy your experience at Dorado Lounge.',
     newSession: 'New session',
     wifi_title: 'Dorado Lounge Wi-Fi',
-    wifi_name: 'Dorado-Lounge',
-    wifi_pass: 'Ask staff for password',
+    wifi_name: 'American Express',
+    wifi_pass: 'AmexLounge2025.',
+    wifi_connect_title: 'Connect',
+    wifi_connect_subtitle: 'from our VIP lounge',
+    wifi_network_label: 'Network name',
+    wifi_password_label: 'Password',
     benefits_title: 'American Express Benefits',
     benefits_text:
       'As an American Express cardholder, enjoy priority access, exclusive menu and preferred service at Dorado Lounge.',
+    benefits_cta: 'View offers and benefits',
     experience_title: 'Your experience with us',
     experience_text:
       'Dorado Lounge offers quality cuisine, premium beverages and first-class connectivity at El Dorado Airport, Bogotá.',
@@ -127,7 +140,8 @@ const TEXTS: Record<string, Record<string, string>> = {
   },
   fr: {
     selectLanguage: 'Sélectionnez votre langue',
-    byAmex: 'Dorado Lounge, by Amex',
+    tagline: 'Salon VIP · El Dorado',
+    cardholderLegal: 'Accès pour les titulaires American Express',
     welcome: 'Bienvenue !',
     hub_menu: 'Menu',
     hub_wifi: 'Connexion Wi-Fi',
@@ -153,11 +167,16 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Profitez de votre expérience au Dorado Lounge.',
     newSession: 'Nouvelle session',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'Dorado-Lounge',
-    wifi_pass: 'Demandez le mot de passe au personnel',
+    wifi_name: 'American Express',
+    wifi_pass: 'AmexLounge2025.',
+    wifi_connect_title: 'Connectez-vous',
+    wifi_connect_subtitle: 'depuis notre salon VIP',
+    wifi_network_label: 'Nom du réseau',
+    wifi_password_label: 'Mot de passe',
     benefits_title: 'Avantages American Express',
     benefits_text:
       "En tant que titulaire American Express, profitez d'un accès prioritaire, d'un menu exclusif et d'un service préférentiel.",
+    benefits_cta: 'Voir offres et avantages',
     experience_title: 'Votre expérience avec nous',
     experience_text:
       "Le Dorado Lounge vous propose une gastronomie de qualité, des boissons premium et une connectivité haut de gamme à l'aéroport El Dorado, Bogotá.",
@@ -171,7 +190,8 @@ const TEXTS: Record<string, Record<string, string>> = {
   },
   pt: {
     selectLanguage: 'Selecione o seu idioma',
-    byAmex: 'Dorado Lounge, by Amex',
+    tagline: 'Sala VIP · El Dorado',
+    cardholderLegal: 'Acesso para titulares American Express',
     welcome: 'Bem-vindo!',
     hub_menu: 'Menu',
     hub_wifi: 'Conectar ao Wi-Fi',
@@ -197,11 +217,16 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Aproveite sua experiência no Dorado Lounge.',
     newSession: 'Nova sessão',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'Dorado-Lounge',
-    wifi_pass: 'Peça a senha ao pessoal',
+    wifi_name: 'American Express',
+    wifi_pass: 'AmexLounge2025.',
+    wifi_connect_title: 'Conecte-se',
+    wifi_connect_subtitle: 'do nosso lounge VIP',
+    wifi_network_label: 'Nome da rede',
+    wifi_password_label: 'Senha',
     benefits_title: 'Benefícios American Express',
     benefits_text:
       'Como titular American Express, aproveite acesso prioritário, menu exclusivo e atendimento preferencial no Dorado Lounge.',
+    benefits_cta: 'Ver ofertas e benefícios',
     experience_title: 'Sua experiência conosco',
     experience_text:
       'O Dorado Lounge oferece gastronomia de qualidade, bebidas premium e conectividade de alto nível no Aeroporto El Dorado, Bogotá.',
@@ -224,21 +249,36 @@ const LOCALES = [
   { code: 'fr', label: 'Français' },
 ];
 
-// ─── Logo Amex ────────────────────────────────────────────────────────────────
-function AmexLogo({ className = '' }: { className?: string }) {
+// ─── Wordmark Dorado Lounge — identidad propia, sin trade dress AmEx ─────────
+function DoradoLogo({
+  size = 'md',
+  className = '',
+}: {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
+  const sizes = {
+    sm: { title: 'text-xl', sub: 'text-[8px]', gap: 'gap-1.5', rule: 'w-8' },
+    md: { title: 'text-3xl', sub: 'text-[10px]', gap: 'gap-2', rule: 'w-10' },
+    lg: { title: 'text-5xl', sub: 'text-xs', gap: 'gap-3', rule: 'w-14' },
+  } as const;
+  const s = sizes[size];
   return (
-    <div className={`flex flex-col items-center ${className}`}>
-      <div
-        className="rounded-xl px-6 py-3 flex flex-col items-center gap-0"
-        style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.3)' }}
+    <div className={`flex flex-col items-center ${s.gap} ${className}`}>
+      <span
+        className={`font-serif ${s.title} font-medium tracking-[0.18em] text-[#FAF7F0] leading-none`}
       >
-        <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.25em] uppercase opacity-80">
-          American
-        </span>
-        <span className="text-[#FAF7F0] text-xl font-black tracking-[0.1em] leading-tight">
-          EXPRESS
-        </span>
-      </div>
+        DORADO
+      </span>
+      <span
+        aria-hidden
+        className={`${s.rule} h-px bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent`}
+      />
+      <span
+        className={`${s.sub} font-sans font-semibold tracking-[0.45em] uppercase text-[#D4AF37]`}
+      >
+        Lounge
+      </span>
     </div>
   );
 }
@@ -711,24 +751,23 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           <div className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-[#D4AF37]/5 blur-3xl" />
 
           {/* Logo top */}
-          <div className="relative flex flex-col items-center gap-1">
-            <span className="text-[#D4AF37]/70 text-[9px] font-bold tracking-[0.25em] uppercase">
-              American
-            </span>
-            <span className="text-[#FAF7F0] text-3xl font-black tracking-[0.08em]">EXPRESS</span>
+          <div className="relative">
+            <DoradoLogo size="lg" />
           </div>
 
-          <div className="relative w-full space-y-6 text-center">
-            <div>
-              <h1 className="text-2xl font-black tracking-tight">{t['byAmex']}</h1>
-              <p className="text-[#FAF7F0]/60 text-sm mt-1">{t['selectLanguage']}</p>
+          <div className="relative w-full space-y-7 text-center">
+            <div className="space-y-2">
+              <h1 className="font-serif text-xl tracking-[0.18em] uppercase text-[#FAF7F0]/90">
+                {t['tagline']}
+              </h1>
+              <p className="text-[#FAF7F0]/55 text-sm">{t['selectLanguage']}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {LOCALES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => handleLocaleSelect(l.code)}
-                  className={`py-4 rounded-2xl font-semibold text-base transition-all active:scale-95 ${
+                  className={`py-4 rounded-2xl font-medium text-base transition-all active:scale-95 ${
                     locale === l.code
                       ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] text-[#0B0B0F] shadow-[0_0_24px_-4px_rgba(212,175,55,0.55)]'
                       : 'bg-[#1C1C24] border border-[#2a2a33] text-[#FAF7F0]/80 hover:border-[#D4AF37]/40 hover:text-[#D4AF37]'
@@ -740,13 +779,10 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             </div>
           </div>
 
-          {/* Logo bottom */}
-          <div className="relative flex flex-col items-center gap-1 opacity-50">
-            <span className="text-[#D4AF37] text-[9px] font-bold tracking-[0.25em] uppercase">
-              American
-            </span>
-            <span className="text-[#FAF7F0] text-lg font-black tracking-[0.1em]">EXPRESS</span>
-          </div>
+          {/* Línea legal (fair use nominativo) */}
+          <p className="relative text-[10px] text-[#FAF7F0]/35 tracking-[0.15em] uppercase text-center max-w-xs">
+            {t['cardholderLegal']}
+          </p>
         </div>
       </>
     );
@@ -764,13 +800,35 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             locale={locale}
           />
           <HubCard title={t['wifi_title'] ?? ''} onBack={() => setHubView('main')} locale={locale}>
-            <div className="space-y-4 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-                <Wifi className="h-8 w-8 text-[#D4AF37]" />
+            <div className="space-y-6">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <DoradoLogo size="sm" />
+                <div>
+                  <h3 className="font-serif text-3xl tracking-tight">{t['wifi_connect_title']}</h3>
+                  <p className="text-sm text-[#FAF7F0]/60 mt-1">{t['wifi_connect_subtitle']}</p>
+                </div>
+                <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
+                  <Wifi className="h-7 w-7 text-[#D4AF37]" />
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-lg">{t['wifi_name']}</p>
-                <p className="text-sm text-[#FAF7F0]/60 mt-1">{t['wifi_pass']}</p>
+
+              <div className="space-y-3">
+                <div className="rounded-2xl bg-[#1C1C24] border border-[#2a2a33] px-4 py-3">
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#D4AF37]/80 font-semibold">
+                    {t['wifi_network_label']}
+                  </p>
+                  <p className="text-lg font-bold mt-1 text-[#FAF7F0] select-all">
+                    {t['wifi_name']}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-[#1C1C24] border border-[#2a2a33] px-4 py-3">
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#D4AF37]/80 font-semibold">
+                    {t['wifi_password_label']}
+                  </p>
+                  <p className="text-lg font-bold mt-1 font-mono tracking-wide text-[#FAF7F0] select-all">
+                    {t['wifi_pass']}
+                  </p>
+                </div>
               </div>
             </div>
           </HubCard>
@@ -791,7 +849,18 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             onBack={() => setHubView('main')}
             locale={locale}
           >
-            <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['benefits_text']}</p>
+            <div className="space-y-5">
+              <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['benefits_text']}</p>
+              <a
+                href="https://www.americanexpress.com/es-co/network/beneficios/ofertas/?inav=co_menu_offers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-12 rounded-2xl font-semibold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                {t['benefits_cta']}
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
           </HubCard>
         </>
       );
@@ -828,12 +897,14 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           {/* Header */}
           <div className="relative px-6 pt-10 pb-8 text-center bg-gradient-to-b from-[#1C1C24] to-[#0B0B0F] border-b border-[#2a2a33] overflow-hidden">
             <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-[#D4AF37]/10 blur-3xl" />
-            <div className="relative">
-              <AmexLogo className="mb-4" />
-              <h1 className="text-2xl font-black">{t['welcome']}</h1>
-              <p className="text-[#D4AF37] text-xs tracking-[0.3em] uppercase mt-2 font-semibold">
-                {mesa.mesaNumero} · {mesa.zona}
-              </p>
+            <div className="relative flex flex-col items-center gap-4">
+              <DoradoLogo size="md" />
+              <div>
+                <h1 className="font-serif text-2xl tracking-tight">{t['welcome']}</h1>
+                <p className="text-[#D4AF37] text-[10px] tracking-[0.3em] uppercase mt-2 font-semibold">
+                  {mesa.mesaNumero} · {mesa.zona}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -862,9 +933,9 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             />
           </div>
 
-          <div className="pb-8 flex justify-center">
-            <AmexLogo />
-          </div>
+          <p className="pb-6 text-center text-[9px] text-[#FAF7F0]/30 tracking-[0.2em] uppercase">
+            {t['cardholderLegal']}
+          </p>
         </div>
       </>
     );
@@ -888,7 +959,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             <div className="w-16 h-16 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
               <Users className="h-8 w-8 text-[#D4AF37]" />
             </div>
-            <h2 className="text-xl font-bold">{t['howManyGuests']}</h2>
+            <h2 className="font-serif text-2xl">{t['howManyGuests']}</h2>
           </div>
           <div className="relative w-full max-w-xs space-y-4">
             <input
@@ -967,13 +1038,13 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
       <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
         <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/12 blur-3xl" />
         <div className="relative">
-          <AmexLogo />
+          <DoradoLogo size="md" />
         </div>
         <div className="relative text-center space-y-4">
           <div className="w-24 h-24 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-[0_0_40px_-8px_rgba(212,175,55,0.5)]">
             <CheckCircle2 className="h-12 w-12 text-[#D4AF37]" />
           </div>
-          <h2 className="text-2xl font-black">{t['allDone']}</h2>
+          <h2 className="font-serif text-3xl">{t['allDone']}</h2>
           <p className="text-[#FAF7F0]/70 text-sm max-w-xs mx-auto leading-relaxed">
             {t['enjoyMessage']}
           </p>
@@ -989,9 +1060,9 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             {t['newSession']}
           </button>
         </div>
-        <div className="relative">
-          <AmexLogo />
-        </div>
+        <p className="relative text-center text-[9px] text-[#FAF7F0]/30 tracking-[0.2em] uppercase">
+          {t['cardholderLegal']}
+        </p>
       </div>
     </>
   );
