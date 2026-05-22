@@ -14,9 +14,11 @@ const nextConfig = {
     const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
       : '*.supabase.co';
-    const socketHost = process.env.NEXT_PUBLIC_SOCKET_URL
-      ? new URL(process.env.NEXT_PUBLIC_SOCKET_URL).host
-      : 'localhost:3001';
+    const socketUrl = new URL(process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3001');
+    const socketConnectSrc =
+      socketUrl.protocol === 'https:'
+        ? [`https://${socketUrl.host}`, `wss://${socketUrl.host}`]
+        : [`http://${socketUrl.host}`, `ws://${socketUrl.host}`];
 
     const csp = [
       "default-src 'self'",
@@ -30,8 +32,7 @@ const nextConfig = {
         "'self'",
         `https://${supabaseHost}`,
         `wss://${supabaseHost}`,
-        `https://${socketHost}`,
-        `wss://${socketHost}`,
+        ...socketConnectSrc,
         'https://challenges.cloudflare.com',
         'https://*.ingest.sentry.io',
         'https://*.axiom.co',

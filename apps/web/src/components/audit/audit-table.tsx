@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getAuditLog } from '@/modules/audit/actions';
+import { getAuditLog, getAuditLogCount } from '@/modules/audit/actions';
 import type { AuditEntry, AuditFilters } from '@/modules/audit/domain/audit-entry';
 
 const PAGE_SIZE = 100;
@@ -157,33 +157,39 @@ export function AuditTable({ initialData, initialTotal, showTenant = false }: Au
       second: '2-digit',
     });
 
+  // Sin offset/limit — esos viven aparte y no afectan al conteo.
+  const buildBaseFilters = useCallback((): Omit<AuditFilters, 'limit' | 'offset'> => {
+    const f: Omit<AuditFilters, 'limit' | 'offset'> = {};
+    if (actionFilter) f.action = actionFilter;
+    if (resourceTypeFilter) f.resourceType = resourceTypeFilter;
+    return f;
+  }, [actionFilter, resourceTypeFilter]);
+
   const loadMore = useCallback(async () => {
     setLoading(true);
-    const filters: AuditFilters = { limit: PAGE_SIZE, offset };
-    if (actionFilter) filters.action = actionFilter;
-    if (resourceTypeFilter) filters.resourceType = resourceTypeFilter;
-    const r = await getAuditLog(filters);
+    const r = await getAuditLog({ ...buildBaseFilters(), limit: PAGE_SIZE, offset });
     if (r.ok) {
       setEntries((prev) => [...prev, ...r.value]);
       setOffset((prev) => prev + r.value.length);
     }
     setLoading(false);
-  }, [offset, actionFilter, resourceTypeFilter]);
+  }, [offset, buildBaseFilters]);
 
   const applyFilters = useCallback(async () => {
     setLoading(true);
     setOffset(0);
-    const filters: AuditFilters = { limit: PAGE_SIZE, offset: 0 };
-    if (actionFilter) filters.action = actionFilter;
-    if (resourceTypeFilter) filters.resourceType = resourceTypeFilter;
-    const r = await getAuditLog(filters);
-    if (r.ok) {
-      setEntries(r.value);
-      setOffset(r.value.length);
-      setTotal(r.value.length < PAGE_SIZE ? r.value.length : total);
+    const base = buildBaseFilters();
+    const [dataRes, countRes] = await Promise.all([
+      getAuditLog({ ...base, limit: PAGE_SIZE, offset: 0 }),
+      getAuditLogCount(base),
+    ]);
+    if (dataRes.ok) {
+      setEntries(dataRes.value);
+      setOffset(dataRes.value.length);
     }
+    if (countRes.ok) setTotal(countRes.value);
     setLoading(false);
-  }, [actionFilter, resourceTypeFilter, total]);
+  }, [buildBaseFilters]);
 
   const chainOk = entries.length > 1 ? verifyChain(entries) : true;
 
@@ -332,8 +338,8 @@ export function AuditTable({ initialData, initialTotal, showTenant = false }: Au
         </Table>
       </div>
 
-      {/* Cargar más */}
-      {entries.length > 0 && entries.length % PAGE_SIZE === 0 && (
+      {/* Cargar más — sólo si quedan registros por traer */}
+      {entries.length < total && (
         <div className="flex justify-center">
           <Button variant="outline" size="sm" onClick={loadMore} disabled={loading}>
             {loading ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}

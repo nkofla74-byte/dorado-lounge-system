@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { generateQRLink } from '@/app/(dashboard)/admin/qr/actions';
 import { toast } from 'sonner';
 
-const ZONA_KEYS = ['amex', 'snack', 'buffet'] as const;
-type ZonaKey = (typeof ZONA_KEYS)[number];
+// QR público solo para zona AMEX (Snack y Buffet no usan menú digital de pasajero).
+const ZONA: 'amex' = 'amex';
+type ZonaKey = typeof ZONA;
 
 const LOCALES = [
   { value: 'es', label: 'ES' },
@@ -31,22 +32,17 @@ interface QRResult {
 export function QRGeneratorClient() {
   const t = useTranslations('qrAdmin');
   const [mesaNumero, setMesaNumero] = useState('');
-  const [zona, setZona] = useState<ZonaKey>('amex');
   const [locale, setLocale] = useState('es');
   const [result, setResult] = useState<QRResult | null>(null);
   const [loading, setLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const zonaLabels: Record<ZonaKey, string> = {
-    amex: t('zonaAmex'),
-    snack: t('zonaSnack'),
-    buffet: t('zonaBuffet'),
-  };
+  const zonaLabel = t('zonaAmex');
 
   const handleGenerate = async () => {
     if (!mesaNumero.trim()) return;
     setLoading(true);
-    const res = await generateQRLink({ mesaNumero: mesaNumero.trim(), zona, locale });
+    const res = await generateQRLink({ mesaNumero: mesaNumero.trim(), zona: ZONA, locale });
     setLoading(false);
     if (!res.ok) {
       toast.error(res.error.message);
@@ -63,8 +59,8 @@ export function QRGeneratorClient() {
     setResult({
       url: res.value.url,
       mesaNumero: mesaNumero.trim(),
-      zona,
-      zonaLabel: zonaLabels[zona],
+      zona: ZONA,
+      zonaLabel,
       dataUrl,
     });
   };
@@ -130,20 +126,9 @@ export function QRGeneratorClient() {
 
         <div className="space-y-1.5">
           <Label>{t('zonaLabel')}</Label>
-          <div className="flex gap-2">
-            {ZONA_KEYS.map((z) => (
-              <button
-                key={z}
-                onClick={() => setZona(z)}
-                className={`flex-1 py-1.5 text-sm rounded-lg border transition-colors ${
-                  zona === z
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border hover:bg-accent'
-                }`}
-              >
-                {zonaLabels[z]}
-              </button>
-            ))}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-sm text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+            {zonaLabel}
           </div>
         </div>
 
