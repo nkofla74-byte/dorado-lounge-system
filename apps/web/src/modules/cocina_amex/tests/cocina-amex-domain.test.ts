@@ -23,6 +23,13 @@ function makePedido(overrides: Partial<PedidoWithItems> = {}): PedidoWithItems {
     updatedAt: new Date('2026-01-01T00:00:00Z'),
     version: 0,
     items: [],
+    timestamps: {
+      recibidoCocinaAt: null,
+      enPreparacionAt: null,
+      despachadoAt: null,
+      entregadoAt: null,
+      canceladoAt: null,
+    },
     ...overrides,
   };
 }

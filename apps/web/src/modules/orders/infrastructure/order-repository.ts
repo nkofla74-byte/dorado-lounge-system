@@ -21,6 +21,11 @@ type ItemRow = {
   receta: { nombre: string } | null;
 };
 
+type EventoRow = {
+  estado: string;
+  created_at: string;
+};
+
 type PedidoRow = {
   id: string;
   tenant_id: string;
@@ -32,6 +37,7 @@ type PedidoRow = {
   created_at: string;
   updated_at: string;
   pedido_items: ItemRow[];
+  pedido_eventos: EventoRow[];
 };
 
 type ItemWithIngsRow = {
@@ -58,7 +64,8 @@ type PedidoWithIngsRow = Omit<PedidoRow, 'pedido_items'> & {
 
 const PEDIDO_SELECT = `
   id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
-  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre))
+  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre)),
+  pedido_eventos(estado, created_at)
 `;
 
 const PEDIDO_FLAT_SELECT =
@@ -89,8 +96,33 @@ function toItem(i: ItemRow): PedidoItem {
   };
 }
 
+// Deriva timestamps por transición. Toma el ÚLTIMO evento de cada estado
+// (improbable que haya múltiples por el state machine, pero por seguridad).
+function buildTimestamps(
+  eventos: EventoRow[] | undefined,
+): import('../domain/pedido').PedidoTimestamps {
+  const lastBy: Record<string, string> = {};
+  for (const e of eventos ?? []) {
+    if (!lastBy[e.estado] || e.created_at > lastBy[e.estado]!) {
+      lastBy[e.estado] = e.created_at;
+    }
+  }
+  const at = (k: string): Date | null => (lastBy[k] ? new Date(lastBy[k]!) : null);
+  return {
+    recibidoCocinaAt: at('recibido_cocina'),
+    enPreparacionAt: at('en_preparacion'),
+    despachadoAt: at('despachado'),
+    entregadoAt: at('entregado'),
+    canceladoAt: at('cancelado'),
+  };
+}
+
 function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
-  return { ...toPedido(row), items: (row.pedido_items ?? []).map(toItem) };
+  return {
+    ...toPedido(row),
+    items: (row.pedido_items ?? []).map(toItem),
+    timestamps: buildTimestamps(row.pedido_eventos),
+  };
 }
 
 function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
@@ -193,6 +225,7 @@ export function createOrderRepository(): OrderRepository {
       return {
         ...toPedido(pedidoData as unknown as Omit<PedidoRow, 'pedido_items'>),
         items: (itemsData as unknown as ItemRow[]).map(toItem),
+        timestamps: buildTimestamps([]),
       };
     },
 

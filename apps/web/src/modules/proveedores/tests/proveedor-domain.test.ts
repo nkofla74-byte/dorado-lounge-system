@@ -32,6 +32,8 @@ function makeRepo(overrides: Partial<ProveedorRepository> = {}): ProveedorReposi
     findById: vi.fn().mockResolvedValue(null),
     create: vi.fn().mockResolvedValue(makeProveedor()),
     update: vi.fn().mockResolvedValue(makeProveedor()),
+    softDelete: vi.fn().mockResolvedValue(undefined),
+    countActiveLotes: vi.fn().mockResolvedValue(0),
     findLotesByProveedor: vi.fn().mockResolvedValue([]),
     ...overrides,
   };

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getInsumos, getLotesProximosVencer } from '@/modules/inventory/actions';
+import { getProveedores } from '@/modules/proveedores/actions';
 import { AlmacenPanel } from '@/components/inventory/almacen-panel';
 import { NuevoIngresoDialog } from '@/components/inventory/nuevo-ingreso-dialog';
+import { ProveedoresPanel } from '@/components/proveedores/proveedores-panel';
 import { createClient } from '@/lib/supabase/server';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -17,10 +19,16 @@ export default async function AlmacenPage() {
   const [
     result,
     vencimientosResult,
+    proveedoresResult,
     {
       data: { user },
     },
-  ] = await Promise.all([getInsumos(), getLotesProximosVencer(7), supabase.auth.getUser()]);
+  ] = await Promise.all([
+    getInsumos(),
+    getLotesProximosVencer(7),
+    getProveedores(),
+    supabase.auth.getUser(),
+  ]);
 
   const userRole = user?.app_metadata?.role as UserRole | undefined;
   const insumos = result.ok ? result.value : [];
@@ -137,6 +145,18 @@ export default async function AlmacenPage() {
           {result.error.message}
         </div>
       )}
+
+      {/* Proveedores: gestión rápida desde la pantalla operativa */}
+      <section className="space-y-3 pt-2">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">{t('proveedoresTitle')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('proveedoresSubtitle')}</p>
+        </div>
+        <ProveedoresPanel
+          initialData={proveedoresResult.ok ? proveedoresResult.value : []}
+          canWrite={canIngresar}
+        />
+      </section>
     </div>
   );
 }

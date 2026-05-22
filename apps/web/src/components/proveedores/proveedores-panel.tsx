@@ -11,12 +11,14 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProveedorDialog } from './proveedor-dialog';
 import { HistorialCompras } from './historial-compras';
-import { updateProveedor } from '@/modules/proveedores/actions';
+import { updateProveedor, deleteProveedor } from '@/modules/proveedores/actions';
 import { toast } from 'sonner';
 import type { Proveedor } from '@/modules/proveedores/domain/proveedor';
 
@@ -36,6 +38,7 @@ export function ProveedoresPanel({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | undefined>();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleSaved = (saved: Proveedor) => {
     setProveedores((prev) => {
@@ -57,6 +60,19 @@ export function ProveedoresPanel({
   const openEdit = (p: Proveedor) => {
     setEditing(p);
     setDialogOpen(true);
+  };
+
+  const handleDelete = async (p: Proveedor) => {
+    if (!confirm(`¿Eliminar proveedor "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(p.id);
+    const result = await deleteProveedor(p.id);
+    setDeletingId(null);
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+    setProveedores((prev) => prev.filter((x) => x.id !== p.id));
+    toast.success(t('eliminado'));
   };
 
   const toggleActivo = async (p: Proveedor) => {
@@ -159,6 +175,7 @@ export function ProveedoresPanel({
                         size="sm"
                         variant="ghost"
                         className="h-7 w-7 p-0"
+                        title={t('editar')}
                         onClick={() => openEdit(p)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -170,6 +187,20 @@ export function ProveedoresPanel({
                         onClick={() => toggleActivo(p)}
                       >
                         {p.activo ? t('desactivar') : t('reactivar')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                        title={t('eliminar')}
+                        disabled={deletingId === p.id}
+                        onClick={() => handleDelete(p)}
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </div>
                   )}

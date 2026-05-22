@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { ShoppingBag, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
+import { ShoppingBag, AlertTriangle, Plus, RefreshCw, ChefHat, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   getPedidos,
+  recibirEnCocina,
   iniciarPreparacion,
   despacharPedido,
   entregarPedido,
@@ -28,6 +29,14 @@ import type { UserRole } from '@dorado/shared-types';
 
 const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
 const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'recepcion']);
+const RECIBIR_ROLES = new Set<UserRole>([
+  'superuser',
+  'admin',
+  'chef',
+  'sous_chef',
+  'mesero_amex',
+  'recepcion',
+]);
 const CANCEL_ROLES = new Set<UserRole>([
   'superuser',
   'admin',
@@ -54,6 +63,17 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
         className={cn(
           base,
           'bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20',
+        )}
+      >
+        {ESTADO_LABEL[estado]}
+      </Badge>
+    );
+  if (estado === 'recibido_cocina')
+    return (
+      <Badge
+        className={cn(
+          base,
+          'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -88,6 +108,56 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   );
 }
 
+// Mide tiempo cocina (recibido→despachado) y tiempo mesero (despachado→entregado).
+// Si una transición aún no ocurrió, usa "ahora" para timer en vivo.
+function TiemposChips({ pedido }: { pedido: PedidoWithItems }) {
+  const { timestamps, estado, createdAt } = pedido;
+  // Cocina arranca al "recibir en cocina" — si lo saltearon, usa createdAt como fallback.
+  const cocinaStart = timestamps.recibidoCocinaAt ?? createdAt;
+  const cocinaEnd = timestamps.despachadoAt;
+  const meseroStart = timestamps.despachadoAt;
+
+  const cocinaActive =
+    (estado === 'creado' || estado === 'recibido_cocina' || estado === 'en_preparacion') &&
+    !cocinaEnd;
+  const meseroActive = estado === 'despachado' && meseroStart;
+
+  const cocinaMin = cocinaActive
+    ? diffMin(cocinaStart)
+    : cocinaEnd
+      ? diffMin(cocinaStart, cocinaEnd)
+      : null;
+  const meseroMin = meseroActive && meseroStart ? diffMin(meseroStart) : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[11px] tabular-nums">
+      {cocinaMin !== null && (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 border',
+            cocinaActive
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+              : 'bg-muted/50 border-border text-muted-foreground',
+          )}
+          title="Tiempo de cocina (recibido → despachado)"
+        >
+          <ChefHat className="h-3 w-3" />
+          {fmtMin(cocinaMin)}
+        </span>
+      )}
+      {meseroMin !== null && (
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 border bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+          title="Tiempo de mesero (despachado → entregado)"
+        >
+          <Truck className="h-3 w-3" />
+          {fmtMin(meseroMin)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
   const t = useTranslations('pedidos');
   if (items.length === 0)
@@ -109,6 +179,16 @@ function formatElapsed(d: Date, ahoraLabel: string): string {
   if (mins < 1) return ahoraLabel;
   if (mins < 60) return `${mins}m`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+// Diferencia en minutos entre dos instantes (segundo opcional = ahora).
+function diffMin(from: Date, to?: Date | null): number {
+  return Math.max(0, Math.floor(((to ?? new Date()).getTime() - from.getTime()) / 60000));
+}
+
+function fmtMin(m: number): string {
+  if (m < 60) return `${m}m`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
 interface PedidoTableProps {
@@ -135,11 +215,17 @@ export function PedidoTable({
   const [fetchError, setFetchError] = useState(initialError);
   const [createOpen, setCreateOpen] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
+  // Tick para refrescar los contadores de tiempo en vivo sin pegarle a la API.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const isCocina = userRole ? COCINA_ROLES.has(userRole) : false;
   const isMesero = userRole ? MESERO_ROLES.has(userRole) : false;
+  const canRecibir = userRole ? RECIBIR_ROLES.has(userRole) : false;
   const canCancel = userRole ? CANCEL_ROLES.has(userRole) : false;
 
   const refresh = async () => {
@@ -154,20 +240,27 @@ export function PedidoTable({
   const applyTransition = (updated: Pedido) => {
     if (updated.estado === 'entregado' || updated.estado === 'cancelado') {
       setData((prev) => prev.filter((p) => p.id !== updated.id));
-    } else {
-      setData((prev) =>
-        prev.map((p) =>
-          p.id === updated.id
-            ? {
-                ...p,
-                estado: updated.estado,
-                version: updated.version,
-                updatedAt: updated.updatedAt,
-              }
-            : p,
-        ),
-      );
+      return;
     }
+    const now = updated.updatedAt instanceof Date ? updated.updatedAt : new Date(updated.updatedAt);
+    setData((prev) =>
+      prev.map((p) => {
+        if (p.id !== updated.id) return p;
+        // Sincroniza el timestamp local de la transición ejecutada — así los
+        // chips de tiempo arrancan a contar sin esperar al próximo refresh.
+        const ts = { ...p.timestamps };
+        if (updated.estado === 'recibido_cocina') ts.recibidoCocinaAt = now;
+        else if (updated.estado === 'en_preparacion') ts.enPreparacionAt = now;
+        else if (updated.estado === 'despachado') ts.despachadoAt = now;
+        return {
+          ...p,
+          estado: updated.estado,
+          version: updated.version,
+          updatedAt: updated.updatedAt,
+          timestamps: ts,
+        };
+      }),
+    );
   };
 
   const runAction = async (pedido: PedidoWithItems, action: ActionFn) => {
@@ -180,7 +273,12 @@ export function PedidoTable({
       setRowError({ id: pedido.id, message: result.error?.message ?? 'Error desconocido' });
     }
     setProcessingId(null);
-    setConfirmingId(null);
+  };
+
+  // Entregar: confirmación nativa única (acción irreversible — descuenta stock).
+  const handleEntregar = (pedido: PedidoWithItems) => {
+    if (!confirm(t('confirmarDescuento'))) return;
+    void runAction(pedido, (id, v) => entregarPedido(id, v));
   };
 
   const recetasServicio = recetas.filter((r) => r.tipoReceta === 'servicio');
@@ -229,6 +327,7 @@ export function PedidoTable({
               <TableHead>{t('colEstado')}</TableHead>
               <TableHead>{t('colItems')}</TableHead>
               <TableHead>{t('colHace')}</TableHead>
+              <TableHead>{t('colTiempos')}</TableHead>
               <TableHead className="text-right">{t('colAcciones')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -242,7 +341,6 @@ export function PedidoTable({
             ) : (
               data.map((pedido) => {
                 const isProcessing = processingId === pedido.id;
-                const isConfirming = confirmingId === pedido.id;
                 const rowErr = rowError?.id === pedido.id ? rowError.message : null;
 
                 return (
@@ -265,10 +363,59 @@ export function PedidoTable({
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
                         {formatElapsed(pedido.createdAt, t('ahora'))}
                       </TableCell>
+                      <TableCell>
+                        <TiemposChips pedido={pedido} />
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* creado: cocina inicia, todos pueden cancelar */}
-                          {pedido.estado === 'creado' && !isConfirming && (
+                          {/* creado: mesero/recepción puede marcar recibido,
+                              cocina puede iniciar directo, todos cancelan */}
+                          {pedido.estado === 'creado' && (
+                            <>
+                              {canRecibir && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                  disabled={isProcessing}
+                                  onClick={() =>
+                                    runAction(pedido, (id, v) => recibirEnCocina(id, v))
+                                  }
+                                >
+                                  {t('recibirEnCocina')}
+                                </Button>
+                              )}
+                              {isCocina && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  disabled={isProcessing}
+                                  onClick={() =>
+                                    runAction(pedido, (id, v) => iniciarPreparacion(id, v))
+                                  }
+                                >
+                                  {t('iniciarPrep')}
+                                </Button>
+                              )}
+                              {canCancel && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs text-muted-foreground"
+                                  disabled={isProcessing}
+                                  onClick={() =>
+                                    runAction(pedido, (id, v) => cancelarPedido(id, v))
+                                  }
+                                >
+                                  {t('cancelar')}
+                                </Button>
+                              )}
+                            </>
+                          )}
+
+                          {/* recibido_cocina: cocina inicia preparación */}
+                          {pedido.estado === 'recibido_cocina' && (
                             <>
                               {isCocina && (
                                 <Button
@@ -300,7 +447,7 @@ export function PedidoTable({
                           )}
 
                           {/* en_preparacion: cocina despacha o cancela */}
-                          {pedido.estado === 'en_preparacion' && !isConfirming && (
+                          {pedido.estado === 'en_preparacion' && (
                             <>
                               {isCocina && (
                                 <Button
@@ -330,42 +477,16 @@ export function PedidoTable({
                             </>
                           )}
 
-                          {/* despachado: mesero confirma entrega (con stock) */}
-                          {pedido.estado === 'despachado' && !isConfirming && isMesero && (
+                          {/* despachado: mesero marca entregado (1 tap + confirm) */}
+                          {pedido.estado === 'despachado' && isMesero && (
                             <Button
                               size="sm"
                               className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                               disabled={isProcessing}
-                              onClick={() => setConfirmingId(pedido.id)}
+                              onClick={() => handleEntregar(pedido)}
                             >
-                              {t('confirmarEntrega')}
+                              {isProcessing ? t('procesando') : t('entregado')}
                             </Button>
-                          )}
-
-                          {/* Confirmación de entrega (descuenta stock) */}
-                          {isConfirming && (
-                            <>
-                              <span className="text-xs text-muted-foreground mr-1">
-                                {t('confirmarDescuento')}
-                              </span>
-                              <Button
-                                size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                                disabled={isProcessing}
-                                onClick={() => runAction(pedido, (id, v) => entregarPedido(id, v))}
-                              >
-                                {isProcessing ? t('procesando') : t('confirmar')}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs"
-                                disabled={isProcessing}
-                                onClick={() => setConfirmingId(null)}
-                              >
-                                {t('no')}
-                              </Button>
-                            </>
                           )}
                         </div>
                       </TableCell>

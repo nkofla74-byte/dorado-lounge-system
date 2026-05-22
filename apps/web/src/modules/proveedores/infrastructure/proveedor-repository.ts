@@ -211,6 +211,50 @@ export function createProveedorRepository(): ProveedorRepository {
       return toProveedor(row, tenantMap);
     },
 
+    async softDelete(id, tenantId): Promise<void> {
+      const patch = { deleted_at: new Date().toISOString(), activo: false };
+      const admin = createAdminClient();
+      let q: any;
+      if (tenantId === null) {
+        q = admin.from('proveedores').update(patch).eq('id', id).is('deleted_at', null);
+      } else {
+        const supabase = await createClient();
+        q = supabase
+          .from('proveedores')
+          .update(patch)
+          .eq('id', id)
+          .eq('tenant_id', tenantId)
+          .is('deleted_at', null);
+      }
+      const { error } = await q;
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+    },
+
+    async countActiveLotes(proveedorId, tenantId): Promise<number> {
+      let q: any;
+      if (tenantId === null) {
+        const admin = createAdminClient();
+        q = admin
+          .from('lotes')
+          .select('id', { count: 'exact', head: true })
+          .eq('proveedor_id', proveedorId)
+          .eq('activo', true)
+          .is('deleted_at', null);
+      } else {
+        const supabase = await createClient();
+        q = supabase
+          .from('lotes')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .eq('proveedor_id', proveedorId)
+          .eq('activo', true)
+          .is('deleted_at', null);
+      }
+      const { count, error } = await q;
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return count ?? 0;
+    },
+
     async findLotesByProveedor(proveedorId, tenantId): Promise<LoteConInsumo[]> {
       let q: any;
       const LOTE_SELECT =

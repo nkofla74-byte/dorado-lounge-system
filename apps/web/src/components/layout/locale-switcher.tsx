@@ -13,9 +13,10 @@ type Locale = (typeof LOCALES)[number]['code'];
 
 interface LocaleSwitcherProps {
   current: Locale;
+  compact?: boolean;
 }
 
-export function LocaleSwitcher({ current }: LocaleSwitcherProps) {
+export function LocaleSwitcher({ current, compact = false }: LocaleSwitcherProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleSwitch = (locale: Locale) => {
@@ -28,6 +29,24 @@ export function LocaleSwitcher({ current }: LocaleSwitcherProps) {
       window.location.reload();
     });
   };
+
+  // Compact: un solo botón que muestra el locale opuesto y cicla al click.
+  // Pensado para el top bar móvil donde el espacio es crítico.
+  if (compact) {
+    const next = LOCALES.find((l) => l.code !== current) ?? LOCALES[0]!;
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-9 px-2 text-xs font-semibold tabular-nums"
+        onClick={() => handleSwitch(next.code)}
+        disabled={isPending}
+        aria-label={`Cambiar a ${next.label}`}
+      >
+        {current.toUpperCase()}
+      </Button>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1 px-3 py-1">

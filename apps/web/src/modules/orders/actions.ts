@@ -115,7 +115,9 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
 
 export async function recibirEnCocina(pedidoId: string, version: number): Promise<Result<Pedido>> {
   try {
-    const ctx = await assertCan('cocina_amex:write');
+    // Permiso compartido: cocina marca recepción cuando ve el pedido entrar,
+    // mesero/recepción cuando llevan físicamente la orden a la cocina.
+    const ctx = await assertCan('orders:receive');
     const repo = createOrderRepository();
 
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);

@@ -11,6 +11,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // xs cubre celulares estrechos (iPhone SE 1st gen = 320, mayoría
+        // moderna ≥ 375). Sirve para mostrar/ocultar elementos del top bar.
+        xs: '380px',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

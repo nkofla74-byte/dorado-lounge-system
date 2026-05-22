@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, PackagePlus } from 'lucide-react';
+import { Loader2, Plus, PackagePlus, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { createLoteSchema } from '@dorado/shared-validation';
 import { getLotesByInsumo, createLote } from '@/modules/inventory/actions';
-import { getProveedores } from '@/modules/proveedores/actions';
+import { getProveedores, deleteProveedor } from '@/modules/proveedores/actions';
+import { ProveedorDialog } from '@/components/proveedores/proveedor-dialog';
 import {
   Sheet,
   SheetContent,
@@ -31,6 +33,9 @@ interface LotesSheetProps {
   insumo: InsumoWithStock | null;
   onOpenChange: (open: boolean) => void;
   onLoteCreated?: () => void;
+  // Si true, el sheet abre con el formulario de nuevo lote desplegado.
+  // Útil para botones "Ingresar lote" que deben llevar directo al form.
+  openInForm?: boolean;
 }
 
 type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
@@ -52,6 +57,10 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
   const [showForm, setShowForm] = useState(false);
   const [serverError, setServerError] = useState('');
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [provDialogOpen, setProvDialogOpen] = useState(false);
+  const [provEditing, setProvEditing] = useState<Proveedor | undefined>(undefined);
+  const [provDeleting, setProvDeleting] = useState(false);
+  const [selectedProvId, setSelectedProvId] = useState<string>('');
 
   const {
     register,
@@ -64,11 +73,41 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
     defaultValues: { insumoId: insumo?.id ?? '' },
   });
 
+  const reloadProveedores = async () => {
+    const r = await getProveedores();
+    if (r.ok) setProveedores(r.value.filter((p) => p.activo));
+  };
+
   useEffect(() => {
-    getProveedores().then((r) => {
-      if (r.ok) setProveedores(r.value.filter((p) => p.activo));
-    });
+    void reloadProveedores();
   }, []);
+
+  const handleProvSaved = (p: Proveedor) => {
+    void reloadProveedores();
+    // Auto-seleccionar el proveedor recién creado/editado en el form de lote
+    setSelectedProvId(p.id);
+    setValue('proveedorId', p.id);
+    setValue('proveedor', p.nombre);
+  };
+
+  const handleProvDelete = async () => {
+    if (!selectedProvId) return;
+    const sel = proveedores.find((p) => p.id === selectedProvId);
+    if (!sel) return;
+    if (!confirm(`¿Eliminar proveedor "${sel.nombre}"? Esta acción no se puede deshacer.`)) return;
+    setProvDeleting(true);
+    const r = await deleteProveedor(selectedProvId);
+    setProvDeleting(false);
+    if (!r.ok) {
+      toast.error(r.error.message);
+      return;
+    }
+    toast.success('Proveedor eliminado');
+    setSelectedProvId('');
+    setValue('proveedorId', undefined);
+    setValue('proveedor', '');
+    void reloadProveedores();
+  };
 
   useEffect(() => {
     if (!insumo) return;
@@ -222,31 +261,81 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                   {t('proveedor')}{' '}
                   <span className="text-muted-foreground font-normal">{t('optional')}</span>
                 </Label>
-                {proveedores.length > 0 ? (
-                  <select
-                    id="proveedorId"
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    {...register('proveedorId')}
-                    onChange={(e) => {
-                      const selected = proveedores.find((p) => p.id === e.target.value);
-                      setValue('proveedorId', e.target.value || undefined);
-                      setValue('proveedor', selected?.nombre ?? '');
+                <div className="flex items-center gap-1">
+                  {proveedores.length > 0 ? (
+                    <select
+                      id="proveedorId"
+                      className="flex-1 min-w-0 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={selectedProvId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        const selected = proveedores.find((p) => p.id === id);
+                        setSelectedProvId(id);
+                        setValue('proveedorId', id || undefined);
+                        setValue('proveedor', selected?.nombre ?? '');
+                      }}
+                    >
+                      <option value="">{t('sinProveedor')}</option>
+                      {proveedores.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id="proveedorId"
+                      className="flex-1"
+                      placeholder={t('proveedorPlaceholder')}
+                      {...register('proveedor')}
+                    />
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    title="Nuevo proveedor"
+                    onClick={() => {
+                      setProvEditing(undefined);
+                      setProvDialogOpen(true);
                     }}
                   >
-                    <option value="">{t('sinProveedor')}</option>
-                    {proveedores.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombre}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input
-                    id="proveedorId"
-                    placeholder={t('proveedorPlaceholder')}
-                    {...register('proveedor')}
-                  />
-                )}
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    title="Editar proveedor seleccionado"
+                    disabled={!selectedProvId}
+                    onClick={() => {
+                      const sel = proveedores.find((p) => p.id === selectedProvId);
+                      if (!sel) return;
+                      setProvEditing(sel);
+                      setProvDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                    title="Eliminar proveedor seleccionado"
+                    disabled={!selectedProvId || provDeleting}
+                    onClick={handleProvDelete}
+                  >
+                    {provDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <input type="hidden" {...register('proveedorId')} />
                 <input type="hidden" {...register('proveedor')} />
               </div>
 
@@ -300,6 +389,16 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
           </form>
         )}
       </SheetContent>
+
+      <ProveedorDialog
+        open={provDialogOpen}
+        onOpenChange={(o) => {
+          setProvDialogOpen(o);
+          if (!o) setProvEditing(undefined);
+        }}
+        proveedor={provEditing}
+        onSaved={handleProvSaved}
+      />
     </Sheet>
   );
 }

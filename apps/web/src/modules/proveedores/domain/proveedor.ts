@@ -36,3 +36,14 @@ export class ProveedorNotFoundError extends Error {
     super('Proveedor no encontrado');
   }
 }
+
+// Bloquea borrado cuando hay lotes activos referenciando al proveedor —
+// el historial de compras debe mantenerse íntegro.
+export class ProveedorEnUsoError extends Error {
+  override name = 'ProveedorEnUsoError' as const;
+  readonly lotesActivos: number;
+  constructor(lotesActivos: number) {
+    super(`No se puede borrar: el proveedor tiene ${lotesActivos} lote(s) activos referenciándolo`);
+    this.lotesActivos = lotesActivos;
+  }
+}

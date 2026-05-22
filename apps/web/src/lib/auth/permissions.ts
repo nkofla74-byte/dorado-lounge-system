@@ -34,6 +34,9 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Pedidos
   'orders:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion', 'personal_pasteleria'],
   'orders:create': ['admin', 'mesero_amex', 'recepcion'],
+  // Recibir el pedido en cocina: el mesero/recepción lo marca cuando lleva la
+  // orden física a la cocina (entre 'creado' y 'en_preparacion').
+  'orders:receive': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
   'orders:dispatch': ['admin', 'chef', 'sous_chef'],
   'orders:deliver': ['admin', 'mesero_amex', 'recepcion'],
   'orders:cancel': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
@@ -93,7 +96,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'cocina_amex:write': ['admin', 'sous_chef'],
   // Proveedores — gestión de proveedores e historial compras
   'proveedores:read': ['admin', 'personal_almacen'],
-  'proveedores:write': ['admin'],
+  'proveedores:write': ['admin', 'personal_almacen'],
   // Alertas — motor de alertas in-app
   'alertas:read': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
   'alertas:write': ['admin'],

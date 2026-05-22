@@ -307,13 +307,14 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="md:hidden sticky top-0 z-30 flex items-center gap-2 h-14 px-3 border-b border-border/50 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/80 safe-pt">
+    <header className="md:hidden sticky top-0 z-30 flex items-center h-14 px-2 border-b border-border/50 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/80 safe-pt">
+      {/* Izquierda: menú */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10"
+            className="h-9 w-9 shrink-0"
             aria-label="Abrir menú de navegación"
           >
             <Menu className="h-5 w-5" />
@@ -325,15 +326,22 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
         </SheetContent>
       </Sheet>
 
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      {/* Centro: marca (texto se oculta en pantallas <sm para dar aire) */}
+      <div className="flex items-center gap-2 min-w-0 flex-1 pl-1">
         <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-primary to-amber-600 text-primary-foreground text-xs font-bold shrink-0 shadow-md shadow-primary/20">
           DL
         </div>
-        <p className="text-sm font-semibold truncate tracking-tight">Dorado Lounge</p>
+        <p className="hidden xs:block text-sm font-semibold truncate tracking-tight">
+          Dorado Lounge
+        </p>
       </div>
 
-      <AlertasBell />
-      <ThemeToggle />
+      {/* Derecha: idioma · tema · alertas, con padding para que el badge no toque la marca */}
+      <div className="flex items-center gap-0.5 shrink-0 pl-2">
+        <LocaleSwitcher current={locale} compact />
+        <ThemeToggle />
+        <AlertasBell />
+      </div>
     </header>
   );
 }

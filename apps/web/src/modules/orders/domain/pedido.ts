@@ -25,8 +25,19 @@ export interface Pedido {
   updatedAt: Date;
 }
 
+// Timestamps de cada transición — derivados de pedido_eventos. Permiten
+// medir tiempo de cocina (recibido→despachado) y de mesero (despachado→entregado).
+export interface PedidoTimestamps {
+  recibidoCocinaAt: Date | null;
+  enPreparacionAt: Date | null;
+  despachadoAt: Date | null;
+  entregadoAt: Date | null;
+  canceladoAt: Date | null;
+}
+
 export interface PedidoWithItems extends Pedido {
   items: PedidoItem[];
+  timestamps: PedidoTimestamps;
 }
 
 export interface PedidoItemIngrediente {

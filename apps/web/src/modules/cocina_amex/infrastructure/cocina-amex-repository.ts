@@ -49,6 +49,8 @@ function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
 }
 
 function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
+  // Esta proyección es para el KDS AMEX, que no usa timestamps de transiciones
+  // — esos viven en la lista de pedidos para mesero. Stub vacío seguro.
   return {
     ...toPedido(row),
     items: (row.pedido_items ?? []).map((i) => ({
@@ -59,6 +61,13 @@ function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
       cantidad: i.cantidad,
       notas: i.notas,
     })),
+    timestamps: {
+      recibidoCocinaAt: null,
+      enPreparacionAt: null,
+      despachadoAt: null,
+      entregadoAt: null,
+      canceladoAt: null,
+    },
   };
 }
 

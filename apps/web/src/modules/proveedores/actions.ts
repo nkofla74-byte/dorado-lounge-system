@@ -7,8 +7,9 @@ import { createProveedorRepository } from './infrastructure/proveedor-repository
 import { getProveedores as getProveedoresUseCase } from './application/get-proveedores';
 import { createProveedor as createProveedorUseCase } from './application/create-proveedor';
 import { updateProveedor as updateProveedorUseCase } from './application/update-proveedor';
+import { deleteProveedor as deleteProveedorUseCase } from './application/delete-proveedor';
 import { createProveedorSchema, updateProveedorSchema } from '@dorado/shared-validation';
-import { ProveedorNotFoundError } from './domain/proveedor';
+import { ProveedorNotFoundError, ProveedorEnUsoError } from './domain/proveedor';
 import type { Result } from '@/lib/result';
 import type { Proveedor } from './domain/proveedor';
 import type { LoteConInsumo } from './application/ports/proveedor-repository.port';
@@ -78,6 +79,34 @@ export async function updateProveedor(id: string, input: unknown): Promise<Resul
   } catch (e) {
     if (e instanceof ProveedorNotFoundError) {
       return err(new AppError('NOT_FOUND', 404, e.message));
+    }
+    return err(toAppError(e));
+  }
+}
+
+export async function deleteProveedor(id: string): Promise<Result<{ id: string }>> {
+  try {
+    const ctx = await assertCan('proveedores:write');
+    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
+    const repo = createProveedorRepository();
+    await deleteProveedorUseCase(repo, id, scope);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'proveedores:eliminar',
+      resourceId: id,
+      resourceType: 'proveedor',
+      payload: {},
+    });
+
+    return ok({ id });
+  } catch (e) {
+    if (e instanceof ProveedorNotFoundError) {
+      return err(new AppError('NOT_FOUND', 404, e.message));
+    }
+    if (e instanceof ProveedorEnUsoError) {
+      return err(new AppError('CONFLICT', 409, e.message));
     }
     return err(toAppError(e));
   }
