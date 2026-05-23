@@ -18,6 +18,7 @@ import { IniciarTurnoDialog } from './iniciar-turno-dialog';
 import { CerrarTurnoDialog } from './cerrar-turno-dialog';
 import type { Turno } from '@/modules/turnos/domain/turno';
 import type { UserRole } from '@dorado/shared-types';
+import { formatBloqueHorario } from '@/lib/turnos';
 
 interface TurnosPanelProps {
   initialTurnos: Turno[];
@@ -38,6 +39,11 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
 
   const canWrite = userRole ? CAN_WRITE.has(userRole) : false;
   const turnoActivo = turnos.find((tu) => tu.activo) ?? null;
+
+  const labelTurno = (tu: Turno): string =>
+    tu.bloque
+      ? `${t(`bloque_${tu.bloque}` as const)} · ${formatBloqueHorario(tu.bloque)}`
+      : tu.nombre;
 
   const formatFecha = (date: Date): string =>
     new Date(date).toLocaleString(locale === 'en' ? 'en-US' : 'es-CO', {
@@ -119,7 +125,9 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
         <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border border-primary/20">
           <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{turnoActivo.nombre}</p>
+            <p className="text-sm font-semibold text-foreground truncate">
+              {labelTurno(turnoActivo)}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t('iniciadoEn', {
                 fecha: formatFecha(turnoActivo.iniciadoAt),
@@ -170,7 +178,7 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
               <TableBody>
                 {turnos.map((tu) => (
                   <TableRow key={tu.id} className="hover:bg-muted/30">
-                    <TableCell className="font-medium text-sm">{tu.nombre}</TableCell>
+                    <TableCell className="font-medium text-sm">{labelTurno(tu)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {formatFecha(tu.iniciadoAt)}
                     </TableCell>

@@ -1,7 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { ProductionRepository } from '../application/ports/production-repository.port';
-import type { Tanda, TandaWithIngredientes, CreateTandaInput, EstadoTanda } from '../domain/tanda';
+import type {
+  Tanda,
+  TandaWithIngredientes,
+  CreateTandaInput,
+  EstadoTanda,
+  ZonaServicio,
+} from '../domain/tanda';
+
+const TANDA_COLUMNS = `
+  id, tenant_id, receta_id, cantidad_tandas, estado, zona_destino, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+  receta:recetas(nombre),
+  responsable:users!tandas_produccion_responsable_id_fkey(nombre),
+  turno:turnos(nombre)
+`;
 
 type TandaRow = {
   id: string;
@@ -9,6 +22,7 @@ type TandaRow = {
   receta_id: string;
   cantidad_tandas: number;
   estado: string;
+  zona_destino: string | null;
   responsable_id: string | null;
   turno_id: string | null;
   notas: string | null;
@@ -41,6 +55,7 @@ function toTanda(row: TandaRow): Tanda {
     recetaNombre: row.receta?.nombre ?? '',
     cantidadTandas: row.cantidad_tandas,
     estado: row.estado as EstadoTanda,
+    zonaDestino: row.zona_destino as ZonaServicio | null,
     responsableId: row.responsable_id,
     responsableNombre: row.responsable?.nombre ?? null,
     turnoId: row.turno_id,
@@ -72,14 +87,7 @@ export function createProductionRepository(): ProductionRepository {
 
       const { data, error } = await supabase
         .from('tandas_produccion')
-        .select(
-          `
-          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre),
-          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
-          turno:turnos(nombre)
-        `,
-        )
+        .select(TANDA_COLUMNS)
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -100,17 +108,11 @@ export function createProductionRepository(): ProductionRepository {
           turno_id: input.turnoId ?? null,
           responsable_id: input.responsableId ?? null,
           cantidad_tandas: input.cantidadTandas,
+          zona_destino: input.zonaDestino,
           notas: input.notas ?? null,
           idempotency_key: input.idempotencyKey,
         })
-        .select(
-          `
-          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre),
-          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
-          turno:turnos(nombre)
-        `,
-        )
+        .select(TANDA_COLUMNS)
         .single();
 
       if (error) {
@@ -137,7 +139,7 @@ export function createProductionRepository(): ProductionRepository {
         .from('tandas_produccion')
         .select(
           `
-          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+          id, tenant_id, receta_id, cantidad_tandas, estado, zona_destino, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
           receta:recetas(
             nombre,
             receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
@@ -166,14 +168,7 @@ export function createProductionRepository(): ProductionRepository {
         .update({ estado })
         .eq('id', id)
         .eq('tenant_id', tenantId)
-        .select(
-          `
-          id, tenant_id, receta_id, cantidad_tandas, estado, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
-          receta:recetas(nombre),
-          responsable:users!tandas_produccion_responsable_id_fkey(nombre),
-          turno:turnos(nombre)
-        `,
-        )
+        .select(TANDA_COLUMNS)
         .single();
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);

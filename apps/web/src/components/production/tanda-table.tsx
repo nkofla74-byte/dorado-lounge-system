@@ -21,7 +21,7 @@ import {
   cancelarTanda,
 } from '@/modules/production/actions';
 import { CreateTandaDialog } from './create-tanda-dialog';
-import type { Tanda, EstadoTanda } from '@/modules/production/domain/tanda';
+import type { Tanda, EstadoTanda, ZonaServicio } from '@/modules/production/domain/tanda';
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { Turno } from '@/modules/turnos/domain/turno';
 
@@ -76,6 +76,23 @@ function formatDate(d: Date): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(d);
+}
+
+function ZonaDestinoBadge({ zona }: { zona: ZonaServicio | null }) {
+  const t = useTranslations('tandas');
+  if (!zona) return <span className="text-muted-foreground italic">—</span>;
+  const base = 'text-xs font-medium';
+  const styles: Record<ZonaServicio, string> = {
+    amex: 'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/20',
+    buffet: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
+    snack: 'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20',
+  };
+  const labels: Record<ZonaServicio, string> = {
+    amex: t('zonaAmex'),
+    buffet: t('zonaBuffet'),
+    snack: t('zonaSnack'),
+  };
+  return <Badge className={cn(base, styles[zona])}>{labels[zona]}</Badge>;
 }
 
 const CREATE_ROLES = new Set<string>([
@@ -239,6 +256,7 @@ export function TandaTable({
             <TableRow className="hover:bg-transparent border-border">
               <TableHead>{t('colReceta')}</TableHead>
               <TableHead className="text-center">{t('colTandas')}</TableHead>
+              <TableHead>{t('colDestino')}</TableHead>
               <TableHead>{t('colResponsable')}</TableHead>
               <TableHead>{t('colTurno')}</TableHead>
               <TableHead>{t('colEstado')}</TableHead>
@@ -249,7 +267,7 @@ export function TandaTable({
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                   {areaFilter === 'todas'
                     ? t('sinTandasTodas')
                     : t('sinTandasArea', { area: areaFilter })}
@@ -267,6 +285,9 @@ export function TandaTable({
                       <TableCell className="font-medium">{tanda.recetaNombre}</TableCell>
                       <TableCell className="text-center tabular-nums text-sm">
                         {tanda.cantidadTandas}
+                      </TableCell>
+                      <TableCell>
+                        <ZonaDestinoBadge zona={tanda.zonaDestino} />
                       </TableCell>
                       <TableCell className="text-sm">
                         {tanda.responsableNombre ?? (
@@ -361,7 +382,7 @@ export function TandaTable({
 
                     {error && (
                       <TableRow className="border-0">
-                        <TableCell colSpan={7} className="pt-0 pb-2">
+                        <TableCell colSpan={8} className="pt-0 pb-2">
                           <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {error}

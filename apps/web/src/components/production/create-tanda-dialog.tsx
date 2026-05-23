@@ -29,6 +29,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { Turno } from '@/modules/turnos/domain/turno';
 import type { z } from 'zod';
+import { formatBloqueHorario } from '@/lib/turnos';
 
 type FormInput = z.input<typeof createTandaSchema>;
 type FormOutput = z.output<typeof createTandaSchema>;
@@ -151,6 +152,30 @@ export function CreateTandaDialog({
             )}
           </div>
 
+          {/* Zona destino */}
+          <div className="space-y-1.5">
+            <Label>{t('zonaDestino')} *</Label>
+            <Select
+              onValueChange={(v) =>
+                setValue('zonaDestino', v as 'amex' | 'snack' | 'buffet', {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('zonaDestinoPlaceholder')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="amex">{t('zonaAmex')}</SelectItem>
+                <SelectItem value="buffet">{t('zonaBuffet')}</SelectItem>
+                <SelectItem value="snack">{t('zonaSnack')}</SelectItem>
+              </SelectContent>
+            </Select>
+            {formErrors.zonaDestino && (
+              <p className="text-xs text-destructive">{t('zonaDestinoRequerida')}</p>
+            )}
+          </div>
+
           {/* Responsable (auto del usuario logueado) */}
           <div className="space-y-1.5">
             <Label>{t('responsable')}</Label>
@@ -165,7 +190,11 @@ export function CreateTandaDialog({
             <Label>{t('turno')}</Label>
             {turnoActivo ? (
               <div className="flex items-center justify-between px-3 py-2 rounded-md border bg-muted/40 text-sm">
-                <span>{turnoActivo.nombre}</span>
+                <span>
+                  {turnoActivo.bloque
+                    ? `${turnoActivo.bloque} · ${formatBloqueHorario(turnoActivo.bloque)}`
+                    : turnoActivo.nombre}
+                </span>
                 <span className="text-xs text-muted-foreground">{t('turnoActivo')}</span>
               </div>
             ) : (

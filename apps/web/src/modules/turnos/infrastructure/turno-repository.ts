@@ -1,17 +1,19 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { TurnoRepository } from '../application/ports/turno-repository.port';
-import type { Turno } from '../domain/turno';
+import type { Turno, TurnoBloque } from '../domain/turno';
 
 type TurnoRow = {
   id: string;
   tenant_id: string;
   nombre: string;
+  bloque: TurnoBloque | null;
   teamlider: string;
   responsable_id: string | null;
   iniciado_at: string;
   cerrado_at: string | null;
   activo: boolean;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -21,18 +23,20 @@ function toTurno(row: TurnoRow): Turno {
     id: row.id,
     tenantId: row.tenant_id,
     nombre: row.nombre,
+    bloque: row.bloque,
     teamlider: row.teamlider,
     responsableId: row.responsable_id,
     iniciadoAt: new Date(row.iniciado_at),
     cerradoAt: row.cerrado_at ? new Date(row.cerrado_at) : null,
     activo: row.activo,
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
 }
 
 const SELECT_FIELDS =
-  'id, tenant_id, nombre, teamlider, responsable_id, iniciado_at, cerrado_at, activo, created_at, updated_at';
+  'id, tenant_id, nombre, bloque, teamlider, responsable_id, iniciado_at, cerrado_at, activo, deleted_at, created_at, updated_at';
 
 export function createTurnoRepository(): TurnoRepository {
   return {
@@ -43,6 +47,7 @@ export function createTurnoRepository(): TurnoRepository {
         .from('turnos')
         .select(SELECT_FIELDS)
         .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
         .order('iniciado_at', { ascending: false })
         .limit(50);
 
@@ -58,6 +63,7 @@ export function createTurnoRepository(): TurnoRepository {
         .select(SELECT_FIELDS)
         .eq('tenant_id', tenantId)
         .eq('activo', true)
+        .is('deleted_at', null)
         .order('iniciado_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -68,7 +74,7 @@ export function createTurnoRepository(): TurnoRepository {
 
     async create(
       tenantId: string,
-      nombre: string,
+      bloque: TurnoBloque,
       teamlider: string,
       responsableId: string,
     ): Promise<Turno> {
@@ -76,7 +82,13 @@ export function createTurnoRepository(): TurnoRepository {
 
       const { data, error } = await supabase
         .from('turnos')
-        .insert({ tenant_id: tenantId, nombre, teamlider, responsable_id: responsableId })
+        .insert({
+          tenant_id: tenantId,
+          bloque,
+          nombre: bloque,
+          teamlider,
+          responsable_id: responsableId,
+        })
         .select(SELECT_FIELDS)
         .single();
 
