@@ -25,21 +25,23 @@ export interface FlightSnapshot extends Flight {
   updatedAt: Date;
 }
 
-// Fila de la vista materializada mv_ocupacion_diaria.
+// Fila de la vista materializada mv_ocupacion_diaria (1 por día).
 export interface OcupacionDiaria {
   fecha: string; // YYYY-MM-DD
-  direccion: FlightDirection;
-  totalVuelos: number;
+  departuresVuelos: number;
+  arrivalsVuelos: number;
   vuelosCancelados: number;
   vuelosSinCapacidad: number;
-  capacidadEstimada: number;
+  departuresCapacidad: number;
+  arrivalsCapacidad: number;
+  capacidadEstimada: number; // suma de ambas direcciones
   pasajerosReales: number;
   ocupacionPct: number | null;
 }
 
 // Agregado para el dashboard de estadísticas.
 export interface FlightStats {
-  hoy: OcupacionDiaria[]; // salidas + llegadas del día más reciente con datos
+  hoy: OcupacionDiaria | null; // día más reciente con datos
   ultimos7d: OcupacionDiaria[]; // serie temporal de los últimos 7 días
   topAerolineas: Array<{ aerolinea: string; vuelos: number; capacidad: number }>;
 }

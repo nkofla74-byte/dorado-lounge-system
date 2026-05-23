@@ -4,16 +4,11 @@ import { useEffect, useState, useTransition } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Plane, Users, BarChart3, Percent, Info } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getFlightStats } from '@/modules/flights/actions';
-import type { FlightStats, OcupacionDiaria } from '@/modules/flights/domain/flight';
-
-function sumByField(rows: OcupacionDiaria[], field: keyof OcupacionDiaria): number {
-  return rows.reduce((acc, r) => acc + ((r[field] as number) ?? 0), 0);
-}
+import type { FlightStats } from '@/modules/flights/domain/flight';
 
 function formatPct(value: number | null, fallback: string): string {
   if (value === null || value === undefined) return fallback;
@@ -95,12 +90,11 @@ export function FlightStatsPanel() {
     );
   }
 
-  const totalVuelosHoy = sumByField(stats.hoy, 'totalVuelos');
-  const capacidadHoy = sumByField(stats.hoy, 'capacidadEstimada');
-  const pasajerosHoy = sumByField(stats.hoy, 'pasajerosReales');
-  const ocupacionHoy =
-    capacidadHoy > 0 ? Math.round((pasajerosHoy / capacidadHoy) * 1000) / 10 : null;
-  const fechaHoy = stats.hoy[0]?.fecha;
+  const totalVuelosHoy = stats.hoy ? stats.hoy.departuresVuelos + stats.hoy.arrivalsVuelos : 0;
+  const capacidadHoy = stats.hoy?.capacidadEstimada ?? 0;
+  const pasajerosHoy = stats.hoy?.pasajerosReales ?? 0;
+  const ocupacionHoy = stats.hoy?.ocupacionPct ?? null;
+  const fechaHoy = stats.hoy?.fecha;
 
   return (
     <div className="space-y-6">
@@ -142,11 +136,11 @@ export function FlightStatsPanel() {
                 <th className="text-left px-4 py-2 font-semibold text-xs uppercase">
                   {t('trendColFecha')}
                 </th>
-                <th className="text-left px-4 py-2 font-semibold text-xs uppercase">
-                  {t('trendColDir')}
+                <th className="text-right px-4 py-2 font-semibold text-xs uppercase">
+                  {t('salidas')}
                 </th>
                 <th className="text-right px-4 py-2 font-semibold text-xs uppercase">
-                  {t('trendColVuelos')}
+                  {t('llegadas')}
                 </th>
                 <th className="text-right px-4 py-2 font-semibold text-xs uppercase">
                   {t('trendColCapacidad')}
@@ -161,17 +155,10 @@ export function FlightStatsPanel() {
             </thead>
             <tbody>
               {stats.ultimos7d.map((r) => (
-                <tr
-                  key={`${r.fecha}-${r.direccion}`}
-                  className="border-b last:border-0 hover:bg-muted/30"
-                >
-                  <td className="px-4 py-2">{formatDate(r.fecha)}</td>
-                  <td className="px-4 py-2">
-                    <Badge variant="outline" className="text-[11px]">
-                      {r.direccion === 'departure' ? t('salidas') : t('llegadas')}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2 text-right tabular-nums">{r.totalVuelos}</td>
+                <tr key={r.fecha} className="border-b last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-2 font-medium">{formatDate(r.fecha)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{r.departuresVuelos}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{r.arrivalsVuelos}</td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {r.capacidadEstimada.toLocaleString(locale === 'en' ? 'en-US' : 'es-CO')}
                   </td>

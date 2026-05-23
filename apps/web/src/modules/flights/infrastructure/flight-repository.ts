@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { FlightsRepository } from '../application/ports/flights-repository.port';
-import type { Flight, FlightStats, OcupacionDiaria, FlightDirection } from '../domain/flight';
+import type { Flight, FlightStats, OcupacionDiaria } from '../domain/flight';
 
 const BOGOTA_TZ = 'America/Bogota';
 
@@ -20,10 +20,12 @@ function fechaBogota(date: Date): string {
 
 type OcupacionRow = {
   fecha: string;
-  direccion: string;
-  total_vuelos: number;
+  departures_vuelos: number;
+  arrivals_vuelos: number;
   vuelos_cancelados: number;
   vuelos_sin_capacidad: number;
+  departures_capacidad: number;
+  arrivals_capacidad: number;
   capacidad_estimada: number;
   pasajeros_reales: number;
   ocupacion_pct: number | null;
@@ -92,7 +94,7 @@ export function createFlightRepository(): FlightsRepository {
       const { data, error } = await supabase
         .from('mv_ocupacion_diaria')
         .select(
-          'fecha, direccion, total_vuelos, vuelos_cancelados, vuelos_sin_capacidad, capacidad_estimada, pasajeros_reales, ocupacion_pct',
+          'fecha, departures_vuelos, arrivals_vuelos, vuelos_cancelados, vuelos_sin_capacidad, departures_capacidad, arrivals_capacidad, capacidad_estimada, pasajeros_reales, ocupacion_pct',
         )
         .eq('tenant_id', tenantId)
         .gte('fecha', fechaBogota(desde))
@@ -102,10 +104,12 @@ export function createFlightRepository(): FlightsRepository {
 
       return ((data ?? []) as OcupacionRow[]).map((r) => ({
         fecha: r.fecha,
-        direccion: r.direccion as FlightDirection,
-        totalVuelos: r.total_vuelos,
+        departuresVuelos: r.departures_vuelos,
+        arrivalsVuelos: r.arrivals_vuelos,
         vuelosCancelados: r.vuelos_cancelados,
         vuelosSinCapacidad: r.vuelos_sin_capacidad,
+        departuresCapacidad: r.departures_capacidad,
+        arrivalsCapacidad: r.arrivals_capacidad,
         capacidadEstimada: r.capacidad_estimada,
         pasajerosReales: r.pasajeros_reales,
         ocupacionPct: r.ocupacion_pct,

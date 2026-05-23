@@ -12,9 +12,8 @@ export async function getFlightStats(
     repo.getTopAerolineas(tenantId, VENTANA_TOP_AEROLINEAS_DIAS),
   ]);
 
-  // "hoy" = la fecha más reciente con datos en la ventana de 7 días.
-  const fechaMasReciente = ultimos7d[0]?.fecha;
-  const hoy = fechaMasReciente ? ultimos7d.filter((r) => r.fecha === fechaMasReciente) : [];
+  // "hoy" = el día más reciente con datos en la ventana de 7 días.
+  const hoy = ultimos7d[0] ?? null;
 
   return { hoy, ultimos7d, topAerolineas };
 }
