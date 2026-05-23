@@ -592,6 +592,32 @@
         "cancelled": "Cancelado",
         "diverted": "Desviado",
         "unknown": "Sin info"
+      },
+      "tabLive": "En vivo",
+      "tabStats": "Estadísticas",
+      "stats": {
+        "title": "Estadísticas operativas",
+        "subtitle": "Capacidad estimada vs. afluencia real · últimos 7 días",
+        "kpiVuelosHoy": "Vuelos día más reciente",
+        "kpiCapacidad": "Capacidad estimada",
+        "kpiPasajeros": "Pasajeros registrados",
+        "kpiOcupacion": "Ocupación",
+        "trendTitle": "Tendencia 7 días",
+        "trendColFecha": "Fecha",
+        "trendColDir": "Dirección",
+        "trendColVuelos": "Vuelos",
+        "trendColCapacidad": "Capacidad",
+        "trendColPasajeros": "Pasajeros",
+        "trendColOcupacion": "% Ocupación",
+        "topAerolineas": "Top 5 aerolíneas (7d)",
+        "topColAerolinea": "Aerolínea",
+        "topColVuelos": "Vuelos",
+        "topColCapacidad": "Capacidad",
+        "salidas": "Salidas",
+        "llegadas": "Llegadas",
+        "sinDatos": "Aún no hay snapshots de vuelos. El cron diario los irá poblando.",
+        "noPct": "—",
+        "ayuda": "Las estadísticas se generan por un cron diario (23:30 Bogotá). Si la API de vuelos aún no está configurada, esta vista quedará vacía."
       }
     }
   },

@@ -554,6 +554,32 @@
         "cancelled": "Cancelled",
         "diverted": "Diverted",
         "unknown": "No info"
+      },
+      "tabLive": "Live",
+      "tabStats": "Statistics",
+      "stats": {
+        "title": "Operational statistics",
+        "subtitle": "Estimated capacity vs. real footfall · last 7 days",
+        "kpiVuelosHoy": "Flights (latest day)",
+        "kpiCapacidad": "Estimated capacity",
+        "kpiPasajeros": "Registered passengers",
+        "kpiOcupacion": "Occupancy",
+        "trendTitle": "7-day trend",
+        "trendColFecha": "Date",
+        "trendColDir": "Direction",
+        "trendColVuelos": "Flights",
+        "trendColCapacidad": "Capacity",
+        "trendColPasajeros": "Passengers",
+        "trendColOcupacion": "% Occupancy",
+        "topAerolineas": "Top 5 airlines (7d)",
+        "topColAerolinea": "Airline",
+        "topColVuelos": "Flights",
+        "topColCapacidad": "Capacity",
+        "salidas": "Departures",
+        "llegadas": "Arrivals",
+        "sinDatos": "No flight snapshots yet. The daily cron will start populating them.",
+        "noPct": "—",
+        "ayuda": "Statistics are produced by a daily cron (23:30 Bogotá time). If the flights API is not yet configured, this view will remain empty."
       }
     }
   },

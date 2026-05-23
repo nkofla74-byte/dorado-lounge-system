@@ -15,6 +15,7 @@ function makeFlight(overrides: Partial<Flight> = {}): Flight {
     gate: null,
     terminal: null,
     direction: 'departure',
+    aircraftIata: null,
     ...overrides,
   };
 }
