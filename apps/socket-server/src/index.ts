@@ -1,4 +1,13 @@
 import 'dotenv/config';
+import * as Sentry from '@sentry/node';
+
+Sentry.init({
+  dsn: process.env['SENTRY_DSN'],
+  environment: process.env['NODE_ENV'] ?? 'production',
+  tracesSampleRate: 0.1,
+  enabled: !!process.env['SENTRY_DSN'],
+});
+
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { logger } from './lib/logger';
@@ -56,6 +65,10 @@ io.on('connection', (socket) => {
         userId,
         channel,
         role,
+      });
+      Sentry.captureMessage('channel_acl_violation', {
+        level: 'warning',
+        extra: { socketId: socket.id, userId, channel, role },
       });
       socket.emit('error', { code: 'FORBIDDEN', channel });
       socket.disconnect(true);

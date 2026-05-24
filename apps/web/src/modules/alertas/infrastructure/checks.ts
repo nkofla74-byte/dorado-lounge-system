@@ -165,17 +165,23 @@ export async function runCheckVencimientos(tenantId: string, diasUmbral = 3): Pr
   let generadas = 0;
   const hoy = new Date().toISOString().split('T')[0]!;
 
-  for (const lote of lotes) {
-    const { count } = await admin
-      .from('alertas')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('tipo', 'vencimiento')
-      .eq('resource_id', lote.id)
-      .eq('leida', false)
-      .gte('created_at', `${hoy}T00:00:00Z`);
+  // Batch: una sola query para todos los lotes en vez de O(N) queries
+  const { data: alertasHoy } = await admin
+    .from('alertas')
+    .select('resource_id')
+    .eq('tenant_id', tenantId)
+    .eq('tipo', 'vencimiento')
+    .eq('leida', false)
+    .gte('created_at', `${hoy}T00:00:00Z`)
+    .in(
+      'resource_id',
+      lotes.map((l) => l.id),
+    );
 
-    if ((count ?? 0) > 0) continue;
+  const yaNotificados = new Set(alertasHoy?.map((a) => a.resource_id) ?? []);
+
+  for (const lote of lotes) {
+    if (yaNotificados.has(lote.id)) continue;
 
     const insumoNombre =
       (lote.insumo as unknown as { nombre: string } | null)?.nombre ?? 'desconocido';
@@ -217,17 +223,23 @@ export async function runCheckDemoraAmex(tenantId: string, umbralMins = 15): Pro
   let generadas = 0;
   const hace1h = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-  for (const pedido of pedidos) {
-    const { count } = await admin
-      .from('alertas')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('tipo', 'demora_amex')
-      .eq('resource_id', pedido.id)
-      .eq('leida', false)
-      .gte('created_at', hace1h);
+  // Batch: una sola query para todos los pedidos en vez de O(N) queries
+  const { data: alertasRecientes } = await admin
+    .from('alertas')
+    .select('resource_id')
+    .eq('tenant_id', tenantId)
+    .eq('tipo', 'demora_amex')
+    .eq('leida', false)
+    .gte('created_at', hace1h)
+    .in(
+      'resource_id',
+      pedidos.map((p) => p.id),
+    );
 
-    if ((count ?? 0) > 0) continue;
+  const yaNotificados = new Set(alertasRecientes?.map((a) => a.resource_id) ?? []);
+
+  for (const pedido of pedidos) {
+    if (yaNotificados.has(pedido.id)) continue;
 
     const mesa = pedido.numero_mesa ?? 'sin mesa';
     const mins = Math.floor((Date.now() - new Date(pedido.created_at).getTime()) / 60000);
