@@ -11,7 +11,6 @@ import {
   ClipboardList,
   UtensilsCrossed,
   Coffee,
-  Clock,
   BarChart3,
   DollarSign,
   Users,
@@ -98,7 +97,7 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     href: '/pedidos',
     labelKey: 'pedidos',
     icon: ClipboardList,
-    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
+    roles: ['admin', 'chef', 'sous_chef', 'mesero_amex'],
   },
   {
     href: '/vuelos',
@@ -114,12 +113,6 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     roles: ['admin', 'chef', 'personal_buffet'],
   },
   { href: '/snack', labelKey: 'snack', icon: Coffee, roles: ['admin', 'chef', 'personal_snack'] },
-  {
-    href: '/turnos',
-    labelKey: 'turnos',
-    icon: Clock,
-    roles: ['admin', 'chef', 'sous_chef', 'recepcion'],
-  },
   {
     href: '/afluencia',
     labelKey: 'afluencia',
@@ -168,7 +161,6 @@ const ICON_COLORS: Record<string, string> = {
   '/admin/qr': 'text-indigo-400',
   '/buffet': 'text-lime-400',
   '/snack': 'text-yellow-400',
-  '/turnos': 'text-blue-400',
   '/afluencia': 'text-teal-400',
   '/analytics': 'text-fuchsia-400',
   '/admin/costos': 'text-primary',

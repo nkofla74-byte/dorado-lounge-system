@@ -5,6 +5,8 @@ import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { OfflineBanner } from '@/components/layout/offline-banner';
 import { SocketProvider } from '@/lib/socket/socket-provider';
 import { ChatPanel } from '@/components/chat/chat-panel';
+import { TurnoGuard } from '@/components/turnos/turno-guard';
+import { getMiTurnoActivo } from '@/modules/turnos/actions';
 import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
 
 // Canal de chat por rol — cada nodo habla en su sala operativa
@@ -81,6 +83,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const sidebarUser = { name, email: user.email ?? '', role };
 
+  // Fetch del turno activo del usuario (null si no tiene). Solo aplica a roles
+  // operativos — admin/superuser quedan excluidos dentro del TurnoGuard.
+  const miTurnoResult = await getMiTurnoActivo();
+  const miTurno = miTurnoResult.ok ? miTurnoResult.value : null;
+
   return (
     <SocketProvider token={token}>
       <div className="flex min-h-screen bg-background">
@@ -91,6 +98,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <main className="flex-1 min-w-0 overflow-y-auto safe-pb">{children}</main>
         </div>
       </div>
+
+      <TurnoGuard role={role} userName={name} initialTurno={miTurno} />
 
       {/* Chat flotante — solo para roles con canal de chat asignado */}
       {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
