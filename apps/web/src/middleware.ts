@@ -11,7 +11,7 @@ const ROLE_HOME: Record<UserRole, string> = {
   chef: '/cocina',
   sous_chef: '/cocina-amex',
   mesero_amex: '/pedidos',
-  recepcion: '/pedidos',
+  recepcion: '/afluencia',
   personal_snack: '/snack',
   personal_buffet: '/buffet',
   personal_almacen: '/almacen',
