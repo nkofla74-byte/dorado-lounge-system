@@ -123,11 +123,17 @@ export async function middleware(request: NextRequest) {
     const role = user.app_metadata?.role as UserRole | undefined;
     const tenantId = user.app_metadata?.tenant_id as string | undefined;
 
-    // Usuario con sesión inválida (sin rol/tenant) → limpiar y redirigir a login
+    // Usuario con sesión inválida (sin rol/tenant) → limpiar cookies y redirigir a login.
+    // Sin limpiar cookies se produce un redirect loop (user existe pero sin claims válidos).
     if (!role || !tenantId) {
+      if (isLoginPath) return supabaseResponse;
       const url = request.nextUrl.clone();
       url.pathname = '/login';
-      return NextResponse.redirect(url);
+      const response = NextResponse.redirect(url);
+      request.cookies.getAll().forEach(({ name }) => {
+        if (name.startsWith('sb-')) response.cookies.delete(name);
+      });
+      return response;
     }
 
     // Autenticado en /login → redirigir al home del rol
