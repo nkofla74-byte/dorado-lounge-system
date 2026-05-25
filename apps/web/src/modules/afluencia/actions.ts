@@ -8,10 +8,13 @@ import { getAfluenciaByTurno as getAfluenciaUseCase } from './application/get-af
 import { getTotalPasajeros as getTotalUseCase } from './application/get-afluencia';
 import { registrarIngreso as registrarIngresoUseCase } from './application/registrar-ingreso';
 import { registrarIngresoSchema } from '@dorado/shared-validation';
+import { registrarPasajero as registrarPasajeroUseCase } from './application/registrar-pasajero';
 import { IngresoInvalidoError } from './domain/afluencia';
+import { PasajeroInvalidoError } from './domain/pasajero-ingreso';
 import { AppError } from '@/lib/result';
 import type { Result } from '@/lib/result';
 import type { AfluenciaIngreso } from './domain/afluencia';
+import type { PasajeroIngreso, RegistrarPasajeroInput } from './domain/pasajero-ingreso';
 
 export async function getAfluenciaByTurno(turnoId: string): Promise<Result<AfluenciaIngreso[]>> {
   try {
@@ -68,6 +71,61 @@ export async function registrarIngreso(input: unknown): Promise<Result<Afluencia
   } catch (e) {
     if (e instanceof IngresoInvalidoError) {
       return err(new AppError('INGRESO_INVALIDO', 400, e.message));
+    }
+    return err(toAppError(e));
+  }
+}
+
+// ── Registro individual de pasajeros ────────────────────────────────────────
+
+export async function getPasajerosByTurno(turnoId: string): Promise<Result<PasajeroIngreso[]>> {
+  try {
+    const ctx = await assertCan('afluencia:read');
+    const repo = createAfluenciaRepository();
+    return ok(await repo.findPasajerosByTurno(ctx.tenantId, turnoId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getTotalPasajerosIndividual(turnoId: string): Promise<Result<number>> {
+  try {
+    const ctx = await assertCan('afluencia:read');
+    const repo = createAfluenciaRepository();
+    return ok(await repo.getTotalPasajerosByTurno(ctx.tenantId, turnoId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function registrarPasajero(
+  input: RegistrarPasajeroInput,
+): Promise<Result<PasajeroIngreso>> {
+  try {
+    const ctx = await assertCan('afluencia:write');
+    const repo = createAfluenciaRepository();
+
+    const pasajero = await registrarPasajeroUseCase(repo, ctx.tenantId, ctx.userId, input);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'afluencia:registrar_pasajero',
+      resourceId: pasajero.id,
+      resourceType: 'pasajero_ingreso',
+      payload: {
+        turnoId: pasajero.turnoId,
+        tipoAcceso: pasajero.tipoAcceso,
+        zona: pasajero.zona,
+        vueloNumero: pasajero.vueloNumero,
+        acompanantes: pasajero.acompanantes,
+      },
+    });
+
+    return ok(pasajero);
+  } catch (e) {
+    if (e instanceof PasajeroInvalidoError) {
+      return err(new AppError('PASAJERO_INVALIDO', 400, e.message));
     }
     return err(toAppError(e));
   }

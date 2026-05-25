@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { AfluenciaPanel } from '@/components/afluencia/afluencia-panel';
+import { PasajerosDashboard } from '@/components/afluencia/pasajeros-dashboard';
 import { getMiTurnoActivo } from '@/modules/turnos/actions';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +20,7 @@ export default async function AfluenciaPage() {
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
 
-      <AfluenciaPanel
+      <PasajerosDashboard
         turnoActivo={
           turnoActivo
             ? {

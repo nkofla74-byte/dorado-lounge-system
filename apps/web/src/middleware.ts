@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@dorado/shared-types';
 
-const PUBLIC_PATHS = ['/login', '/qr'];
+const PUBLIC_PATHS = ['/login', '/qr', '/api/cron'];
 
 // Ruta de inicio por rol — a dónde va el usuario al hacer login
 const ROLE_HOME: Record<UserRole, string> = {

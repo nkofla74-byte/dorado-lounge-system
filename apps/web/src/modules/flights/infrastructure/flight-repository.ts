@@ -54,7 +54,7 @@ export function createFlightRepository(): FlightsRepository {
         }
       }
 
-      const rows = flights.map((f) => ({
+      const allRows = flights.map((f) => ({
         tenant_id: tenantId,
         fecha: fechaBogota(f.scheduledTime),
         numero: f.flightNumber,
@@ -73,17 +73,34 @@ export function createFlightRepository(): FlightsRepository {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error } = await admin
-        .from('vuelos_snapshots')
-        .upsert(rows, { onConflict: 'tenant_id,fecha,numero,direccion' });
+      const seen = new Set<string>();
+      const rows = allRows.filter((r) => {
+        const key = `${r.tenant_id}:${r.fecha}:${r.numero}:${r.direccion}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        const { error } = await admin
+          .from('vuelos_snapshots')
+          .upsert(batch, { onConflict: 'tenant_id,fecha,numero,direccion' });
+        if (error) throw new AppError('DB_ERROR', 500, error.message);
+      }
+
       return rows.length;
     },
 
     async refreshOcupacionDiaria(): Promise<void> {
       const admin = createAdminClient();
       const { error } = await admin.rpc('refresh_ocupacion_diaria');
+      if (error?.message?.includes('not populated')) {
+        // First refresh ever — CONCURRENTLY needs existing data. Silently skip;
+        // the data is already in vuelos_snapshots and the forecast reads from there directly.
+        return;
+      }
       if (error) throw new AppError('DB_ERROR', 500, error.message);
     },
 
