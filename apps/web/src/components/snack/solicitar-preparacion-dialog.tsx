@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { solicitarPreparacion } from '@/modules/snack/actions';
 
@@ -80,7 +81,7 @@ export function SolicitarPreparacionDialog({ open, onOpenChange, onEnviado }: Pr
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
             <div className="space-y-1.5">
-              <FormLabel>{t('destinoLabel')}</FormLabel>
+              <Label>{t('destinoLabel')}</Label>
               <div className="flex rounded-md border border-input overflow-hidden h-9">
                 <button
                   type="button"
