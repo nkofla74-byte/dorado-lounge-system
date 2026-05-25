@@ -21,9 +21,7 @@ jobs:
           version: latest
 
       - name: Apply migrations
-        run: supabase db push --project-ref gyewxgtuzjbxzcvcfmwy
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
 
   deploy-web:
     name: Deploy Web (Vercel)
