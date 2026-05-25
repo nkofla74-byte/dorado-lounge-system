@@ -1134,7 +1134,10 @@
       "habilitar": "Habilitar",
       "inhabilitar": "No disponible",
       "platoInhabilitado": "Plato marcado como no disponible",
-      "platoHabilitado": "Plato habilitado nuevamente"
+      "platoHabilitado": "Plato habilitado nuevamente",
+      "comensalDe": "Comensal {n} de {total}",
+      "enviarYSiguiente": "Enviar y siguiente comensal",
+      "pedidoEnviadoComensal": "Pedido del comensal {n}/{total} enviado"
     },
     "create": {
       "title": "Nuevo pedido",
@@ -1152,7 +1155,10 @@
       "guardar": "Crear pedido",
       "guardando": "Guardando…",
       "cancelar": "Cancelar"
-    }
+    },
+    "historial": "Historial",
+    "historialTitle": "{count, plural, one {# pedido reciente} other {# pedidos recientes}}",
+    "sinHistorial": "No hay pedidos en el historial reciente."
   },
   "ingredientes": {
     "categoriaEntrada": "Entrada",

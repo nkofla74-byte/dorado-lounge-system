@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getPedidos, getCartaServicio } from '@/modules/orders/actions';
-import { getRecetas } from '@/modules/recipes/actions';
 import { PedidosView } from '@/components/orders/pedidos-view';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -15,10 +14,9 @@ export default async function PedidosPage() {
   const t = await getTranslations('pedidos');
   const supabase = await createClient();
 
-  const [pedidosResult, cartaResult, recetasResult, { data: authData }] = await Promise.all([
+  const [pedidosResult, cartaResult, { data: authData }] = await Promise.all([
     getPedidos(),
     getCartaServicio(),
-    getRecetas(),
     supabase.auth.getUser(),
   ]);
 
@@ -33,7 +31,6 @@ export default async function PedidosPage() {
       <PedidosView
         initialData={pedidosResult.ok ? pedidosResult.value : []}
         carta={cartaResult.ok ? cartaResult.value : []}
-        recetas={recetasResult.ok ? recetasResult.value : []}
         userRole={userRole}
         error={pedidosResult.ok ? undefined : pedidosResult.error.message}
       />

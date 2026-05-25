@@ -231,6 +231,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [mesa, setMesa] = useState('');
   const [comensales, setComensales] = useState(1);
+  const [comensalActual, setComensalActual] = useState(1);
   const [notasPedido, setNotasPedido] = useState('');
   const [sending, setSending] = useState(false);
   const idempotencyKeyRef = useRef(genKey());
@@ -317,12 +318,21 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(t('pedidoEnviado'));
       idempotencyKeyRef.current = genKey();
       setCart([]);
-      setMesa('');
       setNotasPedido('');
       onCreated();
+
+      if (comensalActual < comensales) {
+        toast.success(t('pedidoEnviadoComensal', { n: comensalActual, total: comensales }));
+        setComensalActual((n) => n + 1);
+      } else {
+        toast.success(t('pedidoEnviado'));
+        setMesa('');
+        setComensales(1);
+        setComensalActual(1);
+        setStep('setup');
+      }
     } finally {
       setSending(false);
     }
@@ -417,9 +427,15 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
                   {t('mesa')}: {mesa}
                 </span>
               )}
-              <span className="bg-[#1C1C24] border border-[#2a2a33] rounded px-1.5 py-0.5">
-                {comensales} {t('comensales').toLowerCase()}
-              </span>
+              {comensales > 1 ? (
+                <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] rounded px-1.5 py-0.5 font-semibold">
+                  {t('comensalDe', { n: comensalActual, total: comensales })}
+                </span>
+              ) : (
+                <span className="bg-[#1C1C24] border border-[#2a2a33] rounded px-1.5 py-0.5">
+                  1 {t('comensales').toLowerCase()}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => setStep('setup')}
@@ -559,7 +575,11 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             className="w-full h-10 rounded-full font-bold text-[13px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {sending ? t('enviando') : t('enviar')}
+            {sending
+              ? t('enviando')
+              : comensales > 1 && comensalActual < comensales
+                ? t('enviarYSiguiente')
+                : t('enviar')}
           </button>
         </div>
       )}

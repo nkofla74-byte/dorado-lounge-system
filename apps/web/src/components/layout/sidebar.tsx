@@ -105,7 +105,7 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     icon: Plane,
     roles: ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
   },
-  { href: '/admin/qr', labelKey: 'qrGenerator', icon: QrCode, roles: ['admin', 'mesero_amex'] },
+  { href: '/admin/qr', labelKey: 'qrGenerator', icon: QrCode, roles: ['admin'] },
   {
     href: '/buffet',
     labelKey: 'buffet',

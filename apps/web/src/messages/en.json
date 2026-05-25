@@ -1134,7 +1134,10 @@
       "habilitar": "Enable",
       "inhabilitar": "Unavailable",
       "platoInhabilitado": "Dish marked as unavailable",
-      "platoHabilitado": "Dish enabled again"
+      "platoHabilitado": "Dish enabled again",
+      "comensalDe": "Guest {n} of {total}",
+      "enviarYSiguiente": "Send & next guest",
+      "pedidoEnviadoComensal": "Order for guest {n}/{total} sent"
     },
     "create": {
       "title": "New order",
@@ -1152,7 +1155,10 @@
       "guardar": "Create order",
       "guardando": "Saving…",
       "cancelar": "Cancel"
-    }
+    },
+    "historial": "History",
+    "historialTitle": "{count, plural, one {# recent order} other {# recent orders}}",
+    "sinHistorial": "No orders in recent history."
   },
   "ingredientes": {
     "categoriaEntrada": "Starter",

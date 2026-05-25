@@ -94,6 +94,16 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
   }
 }
 
+export async function getPedidosHistorial(): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const repo = createOrderRepository();
+    return ok(await repo.findRecent(ctx.tenantId, 30));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 export async function createPedido(input: unknown): Promise<Result<PedidoWithItems>> {
   try {
     const ctx = await assertCan('orders:create');

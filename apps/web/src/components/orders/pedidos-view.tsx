@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { CartaAmex } from './carta-amex';
 import { PedidoTable } from './pedido-table';
 import type { PedidoWithItems } from '@/modules/orders/domain/pedido';
-import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { CartaReceta } from '@/modules/orders/actions';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -19,12 +18,11 @@ const TOGGLE_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'so
 interface Props {
   initialData: PedidoWithItems[];
   carta: CartaReceta[];
-  recetas: RecetaWithIngredientes[];
   userRole: UserRole | undefined;
   error?: string | undefined;
 }
 
-export function PedidosView({ initialData, carta, recetas, userRole, error }: Props) {
+export function PedidosView({ initialData, carta, userRole, error }: Props) {
   const t = useTranslations('pedidos');
   const isMesero = userRole ? MESERO_ROLES.has(userRole) : false;
   const canToggle = userRole ? TOGGLE_ROLES.has(userRole) : false;
@@ -77,13 +75,7 @@ export function PedidosView({ initialData, carta, recetas, userRole, error }: Pr
       )}
 
       {tab === 'pedidos' && (
-        <PedidoTable
-          key={refreshKey}
-          initialData={initialData}
-          recetas={recetas}
-          userRole={userRole}
-          error={error}
-        />
+        <PedidoTable key={refreshKey} initialData={initialData} userRole={userRole} error={error} />
       )}
     </div>
   );

@@ -175,6 +175,21 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findRecent(tenantId: string, limit: number): Promise<PedidoWithItems[]> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_SELECT)
+        .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
+        .in('estado', ['entregado', 'cancelado'])
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
     async create(
       tenantId: string,
       userId: string,

@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { ShoppingBag, AlertTriangle, Plus, RefreshCw, ChefHat, Truck } from 'lucide-react';
+import { ShoppingBag, AlertTriangle, RefreshCw, ChefHat, Truck, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,15 +16,14 @@ import {
 import { cn } from '@/lib/utils';
 import {
   getPedidos,
+  getPedidosHistorial,
   recibirEnCocina,
   iniciarPreparacion,
   despacharPedido,
   entregarPedido,
   cancelarPedido,
 } from '@/modules/orders/actions';
-import { CreatePedidoDialog } from './create-pedido-dialog';
 import type { PedidoWithItems, Pedido, EstadoPedido } from '@/modules/orders/domain/pedido';
-import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { UserRole } from '@dorado/shared-types';
 
 const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
@@ -179,7 +178,6 @@ function fmtMin(m: number): string {
 
 interface PedidoTableProps {
   initialData: PedidoWithItems[];
-  recetas: RecetaWithIngredientes[];
   userRole: UserRole | undefined;
   error?: string | undefined;
 }
@@ -189,17 +187,13 @@ type ActionFn = (
   version: number,
 ) => Promise<{ ok: boolean; value?: Pedido; error?: { message: string } }>;
 
-export function PedidoTable({
-  initialData,
-  recetas,
-  userRole,
-  error: initialError,
-}: PedidoTableProps) {
+export function PedidoTable({ initialData, userRole, error: initialError }: PedidoTableProps) {
   const t = useTranslations('pedidos');
   const [data, setData] = useState(initialData);
+  const [historial, setHistorial] = useState<PedidoWithItems[]>([]);
+  const [showHistorial, setShowHistorial] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
-  const [createOpen, setCreateOpen] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
   // Tick para refrescar los contadores de tiempo en vivo sin pegarle a la API.
@@ -217,9 +211,25 @@ export function PedidoTable({
   const refresh = async () => {
     setLoading(true);
     setFetchError(undefined);
-    const result = await getPedidos();
-    if (result.ok) setData(result.value);
-    else setFetchError(result.error.message);
+    const [activeResult, historialResult] = await Promise.all([
+      getPedidos(),
+      showHistorial ? getPedidosHistorial() : Promise.resolve(null),
+    ]);
+    if (activeResult.ok) setData(activeResult.value);
+    else setFetchError(activeResult.error.message);
+    if (historialResult?.ok) setHistorial(historialResult.value);
+    setLoading(false);
+  };
+
+  const loadHistorial = async () => {
+    if (showHistorial) {
+      setShowHistorial(false);
+      return;
+    }
+    setShowHistorial(true);
+    setLoading(true);
+    const result = await getPedidosHistorial();
+    if (result.ok) setHistorial(result.value);
     setLoading(false);
   };
 
@@ -267,8 +277,6 @@ export function PedidoTable({
     void runAction(pedido, (id, v) => entregarPedido(id, v));
   };
 
-  const recetasServicio = recetas.filter((r) => r.tipoReceta === 'servicio');
-
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -288,12 +296,15 @@ export function PedidoTable({
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           </Button>
-          {isMesero && (
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              {t('nuevoPedido')}
-            </Button>
-          )}
+          <Button
+            variant={showHistorial ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={loadHistorial}
+            disabled={loading}
+          >
+            <History className="h-4 w-4 mr-1.5" />
+            {t('historial')}
+          </Button>
         </div>
       </div>
 
@@ -496,16 +507,60 @@ export function PedidoTable({
         </Table>
       </div>
 
-      <CreatePedidoDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={() => {
-          setCreateOpen(false);
-          refresh();
-        }}
-        recetas={recetasServicio}
-        defaultZona="amex"
-      />
+      {/* Historial */}
+      {showHistorial && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <History className="h-4 w-4" />
+            <span>{t('historialTitle', { count: historial.length })}</span>
+          </div>
+          <div className="rounded-md border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-border">
+                  <TableHead>{t('colMesa')}</TableHead>
+                  <TableHead>{t('colEstado')}</TableHead>
+                  <TableHead>{t('colItems')}</TableHead>
+                  <TableHead>{t('colHace')}</TableHead>
+                  <TableHead>{t('colTiempos')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historial.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-muted-foreground text-sm"
+                    >
+                      {t('sinHistorial')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  historial.map((pedido) => (
+                    <TableRow key={pedido.id} className="border-border opacity-70">
+                      <TableCell className="font-medium">
+                        {pedido.numeroMesa ?? <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <EstadoBadge estado={pedido.estado} />
+                      </TableCell>
+                      <TableCell>
+                        <ItemsSummary items={pedido.items} />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground tabular-nums">
+                        {formatElapsed(pedido.updatedAt, t('ahora'))}
+                      </TableCell>
+                      <TableCell>
+                        <TiemposChips pedido={pedido} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
