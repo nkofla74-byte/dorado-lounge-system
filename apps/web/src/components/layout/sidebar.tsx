@@ -48,8 +48,9 @@ interface SidebarProps {
   locale: 'es' | 'en';
 }
 
-// roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en middleware.ts.
-// superuser ve todo: se maneja en el filtro del componente, no aquí.
+// roles autorizados por ruta — espejo de ROLE_ALLOWED_PREFIXES en lib/auth/role-home.ts.
+// Este array controla VISIBILIDAD en la UI, no acceso real (el middleware es la autoridad).
+// Al agregar/modificar roles, mantener sincronizado con ROLE_ALLOWED_PREFIXES.
 // `labelKey` referencia messages/<locale>.json → nav.<labelKey>
 const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: UserRole[] }[] = [
   { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['admin', 'personal_almacen'] },
