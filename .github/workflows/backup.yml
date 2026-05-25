@@ -17,46 +17,39 @@ concurrency:
 
 jobs:
   backup:
-    name: pg_dump → Artifact + S3
+    name: Supabase Backup → Artifact
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - name: Install postgresql-client
-        run: sudo apt-get install -y --no-install-recommends postgresql-client
+      - uses: actions/checkout@v4
 
       - name: Set timestamp
         id: ts
         run: echo "stamp=$(date -u +%Y%m%dT%H%M%SZ)" >> "$GITHUB_OUTPUT"
 
-      - name: Dump database
+      - name: Export database via Management API
         env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          pg_dump \
-            --host="${{ secrets.SUPABASE_DB_HOST }}" \
-            --port=5432 \
-            --username=postgres \
-            --dbname=postgres \
-            --no-password \
-            --format=custom \
-            --compress=9 \
-            --file="backup-${{ steps.ts.outputs.stamp }}.pgdump"
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: python3 scripts/ci-backup.py "backup-${{ steps.ts.outputs.stamp }}.sql"
 
-      - name: Verify dump is non-empty
+      - name: Verify backup is non-empty
         run: |
-          SIZE=$(stat -c%s "backup-${{ steps.ts.outputs.stamp }}.pgdump")
+          SIZE=$(stat -c%s "backup-${{ steps.ts.outputs.stamp }}.sql")
           echo "Backup size: ${SIZE} bytes"
           if [ "$SIZE" -lt 1024 ]; then
             echo "::error::Backup file is suspiciously small (${SIZE} bytes)"
             exit 1
           fi
 
+      - name: Compress
+        run: gzip "backup-${{ steps.ts.outputs.stamp }}.sql"
+
       - name: Upload to GitHub Artifacts (30 días)
         uses: actions/upload-artifact@v4
         with:
           name: db-backup-${{ steps.ts.outputs.stamp }}
-          path: backup-${{ steps.ts.outputs.stamp }}.pgdump
+          path: backup-${{ steps.ts.outputs.stamp }}.sql.gz
           retention-days: 30
           if-no-files-found: error
 
@@ -68,8 +61,8 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION || 'us-east-1' }}
         run: |
           aws s3 cp \
-            "backup-${{ steps.ts.outputs.stamp }}.pgdump" \
-            "s3://${{ secrets.BACKUP_S3_BUCKET }}/dorado-lounge/$(date -u +%Y/%m)/backup-${{ steps.ts.outputs.stamp }}.pgdump" \
+            "backup-${{ steps.ts.outputs.stamp }}.sql.gz" \
+            "s3://${{ secrets.BACKUP_S3_BUCKET }}/dorado-lounge/$(date -u +%Y/%m)/backup-${{ steps.ts.outputs.stamp }}.sql.gz" \
             --storage-class STANDARD_IA
 
       - name: Ping heartbeat on success
@@ -78,6 +71,4 @@ jobs:
 
       - name: Notify failure
         if: failure()
-        run: |
-          echo "::error::Backup FAILED at ${{ steps.ts.outputs.stamp }}"
-          # Si se configura SLACK_WEBHOOK_URL o similar, agregar notificación aquí
+        run: echo "::error::Backup FAILED at ${{ steps.ts.outputs.stamp }}"
