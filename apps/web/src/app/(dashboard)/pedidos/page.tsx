@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { getPedidos } from '@/modules/orders/actions';
+import { getPedidos, getCartaServicio } from '@/modules/orders/actions';
 import { getRecetas } from '@/modules/recipes/actions';
-import { PedidoTable } from '@/components/orders/pedido-table';
+import { PedidosView } from '@/components/orders/pedidos-view';
 import type { UserRole } from '@dorado/shared-types';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,8 +15,9 @@ export default async function PedidosPage() {
   const t = await getTranslations('pedidos');
   const supabase = await createClient();
 
-  const [pedidosResult, recetasResult, { data: authData }] = await Promise.all([
+  const [pedidosResult, cartaResult, recetasResult, { data: authData }] = await Promise.all([
     getPedidos(),
+    getCartaServicio(),
     getRecetas(),
     supabase.auth.getUser(),
   ]);
@@ -29,8 +30,9 @@ export default async function PedidosPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
-      <PedidoTable
+      <PedidosView
         initialData={pedidosResult.ok ? pedidosResult.value : []}
+        carta={cartaResult.ok ? cartaResult.value : []}
         recetas={recetasResult.ok ? recetasResult.value : []}
         userRole={userRole}
         error={pedidosResult.ok ? undefined : pedidosResult.error.message}

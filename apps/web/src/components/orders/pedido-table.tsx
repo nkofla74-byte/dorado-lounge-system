@@ -28,23 +28,9 @@ import type { RecetaWithIngredientes } from '@/modules/recipes/domain/recipe';
 import type { UserRole } from '@dorado/shared-types';
 
 const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
-const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'recepcion']);
-const RECIBIR_ROLES = new Set<UserRole>([
-  'superuser',
-  'admin',
-  'chef',
-  'sous_chef',
-  'mesero_amex',
-  'recepcion',
-]);
-const CANCEL_ROLES = new Set<UserRole>([
-  'superuser',
-  'admin',
-  'chef',
-  'sous_chef',
-  'mesero_amex',
-  'recepcion',
-]);
+const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex']);
+const RECIBIR_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
+const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   const t = useTranslations('pedidos');

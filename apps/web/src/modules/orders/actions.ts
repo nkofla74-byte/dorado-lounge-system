@@ -16,6 +16,57 @@ import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { Pedido, PedidoWithItems, PedidoEvento } from './domain/pedido';
 
+// ── Carta de servicio (incluye inactivas para toggle) ────────────────────────
+
+export interface CartaReceta {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  categoriaMenu: string | null;
+  imagenUrl: string | null;
+  activo: boolean;
+  ingredientes: { nombre: string }[];
+}
+
+export async function getCartaServicio(): Promise<Result<CartaReceta[]>> {
+  try {
+    const ctx = await assertCan('recipes:read');
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from('recetas')
+      .select(
+        `id, nombre, descripcion, categoria_menu, imagen_url, activo,
+         receta_ingredientes(insumos(nombre))`,
+      )
+      .eq('tenant_id', ctx.tenantId)
+      .eq('tipo_receta', 'servicio')
+      .is('deleted_at', null)
+      .order('nombre');
+
+    if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+    return ok(
+      (data ?? []).map((r: Record<string, unknown>) => ({
+        id: r['id'] as string,
+        nombre: r['nombre'] as string,
+        descripcion: (r['descripcion'] as string | null) ?? null,
+        categoriaMenu: (r['categoria_menu'] as string | null) ?? null,
+        imagenUrl: (r['imagen_url'] as string | null) ?? null,
+        activo: r['activo'] as boolean,
+        ingredientes: ((r['receta_ingredientes'] as Array<Record<string, unknown>>) ?? []).map(
+          (ri) => {
+            const insumo = ri['insumos'] as Record<string, unknown> | null;
+            return { nombre: (insumo?.['nombre'] as string) ?? '' };
+          },
+        ),
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 // ── Trazabilidad — fire-and-forget ────────────────────────────────────────────
 async function registrarEvento(
   tenantId: string,
@@ -435,6 +486,39 @@ export async function getEventosPedido(pedidoId: string): Promise<Result<PedidoE
         createdAt: new Date(r.created_at),
       })),
     );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function toggleDisponibilidadPlato(
+  recetaId: string,
+  activo: boolean,
+): Promise<Result<{ id: string; activo: boolean }>> {
+  try {
+    const ctx = await assertCan('orders:create');
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from('recetas')
+      .update({ activo })
+      .eq('id', recetaId)
+      .eq('tenant_id', ctx.tenantId)
+      .select('id, activo')
+      .single();
+
+    if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: activo ? 'recetas:habilitar' : 'recetas:inhabilitar',
+      resourceId: recetaId,
+      resourceType: 'receta',
+      payload: { activo },
+    });
+
+    return ok({ id: data.id as string, activo: data.activo as boolean });
   } catch (e) {
     return err(toAppError(e));
   }
