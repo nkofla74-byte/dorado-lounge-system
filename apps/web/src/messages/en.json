@@ -580,6 +580,23 @@
         "sinDatos": "No flight snapshots yet. The daily cron will start populating them.",
         "noPct": "—",
         "ayuda": "Statistics are produced by a daily cron (23:30 Bogotá time). If the flights API is not yet configured, this view will remain empty."
+      },
+      "tabForecast": "Forecast",
+      "forecast": {
+        "title": "Lounge affluence forecast",
+        "selectDate": "Date",
+        "calculate": "Calculate",
+        "estimated": "Est. lounge",
+        "range": "Range (±30%)",
+        "activeFlights": "Active flights",
+        "totalCapacity": "Total capacity",
+        "estPassengers": "Est. passengers",
+        "intlLong": "Long-haul intl.",
+        "intlRegional": "Regional intl.",
+        "domestic": "Domestic",
+        "lowcost": "Low-cost",
+        "visitors": "visitors",
+        "cancelledNote": "{count, plural, one {# cancelled flight excluded} other {# cancelled flights excluded}}"
       }
     }
   },

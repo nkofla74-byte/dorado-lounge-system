@@ -7,8 +7,10 @@ import { createAviationStackProvider } from './infrastructure/aviationstack-prov
 import { createFlightRepository } from './infrastructure/flight-repository';
 import { getFlights as getFlightsUseCase } from './application/get-flights';
 import { getFlightStats as getFlightStatsUseCase } from './application/get-flight-stats';
+import { getForecast as getForecastUseCase } from './application/get-forecast';
 import type { Result } from '@/lib/result';
 import type { Flight, FlightDirection, FlightStats } from './domain/flight';
+import type { ForecastResult } from './domain/forecast';
 
 const AIRPORT_IATA = 'BOG'; // El Dorado, Bogotá
 
@@ -46,6 +48,17 @@ export async function getFlightStats(): Promise<Result<FlightStats>> {
     });
 
     return ok(stats);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getForecastForDate(fecha: string): Promise<Result<ForecastResult>> {
+  try {
+    const ctx = await assertCan('flights:stats:read');
+    const repo = createFlightRepository();
+    const forecast = await getForecastUseCase(repo, ctx.tenantId, fecha);
+    return ok(forecast);
   } catch (e) {
     return err(toAppError(e));
   }

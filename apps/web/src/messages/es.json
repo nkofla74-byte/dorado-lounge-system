@@ -639,6 +639,23 @@
         "sinDatos": "Aún no hay snapshots de vuelos. El cron diario los irá poblando.",
         "noPct": "—",
         "ayuda": "Las estadísticas se generan por un cron diario (23:30 Bogotá). Si la API de vuelos aún no está configurada, esta vista quedará vacía."
+      },
+      "tabForecast": "Pronóstico",
+      "forecast": {
+        "title": "Pronóstico de afluencia en sala",
+        "selectDate": "Fecha",
+        "calculate": "Calcular",
+        "estimated": "Estimado sala",
+        "range": "Rango (±30%)",
+        "activeFlights": "Vuelos activos",
+        "totalCapacity": "Capacidad total",
+        "estPassengers": "Pasajeros est.",
+        "intlLong": "Internacional largo",
+        "intlRegional": "Internacional regional",
+        "domestic": "Doméstico",
+        "lowcost": "Low-cost",
+        "visitors": "visitantes",
+        "cancelledNote": "{count, plural, one {# vuelo cancelado excluido} other {# vuelos cancelados excluidos}}"
       }
     }
   },

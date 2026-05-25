@@ -66,7 +66,17 @@ function createInMemoryRepo(): ProveedorRepository & {
         (p) => p.id === id && (tenantId === null || p.tenantId === tenantId),
       );
       if (idx === -1) throw new ProveedorNotFoundError();
-      proveedores[idx] = { ...proveedores[idx]!, ...input, updatedAt: new Date() };
+      const current = proveedores[idx]!;
+      proveedores[idx] = {
+        ...current,
+        nombre: input.nombre ?? current.nombre,
+        contacto: input.contacto !== undefined ? (input.contacto ?? null) : current.contacto,
+        telefono: input.telefono !== undefined ? (input.telefono ?? null) : current.telefono,
+        email: input.email !== undefined ? (input.email ?? null) : current.email,
+        notas: input.notas !== undefined ? (input.notas ?? null) : current.notas,
+        activo: input.activo !== undefined ? input.activo : current.activo,
+        updatedAt: new Date(),
+      };
       return proveedores[idx]!;
     },
     async softDelete(id: string, tenantId: string | null) {

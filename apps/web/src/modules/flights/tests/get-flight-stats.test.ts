@@ -25,6 +25,7 @@ function makeRepo(overrides: Partial<FlightsRepository> = {}): FlightsRepository
     refreshOcupacionDiaria: vi.fn(),
     getOcupacionUltimos7d: vi.fn(async () => []),
     getTopAerolineas: vi.fn(async () => []),
+    getDeparturesForDate: vi.fn(async () => []),
     ...overrides,
   };
 }

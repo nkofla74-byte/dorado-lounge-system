@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Activity, BarChart3 } from 'lucide-react';
+import { Activity, BarChart3, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { FlightsBoard } from './flights-board';
 import { FlightStatsPanel } from './flight-stats-panel';
+import { ForecastPanel } from './forecast-panel';
 import type { Flight } from '@/modules/flights/domain/flight';
 
 interface FlightsViewProps {
@@ -15,7 +16,7 @@ interface FlightsViewProps {
   canViewStats: boolean;
 }
 
-type Tab = 'live' | 'stats';
+type Tab = 'live' | 'stats' | 'forecast';
 
 export function FlightsView({
   initialDepartures,
@@ -53,14 +54,26 @@ export function FlightsView({
             <BarChart3 className="h-4 w-4" />
             {t('tabStats')}
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTab('forecast')}
+            className={cn(
+              'gap-2 rounded-none border-b-2 -mb-px',
+              tab === 'forecast' ? 'border-primary' : 'border-transparent',
+            )}
+          >
+            <Users className="h-4 w-4" />
+            {t('tabForecast')}
+          </Button>
         </div>
       )}
 
-      {tab === 'live' ? (
+      {tab === 'live' && (
         <FlightsBoard initialDepartures={initialDepartures} initialArrivals={initialArrivals} />
-      ) : (
-        <FlightStatsPanel />
       )}
+      {tab === 'stats' && <FlightStatsPanel />}
+      {tab === 'forecast' && <ForecastPanel />}
     </div>
   );
 }

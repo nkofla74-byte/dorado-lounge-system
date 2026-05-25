@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { FlightsRepository } from '../application/ports/flights-repository.port';
 import type { Flight, FlightStats, OcupacionDiaria } from '../domain/flight';
+import type { FlightForecastInput } from '../domain/forecast';
 
 const BOGOTA_TZ = 'America/Bogota';
 
@@ -143,6 +144,25 @@ export function createFlightRepository(): FlightsRepository {
         .map(([aerolinea, v]) => ({ aerolinea, ...v }))
         .sort((a, b) => b.vuelos - a.vuelos)
         .slice(0, 5);
+    },
+
+    async getDeparturesForDate(tenantId: string, fecha: string): Promise<FlightForecastInput[]> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('vuelos_snapshots')
+        .select('destino, aerolinea, capacidad_estimada, status')
+        .eq('tenant_id', tenantId)
+        .eq('fecha', fecha)
+        .eq('direccion', 'departure');
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+      return (data ?? []).map((r) => ({
+        destination: (r.destino as string) ?? '—',
+        airline: (r.aerolinea as string) ?? '—',
+        capacity: (r.capacidad_estimada as number | null) ?? null,
+        status: (r.status as string) ?? 'scheduled',
+      }));
     },
   };
 }
