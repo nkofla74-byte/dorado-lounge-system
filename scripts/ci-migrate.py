@@ -21,25 +21,25 @@ def api_query(sql: str) -> list:
     result = subprocess.run(
         [
             "curl",
-            "-sf",
+            "-s",
             "-X", "POST",
             API_URL,
             "-H", f"Authorization: Bearer {os.environ['SUPABASE_ACCESS_TOKEN']}",
             "-H", "Content-Type: application/json",
             "-H", "Accept: application/json",
-            "--data-raw", payload,
-            "--fail-with-body",
+            "-d", payload,
         ],
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"curl failed (exit {result.returncode}): {result.stdout[:500]}"
-        )
-    data = json.loads(result.stdout)
-    if isinstance(data, dict) and "message" in data:
-        raise RuntimeError(f"API error: {data['message']}")
+        raise RuntimeError(f"curl error (exit {result.returncode}): {result.stderr}")
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        raise RuntimeError(f"Non-JSON response: {result.stdout[:500]}")
+    if isinstance(data, dict) and ("message" in data or "error" in data):
+        raise RuntimeError(f"API error: {result.stdout[:500]}")
     return data
 
 
