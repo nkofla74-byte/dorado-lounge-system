@@ -14,7 +14,7 @@ const nextConfig = {
     const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
       : '*.supabase.co';
-    const socketUrl = new URL(process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3001');
+    const socketUrl = new URL(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
     const socketConnectSrc =
       socketUrl.protocol === 'https:'
         ? [`https://${socketUrl.host}`, `wss://${socketUrl.host}`]
