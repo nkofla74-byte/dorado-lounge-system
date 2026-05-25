@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,8 +30,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { iniciarTurno, getUsuariosResumen } from '@/modules/turnos/actions';
 import type { UsuarioResumen } from '@/modules/turnos/actions';
+import { detectarBloqueActual, formatBloqueHorario } from '@/lib/turnos';
 
 const OTRO = '__otro__';
 
@@ -47,6 +49,8 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
   const [showOtro, setShowOtro] = useState(false);
 
+  const bloque = useMemo(() => detectarBloqueActual(), [open]);
+
   useEffect(() => {
     if (!open) return;
     getUsuariosResumen().then((r) => {
@@ -55,7 +59,6 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
   }, [open]);
 
   const formSchema = z.object({
-    nombre: z.string().min(1, t('errorNombre')).max(255),
     teamlider: z.string().min(1, t('errorTeamlider')).max(255),
     teamliderSelect: z.string().min(1),
   });
@@ -64,12 +67,12 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { nombre: '', teamlider: '', teamliderSelect: '' },
+    defaultValues: { teamlider: '', teamliderSelect: '' },
   });
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
-    const result = await iniciarTurno({ nombre: values.nombre, teamlider: values.teamlider });
+    const result = await iniciarTurno({ bloque, teamlider: values.teamlider });
 
     if (!result.ok) {
       setError(result.error.message);
@@ -103,19 +106,16 @@ export function IniciarTurnoDialog({ open, onOpenChange, onIniciado }: IniciarTu
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
-            <FormField
-              control={form.control}
-              name="nombre"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('nombre')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('nombrePlaceholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-1.5">
+              <Label>{t('bloque')}</Label>
+              <div className="flex items-center justify-between px-3 py-2 rounded-md border bg-muted/40 text-sm">
+                <span className="font-medium">{t(`bloque_${bloque}` as const)}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatBloqueHorario(bloque)}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{t('bloqueHint')}</p>
+            </div>
 
             <FormField
               control={form.control}

@@ -12,6 +12,7 @@ import { cerrarTurno as cerrarTurnoUseCase } from './application/cerrar-turno';
 import { createTurnoSchema } from '@dorado/shared-validation';
 import { TurnoYaActivoError, TurnoNoActivoError } from './domain/turno';
 import { CHANNELS } from '@dorado/shared-types';
+import { detectarBloqueActual } from '@/lib/turnos';
 import type { Result } from '@/lib/result';
 import type { Turno } from './domain/turno';
 
@@ -60,7 +61,9 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
   try {
     const ctx = await assertCan('turnos:write');
 
-    const parsed = createTurnoSchema.safeParse(input);
+    const raw = (input ?? {}) as Record<string, unknown>;
+    const candidate = { bloque: raw.bloque ?? detectarBloqueActual(), teamlider: raw.teamlider };
+    const parsed = createTurnoSchema.safeParse(candidate);
     if (!parsed.success) {
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
@@ -69,7 +72,7 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
     const turno = await createTurnoUseCase(
       repo,
       ctx.tenantId,
-      parsed.data.nombre,
+      parsed.data.bloque,
       parsed.data.teamlider,
       ctx.userId,
     );
@@ -80,7 +83,7 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
       action: 'turnos:iniciar',
       resourceId: turno.id,
       resourceType: 'turno',
-      payload: { nombre: turno.nombre },
+      payload: { bloque: turno.bloque, teamlider: turno.teamlider },
     });
 
     await emitEvent(ctx.tenantId, CHANNELS.ADMIN, {
@@ -88,7 +91,7 @@ export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
       payload: {
         turnoId: turno.id,
         tenantId: ctx.tenantId,
-        nombre: turno.nombre,
+        nombre: turno.bloque ?? turno.nombre,
         accion: 'iniciado',
         responsableId: ctx.userId,
         timestamp:
@@ -127,7 +130,7 @@ export async function cerrarTurno(turnoId: string): Promise<Result<Turno>> {
       payload: {
         turnoId: turno.id,
         tenantId: ctx.tenantId,
-        nombre: turno.nombre,
+        nombre: turno.bloque ?? turno.nombre,
         accion: 'cerrado',
         responsableId: ctx.userId,
         timestamp:

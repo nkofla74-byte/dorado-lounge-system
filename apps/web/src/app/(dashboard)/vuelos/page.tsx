@@ -2,11 +2,12 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getFlights } from '@/modules/flights/actions';
-import { FlightsBoard } from '@/components/flights/flights-board';
+import { FlightsView } from '@/components/flights/flights-view';
 import { Plane } from 'lucide-react';
 import type { UserRole } from '@dorado/shared-types';
 
 const ALLOWED_ROLES: UserRole[] = ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'];
+const STATS_ROLES: UserRole[] = ['admin', 'recepcion'];
 
 export default async function VuelosPage() {
   const t = await getTranslations('admin.flights');
@@ -25,6 +26,7 @@ export default async function VuelosPage() {
 
   const departures = departuresResult.ok ? departuresResult.value : [];
   const arrivals = arrivalsResult.ok ? arrivalsResult.value : [];
+  const canViewStats = STATS_ROLES.includes(role);
 
   return (
     <div className="p-6 space-y-6">
@@ -36,7 +38,11 @@ export default async function VuelosPage() {
         </div>
       </div>
 
-      <FlightsBoard initialDepartures={departures} initialArrivals={arrivals} />
+      <FlightsView
+        initialDepartures={departures}
+        initialArrivals={arrivals}
+        canViewStats={canViewStats}
+      />
     </div>
   );
 }

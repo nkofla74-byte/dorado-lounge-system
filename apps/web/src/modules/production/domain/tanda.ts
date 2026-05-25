@@ -1,6 +1,6 @@
-import type { EstadoTanda } from '@dorado/shared-types';
+import type { EstadoTanda, ZonaServicio } from '@dorado/shared-types';
 
-export type { EstadoTanda };
+export type { EstadoTanda, ZonaServicio };
 
 export interface Tanda {
   id: string;
@@ -9,6 +9,7 @@ export interface Tanda {
   recetaNombre: string;
   cantidadTandas: number;
   estado: EstadoTanda;
+  zonaDestino: ZonaServicio | null;
   responsableId: string | null;
   responsableNombre: string | null;
   turnoId: string | null;
@@ -34,6 +35,7 @@ export interface TandaWithIngredientes extends Tanda {
 export interface CreateTandaInput {
   recetaId: string;
   cantidadTandas: number;
+  zonaDestino: ZonaServicio;
   notas?: string | null;
   responsableId?: string | null;
   turnoId?: string | null;

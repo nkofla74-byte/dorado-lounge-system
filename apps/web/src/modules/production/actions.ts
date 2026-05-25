@@ -36,6 +36,7 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
     const tanda = await createTandaUseCase(repo, ctx.tenantId, {
       recetaId: parsed.data.recetaId,
       cantidadTandas: parsed.data.cantidadTandas,
+      zonaDestino: parsed.data.zonaDestino,
       idempotencyKey: parsed.data.idempotencyKey,
       responsableId: ctx.userId,
       turnoId: parsed.data.turnoId ?? null,
@@ -51,6 +52,7 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
       payload: {
         recetaId: tanda.recetaId,
         cantidadTandas: tanda.cantidadTandas,
+        zonaDestino: tanda.zonaDestino,
         turnoId: tanda.turnoId,
         responsableId: tanda.responsableId,
       },

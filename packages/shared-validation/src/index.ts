@@ -186,6 +186,7 @@ export const createTandaSchema = z.object({
   recetaId: uuidSchema,
   turnoId: uuidSchema.optional(),
   cantidadTandas: z.number().int().positive('La cantidad de tandas debe ser mayor que 0'),
+  zonaDestino: zonaServicioSchema,
   notas: z.string().max(500).optional(),
   idempotencyKey: idempotencyKeySchema,
 });
@@ -249,8 +250,10 @@ export const enviarStuartSchema = z.object({
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
 });
 
+export const turnoBloqueSchema = z.enum(['6a2', '2a10', '10a6']);
+
 export const createTurnoSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
+  bloque: turnoBloqueSchema,
   teamlider: z.string().min(1, 'El nombre del jefe de turno es obligatorio').max(255),
 });
 

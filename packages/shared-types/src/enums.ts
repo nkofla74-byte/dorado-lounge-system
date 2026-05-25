@@ -84,6 +84,20 @@ export const CategoriaMenu = {
 
 export type CategoriaMenu = (typeof CategoriaMenu)[keyof typeof CategoriaMenu];
 
+export const TurnoBloque = {
+  '6a2': '6a2',
+  '2a10': '2a10',
+  '10a6': '10a6',
+} as const;
+
+export type TurnoBloque = (typeof TurnoBloque)[keyof typeof TurnoBloque];
+
+export const TURNO_BLOQUE_HORARIOS: Record<TurnoBloque, { inicio: number; fin: number }> = {
+  '6a2': { inicio: 6, fin: 14 },
+  '2a10': { inicio: 14, fin: 22 },
+  '10a6': { inicio: 22, fin: 6 },
+};
+
 export const EstadoTanda = {
   planificada: 'planificada',
   en_proceso: 'en_proceso',

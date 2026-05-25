@@ -16,6 +16,7 @@ interface ASFlight {
   flight_status: string;
   flight: { iata: string | null };
   airline: { name: string | null };
+  aircraft: { iata: string | null } | null;
   departure: ASEndpoint;
   arrival: ASEndpoint;
 }
@@ -89,6 +90,7 @@ export function createAviationStackProvider(): FlightsProvider {
           gate: (isDeparture ? dep.gate : arr.gate) ?? null,
           terminal: (isDeparture ? dep.terminal : arr.terminal) ?? null,
           direction: query.direction,
+          aircraftIata: f.aircraft?.iata ?? null,
         };
       });
     },
