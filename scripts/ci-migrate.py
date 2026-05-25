@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Apply Supabase migrations via Management API (no direct DB connection needed).
+"""Apply Supabase migrations via Management API.
 
-Used in GitHub Actions to work around IPv6-only direct DB endpoints.
-Requires: SUPABASE_ACCESS_TOKEN env var.
+Uses curl for HTTP (avoids Python urllib TLS fingerprint blocked by Cloudflare
+from GitHub Actions runners). Requires: SUPABASE_ACCESS_TOKEN env var.
 """
 
 import json
 import os
 import re
+import subprocess
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 PROJECT_REF = "gyewxgtuzjbxzcvcfmwy"
@@ -18,20 +17,30 @@ API_URL = f"https://api.supabase.com/v1/projects/{PROJECT_REF}/database/query"
 
 
 def api_query(sql: str) -> list:
-    payload = json.dumps({"query": sql}).encode()
-    req = urllib.request.Request(
-        API_URL,
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {os.environ['SUPABASE_ACCESS_TOKEN']}",
-            "Content-Type": "application/json",
-        },
+    payload = json.dumps({"query": sql})
+    result = subprocess.run(
+        [
+            "curl",
+            "-sf",
+            "-X", "POST",
+            API_URL,
+            "-H", f"Authorization: Bearer {os.environ['SUPABASE_ACCESS_TOKEN']}",
+            "-H", "Content-Type: application/json",
+            "-H", "Accept: application/json",
+            "--data-raw", payload,
+            "--fail-with-body",
+        ],
+        capture_output=True,
+        text=True,
     )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            return json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"HTTP {e.code}: {e.read().decode()}") from e
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"curl failed (exit {result.returncode}): {result.stdout[:500]}"
+        )
+    data = json.loads(result.stdout)
+    if isinstance(data, dict) and "message" in data:
+        raise RuntimeError(f"API error: {data['message']}")
+    return data
 
 
 def version_from_filename(name: str) -> str:
@@ -70,7 +79,6 @@ def main() -> None:
             print(f"FAILED\n{exc}")
             sys.exit(1)
 
-        # Record as applied (same schema as supabase CLI)
         api_query(
             "INSERT INTO supabase_migrations.schema_migrations "
             "(version, name, statements, created_by, idempotency_key, rollback) "
