@@ -23,7 +23,7 @@ import {
   iniciarPreparacionAmex as iniciarPreparacion,
   despacharPedidoAmex as despacharPedido,
   getEventosPedidoAmex as getEventosPedido,
-} from '@/modules/cocina_amex/actions';
+} from '@/modules/cocina-amex/actions';
 import { toast } from 'sonner';
 import type { PedidoWithItems, PedidoEvento } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';

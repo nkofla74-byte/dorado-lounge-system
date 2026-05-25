@@ -111,7 +111,7 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 | ✅     | `feature-flags` | Flags por tenant                                                    |
 | ✅     | `superuser`     | CRUD tenants y usuarios                                             |
 | ✅     | `audit`         | Hash chain SHA-256, audit_log                                       |
-| ✅     | `cocina_amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
+| ✅     | `cocina-amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
 | ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes          |
 | ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
 | ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual) |
