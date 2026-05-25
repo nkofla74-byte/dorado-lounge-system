@@ -2,37 +2,13 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { PlusCircle } from 'lucide-react';
+import { Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { registrarIngresoSchema } from '@dorado/shared-validation';
 import { registrarIngreso } from '@/modules/afluencia/actions';
-import type { RegistrarIngresoInput } from '@dorado/shared-validation';
+
+type Zona = 'amex' | null;
 
 interface Props {
   turnoId: string;
@@ -41,35 +17,28 @@ interface Props {
 
 export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
   const t = useTranslations('afluencia');
-  const tZ = useTranslations('zonas');
-  const [open, setOpen] = useState(false);
+  const [cantidad, setCantidad] = useState(1);
+  const [zona, setZona] = useState<Zona>(null);
+  const [vuelo, setVuelo] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<RegistrarIngresoInput>({
-    resolver: zodResolver(registrarIngresoSchema),
-    defaultValues: {
-      turnoId,
-      cantidad: 1,
-      zona: null,
-      vueloNumero: null,
-    },
-  });
-
-  const onSubmit = async (values: RegistrarIngresoInput) => {
+  const handleSubmit = async () => {
+    if (cantidad < 1) return;
     setLoading(true);
     try {
       const result = await registrarIngreso({
-        ...values,
         turnoId,
-        vueloNumero: values.vueloNumero?.trim() || null,
+        cantidad,
+        zona: zona ?? undefined,
+        vueloNumero: vuelo.trim() || undefined,
       });
       if (!result.ok) {
         toast.error(result.error.message);
         return;
       }
-      toast.success(t('registradoToast', { n: values.cantidad }));
-      form.reset({ turnoId, cantidad: 1, zona: null, vueloNumero: null });
-      setOpen(false);
+      toast.success(t('registradoToast', { n: cantidad }));
+      setCantidad(1);
+      setVuelo('');
       onSuccess();
     } finally {
       setLoading(false);
@@ -77,104 +46,84 @@ export function RegistrarIngresoDialog({ turnoId, onSuccess }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusCircle className="h-4 w-4 mr-2" />
-          {t('registrarIngreso')}
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-foreground">{t('registrarTitle')}</h3>
+
+      <div className="flex flex-wrap items-end gap-3">
+        {/* Cantidad */}
+        <div className="space-y-1">
+          <label htmlFor="af-cantidad" className="text-xs text-muted-foreground font-medium">
+            {t('cantidad')}
+          </label>
+          <Input
+            id="af-cantidad"
+            type="number"
+            min={1}
+            className="w-20 tabular-nums"
+            value={cantidad}
+            onChange={(e) => setCantidad(parseInt(e.target.value, 10) || 0)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) void handleSubmit();
+            }}
+          />
+        </div>
+
+        {/* Zona toggle */}
+        <div className="space-y-1">
+          <span className="text-xs text-muted-foreground font-medium block">{t('zona')}</span>
+          <div className="flex rounded-md border border-input overflow-hidden h-9">
+            <button
+              type="button"
+              onClick={() => setZona(null)}
+              className={`px-3 text-sm font-medium transition-colors ${
+                zona === null
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {t('zonaSala')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setZona('amex')}
+              className={`px-3 text-sm font-medium border-l border-input transition-colors ${
+                zona === 'amex'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {t('zonaAmex')}
+            </button>
+          </div>
+        </div>
+
+        {/* Vuelo */}
+        <div className="space-y-1">
+          <label
+            htmlFor="af-vuelo"
+            className="text-xs text-muted-foreground font-medium flex items-center gap-1"
+          >
+            <Plane className="h-3 w-3" />
+            {t('vuelo')}
+          </label>
+          <Input
+            id="af-vuelo"
+            className="w-28"
+            placeholder={t('vueloPlaceholder')}
+            maxLength={10}
+            value={vuelo}
+            onChange={(e) => setVuelo(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) void handleSubmit();
+            }}
+          />
+        </div>
+
+        {/* Submit */}
+        <Button onClick={handleSubmit} disabled={loading || cantidad < 1} className="h-9">
+          {loading ? t('submitting') : t('submit')}
         </Button>
-      </DialogTrigger>
-
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('registrarTitle')}</DialogTitle>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <FormField
-              control={form.control}
-              name="cantidad"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cantidad')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder={t('cantidadPlaceholder')}
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="zona"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('zona')}</FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v === 'todas' ? null : v)}
-                    defaultValue="todas"
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('zonaPlaceholder')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="todas">{t('todasLasZonas')}</SelectItem>
-                      <SelectItem value="amex">{tZ('amex')}</SelectItem>
-                      <SelectItem value="snack">{tZ('snack')}</SelectItem>
-                      <SelectItem value="buffet">{tZ('buffet')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="vueloNumero"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('vuelo')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('vueloPlaceholder')}
-                      maxLength={10}
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.value || null)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-              >
-                {t('cancelar')}
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? t('submitting') : t('submit')}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

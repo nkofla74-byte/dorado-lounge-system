@@ -26,6 +26,8 @@ function makeRepo(overrides: Partial<AfluenciaRepository> = {}): AfluenciaReposi
   return {
     findByTurno: vi.fn().mockResolvedValue([]),
     getTotalByTurno: vi.fn().mockResolvedValue(0),
+    findByBloqueHoy: vi.fn().mockResolvedValue([]),
+    getTotalByBloqueHoy: vi.fn().mockResolvedValue(0),
     create: vi.fn().mockResolvedValue(makeIngreso()),
     ...overrides,
   };

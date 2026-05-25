@@ -20,8 +20,6 @@ import { RegistrarIngresoDialog } from './registrar-ingreso-dialog';
 import { getAfluenciaByTurno, getTotalPasajeros } from '@/modules/afluencia/actions';
 import type { AfluenciaIngreso } from '@/modules/afluencia/domain/afluencia';
 
-type ZonaKey = 'amex' | 'snack' | 'buffet';
-
 interface TurnoActivo {
   id: string;
   nombre: string;
@@ -35,7 +33,6 @@ interface Props {
 
 export function AfluenciaPanel({ turnoActivo }: Props) {
   const t = useTranslations('afluencia');
-  const tZ = useTranslations('zonas');
   const locale = useLocale();
   const dateLocale = locale === 'en' ? 'en-US' : 'es-CO';
   const [ingresos, setIngresos] = useState<AfluenciaIngreso[]>([]);
@@ -134,19 +131,17 @@ export function AfluenciaPanel({ turnoActivo }: Props) {
         </CardContent>
       </Card>
 
-      {/* Controles */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground">{t('registroTitle')}</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {t('actualizar')}
-          </Button>
-          <RegistrarIngresoDialog turnoId={turnoActivo.id} onSuccess={loadData} />
-        </div>
-      </div>
+      {/* Registro rápido inline */}
+      <RegistrarIngresoDialog turnoId={turnoActivo.id} onSuccess={loadData} />
 
       {/* Tabla de ingresos */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-foreground">{t('registroTitle')}</h2>
+        <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          {t('actualizar')}
+        </Button>
+      </div>
       <Card>
         <CardContent className="p-0">
           {loading && ingresos.length === 0 ? (
@@ -182,12 +177,10 @@ export function AfluenciaPanel({ turnoActivo }: Props) {
                       {ing.cantidad}
                     </TableCell>
                     <TableCell>
-                      {ing.zona ? (
-                        <Badge variant="outline">
-                          {tZ.has(ing.zona) ? tZ(ing.zona as ZonaKey) : ing.zona}
-                        </Badge>
+                      {ing.zona === 'amex' ? (
+                        <Badge variant="outline">{t('zonaAmex')}</Badge>
                       ) : (
-                        <span className="text-muted-foreground text-sm">{t('todas')}</span>
+                        <span className="text-sm text-muted-foreground">{t('todas')}</span>
                       )}
                     </TableCell>
                     <TableCell>

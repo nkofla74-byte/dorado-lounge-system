@@ -1,6 +1,38 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { AfluenciaRepository } from '../application/ports/afluencia-repository.port';
 import type { AfluenciaIngreso, RegistrarIngresoInput } from '../domain/afluencia';
+import type { TurnoBloque } from '@dorado/shared-types';
+
+const BOGOTA_TZ = 'America/Bogota';
+
+/** Devuelve [startUTC, endUTC) del día actual en Bogotá. */
+function rangoDiaBogotaUTC(): { startUTC: string; endUTC: string } {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: BOGOTA_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? '00';
+  const fecha = `${get('year')}-${get('month')}-${get('day')}`;
+  // Bogotá es UTC-5 todo el año (no tiene DST).
+  return {
+    startUTC: `${fecha}T05:00:00.000Z`,
+    endUTC: `${fecha}T29:00:00.000Z`.replace('T29:', 'T05:').replace(fecha, addDays(fecha, 1)),
+  };
+}
+
+function addDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
 
 interface AfluenciaRow {
   id: string;
@@ -71,6 +103,35 @@ export function createAfluenciaRepository(): AfluenciaRepository {
 
       if (error) throw new Error(error.message);
       return toEntity(data as AfluenciaRow);
+    },
+
+    async findByBloqueHoy(tenantId, bloque) {
+      const { startUTC, endUTC } = rangoDiaBogotaUTC();
+      const { data, error } = await supabase
+        .from('afluencia_ingresos')
+        .select('*, turnos!inner(bloque)')
+        .eq('tenant_id', tenantId)
+        .eq('turnos.bloque', bloque)
+        .gte('ingresado_at', startUTC)
+        .lt('ingresado_at', endUTC)
+        .order('ingresado_at', { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return (data as AfluenciaRow[]).map(toEntity);
+    },
+
+    async getTotalByBloqueHoy(tenantId, bloque) {
+      const { startUTC, endUTC } = rangoDiaBogotaUTC();
+      const { data, error } = await supabase
+        .from('afluencia_ingresos')
+        .select('cantidad, turnos!inner(bloque)')
+        .eq('tenant_id', tenantId)
+        .eq('turnos.bloque', bloque)
+        .gte('ingresado_at', startUTC)
+        .lt('ingresado_at', endUTC);
+
+      if (error) throw new Error(error.message);
+      return (data as { cantidad: number }[]).reduce((sum, r) => sum + r.cantidad, 0);
     },
   };
 }
