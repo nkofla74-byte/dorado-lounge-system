@@ -111,12 +111,17 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
   const isLoginPath = pathname.startsWith('/login');
 
-  // Sin sesión → redirigir a login (excepto rutas públicas)
+  // Sin sesión → redirigir a login (excepto rutas públicas).
+  // Usar 302 (no 307) + no-store para evitar caché agresivo de Chrome móvil.
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url, 302);
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.headers.set('Pragma', 'no-cache');
+    res.headers.set('Expires', '0');
+    return res;
   }
 
   if (user) {
@@ -129,29 +134,27 @@ export async function middleware(request: NextRequest) {
       if (isLoginPath) return supabaseResponse;
       const url = request.nextUrl.clone();
       url.pathname = '/login';
-      const response = NextResponse.redirect(url);
+      const response = NextResponse.redirect(url, 302);
+      response.headers.set('Cache-Control', 'no-store');
       request.cookies.getAll().forEach(({ name }) => {
         if (name.startsWith('sb-')) response.cookies.delete(name);
       });
       return response;
     }
 
-    // Autenticado en /login → redirigir al home del rol
-    // OJO: /qr/* es público para pasajeros y nunca debe redirigir
     if (isLoginPath) {
       const next = request.nextUrl.searchParams.get('next');
       const destination = next && canAccess(role, next) ? next : (ROLE_HOME[role] ?? '/inventario');
       const url = request.nextUrl.clone();
       url.pathname = destination;
       url.searchParams.delete('next');
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(url, 302);
     }
 
-    // Ruta protegida: verificar que el rol tenga acceso
     if (!isPublicPath && !canAccess(role, pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = ROLE_HOME[role] ?? '/inventario';
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(url, 302);
     }
   }
 
