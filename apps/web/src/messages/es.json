@@ -1063,6 +1063,20 @@
       "submitting": "Registrando…",
       "errorTurno": "Selecciona un turno",
       "errorCantidad": "La cantidad no puede ser negativa"
+    },
+    "pedirPreparacion": "Pedir preparación",
+    "preparacion": {
+      "title": "Solicitar preparación a cocina",
+      "srDescription": "Envía una solicitud de preparación al chef.",
+      "label": "¿Qué necesitas que preparen?",
+      "placeholder": "Ej: 5 tandas de ensalada, 3 de sopa…",
+      "cancelar": "Cancelar",
+      "submit": "Enviar a cocina",
+      "submitting": "Enviando…",
+      "errorDescripcion": "La descripción es obligatoria",
+      "destinoLabel": "¿A quién va dirigido?",
+      "destinoCocina": "Cocina",
+      "destinoPasteleria": "Pastelería"
     }
   },
   "snack": {
@@ -1106,7 +1120,27 @@
       "errorInsumo": "Selecciona un insumo",
       "errorCantidad": "La cantidad debe ser mayor que 0",
       "errorDecimales": "Máximo 4 decimales"
-    }
+    },
+    "pedirPreparacion": "Pedir preparación",
+    "stockLocalTitle": "Preparaciones disponibles hoy",
+    "preparacionTitle": "Solicitudes de preparación a cocina",
+    "sinSolicitudes": "Sin solicitudes de preparación",
+    "nuevoDespachoToast": "Nuevo despacho recibido de cocina",
+    "preparacion": {
+      "title": "Solicitar preparación a cocina",
+      "srDescription": "Envía una solicitud de preparación al chef para que prepare lo que necesitas.",
+      "label": "¿Qué necesitas que preparen?",
+      "placeholder": "Ej: 5 tandas de empanadas, 3 de sándwiches club…",
+      "cancelar": "Cancelar",
+      "submit": "Enviar a cocina",
+      "submitting": "Enviando…",
+      "errorDescripcion": "La descripción es obligatoria",
+      "destinoLabel": "¿A quién va dirigido?",
+      "destinoCocina": "Cocina",
+      "destinoPasteleria": "Pastelería"
+    },
+    "sinPreparaciones": "No hay preparaciones despachadas hoy",
+    "lotesCount": "{n, plural, =0 {0 lotes} =1 {1 lote} other {# lotes}}"
   },
   "kds": {
     "titulo": "Cocina — KDS",
@@ -1148,7 +1182,8 @@
       "despachado": "Despachado",
       "entregado": "Entregado",
       "cancelado": "Cancelado"
-    }
+    },
+    "solicitudPreparacionToast": "Solicitud de {zona}: {descripcion}"
   },
   "pedidos": {
     "estadoCreado": "Creado",
@@ -1272,7 +1307,12 @@
     "pedidosEspeciales": "{n, plural, =1 {1 pedido especial pendiente desde Amex} other {# pedidos especiales pendientes desde Amex}}",
     "sinMesa": "Sin mesa",
     "estadoNuevo": "Nuevo",
-    "estadoEnPreparacion": "En preparación"
+    "estadoEnPreparacion": "En preparación",
+    "solicitudesTitle": "Solicitudes de preparación",
+    "colZona": "Zona",
+    "colDescripcion": "Descripción",
+    "colEnviado": "Enviado",
+    "nuevaSolicitudToast": "Nueva solicitud de {zona}: {descripcion}"
   },
   "qrAdmin": {
     "metaTitle": "Generador QR — Dorado Lounge",

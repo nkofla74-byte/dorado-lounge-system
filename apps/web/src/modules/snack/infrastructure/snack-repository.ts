@@ -3,8 +3,10 @@ import { AppError } from '@/lib/result';
 import type { SnackRepository } from '../application/ports/snack-repository.port';
 import type { DespachoSnack, TurnoActivo } from '../domain/despacho-snack';
 import type { StuartRequest } from '../domain/stuart-request';
+import type { SolicitudPreparacion } from '../domain/solicitud-preparacion';
 
 const STUART_SNACK_CHANNEL = 'sala:stuart:snack';
+const COCINA_CHANNEL = 'sala:cocina';
 
 type DespachoRow = {
   id: string;
@@ -55,6 +57,17 @@ function toDespacho(row: DespachoRow): DespachoSnack {
 }
 
 function toStuart(row: MensajeRow): StuartRequest {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    canal: row.canal,
+    remitenteId: row.remitente_id,
+    descripcion: row.contenido,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function toSolicitud(row: MensajeRow): SolicitudPreparacion {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -140,6 +153,47 @@ export function createSnackRepository(): SnackRepository {
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       return toStuart(data as MensajeRow);
+    },
+
+    async findSolicitudesPreparacion(
+      tenantId: string,
+      limit = 20,
+    ): Promise<SolicitudPreparacion[]> {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('mensajes_chat')
+        .select('id, tenant_id, canal, remitente_id, contenido, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('canal', COCINA_CHANNEL)
+        .eq('tipo', 'alert')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as MensajeRow[]).map(toSolicitud);
+    },
+
+    async createSolicitudPreparacion(
+      tenantId: string,
+      input: { remitenteId: string; descripcion: string; canal?: string },
+    ): Promise<SolicitudPreparacion> {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('mensajes_chat')
+        .insert({
+          tenant_id: tenantId,
+          canal: input.canal ?? COCINA_CHANNEL,
+          remitente_id: input.remitenteId,
+          contenido: input.descripcion,
+          tipo: 'alert',
+        })
+        .select('id, tenant_id, canal, remitente_id, contenido, created_at')
+        .single();
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return toSolicitud(data as MensajeRow);
     },
   };
 }

@@ -2,7 +2,15 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { UtensilsCrossed, Ticket, AlertTriangle, RefreshCw, Plus, BarChart2 } from 'lucide-react';
+import {
+  UtensilsCrossed,
+  Ticket,
+  AlertTriangle,
+  RefreshCw,
+  Plus,
+  BarChart2,
+  ChefHat,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,6 +31,7 @@ import {
 import { getDespachos, getTicketsByTurno } from '@/modules/buffet/actions';
 import { DespacharLoteDialog } from './despachar-lote-dialog';
 import { RegistrarTicketsDialog } from './registrar-tickets-dialog';
+import { SolicitarPreparacionDialog } from './solicitar-preparacion-dialog';
 import type { DespachoBuffet } from '@/modules/buffet/domain/despacho-buffet';
 import type { TicketTurno, TurnoActivo } from '@/modules/buffet/domain/ticket-turno';
 import type { UserRole } from '@dorado/shared-types';
@@ -57,6 +66,7 @@ export function BuffetPanel({
   const [selectedTurnoId, setSelectedTurnoId] = useState<string>('');
   const [despacharOpen, setDespacharOpen] = useState(false);
   const [ticketsOpen, setTicketsOpen] = useState(false);
+  const [preparacionOpen, setPreparacionOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | undefined>(error);
   const [isPending, startTransition] = useTransition();
 
@@ -138,6 +148,15 @@ export function BuffetPanel({
 
         {canWrite && (
           <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPreparacionOpen(true)}
+              className="gap-2"
+            >
+              <ChefHat className="h-4 w-4" />
+              {t('pedirPreparacion')}
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -307,6 +326,11 @@ export function BuffetPanel({
       )}
 
       {/* Dialogs */}
+      <SolicitarPreparacionDialog
+        open={preparacionOpen}
+        onOpenChange={setPreparacionOpen}
+        onEnviado={() => {}}
+      />
       <DespacharLoteDialog
         open={despacharOpen}
         onOpenChange={setDespacharOpen}

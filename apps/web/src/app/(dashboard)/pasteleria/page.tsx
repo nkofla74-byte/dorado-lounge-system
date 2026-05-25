@@ -5,7 +5,9 @@ import { getTandas } from '@/modules/production/actions';
 import { getRecetas } from '@/modules/recipes/actions';
 import { getTurnoActivo } from '@/modules/turnos/actions';
 import { getPedidos } from '@/modules/orders/actions';
+import { getSolicitudesCocina } from '@/modules/production/actions';
 import { TandaTable } from '@/components/production/tanda-table';
+import { SolicitudesPanel } from '@/components/production/solicitudes-panel';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pasteleria');
@@ -17,14 +19,21 @@ export default async function PasteleriaPage() {
   const t = await getTranslations('pasteleria');
   const tLayout = await getTranslations('layout');
 
-  const [tandasResult, recetasResult, turnoResult, pedidosResult, { data: userData }] =
-    await Promise.all([
-      getTandas(),
-      getRecetas(),
-      getTurnoActivo(),
-      getPedidos(),
-      supabase.auth.getUser(),
-    ]);
+  const [
+    tandasResult,
+    recetasResult,
+    turnoResult,
+    pedidosResult,
+    solicitudesResult,
+    { data: userData },
+  ] = await Promise.all([
+    getTandas(),
+    getRecetas(),
+    getTurnoActivo(),
+    getPedidos(),
+    getSolicitudesCocina(),
+    supabase.auth.getUser(),
+  ]);
 
   const user = userData.user;
   const userRole = user?.app_metadata?.role as string | undefined;
@@ -56,6 +65,16 @@ export default async function PasteleriaPage() {
           </p>
         </div>
       )}
+
+      {/* Solicitudes de preparación de snack/buffet */}
+      <SolicitudesPanel
+        initialSolicitudes={solicitudesResult.ok ? solicitudesResult.value : []}
+        fetchSolicitudes={async () => {
+          'use server';
+          const r = await getSolicitudesCocina();
+          return r.ok ? r.value : [];
+        }}
+      />
 
       {/* Pedidos especiales activos desde Amex */}
       {pedidosEspeciales.length > 0 && (

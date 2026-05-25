@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { getDespachos, getTurnosActivos, getStuartRequests } from '@/modules/snack/actions';
+import {
+  getDespachos,
+  getStuartRequests,
+  getSolicitudesPreparacion,
+} from '@/modules/snack/actions';
 import { getInsumos } from '@/modules/inventory/actions';
 import { SnackPanel } from '@/components/snack/snack-panel';
 import type { UserRole } from '@dorado/shared-types';
@@ -15,11 +19,11 @@ export default async function SnackPage() {
   const t = await getTranslations('snack');
   const supabase = await createClient();
 
-  const [despachosResult, turnosResult, stuartResult, insumosResult, { data: authData }] =
+  const [despachosResult, stuartResult, solicitudesResult, insumosResult, { data: authData }] =
     await Promise.all([
       getDespachos(),
-      getTurnosActivos(),
       getStuartRequests(),
+      getSolicitudesPreparacion(),
       getInsumos(),
       supabase.auth.getUser(),
     ]);
@@ -35,7 +39,7 @@ export default async function SnackPage() {
       <SnackPanel
         initialDespachos={despachosResult.ok ? despachosResult.value : []}
         initialStuart={stuartResult.ok ? stuartResult.value : []}
-        turnos={turnosResult.ok ? turnosResult.value : []}
+        initialSolicitudes={solicitudesResult.ok ? solicitudesResult.value : []}
         insumos={insumosResult.ok ? insumosResult.value : []}
         userRole={userRole}
         error={despachosResult.ok ? undefined : despachosResult.error.message}

@@ -5,6 +5,7 @@ import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createProductionRepository } from './infrastructure/production-repository';
+import { createClient } from '@/lib/supabase/server';
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
 import { createTandaSchema } from '@dorado/shared-validation';
@@ -204,6 +205,42 @@ export async function cancelarTanda(tandaId: string): Promise<Result<Tanda>> {
     });
 
     return ok(updated);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export interface SolicitudCocina {
+  id: string;
+  descripcion: string;
+  zona: string;
+  createdAt: string;
+}
+
+export async function getSolicitudesCocina(limit = 20): Promise<Result<SolicitudCocina[]>> {
+  try {
+    const ctx = await assertCan('production:read');
+    const supabase = await createClient();
+
+    const { data, error: dbError } = await supabase
+      .from('mensajes_chat')
+      .select('id, contenido, created_at')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('canal', 'sala:broadcast:cocina')
+      .eq('tipo', 'alert')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (dbError) throw new AppError('DB_ERROR', 500, dbError.message);
+
+    return ok(
+      (data ?? []).map((r) => ({
+        id: r.id as string,
+        descripcion: r.contenido as string,
+        zona: 'snack/buffet',
+        createdAt: r.created_at as string,
+      })),
+    );
   } catch (e) {
     return err(toAppError(e));
   }

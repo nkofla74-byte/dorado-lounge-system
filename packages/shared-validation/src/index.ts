@@ -250,6 +250,13 @@ export const enviarStuartSchema = z.object({
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
 });
 
+export const destinoPreparacionSchema = z.enum(['cocina', 'pasteleria']);
+
+export const solicitarPreparacionSchema = z.object({
+  descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
+  destino: destinoPreparacionSchema,
+});
+
 export const turnoBloqueSchema = z.enum(['6a2', '2a10', '10a6']);
 
 export const createTurnoSchema = z.object({
@@ -303,6 +310,7 @@ export type TransicionPedidoInput = z.infer<typeof transicionPedidoSchema>;
 export type DespacharLoteBuffetInput = z.infer<typeof despacharLoteBuffetSchema>;
 export type RegistrarTicketsTurnoInput = z.infer<typeof registrarTicketsTurnoSchema>;
 export type EnviarStuartInput = z.infer<typeof enviarStuartSchema>;
+export type SolicitarPreparacionInput = z.infer<typeof solicitarPreparacionSchema>;
 export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
 export type RegistrarIngresoInput = z.infer<typeof registrarIngresoSchema>;
 export type CrearTenantInput = z.infer<typeof crearTenantSchema>;

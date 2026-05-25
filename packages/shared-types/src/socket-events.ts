@@ -145,6 +145,18 @@ export interface TurnoEvent {
   };
 }
 
+export interface SolicitudPreparacionEvent {
+  type: 'SOLICITUD_PREPARACION';
+  payload: {
+    solicitudId: string;
+    tenantId: string;
+    zona: ZonaServicio;
+    solicitanteId: string;
+    descripcion: string;
+    createdAt: string;
+  };
+}
+
 export interface AlertaEvent {
   type: 'ALERTA';
   payload: {
@@ -168,6 +180,7 @@ export type SocketEvent =
   | MensajeChatEvent
   | BroadcastEvent
   | StuartRequestEvent
+  | SolicitudPreparacionEvent
   | TurnoEvent
   | AlertaEvent;
 

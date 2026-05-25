@@ -90,6 +90,14 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
           : event.payload.zona;
         toast.info(t('nuevoPedidoToast', { zona, mesa: event.payload.numeroMesa ?? '' }));
       }
+      if (event.type === 'SOLICITUD_PREPARACION') {
+        toast.info(
+          t('solicitudPreparacionToast', {
+            zona: event.payload.zona,
+            descripcion: event.payload.descripcion,
+          }),
+        );
+      }
       if (event.type === 'PEDIDO_ESTADO') {
         const { pedidoId, estadoNuevo } = event.payload;
         if (estadoNuevo === 'entregado' || estadoNuevo === 'cancelado') {

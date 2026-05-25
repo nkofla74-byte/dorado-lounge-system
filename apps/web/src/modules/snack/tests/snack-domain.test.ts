@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { DespachoSnack } from '../domain/despacho-snack';
 import type { StuartRequest } from '../domain/stuart-request';
+import type { SolicitudPreparacion } from '../domain/solicitud-preparacion';
 import { getDespachos } from '../application/get-despachos';
 import { getStuartRequests } from '../application/get-stuart-requests';
 import type { SnackRepository } from '../application/ports/snack-repository.port';
@@ -34,12 +35,26 @@ function makeStuart(overrides: Partial<StuartRequest> = {}): StuartRequest {
   };
 }
 
+function makeSolicitud(overrides: Partial<SolicitudPreparacion> = {}): SolicitudPreparacion {
+  return {
+    id: 'sol-1',
+    tenantId: 'tenant-1',
+    canal: 'sala:cocina',
+    remitenteId: 'user-1',
+    descripcion: '5 tandas de empanadas',
+    createdAt: new Date('2026-05-04T09:10:00Z'),
+    ...overrides,
+  };
+}
+
 function makeRepo(overrides: Partial<SnackRepository> = {}): SnackRepository {
   return {
     findDespachos: vi.fn().mockResolvedValue([]),
     findTurnosActivos: vi.fn().mockResolvedValue([]),
     findStuartRequests: vi.fn().mockResolvedValue([]),
     createStuartRequest: vi.fn().mockResolvedValue(makeStuart()),
+    findSolicitudesPreparacion: vi.fn().mockResolvedValue([]),
+    createSolicitudPreparacion: vi.fn().mockResolvedValue(makeSolicitud()),
     ...overrides,
   };
 }
@@ -122,5 +137,27 @@ describe('getStuartRequests', () => {
     const repo = makeRepo({ findStuartRequests: vi.fn().mockResolvedValue([]) });
     await getStuartRequests(repo, 'tenant-1', 10);
     expect(repo.findStuartRequests).toHaveBeenCalledWith('tenant-1', 10);
+  });
+});
+
+describe('SolicitudPreparacion', () => {
+  it('tiene canal sala:cocina', () => {
+    const sol = makeSolicitud({ canal: 'sala:cocina' });
+    expect(sol.canal).toBe('sala:cocina');
+  });
+
+  it('la descripción es no vacía', () => {
+    const sol = makeSolicitud({ descripcion: '5 tandas de empanadas' });
+    expect(sol.descripcion.trim()).not.toBe('');
+  });
+
+  it('tiene remitente identificado', () => {
+    const sol = makeSolicitud({ remitenteId: 'personal-snack-1' });
+    expect(sol.remitenteId).not.toBe('');
+  });
+
+  it('tiene timestamp de creación', () => {
+    const sol = makeSolicitud();
+    expect(sol.createdAt).toBeInstanceOf(Date);
   });
 });

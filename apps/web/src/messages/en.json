@@ -1063,6 +1063,20 @@
       "submitting": "Registering…",
       "errorTurno": "Select a shift",
       "errorCantidad": "Amount cannot be negative"
+    },
+    "pedirPreparacion": "Request preparation",
+    "preparacion": {
+      "title": "Request kitchen preparation",
+      "srDescription": "Send a preparation request to the chef.",
+      "label": "What do you need prepared?",
+      "placeholder": "e.g. 5 batches of salad, 3 of soup…",
+      "cancelar": "Cancel",
+      "submit": "Send to kitchen",
+      "submitting": "Sending…",
+      "errorDescripcion": "Description is required",
+      "destinoLabel": "Send to",
+      "destinoCocina": "Kitchen",
+      "destinoPasteleria": "Pastry"
     }
   },
   "snack": {
@@ -1106,7 +1120,27 @@
       "errorInsumo": "Select an item",
       "errorCantidad": "Amount must be greater than 0",
       "errorDecimales": "Maximum 4 decimals"
-    }
+    },
+    "pedirPreparacion": "Request preparation",
+    "stockLocalTitle": "Preparations available today",
+    "preparacionTitle": "Kitchen preparation requests",
+    "sinSolicitudes": "No preparation requests",
+    "nuevoDespachoToast": "New dispatch received from kitchen",
+    "preparacion": {
+      "title": "Request kitchen preparation",
+      "srDescription": "Send a preparation request to the chef for what you need.",
+      "label": "What do you need prepared?",
+      "placeholder": "e.g. 5 batches of empanadas, 3 club sandwiches…",
+      "cancelar": "Cancel",
+      "submit": "Send to kitchen",
+      "submitting": "Sending…",
+      "errorDescripcion": "Description is required",
+      "destinoLabel": "Send to",
+      "destinoCocina": "Kitchen",
+      "destinoPasteleria": "Pastry"
+    },
+    "sinPreparaciones": "No preparations dispatched today",
+    "lotesCount": "{n, plural, =0 {0 batches} =1 {1 batch} other {# batches}}"
   },
   "kds": {
     "titulo": "Kitchen — KDS",
@@ -1148,7 +1182,8 @@
       "despachado": "Dispatched",
       "entregado": "Delivered",
       "cancelado": "Canceled"
-    }
+    },
+    "solicitudPreparacionToast": "Request from {zona}: {descripcion}"
   },
   "pedidos": {
     "estadoCreado": "Created",
@@ -1272,7 +1307,12 @@
     "pedidosEspeciales": "{n, plural, =1 {1 special order pending from Amex} other {# special orders pending from Amex}}",
     "sinMesa": "No table",
     "estadoNuevo": "New",
-    "estadoEnPreparacion": "In preparation"
+    "estadoEnPreparacion": "In preparation",
+    "solicitudesTitle": "Preparation requests",
+    "colZona": "Zone",
+    "colDescripcion": "Description",
+    "colEnviado": "Sent",
+    "nuevaSolicitudToast": "New request from {zona}: {descripcion}"
   },
   "qrAdmin": {
     "metaTitle": "QR Generator — Dorado Lounge",

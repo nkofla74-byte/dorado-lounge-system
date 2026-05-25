@@ -9,8 +9,13 @@ import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { createBuffetRepository } from './infrastructure/buffet-repository';
 import { getDespachos as getDespachoUseCase } from './application/get-despachos';
 import { getTicketsByTurno as getTicketsUseCase } from './application/get-tickets';
-import { despacharLoteBuffetSchema, registrarTicketsTurnoSchema } from '@dorado/shared-validation';
+import {
+  despacharLoteBuffetSchema,
+  registrarTicketsTurnoSchema,
+  solicitarPreparacionSchema,
+} from '@dorado/shared-validation';
 import { CHANNELS } from '@dorado/shared-types';
+import { createClient } from '@/lib/supabase/server';
 import type { Result } from '@/lib/result';
 import type { DespachoBuffet } from './domain/despacho-buffet';
 import type { TicketTurno, TurnoActivo } from './domain/ticket-turno';
@@ -154,6 +159,105 @@ export async function despacharLoteBuffet(input: unknown): Promise<Result<Despac
     });
 
     return ok(despacho);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export interface SolicitudPreparacionBuffet {
+  id: string;
+  descripcion: string;
+  createdAt: string;
+}
+
+export async function getSolicitudesPreparacion(
+  limit = 20,
+): Promise<Result<SolicitudPreparacionBuffet[]>> {
+  try {
+    const ctx = await assertCan('buffet:read');
+    const supabase = await createClient();
+
+    const { data, error: dbError } = await supabase
+      .from('mensajes_chat')
+      .select('id, contenido, created_at')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('canal', 'sala:cocina')
+      .eq('tipo', 'alert')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (dbError) throw new AppError('DB_ERROR', 500, dbError.message);
+
+    return ok(
+      (data ?? []).map((r) => ({
+        id: r.id as string,
+        descripcion: r.contenido as string,
+        createdAt: r.created_at as string,
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function solicitarPreparacion(
+  input: unknown,
+): Promise<Result<SolicitudPreparacionBuffet>> {
+  try {
+    const ctx = await assertCan('buffet:write');
+
+    const parsed = solicitarPreparacionSchema.safeParse(input);
+    if (!parsed.success) {
+      return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
+    }
+
+    const destino = parsed.data.destino;
+    const canal = destino === 'pasteleria' ? 'sala:broadcast:cocina' : 'sala:cocina';
+    const socketChannel = destino === 'pasteleria' ? CHANNELS.BROADCAST_COCINA : CHANNELS.COCINA;
+
+    const supabase = await createClient();
+    const { data, error: dbError } = await supabase
+      .from('mensajes_chat')
+      .insert({
+        tenant_id: ctx.tenantId,
+        canal,
+        remitente_id: ctx.userId,
+        contenido: parsed.data.descripcion,
+        tipo: 'alert',
+      })
+      .select('id, contenido, created_at')
+      .single();
+
+    if (dbError) throw new AppError('DB_ERROR', 500, dbError.message);
+
+    const solicitud = {
+      id: data.id as string,
+      descripcion: data.contenido as string,
+      createdAt: data.created_at as string,
+    };
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'buffet:solicitud_preparacion',
+      resourceId: solicitud.id,
+      resourceType: 'mensaje_chat',
+      payload: { descripcion: solicitud.descripcion, destino },
+    });
+
+    await emitEvent(ctx.tenantId, socketChannel, {
+      type: 'SOLICITUD_PREPARACION',
+      payload: {
+        solicitudId: solicitud.id,
+        tenantId: ctx.tenantId,
+        zona: 'buffet',
+        solicitanteId: ctx.userId,
+        descripcion: solicitud.descripcion,
+        createdAt: solicitud.createdAt,
+      },
+    });
+
+    return ok(solicitud);
   } catch (e) {
     return err(toAppError(e));
   }
