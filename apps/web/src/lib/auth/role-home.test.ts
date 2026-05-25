@@ -1,0 +1,93 @@
+import { describe, it, expect } from 'vitest';
+import { ROLE_HOME, ROLE_ALLOWED_PREFIXES, canAccess, getRoleHome, getSafeNext } from './role-home';
+import type { UserRole } from '@dorado/shared-types';
+
+const ROLES = Object.keys(ROLE_HOME) as UserRole[];
+
+describe('ROLE_HOME / ROLE_ALLOWED_PREFIXES invariant', () => {
+  it('todo rol tiene una entrada en ROLE_ALLOWED_PREFIXES', () => {
+    for (const role of ROLES) {
+      expect(ROLE_ALLOWED_PREFIXES[role], `rol ${role} sin prefijos permitidos`).toBeDefined();
+    }
+  });
+
+  it('ROLE_HOME[rol] siempre es accesible según ROLE_ALLOWED_PREFIXES[rol]', () => {
+    for (const role of ROLES) {
+      const home = ROLE_HOME[role];
+      expect(
+        canAccess(role, home),
+        `rol "${role}": home "${home}" no está en su whitelist [${ROLE_ALLOWED_PREFIXES[role].join(', ')}]`,
+      ).toBe(true);
+    }
+  });
+});
+
+describe('canAccess', () => {
+  it('superuser accede a cualquier ruta', () => {
+    expect(canAccess('superuser', '/admin/tenants')).toBe(true);
+    expect(canAccess('superuser', '/inventario')).toBe(true);
+    expect(canAccess('superuser', '/cocina-amex')).toBe(true);
+  });
+
+  it('recepcion solo accede a /afluencia y /vuelos', () => {
+    expect(canAccess('recepcion', '/afluencia')).toBe(true);
+    expect(canAccess('recepcion', '/afluencia/turno/123')).toBe(true);
+    expect(canAccess('recepcion', '/vuelos')).toBe(true);
+    expect(canAccess('recepcion', '/pedidos')).toBe(false);
+    expect(canAccess('recepcion', '/inventario')).toBe(false);
+    expect(canAccess('recepcion', '/cocina')).toBe(false);
+  });
+
+  it('mesero_amex solo accede a /pedidos y /vuelos', () => {
+    expect(canAccess('mesero_amex', '/pedidos')).toBe(true);
+    expect(canAccess('mesero_amex', '/vuelos')).toBe(true);
+    expect(canAccess('mesero_amex', '/inventario')).toBe(false);
+    expect(canAccess('mesero_amex', '/afluencia')).toBe(false);
+  });
+
+  it('personal_almacen puede acceder a /admin/proveedores', () => {
+    expect(canAccess('personal_almacen', '/almacen')).toBe(true);
+    expect(canAccess('personal_almacen', '/admin/proveedores')).toBe(true);
+    expect(canAccess('personal_almacen', '/admin/tenants')).toBe(false);
+  });
+
+  it('no confunde prefijos parciales (/co no da acceso a /cocina)', () => {
+    expect(canAccess('recepcion', '/afluencia-falsa')).toBe(false);
+    expect(canAccess('mesero_amex', '/pedidosX')).toBe(false);
+  });
+});
+
+describe('getRoleHome', () => {
+  it('devuelve la ruta correcta para cada rol', () => {
+    expect(getRoleHome('recepcion')).toBe('/afluencia');
+    expect(getRoleHome('admin')).toBe('/inventario');
+    expect(getRoleHome('chef')).toBe('/cocina');
+    expect(getRoleHome('sous_chef')).toBe('/cocina-amex');
+  });
+
+  it('devuelve /inventario para rol desconocido o undefined', () => {
+    expect(getRoleHome(undefined)).toBe('/inventario');
+    expect(getRoleHome('rol_inexistente')).toBe('/inventario');
+  });
+});
+
+describe('getSafeNext', () => {
+  it('acepta rutas internas válidas', () => {
+    expect(getSafeNext('/afluencia', 'recepcion')).toBe('/afluencia');
+    expect(getSafeNext('/inventario/lotes', 'admin')).toBe('/inventario/lotes');
+  });
+
+  it('rechaza rutas externas y devuelve el home del rol', () => {
+    expect(getSafeNext('https://evil.com', 'recepcion')).toBe('/afluencia');
+    expect(getSafeNext('//evil.com', 'admin')).toBe('/inventario');
+  });
+
+  it('rechaza /login para evitar redirect loops', () => {
+    expect(getSafeNext('/login', 'recepcion')).toBe('/afluencia');
+  });
+
+  it('acepta null/undefined devolviendo el home del rol', () => {
+    expect(getSafeNext(null, 'chef')).toBe('/cocina');
+    expect(getSafeNext(undefined, 'chef')).toBe('/cocina');
+  });
+});

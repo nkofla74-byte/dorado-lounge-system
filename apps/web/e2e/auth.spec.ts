@@ -51,4 +51,16 @@ test.describe('Login', () => {
 
     await expect(page).toHaveURL(/\/cocina/);
   });
+
+  test('login recepcion redirige a /afluencia sin loop', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Correo electrónico').fill(process.env.E2E_RECEPCION_EMAIL!);
+    await page.getByLabel('Contraseña').fill(process.env.E2E_RECEPCION_PASSWORD!);
+    await page.getByRole('button', { name: 'Ingresar' }).click();
+
+    await expect(page).toHaveURL(/\/afluencia/);
+    // Verificar que no hay loop: la URL no vuelve a /login ni a /pedidos
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page).not.toHaveURL(/\/pedidos/);
+  });
 });

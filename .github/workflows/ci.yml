@@ -64,6 +64,8 @@ jobs:
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
           E2E_CHEF_EMAIL: ${{ secrets.E2E_CHEF_EMAIL }}
           E2E_CHEF_PASSWORD: ${{ secrets.E2E_CHEF_PASSWORD }}
+          E2E_RECEPCION_EMAIL: ${{ secrets.E2E_RECEPCION_EMAIL }}
+          E2E_RECEPCION_PASSWORD: ${{ secrets.E2E_RECEPCION_PASSWORD }}
 
       - name: Upload Playwright report
         if: failure()

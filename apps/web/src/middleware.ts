@@ -1,85 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@dorado/shared-types';
+import { ROLE_HOME, canAccess } from '@/lib/auth/role-home';
 
 const PUBLIC_PATHS = ['/login', '/qr', '/api/cron'];
-
-// Ruta de inicio por rol — a dónde va el usuario al hacer login
-const ROLE_HOME: Record<UserRole, string> = {
-  superuser: '/admin/tenants',
-  admin: '/inventario',
-  chef: '/cocina',
-  sous_chef: '/cocina-amex',
-  mesero_amex: '/pedidos',
-  recepcion: '/afluencia',
-  personal_snack: '/snack',
-  personal_buffet: '/buffet',
-  personal_almacen: '/almacen',
-  personal_pasteleria: '/pasteleria',
-  steward: '/produccion',
-};
-
-// Prefijos de ruta accesibles por rol (whitelist).
-// superuser tiene acceso total; el resto solo ve lo que necesita.
-// assertCan() en cada Server Action sigue siendo la autoridad final sobre escritura.
-const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
-  superuser: ['/'],
-  admin: [
-    '/inventario',
-    '/almacen',
-    '/recetas',
-    '/produccion',
-    '/pasteleria',
-    '/pedidos',
-    '/cocina',
-    '/cocina-amex',
-    '/buffet',
-    '/snack',
-    '/afluencia',
-    '/analytics',
-    '/admin',
-    '/vuelos',
-  ],
-  chef: [
-    '/cocina',
-    '/produccion',
-    '/pedidos',
-    '/inventario',
-    '/recetas',
-    '/afluencia',
-    '/snack',
-    '/buffet',
-    '/vuelos',
-  ],
-  sous_chef: [
-    '/cocina-amex',
-    '/produccion',
-    '/pedidos',
-    '/inventario',
-    '/recetas',
-    '/afluencia',
-    '/vuelos',
-  ],
-  mesero_amex: ['/pedidos', '/vuelos'],
-  recepcion: ['/afluencia', '/vuelos'],
-  personal_snack: ['/snack', '/inventario'],
-  personal_buffet: ['/buffet', '/inventario'],
-  personal_almacen: ['/almacen', '/inventario', '/admin/proveedores'],
-  personal_pasteleria: ['/pasteleria', '/produccion', '/recetas', '/inventario'],
-  steward: ['/produccion', '/inventario'],
-};
-
-function canAccess(role: UserRole, pathname: string): boolean {
-  const prefixes = ROLE_ALLOWED_PREFIXES[role];
-  if (!prefixes) return false;
-  return prefixes.some(
-    (prefix) =>
-      prefix === '/' ||
-      pathname === prefix ||
-      pathname.startsWith(prefix + '/') ||
-      pathname.startsWith(prefix + '?'),
-  );
-}
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
