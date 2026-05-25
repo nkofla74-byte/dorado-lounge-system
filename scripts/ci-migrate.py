@@ -79,12 +79,15 @@ def main() -> None:
             print(f"FAILED\n{exc}")
             sys.exit(1)
 
+        # Use $$ quoting so version/name values with special chars are safe
+        v_esc = version.replace("'", "''")
+        n_esc = f.name.replace("'", "''")
         api_query(
             "INSERT INTO supabase_migrations.schema_migrations "
             "(version, name, statements, created_by, idempotency_key, rollback) "
-            f"VALUES ({json.dumps(version)}, {json.dumps(f.name)}, "
+            f"VALUES ('{v_esc}', '{n_esc}', "
             "ARRAY[]::text[], 'ci-pipeline', "
-            f"{json.dumps(version)}, ARRAY[]::text[]) "
+            f"'{v_esc}', ARRAY[]::text[]) "
             "ON CONFLICT (version) DO NOTHING"
         )
         new_count += 1
