@@ -96,3 +96,12 @@ io.on('connection', (socket) => {
 httpServer.listen(PORT, () => {
   logger.info({ event: 'server_started', port: PORT, allowedOrigin: ALLOWED_ORIGIN });
 });
+
+function shutdown() {
+  logger.info({ event: 'server_shutting_down' });
+  io.close();
+  httpServer.close();
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

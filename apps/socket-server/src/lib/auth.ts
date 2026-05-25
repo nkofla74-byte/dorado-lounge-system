@@ -29,7 +29,7 @@ export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
+    const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
     const appMeta = decoded.app_metadata as { tenant_id?: string; role?: string } | undefined;
 
     if (!appMeta?.tenant_id || !appMeta?.role) {
