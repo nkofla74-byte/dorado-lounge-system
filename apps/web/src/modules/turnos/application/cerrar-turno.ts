@@ -6,8 +6,9 @@ export async function cerrarTurno(
   repo: TurnoRepository,
   turnoId: string,
   tenantId: string,
+  responsableId: string,
 ): Promise<Turno> {
-  const turno = await repo.findActivo(tenantId);
+  const turno = await repo.findActivoByUser(tenantId, responsableId);
   if (!turno || turno.id !== turnoId) throw new TurnoNoActivoError();
   return repo.cerrar(turnoId, tenantId);
 }

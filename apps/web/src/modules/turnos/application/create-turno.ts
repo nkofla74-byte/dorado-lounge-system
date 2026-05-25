@@ -9,7 +9,7 @@ export async function createTurno(
   teamlider: string,
   responsableId: string,
 ): Promise<Turno> {
-  const activo = await repo.findActivo(tenantId);
+  const activo = await repo.findActivoByUser(tenantId, responsableId);
   if (activo) throw new TurnoYaActivoError();
   return repo.create(tenantId, bloque, teamlider, responsableId);
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Clock, Play, Square, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,31 +14,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getTurnos } from '@/modules/turnos/actions';
-import { IniciarTurnoDialog } from './iniciar-turno-dialog';
-import { CerrarTurnoDialog } from './cerrar-turno-dialog';
 import type { Turno } from '@/modules/turnos/domain/turno';
-import type { UserRole } from '@dorado/shared-types';
 import { formatBloqueHorario } from '@/lib/turnos';
 
 interface TurnosPanelProps {
   initialTurnos: Turno[];
-  userRole: UserRole | undefined;
   error?: string | undefined;
 }
 
-const CAN_WRITE = new Set<UserRole>(['superuser', 'admin']);
-
-export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps) {
+export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
   const t = useTranslations('turnos');
   const locale = useLocale();
   const [turnos, setTurnos] = useState<Turno[]>(initialTurnos);
-  const [iniciarOpen, setIniciarOpen] = useState(false);
-  const [cerrarOpen, setCerrarOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | undefined>(error);
   const [isPending, startTransition] = useTransition();
 
-  const canWrite = userRole ? CAN_WRITE.has(userRole) : false;
-  const turnoActivo = turnos.find((tu) => tu.activo) ?? null;
+  const activos = turnos.filter((tu) => tu.activo);
 
   const labelTurno = (tu: Turno): string =>
     tu.bloque
@@ -91,26 +82,9 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
 
         <div className="flex-1" />
 
-        {canWrite && (
-          <>
-            {turnoActivo ? (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setCerrarOpen(true)}
-                className="gap-2"
-              >
-                <Square className="h-4 w-4" />
-                {t('cerrarActivo')}
-              </Button>
-            ) : (
-              <Button size="sm" onClick={() => setIniciarOpen(true)} className="gap-2">
-                <Play className="h-4 w-4" />
-                {t('iniciar')}
-              </Button>
-            )}
-          </>
-        )}
+        <div className="text-xs text-muted-foreground">
+          {t('activosCount', { count: activos.length })}
+        </div>
       </div>
 
       {loadError && (
@@ -120,26 +94,7 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
         </div>
       )}
 
-      {/* Turno activo — banner */}
-      {turnoActivo && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border border-primary/20">
-          <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">
-              {labelTurno(turnoActivo)}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t('iniciadoEn', {
-                fecha: formatFecha(turnoActivo.iniciadoAt),
-                duracion: duracion(turnoActivo.iniciadoAt, null),
-              })}
-            </p>
-          </div>
-          <Badge className="shrink-0">{t('activo')}</Badge>
-        </div>
-      )}
-
-      {/* Historial */}
+      {/* Histórico */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -159,7 +114,10 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs font-medium text-muted-foreground">
-                    {t('colNombre')}
+                    {t('colBloque')}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">
+                    {t('colEmpleado')}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-muted-foreground">
                     {t('colInicio')}
@@ -178,7 +136,10 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
               <TableBody>
                 {turnos.map((tu) => (
                   <TableRow key={tu.id} className="hover:bg-muted/30">
-                    <TableCell className="font-medium text-sm">{labelTurno(tu)}</TableCell>
+                    <TableCell className="font-medium text-sm whitespace-nowrap">
+                      {labelTurno(tu)}
+                    </TableCell>
+                    <TableCell className="text-sm">{tu.teamlider}</TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {formatFecha(tu.iniciadoAt)}
                     </TableCell>
@@ -191,6 +152,13 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
                     <TableCell>
                       {tu.activo ? (
                         <Badge className="text-xs">{t('activo')}</Badge>
+                      ) : tu.cierreMotivo === 'auto_expiracion' ? (
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-amber-600 border-amber-500/40"
+                        >
+                          {t('cerradoAuto')}
+                        </Badge>
                       ) : (
                         <Badge variant="outline" className="text-xs text-muted-foreground">
                           {t('cerrado')}
@@ -204,17 +172,6 @@ export function TurnosPanel({ initialTurnos, userRole, error }: TurnosPanelProps
           </div>
         )}
       </section>
-
-      {/* Dialogs */}
-      <IniciarTurnoDialog open={iniciarOpen} onOpenChange={setIniciarOpen} onIniciado={refresh} />
-      {turnoActivo && (
-        <CerrarTurnoDialog
-          open={cerrarOpen}
-          onOpenChange={setCerrarOpen}
-          onCerrado={refresh}
-          turno={turnoActivo}
-        />
-      )}
     </div>
   );
 }

@@ -57,6 +57,20 @@ export async function getTurnoActivo(): Promise<Result<Turno | null>> {
   }
 }
 
+/**
+ * Devuelve el turno activo del usuario logueado, o null si no tiene.
+ * Usado por el modal TurnoGuard y la pill del topbar.
+ */
+export async function getMiTurnoActivo(): Promise<Result<Turno | null>> {
+  try {
+    const ctx = await assertCan('turnos:read');
+    const repo = createTurnoRepository();
+    return ok(await repo.findActivoByUser(ctx.tenantId, ctx.userId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 export async function iniciarTurno(input: unknown): Promise<Result<Turno>> {
   try {
     const ctx = await assertCan('turnos:write');
@@ -114,7 +128,7 @@ export async function cerrarTurno(turnoId: string): Promise<Result<Turno>> {
   try {
     const ctx = await assertCan('turnos:write');
     const repo = createTurnoRepository();
-    const turno = await cerrarTurnoUseCase(repo, turnoId, ctx.tenantId);
+    const turno = await cerrarTurnoUseCase(repo, turnoId, ctx.tenantId, ctx.userId);
 
     await auditLog({
       tenantId: ctx.tenantId,

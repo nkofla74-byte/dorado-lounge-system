@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { TurnoRepository } from '../application/ports/turno-repository.port';
-import type { Turno, TurnoBloque } from '../domain/turno';
+import type { Turno, TurnoBloque, TurnoCierreMotivo } from '../domain/turno';
 
 type TurnoRow = {
   id: string;
@@ -12,6 +12,7 @@ type TurnoRow = {
   responsable_id: string | null;
   iniciado_at: string;
   cerrado_at: string | null;
+  cierre_motivo: TurnoCierreMotivo | null;
   activo: boolean;
   deleted_at: string | null;
   created_at: string;
@@ -28,6 +29,7 @@ function toTurno(row: TurnoRow): Turno {
     responsableId: row.responsable_id,
     iniciadoAt: new Date(row.iniciado_at),
     cerradoAt: row.cerrado_at ? new Date(row.cerrado_at) : null,
+    cierreMotivo: row.cierre_motivo,
     activo: row.activo,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     createdAt: new Date(row.created_at),
@@ -36,7 +38,7 @@ function toTurno(row: TurnoRow): Turno {
 }
 
 const SELECT_FIELDS =
-  'id, tenant_id, nombre, bloque, teamlider, responsable_id, iniciado_at, cerrado_at, activo, deleted_at, created_at, updated_at';
+  'id, tenant_id, nombre, bloque, teamlider, responsable_id, iniciado_at, cerrado_at, cierre_motivo, activo, deleted_at, created_at, updated_at';
 
 export function createTurnoRepository(): TurnoRepository {
   return {
@@ -72,6 +74,40 @@ export function createTurnoRepository(): TurnoRepository {
       return data ? toTurno(data as TurnoRow) : null;
     },
 
+    async findActivoByUser(tenantId: string, responsableId: string): Promise<Turno | null> {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('turnos')
+        .select(SELECT_FIELDS)
+        .eq('tenant_id', tenantId)
+        .eq('responsable_id', responsableId)
+        .eq('activo', true)
+        .is('deleted_at', null)
+        .order('iniciado_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return data ? toTurno(data as TurnoRow) : null;
+    },
+
+    async findActivosEnBloque(tenantId: string, bloque: TurnoBloque): Promise<Turno[]> {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('turnos')
+        .select(SELECT_FIELDS)
+        .eq('tenant_id', tenantId)
+        .eq('bloque', bloque)
+        .eq('activo', true)
+        .is('deleted_at', null)
+        .order('iniciado_at', { ascending: false });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as TurnoRow[]).map(toTurno);
+    },
+
     async create(
       tenantId: string,
       bloque: TurnoBloque,
@@ -101,7 +137,11 @@ export function createTurnoRepository(): TurnoRepository {
 
       const { data, error } = await supabase
         .from('turnos')
-        .update({ activo: false, cerrado_at: new Date().toISOString() })
+        .update({
+          activo: false,
+          cerrado_at: new Date().toISOString(),
+          cierre_motivo: 'manual',
+        })
         .eq('id', turnoId)
         .eq('tenant_id', tenantId)
         .select(SELECT_FIELDS)

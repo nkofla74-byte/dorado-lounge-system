@@ -26,20 +26,18 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'personal_almacen',
   ],
   // Recetas
-  'recipes:read': ['admin', 'chef', 'sous_chef', 'personal_pasteleria'],
+  'recipes:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'personal_pasteleria'],
   'recipes:write': ['admin'],
   // Producción
   'production:read': ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
   'production:write': ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
   // Pedidos
-  'orders:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion', 'personal_pasteleria'],
-  'orders:create': ['admin', 'mesero_amex', 'recepcion'],
-  // Recibir el pedido en cocina: el mesero/recepción lo marca cuando lleva la
-  // orden física a la cocina (entre 'creado' y 'en_preparacion').
-  'orders:receive': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
+  'orders:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'personal_pasteleria'],
+  'orders:create': ['admin', 'mesero_amex'],
+  'orders:receive': ['admin', 'chef', 'sous_chef', 'mesero_amex'],
   'orders:dispatch': ['admin', 'chef', 'sous_chef'],
-  'orders:deliver': ['admin', 'mesero_amex', 'recepcion'],
-  'orders:cancel': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
+  'orders:deliver': ['admin', 'mesero_amex'],
+  'orders:cancel': ['admin', 'chef', 'sous_chef', 'mesero_amex'],
   // Buffet
   'buffet:read': ['admin', 'chef', 'sous_chef', 'personal_buffet'],
   'buffet:write': ['admin', 'personal_buffet'],
@@ -52,8 +50,30 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'afluencia:read': ['admin', 'chef', 'sous_chef', 'recepcion'],
   'afluencia:write': ['admin', 'chef', 'sous_chef', 'recepcion'],
   // Turnos
-  'turnos:read': ['admin', 'chef', 'sous_chef'],
-  'turnos:write': ['admin'],
+  'turnos:read': [
+    'admin',
+    'chef',
+    'sous_chef',
+    'recepcion',
+    'mesero_amex',
+    'personal_snack',
+    'personal_buffet',
+    'personal_pasteleria',
+    'personal_almacen',
+    'steward',
+  ],
+  'turnos:write': [
+    'admin',
+    'chef',
+    'sous_chef',
+    'recepcion',
+    'mesero_amex',
+    'personal_snack',
+    'personal_buffet',
+    'personal_pasteleria',
+    'personal_almacen',
+    'steward',
+  ],
   // Usuarios y tenants
   'users:read': ['admin'],
   'users:write': ['admin'],
