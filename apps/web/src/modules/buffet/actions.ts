@@ -181,7 +181,7 @@ export async function getSolicitudesPreparacion(
       .from('mensajes_chat')
       .select('id, contenido, created_at')
       .eq('tenant_id', ctx.tenantId)
-      .eq('canal', 'sala:cocina')
+      .in('canal', ['sala:cocina', 'sala:broadcast:cocina'])
       .eq('tipo', 'alert')
       .order('created_at', { ascending: false })
       .limit(limit);

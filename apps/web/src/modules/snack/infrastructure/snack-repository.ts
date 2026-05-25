@@ -165,7 +165,7 @@ export function createSnackRepository(): SnackRepository {
         .from('mensajes_chat')
         .select('id, tenant_id, canal, remitente_id, contenido, created_at')
         .eq('tenant_id', tenantId)
-        .eq('canal', COCINA_CHANNEL)
+        .in('canal', [COCINA_CHANNEL, 'sala:broadcast:cocina'])
         .eq('tipo', 'alert')
         .order('created_at', { ascending: false })
         .limit(limit);
