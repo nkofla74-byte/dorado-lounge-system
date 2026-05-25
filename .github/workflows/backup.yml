@@ -54,20 +54,20 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to S3 (si está configurado)
-        if: ${{ secrets.BACKUP_S3_BUCKET != '' }}
+        if: ${{ vars.BACKUP_S3_BUCKET != '' }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION || 'us-east-1' }}
+          AWS_DEFAULT_REGION: ${{ vars.BACKUP_AWS_REGION || 'us-east-1' }}
         run: |
           aws s3 cp \
             "backup-${{ steps.ts.outputs.stamp }}.sql.gz" \
-            "s3://${{ secrets.BACKUP_S3_BUCKET }}/dorado-lounge/$(date -u +%Y/%m)/backup-${{ steps.ts.outputs.stamp }}.sql.gz" \
+            "s3://${{ vars.BACKUP_S3_BUCKET }}/dorado-lounge/$(date -u +%Y/%m)/backup-${{ steps.ts.outputs.stamp }}.sql.gz" \
             --storage-class STANDARD_IA
 
       - name: Ping heartbeat on success
-        if: success() && secrets.BETTERSTACK_BACKUP_HEARTBEAT_URL != ''
-        run: curl --silent --fail "${{ secrets.BETTERSTACK_BACKUP_HEARTBEAT_URL }}" || true
+        if: success() && vars.BETTERSTACK_BACKUP_HEARTBEAT_URL != ''
+        run: curl --silent --fail "${{ vars.BETTERSTACK_BACKUP_HEARTBEAT_URL }}" || true
 
       - name: Notify failure
         if: failure()
