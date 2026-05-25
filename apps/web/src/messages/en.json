@@ -742,7 +742,23 @@
       "colZona": "Zone",
       "colPersonas": "People",
       "topDestinos": "Top destinations",
-      "topAerolineas": "Top airlines"
+      "topAerolineas": "Top airlines",
+      "scanearDoc": "Scan document",
+      "scanTip": "Scan boarding pass, passport, or ID card",
+      "scanAreaPlaceholder": "Point scanner here and scan…",
+      "escaneoExitoso": "Document scanned: {tipo}",
+      "escaneoNoReconocido": "Document format not recognized",
+      "tipoBcbp": "Boarding pass",
+      "tipoMrz": "Passport",
+      "tipoCedulaCo": "ID card",
+      "sexo": "Sex",
+      "sexoPlaceholder": "Sex",
+      "sexoM": "Male",
+      "sexoF": "Female",
+      "sexoX": "Other",
+      "fechaNacimiento": "Date of birth",
+      "anos": "years",
+      "paisOrigen": "Country of origin"
     }
   },
   "turnos": {

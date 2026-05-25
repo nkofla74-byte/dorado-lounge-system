@@ -28,6 +28,9 @@ export interface PasajeroIngreso {
   tarjetaUltimos4: string | null;
   acompanantes: number;
   zona: ZonaServicio | null;
+  sexo: 'M' | 'F' | 'X' | null;
+  fechaNacimiento: Date | null;
+  paisOrigen: string | null;
   registradoPor: string;
   ingresadoAt: Date;
   notas: string | null;
@@ -49,6 +52,9 @@ export interface RegistrarPasajeroInput {
   tarjetaUltimos4?: string | null | undefined;
   acompanantes?: number | undefined;
   zona?: ZonaServicio | null | undefined;
+  sexo?: 'M' | 'F' | 'X' | null | undefined;
+  fechaNacimiento?: string | null | undefined; // ISO date YYYY-MM-DD
+  paisOrigen?: string | null | undefined;
   notas?: string | null | undefined;
 }
 

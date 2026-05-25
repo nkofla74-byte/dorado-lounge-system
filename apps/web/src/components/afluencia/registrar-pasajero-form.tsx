@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { UserPlus, Plane, Loader2 } from 'lucide-react';
+import { UserPlus, Plane, Loader2, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { registrarPasajero } from '@/modules/afluencia/actions';
 import { TIPOS_ACCESO, type TipoAcceso } from '@/modules/afluencia/domain/pasajero-ingreso';
+import { useDocumentScanner, type ScanResult } from '@/lib/scanner/use-document-scanner';
 
 interface Props {
   turnoId: string;
@@ -33,6 +34,17 @@ const TIPO_ACCESO_LABELS: Record<TipoAcceso, string> = {
 };
 
 type Zona = 'amex' | null;
+type Sexo = 'M' | 'F' | 'X' | '';
+
+function calcularEdad(fechaISO: string): number | null {
+  const dob = new Date(fechaISO);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
 export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
   const t = useTranslations('afluencia.pasajero');
@@ -51,6 +63,9 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
   const [ultimos4, setUltimos4] = useState('');
   const [acompanantes, setAcompanantes] = useState(0);
   const [zona, setZona] = useState<Zona>(null);
+  const [sexo, setSexo] = useState<Sexo>('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [paisOrigen, setPaisOrigen] = useState('');
   const [notas, setNotas] = useState('');
 
   const resetForm = () => {
@@ -67,8 +82,42 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
     setUltimos4('');
     setAcompanantes(0);
     setZona(null);
+    setSexo('');
+    setFechaNacimiento('');
+    setPaisOrigen('');
     setNotas('');
   };
+
+  const handleScan = useCallback(
+    (result: ScanResult) => {
+      if (result.type === 'unknown') {
+        toast.warning(t('escaneoNoReconocido'));
+        return;
+      }
+
+      if (result.nombrePasajero) setNombre(result.nombrePasajero);
+
+      if (result.type === 'bcbp') {
+        if (result.destino) setDestino(result.destino);
+        if (result.aerolinea) setAerolinea(result.aerolinea);
+        if (result.vueloNumero) setVuelo(result.vueloNumero);
+        if (result.asiento) setAsiento(result.asiento);
+        toast.success(t('escaneoExitoso', { tipo: t('tipoBcbp') }));
+      } else {
+        // mrz or cedula_co
+        if (result.documentoTipo) setDocTipo(result.documentoTipo);
+        if (result.documentoNumero) setDocNumero(result.documentoNumero);
+        if (result.sexo) setSexo(result.sexo);
+        if (result.fechaNacimiento) setFechaNacimiento(result.fechaNacimiento);
+        if (result.paisOrigen) setPaisOrigen(result.paisOrigen);
+        const tipoKey = result.type === 'mrz' ? 'tipoMrz' : 'tipoCedulaCo';
+        toast.success(t('escaneoExitoso', { tipo: t(tipoKey) }));
+      }
+    },
+    [t],
+  );
+
+  const { inputRef, handleKeyDown } = useDocumentScanner(handleScan);
 
   const handleSubmit = async () => {
     if (!nombre.trim()) {
@@ -92,6 +141,9 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
         tarjetaUltimos4: ultimos4.trim() || undefined,
         acompanantes,
         zona: zona ?? undefined,
+        sexo: (sexo || undefined) as 'M' | 'F' | 'X' | undefined,
+        fechaNacimiento: fechaNacimiento || undefined,
+        paisOrigen: paisOrigen.trim().toUpperCase() || undefined,
         notas: notas.trim() || undefined,
       });
       if (!result.ok) {
@@ -107,11 +159,33 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
     }
   };
 
+  const edad = fechaNacimiento ? calcularEdad(fechaNacimiento) : null;
+
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex items-center gap-2">
         <UserPlus className="h-5 w-5 text-primary" />
         <h3 className="font-semibold">{t('title')}</h3>
+      </div>
+
+      {/* Zona de escaneo */}
+      <div
+        className="flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 cursor-text"
+        onClick={() => inputRef.current?.focus()}
+      >
+        <ScanLine className="h-4 w-4 text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] text-muted-foreground mb-0.5">{t('scanTip')}</p>
+          <input
+            ref={inputRef}
+            type="text"
+            className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/40 text-foreground"
+            placeholder={t('scanAreaPlaceholder')}
+            onKeyDown={handleKeyDown}
+            aria-label={t('scanearDoc')}
+            autoComplete="off"
+          />
+        </div>
       </div>
 
       {/* Fila 1: Nombre + Documento */}
@@ -123,7 +197,6 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
             placeholder={t('nombrePlaceholder')}
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            autoFocus
           />
         </div>
         <div className="space-y-1">
@@ -151,7 +224,51 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* Fila 2: Vuelo */}
+      {/* Fila 2: Demografía */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label>{t('sexo')}</Label>
+          <Select value={sexo} onValueChange={(v) => setSexo(v as Sexo)}>
+            <SelectTrigger>
+              <SelectValue placeholder={t('sexoPlaceholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="M">{t('sexoM')}</SelectItem>
+              <SelectItem value="F">{t('sexoF')}</SelectItem>
+              <SelectItem value="X">{t('sexoX')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pax-fnac">
+            {t('fechaNacimiento')}
+            {edad !== null && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                ({edad} {t('anos')})
+              </span>
+            )}
+          </Label>
+          <Input
+            id="pax-fnac"
+            type="date"
+            value={fechaNacimiento}
+            onChange={(e) => setFechaNacimiento(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pax-pais">{t('paisOrigen')}</Label>
+          <Input
+            id="pax-pais"
+            placeholder="COL"
+            maxLength={3}
+            className="uppercase"
+            value={paisOrigen}
+            onChange={(e) => setPaisOrigen(e.target.value.toUpperCase())}
+          />
+        </div>
+      </div>
+
+      {/* Fila 3: Vuelo */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="space-y-1">
           <Label htmlFor="pax-vuelo" className="flex items-center gap-1">
@@ -220,7 +337,7 @@ export function RegistrarPasajeroForm({ turnoId, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* Fila 3: Acceso + Zona */}
+      {/* Fila 4: Acceso + Zona */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="space-y-1">
           <Label>{t('tipoAcceso')} *</Label>

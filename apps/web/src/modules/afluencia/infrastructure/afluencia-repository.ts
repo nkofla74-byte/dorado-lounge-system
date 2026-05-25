@@ -179,6 +179,9 @@ export function createAfluenciaRepository(): AfluenciaRepository {
           tarjeta_ultimos4: input.tarjetaUltimos4 ?? null,
           acompanantes: input.acompanantes ?? 0,
           zona: input.zona ?? null,
+          sexo: input.sexo ?? null,
+          fecha_nacimiento: input.fechaNacimiento ?? null,
+          pais_origen: input.paisOrigen ?? null,
           registrado_por: registradoPor,
           notas: input.notas ?? null,
         })
@@ -208,6 +211,9 @@ interface PasajeroRow {
   tarjeta_ultimos4: string | null;
   acompanantes: number;
   zona: string | null;
+  sexo: string | null;
+  fecha_nacimiento: string | null;
+  pais_origen: string | null;
   registrado_por: string;
   ingresado_at: string;
   notas: string | null;
@@ -232,6 +238,9 @@ function toPasajeroEntity(row: PasajeroRow): PasajeroIngreso {
     tarjetaUltimos4: row.tarjeta_ultimos4,
     acompanantes: row.acompanantes,
     zona: (row.zona as ZonaServicio) ?? null,
+    sexo: (row.sexo as PasajeroIngreso['sexo']) ?? null,
+    fechaNacimiento: row.fecha_nacimiento ? new Date(row.fecha_nacimiento) : null,
+    paisOrigen: row.pais_origen,
     registradoPor: row.registrado_por,
     ingresadoAt: new Date(row.ingresado_at),
     notas: row.notas,

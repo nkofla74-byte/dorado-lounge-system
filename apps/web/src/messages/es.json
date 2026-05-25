@@ -801,7 +801,23 @@
       "colZona": "Zona",
       "colPersonas": "Personas",
       "topDestinos": "Top destinos",
-      "topAerolineas": "Top aerolíneas"
+      "topAerolineas": "Top aerolíneas",
+      "scanearDoc": "Escanear documento",
+      "scanTip": "Escanea el pase de abordaje, pasaporte o cédula",
+      "scanAreaPlaceholder": "Apunta el lector aquí y escanea…",
+      "escaneoExitoso": "Documento escaneado: {tipo}",
+      "escaneoNoReconocido": "Formato de documento no reconocido",
+      "tipoBcbp": "Pase de abordaje",
+      "tipoMrz": "Pasaporte",
+      "tipoCedulaCo": "Cédula",
+      "sexo": "Sexo",
+      "sexoPlaceholder": "Sexo",
+      "sexoM": "Masculino",
+      "sexoF": "Femenino",
+      "sexoX": "Otro",
+      "fechaNacimiento": "Fecha de nacimiento",
+      "anos": "años",
+      "paisOrigen": "País de origen"
     }
   },
   "common": {
