@@ -42,17 +42,21 @@ export async function GET(request: Request) {
   let totalVencimientos = 0;
   let totalDemoras = 0;
 
-  await Promise.allSettled(
-    tenants.map(async (t) => {
-      try {
-        const [v, d] = await Promise.all([runCheckVencimientos(t.id), runCheckDemoraAmex(t.id)]);
-        totalVencimientos += v;
-        totalDemoras += d;
-      } catch (err) {
-        log.error('Error procesando tenant', { tenantId: t.id, error: String(err) });
-      }
-    }),
-  );
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < tenants.length; i += BATCH_SIZE) {
+    const batch = tenants.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(async (t) => {
+        try {
+          const [v, d] = await Promise.all([runCheckVencimientos(t.id), runCheckDemoraAmex(t.id)]);
+          totalVencimientos += v;
+          totalDemoras += d;
+        } catch (err) {
+          log.error('Error procesando tenant', { tenantId: t.id, error: String(err) });
+        }
+      }),
+    );
+  }
 
   log.info('Cron check-alertas completado', {
     tenants: tenants.length,

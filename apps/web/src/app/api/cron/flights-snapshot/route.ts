@@ -55,17 +55,21 @@ export async function GET(request: Request) {
   let totalDep = 0;
   let totalArr = 0;
 
-  await Promise.allSettled(
-    tenants.map(async (t) => {
-      try {
-        const { departures, arrivals } = await saveFlightsSnapshot(provider, repo, t.id);
-        totalDep += departures;
-        totalArr += arrivals;
-      } catch (err) {
-        log.error('Error procesando tenant', { tenantId: t.id, error: String(err) });
-      }
-    }),
-  );
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < tenants.length; i += BATCH_SIZE) {
+    const batch = tenants.slice(i, i + BATCH_SIZE);
+    await Promise.allSettled(
+      batch.map(async (t) => {
+        try {
+          const { departures, arrivals } = await saveFlightsSnapshot(provider, repo, t.id);
+          totalDep += departures;
+          totalArr += arrivals;
+        } catch (err) {
+          log.error('Error procesando tenant', { tenantId: t.id, error: String(err) });
+        }
+      }),
+    );
+  }
 
   log.info('Cron flights-snapshot completado', {
     tenants: tenants.length,
