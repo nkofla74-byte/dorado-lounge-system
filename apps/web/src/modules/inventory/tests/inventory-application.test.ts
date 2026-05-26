@@ -77,13 +77,15 @@ function createInMemoryRepo(): InsumoRepository & { insumos: InsumoWithStock[]; 
     async update(tenantId: string, input) {
       const idx = insumos.findIndex((i) => i.id === input.id && i.tenantId === tenantId);
       if (idx === -1) throw new Error('NOT_FOUND');
-      insumos[idx] = {
-        ...insumos[idx],
+      const existing = insumos[idx]!;
+      const updated: InsumoWithStock = {
+        ...existing,
         nombre: input.nombre,
         stockMinimo: input.stockMinimo,
         mermaDefault: input.mermaDefault,
       };
-      return insumos[idx];
+      insumos[idx] = updated;
+      return updated;
     },
     async findLotesByInsumo(insumoId: string) {
       return lotes.filter((l) => l.insumoId === insumoId);

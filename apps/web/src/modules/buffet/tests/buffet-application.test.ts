@@ -29,6 +29,7 @@ function makeTicket(overrides: Partial<TicketTurno> = {}): TicketTurno {
     turnoNombre: 'Turno 6a2',
     cantidadTickets: 45,
     registradoPor: 'user-1',
+    idempotencyKey: 'idem-1',
     createdAt: new Date(),
     ...overrides,
   };
@@ -63,7 +64,7 @@ function createInMemoryRepo(): BuffetRepository & {
         tenantId,
         recetaId: input.recetaId,
         cantidad: input.cantidad,
-        turnoId: input.turnoId,
+        turnoId: input.turnoId ?? null,
         idempotencyKey: input.idempotencyKey,
         responsableId: input.responsableId,
       });
