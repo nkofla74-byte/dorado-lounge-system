@@ -16,13 +16,10 @@ export default defineConfig({
       include: ['src/modules/*/domain/**', 'src/lib/audit.ts', 'src/lib/result.ts'],
       exclude: ['**/*.test.ts', '**/tests/**'],
       thresholds: {
-        // Threshold global suave (60%): muchos archivos de dominio aún sin
-        // cubrir (analytics, insumo, recipe, snack/buffet despachos).
-        // El threshold por archivo crítico (merma 90%) sigue siendo el gate duro.
-        statements: 60,
-        branches: 60,
-        functions: 60,
-        lines: 60,
+        statements: 75,
+        branches: 75,
+        functions: 75,
+        lines: 75,
         // Merma es el algoritmo más crítico del sistema (Principio Rector).
         'src/modules/inventory/domain/merma.ts': {
           statements: 90,
