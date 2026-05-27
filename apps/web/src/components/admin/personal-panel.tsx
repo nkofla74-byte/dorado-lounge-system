@@ -28,6 +28,8 @@ import type { TenantUser } from '@/modules/superuser/domain/superuser';
 type RoleKey =
   | 'admin'
   | 'chef'
+  | 'chef_cocina_fria'
+  | 'chef_cocina_caliente'
   | 'sous_chef'
   | 'mesero_amex'
   | 'personal_snack'
@@ -36,6 +38,8 @@ type RoleKey =
 const ASSIGNABLE_ROLES: RoleKey[] = [
   'admin',
   'chef',
+  'chef_cocina_fria',
+  'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
   'personal_snack',

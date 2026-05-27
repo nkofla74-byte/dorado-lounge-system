@@ -33,12 +33,12 @@ interface Props {
   onEnviado: () => void;
 }
 
-type Destino = 'cocina' | 'pasteleria';
+type Destino = 'cocina_fria' | 'cocina_caliente' | 'pasteleria';
 
 export function SolicitarPreparacionDialog({ open, onOpenChange, onEnviado }: Props) {
   const t = useTranslations('snack.preparacion');
   const [error, setError] = useState<string | null>(null);
-  const [destino, setDestino] = useState<Destino>('cocina');
+  const [destino, setDestino] = useState<Destino>('cocina_fria');
 
   const formSchema = z.object({
     descripcion: z.string().min(1, t('errorDescripcion')).max(500),
@@ -65,10 +65,16 @@ export function SolicitarPreparacionDialog({ open, onOpenChange, onEnviado }: Pr
     }
 
     form.reset();
-    setDestino('cocina');
+    setDestino('cocina_fria');
     onOpenChange(false);
     onEnviado();
   };
+
+  const destinos: { value: Destino; labelKey: string }[] = [
+    { value: 'cocina_fria', labelKey: 'destinoCocinaFria' },
+    { value: 'cocina_caliente', labelKey: 'destinoCocinaCaliente' },
+    { value: 'pasteleria', labelKey: 'destinoPasteleria' },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,30 +89,22 @@ export function SolicitarPreparacionDialog({ open, onOpenChange, onEnviado }: Pr
             <div className="space-y-1.5">
               <Label>{t('destinoLabel')}</Label>
               <div className="flex rounded-md border border-input overflow-hidden h-9">
-                <button
-                  type="button"
-                  onClick={() => setDestino('cocina')}
-                  className={cn(
-                    'px-3 text-sm font-medium transition-colors flex-1',
-                    destino === 'cocina'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
-                  )}
-                >
-                  {t('destinoCocina')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDestino('pasteleria')}
-                  className={cn(
-                    'px-3 text-sm font-medium border-l border-input transition-colors flex-1',
-                    destino === 'pasteleria'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
-                  )}
-                >
-                  {t('destinoPasteleria')}
-                </button>
+                {destinos.map((d, i) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setDestino(d.value)}
+                    className={cn(
+                      'px-3 text-sm font-medium transition-colors flex-1',
+                      i > 0 && 'border-l border-input',
+                      destino === d.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-background text-muted-foreground hover:bg-muted',
+                    )}
+                  >
+                    {t(d.labelKey)}
+                  </button>
+                ))}
               </div>
             </div>
 

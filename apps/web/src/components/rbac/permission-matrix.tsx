@@ -9,6 +9,8 @@ import type { UserRole } from '@dorado/shared-types';
 const ROLES: UserRole[] = [
   'admin',
   'chef',
+  'chef_cocina_fria',
+  'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
   'recepcion',

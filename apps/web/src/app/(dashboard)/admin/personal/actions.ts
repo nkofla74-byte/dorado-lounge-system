@@ -13,6 +13,8 @@ import type { TenantUser } from '@/modules/superuser/domain/superuser';
 const adminRoleSchema = z.enum([
   'admin',
   'chef',
+  'chef_cocina_fria',
+  'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
   'recepcion',

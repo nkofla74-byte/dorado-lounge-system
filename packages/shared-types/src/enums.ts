@@ -2,6 +2,8 @@ export const UserRole = {
   superuser: 'superuser',
   admin: 'admin',
   chef: 'chef',
+  chef_cocina_fria: 'chef_cocina_fria',
+  chef_cocina_caliente: 'chef_cocina_caliente',
   sous_chef: 'sous_chef',
   mesero_amex: 'mesero_amex',
   personal_snack: 'personal_snack',

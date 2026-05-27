@@ -4,6 +4,8 @@
     "inventario": "Inventory",
     "recetas": "Recipes",
     "cocina": "Kitchen KDS",
+    "cocinaFria": "Cold Kitchen KDS",
+    "cocinaCaliente": "Hot Kitchen KDS",
     "cocinaAmex": "AMEX KDS",
     "produccion": "Production",
     "pasteleria": "Pastry",
@@ -30,6 +32,8 @@
     "superuser": "Super User",
     "admin": "Administrator",
     "chef": "Chef",
+    "chef_cocina_fria": "Cold Kitchen Chef",
+    "chef_cocina_caliente": "Hot Kitchen Chef",
     "sous_chef": "Sous Chef",
     "mesero_amex": "AMEX Waiter",
     "personal_snack": "Snack Staff",
@@ -58,6 +62,8 @@
     "usuarioFallback": "User",
     "chatTitulo": {
       "chef": "Kitchen",
+      "chef_cocina_fria": "Cold Kitchen",
+      "chef_cocina_caliente": "Hot Kitchen",
       "sous_chef": "Amex Kitchen",
       "admin": "Admin",
       "mesero_amex": "Amex Floor",
@@ -1075,7 +1081,8 @@
       "submitting": "Sending…",
       "errorDescripcion": "Description is required",
       "destinoLabel": "Send to",
-      "destinoCocina": "Kitchen",
+      "destinoCocinaFria": "Cold",
+      "destinoCocinaCaliente": "Hot",
       "destinoPasteleria": "Pastry"
     }
   },
@@ -1136,7 +1143,8 @@
       "submitting": "Sending…",
       "errorDescripcion": "Description is required",
       "destinoLabel": "Send to",
-      "destinoCocina": "Kitchen",
+      "destinoCocinaFria": "Cold",
+      "destinoCocinaCaliente": "Hot",
       "destinoPasteleria": "Pastry"
     },
     "sinPreparaciones": "No preparations dispatched today",

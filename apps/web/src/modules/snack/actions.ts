@@ -108,8 +108,18 @@ export async function solicitarPreparacion(input: unknown): Promise<Result<Solic
     }
 
     const destino = parsed.data.destino;
-    const canal = destino === 'pasteleria' ? 'sala:broadcast:cocina' : 'sala:cocina';
-    const socketChannel = destino === 'pasteleria' ? CHANNELS.BROADCAST_COCINA : CHANNELS.COCINA;
+    const DESTINO_CANAL = {
+      cocina_fria: 'sala:cocina:fria',
+      cocina_caliente: 'sala:cocina:caliente',
+      pasteleria: 'sala:broadcast:cocina',
+    } as const;
+    const DESTINO_SOCKET = {
+      cocina_fria: CHANNELS.COCINA_FRIA,
+      cocina_caliente: CHANNELS.COCINA_CALIENTE,
+      pasteleria: CHANNELS.BROADCAST_COCINA,
+    } as const;
+    const canal = DESTINO_CANAL[destino];
+    const socketChannel = DESTINO_SOCKET[destino];
 
     const repo = createSnackRepository();
     const solicitud = await repo.createSolicitudPreparacion(ctx.tenantId, {

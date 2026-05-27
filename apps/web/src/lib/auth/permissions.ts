@@ -8,6 +8,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'inventory:read': [
     'admin',
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'personal_snack',
     'personal_buffet',
@@ -26,23 +28,83 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'personal_almacen',
   ],
   // Recetas
-  'recipes:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'personal_pasteleria'],
+  'recipes:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'mesero_amex',
+    'personal_pasteleria',
+  ],
   'recipes:write': ['admin'],
   // Producción
-  'production:read': ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
-  'production:write': ['admin', 'chef', 'sous_chef', 'personal_pasteleria', 'steward'],
+  'production:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+    'steward',
+  ],
+  'production:write': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+    'steward',
+  ],
   // Pedidos
-  'orders:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'personal_pasteleria'],
+  'orders:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'mesero_amex',
+    'personal_pasteleria',
+  ],
   'orders:create': ['admin', 'mesero_amex'],
-  'orders:receive': ['admin', 'chef', 'sous_chef', 'mesero_amex'],
-  'orders:dispatch': ['admin', 'chef', 'sous_chef'],
+  'orders:receive': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'mesero_amex',
+  ],
+  'orders:dispatch': ['admin', 'chef', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef'],
   'orders:deliver': ['admin', 'mesero_amex'],
-  'orders:cancel': ['admin', 'chef', 'sous_chef', 'mesero_amex'],
+  'orders:cancel': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'mesero_amex',
+  ],
   // Buffet
-  'buffet:read': ['admin', 'chef', 'sous_chef', 'personal_buffet'],
+  'buffet:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_buffet',
+  ],
   'buffet:write': ['admin', 'personal_buffet'],
   // Snack
-  'snack:read': ['admin', 'chef', 'sous_chef', 'personal_snack'],
+  'snack:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_snack',
+  ],
   'snack:write': ['admin', 'personal_snack'],
   // Analytics
   'analytics:read': ['admin'],
@@ -53,6 +115,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'turnos:read': [
     'admin',
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'recepcion',
     'mesero_amex',
@@ -65,6 +129,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'turnos:write': [
     'admin',
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'recepcion',
     'mesero_amex',
@@ -83,6 +149,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'chat:read': [
     'admin',
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
     'recepcion',
@@ -95,6 +163,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'chat:write': [
     'admin',
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
     'recepcion',
@@ -116,10 +186,23 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],
+  // Cocina Fría — KDS exclusivo
+  'cocina_fria:read': ['admin', 'chef_cocina_fria'],
+  'cocina_fria:write': ['admin', 'chef_cocina_fria'],
+  // Cocina Caliente — KDS exclusivo
+  'cocina_caliente:read': ['admin', 'chef_cocina_caliente'],
+  'cocina_caliente:write': ['admin', 'chef_cocina_caliente'],
   // Proveedores — gestión de proveedores e historial compras
   'proveedores:read': ['admin', 'personal_almacen'],
   'proveedores:write': ['admin', 'personal_almacen'],
   // Alertas — motor de alertas in-app
-  'alertas:read': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
+  'alertas:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_almacen',
+  ],
   'alertas:write': ['admin'],
 };

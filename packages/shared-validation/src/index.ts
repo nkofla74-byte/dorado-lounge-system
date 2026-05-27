@@ -21,6 +21,8 @@ export const userRoleSchema = z.enum([
   'superuser',
   'admin',
   'chef',
+  'chef_cocina_fria',
+  'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
   'personal_snack',
@@ -250,7 +252,7 @@ export const enviarStuartSchema = z.object({
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),
 });
 
-export const destinoPreparacionSchema = z.enum(['cocina', 'pasteleria']);
+export const destinoPreparacionSchema = z.enum(['cocina_fria', 'cocina_caliente', 'pasteleria']);
 
 export const solicitarPreparacionSchema = z.object({
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500),

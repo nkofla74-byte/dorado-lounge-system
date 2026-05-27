@@ -6,6 +6,8 @@ import type { UserRole, ZonaServicio, EstadoPedido } from './enums';
 
 export const CHANNELS = {
   COCINA: 'sala:cocina',
+  COCINA_FRIA: 'sala:cocina:fria',
+  COCINA_CALIENTE: 'sala:cocina:caliente',
   COCINA_AMEX: 'sala:cocina:amex',
   AMEX: 'sala:amex',
   SNACK: 'sala:snack',
@@ -23,17 +25,44 @@ export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
 // ── ACL de canales ────────────────────────────────────────────────────────────
 // Roles que pueden unirse a cada canal. Un rol ausente = desconexión + audit_log.
 export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
-  'sala:cocina': ['chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:cocina': [
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'admin',
+    'superuser',
+  ],
+  'sala:cocina:fria': ['chef_cocina_fria', 'chef', 'admin', 'superuser'],
+  'sala:cocina:caliente': ['chef_cocina_caliente', 'chef', 'admin', 'superuser'],
   'sala:cocina:amex': ['sous_chef', 'chef', 'admin', 'superuser'],
   'sala:amex': ['mesero_amex', 'recepcion', 'admin', 'superuser'],
   'sala:snack': ['personal_snack', 'admin', 'superuser'],
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
   'sala:stuart:amex': ['mesero_amex', 'recepcion', 'chef', 'sous_chef', 'admin', 'superuser'],
-  'sala:stuart:snack': ['personal_snack', 'chef', 'sous_chef', 'admin', 'superuser'],
-  'sala:stuart:buffet': ['personal_buffet', 'chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:stuart:snack': [
+    'personal_snack',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'admin',
+    'superuser',
+  ],
+  'sala:stuart:buffet': [
+    'personal_buffet',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'admin',
+    'superuser',
+  ],
   'sala:broadcast:cocina': [
     'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
     'sous_chef',
     'personal_pasteleria',
     'steward',

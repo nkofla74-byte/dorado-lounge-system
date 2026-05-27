@@ -6,7 +6,12 @@ import type { StuartRequest } from '../domain/stuart-request';
 import type { SolicitudPreparacion } from '../domain/solicitud-preparacion';
 
 const STUART_SNACK_CHANNEL = 'sala:stuart:snack';
-const COCINA_CHANNEL = 'sala:cocina';
+const SOLICITUD_CHANNELS = [
+  'sala:cocina',
+  'sala:cocina:fria',
+  'sala:cocina:caliente',
+  'sala:broadcast:cocina',
+];
 
 type DespachoRow = {
   id: string;
@@ -165,7 +170,7 @@ export function createSnackRepository(): SnackRepository {
         .from('mensajes_chat')
         .select('id, tenant_id, canal, remitente_id, contenido, created_at')
         .eq('tenant_id', tenantId)
-        .in('canal', [COCINA_CHANNEL, 'sala:broadcast:cocina'])
+        .in('canal', SOLICITUD_CHANNELS)
         .eq('tipo', 'alert')
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -184,7 +189,7 @@ export function createSnackRepository(): SnackRepository {
         .from('mensajes_chat')
         .insert({
           tenant_id: tenantId,
-          canal: input.canal ?? COCINA_CHANNEL,
+          canal: input.canal ?? 'sala:cocina:caliente',
           remitente_id: input.remitenteId,
           contenido: input.descripcion,
           tipo: 'alert',

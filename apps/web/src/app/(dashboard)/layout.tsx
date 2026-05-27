@@ -12,6 +12,8 @@ import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
 // Canal de chat por rol — cada nodo habla en su sala operativa
 const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   chef: CHANNELS.COCINA,
+  chef_cocina_fria: CHANNELS.COCINA_FRIA,
+  chef_cocina_caliente: CHANNELS.COCINA_CALIENTE,
   sous_chef: CHANNELS.COCINA_AMEX,
   admin: CHANNELS.ADMIN,
   superuser: CHANNELS.ADMIN,
@@ -26,6 +28,8 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
 
 type ChatTituloKey =
   | 'chef'
+  | 'chef_cocina_fria'
+  | 'chef_cocina_caliente'
   | 'sous_chef'
   | 'admin'
   | 'mesero_amex'
@@ -39,6 +43,8 @@ type ChatTituloKey =
 
 const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
   chef: 'chef',
+  chef_cocina_fria: 'chef_cocina_fria',
+  chef_cocina_caliente: 'chef_cocina_caliente',
   sous_chef: 'sous_chef',
   admin: 'admin',
   superuser: 'admin',

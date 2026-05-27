@@ -4,6 +4,8 @@
     "inventario": "Inventario",
     "recetas": "Recetas",
     "cocina": "KDS Cocina",
+    "cocinaFria": "KDS Cocina Fría",
+    "cocinaCaliente": "KDS Cocina Caliente",
     "cocinaAmex": "KDS AMEX",
     "produccion": "Producción",
     "pasteleria": "Pastelería",
@@ -30,6 +32,8 @@
     "superuser": "Super Usuario",
     "admin": "Administrador",
     "chef": "Chef",
+    "chef_cocina_fria": "Chef Cocina Fría",
+    "chef_cocina_caliente": "Chef Cocina Caliente",
     "sous_chef": "Sous Chef",
     "mesero_amex": "Mesero Amex",
     "personal_snack": "Personal Snack",
@@ -58,6 +62,8 @@
     "usuarioFallback": "Usuario",
     "chatTitulo": {
       "chef": "Cocina",
+      "chef_cocina_fria": "Cocina Fría",
+      "chef_cocina_caliente": "Cocina Caliente",
       "sous_chef": "Cocina Amex",
       "admin": "Admin",
       "mesero_amex": "Sala Amex",
@@ -1075,7 +1081,8 @@
       "submitting": "Enviando…",
       "errorDescripcion": "La descripción es obligatoria",
       "destinoLabel": "¿A quién va dirigido?",
-      "destinoCocina": "Cocina",
+      "destinoCocinaFria": "C. Fría",
+      "destinoCocinaCaliente": "C. Caliente",
       "destinoPasteleria": "Pastelería"
     }
   },
@@ -1136,7 +1143,8 @@
       "submitting": "Enviando…",
       "errorDescripcion": "La descripción es obligatoria",
       "destinoLabel": "¿A quién va dirigido?",
-      "destinoCocina": "Cocina",
+      "destinoCocinaFria": "C. Fría",
+      "destinoCocinaCaliente": "C. Caliente",
       "destinoPasteleria": "Pastelería"
     },
     "sinPreparaciones": "No hay preparaciones despachadas hoy",
