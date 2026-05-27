@@ -5,8 +5,6 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { getProveedores } from '@/modules/proveedores/actions';
 import { ProveedoresPanel } from '@/components/proveedores/proveedores-panel';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { createClient } from '@/lib/supabase/server';
-import type { UserRole } from '@dorado/shared-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +18,9 @@ export default async function ProveedoresPage() {
   let canWrite = false;
   let isSuperuser = false;
   try {
-    await assertCan('proveedores:read');
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const role = data.user?.app_metadata?.role as UserRole | undefined;
-    canWrite = role ? (PERMISSIONS['proveedores:write']?.includes(role) ?? false) : false;
+    const ctx = await assertCan('proveedores:read');
+    const { role } = ctx;
+    canWrite = PERMISSIONS['proveedores:write']?.includes(role) ?? false;
     isSuperuser = role === 'superuser';
     if (isSuperuser) canWrite = true;
   } catch {

@@ -59,14 +59,12 @@ const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const [{ data: userData }, { data: sessionData }, locale, tLayout, tChatTitulo] =
-    await Promise.all([
-      supabase.auth.getUser(),
-      supabase.auth.getSession(),
-      getLocale(),
-      getTranslations('layout'),
-      getTranslations('layout.chatTitulo'),
-    ]);
+  const [{ data: userData }, locale, tLayout, tChatTitulo] = await Promise.all([
+    supabase.auth.getUser(),
+    getLocale(),
+    getTranslations('layout'),
+    getTranslations('layout.chatTitulo'),
+  ]);
 
   const user = userData.user;
   if (!user) redirect('/login');
@@ -83,6 +81,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     user.email?.split('@')[0] ??
     tLayout('usuarioFallback');
 
+  const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token ?? '';
   const chatCanal = ROLE_CHAT_CHANNEL[role] ?? null;
   const chatTitulo = tChatTitulo(CHAT_TITULO_KEYS[role] ?? 'default');

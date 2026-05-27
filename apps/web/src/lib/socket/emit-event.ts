@@ -12,7 +12,12 @@ export async function emitEvent(
   channel: Channel,
   event: SocketEvent,
 ): Promise<void> {
-  if (!EMIT_SECRET) return;
+  if (!EMIT_SECRET) {
+    if (process.env['NODE_ENV'] === 'production') {
+      console.warn('[emit-event] SOCKET_EMIT_SECRET not set — all real-time events suppressed');
+    }
+    return;
+  }
 
   try {
     await fetch(`${SOCKET_URL}/emit`, {

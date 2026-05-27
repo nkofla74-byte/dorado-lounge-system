@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@dorado/shared-types';
 import { ROLE_HOME, canAccess } from '@/lib/auth/role-home';
 
-const PUBLIC_PATHS = ['/login', '/qr', '/api/cron'];
+const PUBLIC_PATHS = ['/login', '/qr', '/api/cron', '/api/heartbeat', '/health'];
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

@@ -11,11 +11,13 @@ export function SocketProvider({ token, children }: { token: string; children: R
   useEffect(() => {
     socket.connect();
 
-    socket.on('error', (e) => {
+    const handleError = (e: { code?: string }) => {
       if (e.code === 'FORBIDDEN') socket.disconnect();
-    });
+    };
+    socket.on('error', handleError);
 
     return () => {
+      socket.off('error', handleError);
       disconnectSocket();
     };
   }, [socket]);

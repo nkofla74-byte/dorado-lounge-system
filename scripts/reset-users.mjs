@@ -19,6 +19,20 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
+if (
+  !SUPABASE_URL.includes('localhost') &&
+  !SUPABASE_URL.includes('127.0.0.1') &&
+  process.env.ALLOW_PRODUCTION_RESET !== 'yes_i_know'
+) {
+  console.error(
+    '✗ SAFETY: Este script es destructivo. Solo ejecutar contra bases de datos locales o de staging.',
+  );
+  console.error(
+    '  Si realmente necesitas ejecutarlo contra producción, exporta ALLOW_PRODUCTION_RESET=yes_i_know',
+  );
+  process.exit(1);
+}
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });

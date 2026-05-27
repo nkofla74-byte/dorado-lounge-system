@@ -28,5 +28,18 @@ export default async function QRPage({ params, searchParams }: Props) {
 
   const { recetas, mesa } = result.value;
 
-  return <QRPassengerApp recetas={recetas} mesa={mesa} token={token} initialLocale={locale} />;
+  const wifiConfig = {
+    networkName: process.env.WIFI_NETWORK_NAME ?? 'American Express',
+    password: process.env.WIFI_PASSWORD ?? '',
+  };
+
+  return (
+    <QRPassengerApp
+      recetas={recetas}
+      mesa={mesa}
+      token={token}
+      initialLocale={locale}
+      wifiConfig={wifiConfig}
+    />
+  );
 }

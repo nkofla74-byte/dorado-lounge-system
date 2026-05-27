@@ -188,7 +188,7 @@ export async function stockOut(input: unknown): Promise<Result<void>> {
       p_insumo_id: parsed.data.insumoId,
       p_cantidad: parsed.data.cantidad,
       p_idempotency_key: parsed.data.idempotencyKey,
-      p_tipo: 'ajuste',
+      p_tipo: 'salida_receta',
       p_referencia_id: null,
       p_referencia_tipo: 'stock_out',
       p_usuario_id: ctx.userId,
@@ -253,8 +253,7 @@ export async function registrarMerma(input: unknown): Promise<Result<void>> {
       return err(new AppError('FEFO_ERROR', 500, 'Error al descontar stock. Intenta de nuevo.'));
     }
 
-    // Registrar la merma categorizada (idempotent via unique idempotency_key)
-    await admin.from('mermas').upsert(
+    const { error: mermaError } = await admin.from('mermas').upsert(
       {
         tenant_id: ctx.tenantId,
         insumo_id: parsed.data.insumoId,
@@ -266,6 +265,16 @@ export async function registrarMerma(input: unknown): Promise<Result<void>> {
       },
       { onConflict: 'idempotency_key', ignoreDuplicates: true },
     );
+
+    if (mermaError) {
+      return err(
+        new AppError(
+          'DB_ERROR',
+          500,
+          'Stock deducido pero el registro de merma falló. Contacta administración.',
+        ),
+      );
+    }
 
     await auditLog({
       tenantId: ctx.tenantId,

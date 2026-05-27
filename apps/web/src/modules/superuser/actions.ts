@@ -79,9 +79,10 @@ export async function toggleTenant(tenantId: string, activo: boolean): Promise<R
 
 export async function getUsers(tenantId?: string): Promise<Result<TenantUser[]>> {
   try {
-    await assertCan('users:read');
+    const ctx = await assertCan('users:read');
+    const scopedTenantId = ctx.role === 'superuser' ? tenantId : ctx.tenantId;
     const repo = createSuperuserRepository();
-    return ok(await getUsersFn(repo, tenantId));
+    return ok(await getUsersFn(repo, scopedTenantId));
   } catch (e) {
     return err(toAppError(e));
   }

@@ -121,7 +121,7 @@ export const EstadoPedido = {
 export type EstadoPedido = (typeof EstadoPedido)[keyof typeof EstadoPedido];
 
 export const PEDIDO_TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
-  creado: ['recibido_cocina', 'en_preparacion', 'cancelado'],
+  creado: ['recibido_cocina', 'cancelado'],
   recibido_cocina: ['en_preparacion', 'cancelado'],
   en_preparacion: ['despachado', 'cancelado'],
   despachado: ['entregado'],

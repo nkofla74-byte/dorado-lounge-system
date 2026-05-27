@@ -32,7 +32,7 @@ interface QRResult {
 export function QRGeneratorClient() {
   const t = useTranslations('qrAdmin');
   const [mesaNumero, setMesaNumero] = useState('');
-  const [locale, setLocale] = useState('es');
+  const locale = 'es';
   const [result, setResult] = useState<QRResult | null>(null);
   const [loading, setLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
@@ -129,25 +129,6 @@ export function QRGeneratorClient() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-sm text-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
             {zonaLabel}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>{t('idiomaLabel')}</Label>
-          <div className="flex gap-2">
-            {LOCALES.map((l) => (
-              <button
-                key={l.value}
-                onClick={() => setLocale(l.value)}
-                className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${
-                  locale === l.value
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border hover:bg-accent'
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
           </div>
         </div>
 

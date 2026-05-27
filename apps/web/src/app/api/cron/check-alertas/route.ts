@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { runCheckVencimientos, runCheckDemoraAmex } from '@/modules/alertas/infrastructure/checks';
 import { createLogger } from '@/lib/logger';
@@ -23,7 +24,12 @@ export async function GET(request: Request) {
   }
 
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const expectedToken = `Bearer ${cronSecret}`;
+  if (
+    !authHeader ||
+    authHeader.length !== expectedToken.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedToken))
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

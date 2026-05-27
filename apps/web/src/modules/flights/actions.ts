@@ -3,7 +3,7 @@
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
-import { createAviationStackProvider } from './infrastructure/aviationstack-provider';
+import { createAeroDataBoxProvider } from './infrastructure/aerodatabox-provider';
 import { createFlightRepository } from './infrastructure/flight-repository';
 import { getFlights as getFlightsUseCase } from './application/get-flights';
 import { getFlightStats as getFlightStatsUseCase } from './application/get-flight-stats';
@@ -20,7 +20,7 @@ export async function getFlights(
 ): Promise<Result<Flight[]>> {
   try {
     await assertCan('flights:read');
-    const provider = createAviationStackProvider();
+    const provider = createAeroDataBoxProvider();
     const flights = await getFlightsUseCase(provider, {
       direction,
       airportIata: AIRPORT_IATA,

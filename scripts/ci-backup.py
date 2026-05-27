@@ -14,7 +14,10 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
-PROJECT_REF = "gyewxgtuzjbxzcvcfmwy"
+PROJECT_REF = os.environ.get("SUPABASE_PROJECT_REF")
+if not PROJECT_REF:
+    print("ERROR: SUPABASE_PROJECT_REF env var is required", file=sys.stderr)
+    sys.exit(1)
 API_URL = f"https://api.supabase.com/v1/projects/{PROJECT_REF}/database/query"
 
 # Tables to back up, in dependency order (parent before child)

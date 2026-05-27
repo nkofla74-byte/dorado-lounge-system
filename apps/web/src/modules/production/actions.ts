@@ -118,47 +118,41 @@ export async function completarTanda(tandaId: string): Promise<Result<Tanda>> {
       );
     }
 
-    // Descontar ingredientes via fn_descontar_insumo_fefo (SECURITY DEFINER, admin client).
-    // La merma se aplica aquí: cantidad_a_descontar = cantidad_neta / (1 - coeficiente).
-    if (tanda.ingredientes.length > 0) {
-      const adminClient = createAdminClient();
+    // Atomic FEFO deduction + state transition via single Postgres RPC.
+    // All ingredient deductions and the state change happen in one transaction.
+    const adminClient = createAdminClient();
+    const ingredientesPayload = tanda.ingredientes.map((ing) => ({
+      insumo_id: ing.insumoId,
+      cantidad_bruta: cantidadConMerma(ing.cantidad * tanda.cantidadTandas, ing.mermaCoeficiente),
+      insumo_nombre: ing.insumoNombre,
+    }));
 
-      for (const ing of tanda.ingredientes) {
-        const cantidadNeta = ing.cantidad * tanda.cantidadTandas;
-        const cantidadBruta = cantidadConMerma(cantidadNeta, ing.mermaCoeficiente);
-        const idempotencyKey = `tanda:${tandaId}:ing:${ing.insumoId}`;
+    const { data: rpcResult, error: rpcError } = await adminClient.rpc('fn_completar_tanda', {
+      p_tanda_id: tandaId,
+      p_tenant_id: ctx.tenantId,
+      p_usuario_id: ctx.userId,
+      p_ingredientes: ingredientesPayload,
+    });
 
-        const { data, error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
-          p_tenant_id: ctx.tenantId,
-          p_insumo_id: ing.insumoId,
-          p_cantidad: cantidadBruta,
-          p_idempotency_key: idempotencyKey,
-          p_tipo: 'salida_receta',
-          p_referencia_id: tandaId,
-          p_referencia_tipo: 'tanda',
-          p_usuario_id: ctx.userId,
-        });
-
-        if (error) {
-          throw new AppError(
-            'FEFO_ERROR',
-            500,
-            `Error al descontar stock de '${ing.insumoNombre}'. Intenta de nuevo.`,
-          );
-        }
-
-        const rpcResult = data as { ok?: boolean; message?: string } | null;
-        if (!rpcResult?.ok) {
-          throw new AppError(
-            'STOCK_INSUFICIENTE',
-            409,
-            `Stock insuficiente para: ${ing.insumoNombre}`,
-          );
-        }
+    if (rpcError) {
+      if (rpcError.code === 'P0001') {
+        return err(new AppError('STOCK_INSUFICIENTE', 409, rpcError.message));
       }
+      return err(new AppError('FEFO_ERROR', 500, 'Error al completar tanda. Intenta de nuevo.'));
     }
 
-    const updated = await repo.updateEstado(tandaId, ctx.tenantId, 'completada');
+    const result = rpcResult as { ok: boolean; error?: string } | null;
+    if (result && !result.ok) {
+      if (result.error === 'TANDA_NOT_FOUND') {
+        return err(new AppError('NOT_FOUND', 404, 'Tanda no encontrada'));
+      }
+      if (result.error === 'INVALID_STATE') {
+        return err(new AppError('INVALID_TRANSITION', 400, 'Tanda no está en estado en_proceso'));
+      }
+      return err(new AppError('FEFO_ERROR', 500, 'Error inesperado al completar tanda'));
+    }
+
+    const updated = (await repo.findByIdWithIngredientes(tandaId, ctx.tenantId)) ?? tanda;
 
     await auditLog({
       tenantId: ctx.tenantId,

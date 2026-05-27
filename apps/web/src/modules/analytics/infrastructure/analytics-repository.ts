@@ -94,14 +94,14 @@ export function createAnalyticsRepository(): AnalyticsRepository {
       let query: any;
       if (tenantId === null) {
         query = admin
-          .from('mv_cogs_per_passenger')
+          .from('v_cogs_per_passenger_tenant')
           .select(COGS_SELECT)
           .order('iniciado_at', { ascending: false })
           .limit(200);
       } else {
         const supabase = await createClient();
         query = supabase
-          .from('mv_cogs_per_passenger')
+          .from('v_cogs_per_passenger_tenant')
           .select(COGS_SELECT)
           .eq('tenant_id', tenantId)
           .order('iniciado_at', { ascending: false })
@@ -127,7 +127,7 @@ export function createAnalyticsRepository(): AnalyticsRepository {
       let query: any;
       if (tenantId === null) {
         query = admin
-          .from('mv_consumo_vs_produccion_turno')
+          .from('v_consumo_vs_produccion_turno_tenant')
           .select(CONSUMO_SELECT)
           .order('turno_id', { ascending: false })
           .order('insumo_nombre', { ascending: true })
@@ -135,7 +135,7 @@ export function createAnalyticsRepository(): AnalyticsRepository {
       } else {
         const supabase = await createClient();
         query = supabase
-          .from('mv_consumo_vs_produccion_turno')
+          .from('v_consumo_vs_produccion_turno_tenant')
           .select(CONSUMO_SELECT)
           .eq('tenant_id', tenantId)
           .order('turno_id', { ascending: false })

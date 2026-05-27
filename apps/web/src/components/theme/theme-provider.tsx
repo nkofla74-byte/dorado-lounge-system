@@ -6,15 +6,20 @@ import type { ReactNode } from 'react';
 interface ThemeProviderProps {
   children: ReactNode;
   defaultTheme?: 'light' | 'dark' | 'system';
+  storageKey?: string;
 }
 
-export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProviderProps) {
+export function ThemeProvider({
+  children,
+  defaultTheme = 'dark',
+  storageKey = 'dorado-theme',
+}: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
       defaultTheme={defaultTheme}
       enableSystem
-      storageKey="dorado-theme"
+      storageKey={storageKey}
       disableTransitionOnChange
     >
       {children}

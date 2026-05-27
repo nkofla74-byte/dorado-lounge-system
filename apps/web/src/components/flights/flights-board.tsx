@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Plane, PlaneLanding, PlaneTakeoff, RefreshCw, Clock } from 'lucide-react';
+
+function formatFlightTime(d: Date, locale: string): string {
+  return d.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -29,12 +37,7 @@ function FlightRow({ flight }: { flight: Flight }) {
   const effective = effectiveTime(flight);
   const isDeparture = flight.direction === 'departure';
 
-  const formatTime = (d: Date): string =>
-    d.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+  const formatTime = (d: Date) => formatFlightTime(d, locale);
 
   return (
     <tr className="border-b hover:bg-muted/30 transition-colors text-sm">
@@ -85,32 +88,29 @@ export function FlightsBoard({ initialDepartures, initialArrivals }: FlightsBoar
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [pending, startTransition] = useTransition();
 
-  const formatTime = (d: Date): string =>
-    d.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-CO', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+  const formatTime = (d: Date) => formatFlightTime(d, locale);
 
   const flights = direction === 'departure' ? departures : arrivals;
 
-  const refresh = (dir?: FlightDirection) => {
-    const target = dir ?? direction;
-    startTransition(async () => {
-      const result = await getFlights(target);
-      if (result.ok) {
-        if (target === 'departure') setDepartures(result.value);
-        else setArrivals(result.value);
-        setLastUpdated(new Date());
-      }
-    });
-  };
+  const refresh = useCallback(
+    (dir?: FlightDirection) => {
+      const target = dir ?? direction;
+      startTransition(async () => {
+        const result = await getFlights(target);
+        if (result.ok) {
+          if (target === 'departure') setDepartures(result.value);
+          else setArrivals(result.value);
+          setLastUpdated(new Date());
+        }
+      });
+    },
+    [direction],
+  );
 
   useEffect(() => {
     const id = setInterval(() => refresh(), 60_000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [direction]);
+  }, [refresh]);
 
   const handleTabChange = (dir: FlightDirection) => {
     setDirection(dir);

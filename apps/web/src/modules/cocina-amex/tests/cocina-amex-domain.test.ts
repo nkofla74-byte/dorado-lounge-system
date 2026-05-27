@@ -75,7 +75,8 @@ describe('AMEX_URGENCY thresholds', () => {
 describe('PEDIDO_TRANSITIONS re-export', () => {
   it('re-exporta la máquina de estados de orders', () => {
     expect(PEDIDO_TRANSITIONS).toBeDefined();
-    expect(PEDIDO_TRANSITIONS['creado']).toContain('en_preparacion');
+    expect(PEDIDO_TRANSITIONS['creado']).toContain('recibido_cocina');
+    expect(PEDIDO_TRANSITIONS['recibido_cocina']).toContain('en_preparacion');
     expect(PEDIDO_TRANSITIONS['en_preparacion']).toContain('despachado');
   });
 });

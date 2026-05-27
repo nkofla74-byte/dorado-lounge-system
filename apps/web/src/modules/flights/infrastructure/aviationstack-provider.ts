@@ -61,7 +61,7 @@ export function createAviationStackProvider(): FlightsProvider {
       });
 
       const res = await fetch(`${apiUrl}/flights?${params.toString()}`, {
-        next: { revalidate: 60 }, // caché server-side 60 s
+        next: { revalidate: 60 },
       });
 
       if (!res.ok) {

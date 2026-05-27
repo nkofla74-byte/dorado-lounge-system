@@ -110,7 +110,7 @@ export function createFlightRepository(): FlightsRepository {
       desde.setDate(desde.getDate() - 7);
 
       const { data, error } = await supabase
-        .from('mv_ocupacion_diaria')
+        .from('v_ocupacion_diaria_tenant')
         .select(
           'fecha, departures_vuelos, arrivals_vuelos, vuelos_cancelados, vuelos_sin_capacidad, departures_capacidad, arrivals_capacidad, capacidad_estimada, pasajeros_reales, ocupacion_pct',
         )

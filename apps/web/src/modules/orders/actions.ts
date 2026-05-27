@@ -506,7 +506,7 @@ export async function toggleDisponibilidadPlato(
   activo: boolean,
 ): Promise<Result<{ id: string; activo: boolean }>> {
   try {
-    const ctx = await assertCan('orders:create');
+    const ctx = await assertCan('recipes:write');
     const admin = createAdminClient();
 
     const { data, error } = await admin

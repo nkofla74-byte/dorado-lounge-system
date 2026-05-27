@@ -4,6 +4,7 @@ import type { EstadoPedido } from '../domain/pedido';
 
 const TODOS_LOS_ESTADOS: EstadoPedido[] = [
   'creado',
+  'recibido_cocina',
   'en_preparacion',
   'despachado',
   'entregado',
@@ -17,8 +18,10 @@ describe('PEDIDO_TRANSITIONS — máquina de estados', () => {
     }
   });
 
-  it('flujo feliz: creado → en_preparacion → despachado → entregado', () => {
-    expect(PEDIDO_TRANSITIONS['creado']).toContain('en_preparacion');
+  it('flujo feliz: creado → recibido_cocina → en_preparacion → despachado → entregado', () => {
+    expect(PEDIDO_TRANSITIONS['creado']).toContain('recibido_cocina');
+    expect(PEDIDO_TRANSITIONS['creado']).not.toContain('en_preparacion');
+    expect(PEDIDO_TRANSITIONS['recibido_cocina']).toContain('en_preparacion');
     expect(PEDIDO_TRANSITIONS['en_preparacion']).toContain('despachado');
     expect(PEDIDO_TRANSITIONS['despachado']).toContain('entregado');
   });
@@ -64,8 +67,10 @@ describe('PEDIDO_TRANSITIONS — máquina de estados', () => {
   it('la propiedad isValidTransition se comporta como esperado', () => {
     const isValid = (from: EstadoPedido, to: EstadoPedido) => PEDIDO_TRANSITIONS[from].includes(to);
 
-    expect(isValid('creado', 'en_preparacion')).toBe(true);
+    expect(isValid('creado', 'recibido_cocina')).toBe(true);
+    expect(isValid('creado', 'en_preparacion')).toBe(false);
     expect(isValid('creado', 'entregado')).toBe(false);
+    expect(isValid('recibido_cocina', 'en_preparacion')).toBe(true);
     expect(isValid('en_preparacion', 'despachado')).toBe(true);
     expect(isValid('despachado', 'entregado')).toBe(true);
     expect(isValid('entregado', 'cancelado')).toBe(false);

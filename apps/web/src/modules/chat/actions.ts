@@ -2,18 +2,31 @@
 
 import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError } from '@/lib/result';
+import { AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
 import { createChatRepository } from './infrastructure/chat-repository';
 import { getMensajes as getMensajesUseCase } from './application/get-mensajes';
 import { enviarMensaje as enviarMensajeUseCase } from './application/enviar-mensaje';
-import { CHANNELS } from '@dorado/shared-types';
+import { CHANNELS, CHANNEL_ACL } from '@dorado/shared-types';
+import type { Channel } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type { Mensaje, EnviarMensajeInput } from './domain/mensaje';
+
+function isValidChannel(canal: string): canal is Channel {
+  return Object.values(CHANNELS).includes(canal as Channel);
+}
 
 export async function getMensajes(canal: string, limit?: number): Promise<Result<Mensaje[]>> {
   try {
     const ctx = await assertCan('chat:read');
+
+    if (isValidChannel(canal) && !CHANNEL_ACL[canal].includes(ctx.role)) {
+      return err(
+        new AppError('FORBIDDEN', 403, `Rol '${ctx.role}' sin acceso al canal '${canal}'`),
+      );
+    }
+
     const repo = createChatRepository();
     return ok(await getMensajesUseCase(repo, ctx.tenantId, canal, limit));
   } catch (e) {
@@ -24,6 +37,12 @@ export async function getMensajes(canal: string, limit?: number): Promise<Result
 export async function enviarMensaje(input: EnviarMensajeInput): Promise<Result<Mensaje>> {
   try {
     const ctx = await assertCan('chat:write');
+
+    if (isValidChannel(input.canal) && !CHANNEL_ACL[input.canal].includes(ctx.role)) {
+      return err(
+        new AppError('FORBIDDEN', 403, `Rol '${ctx.role}' sin acceso al canal '${input.canal}'`),
+      );
+    }
     const { createClient } = await import('@/lib/supabase/server');
     const supabase = await createClient();
     const {

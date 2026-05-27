@@ -44,12 +44,14 @@ const URGENCY_WARN_MINS = 8;
 const URGENCY_CRIT_MINS = 15;
 
 function useElapsed(since: Date): { label: string; mins: number } {
-  const calc = () => {
-    const secs = Math.floor((Date.now() - since.getTime()) / 1000);
+  const sinceMs = since.getTime();
+
+  const calc = useCallback(() => {
+    const secs = Math.floor((Date.now() - sinceMs) / 1000);
     const mins = Math.floor(secs / 60);
     const s = secs % 60;
     return { label: mins < 1 ? `${secs}s` : `${mins}m ${s.toString().padStart(2, '0')}s`, mins };
-  };
+  }, [sinceMs]);
 
   const [state, setState] = useState(calc);
 
@@ -57,8 +59,7 @@ function useElapsed(since: Date): { label: string; mins: number } {
     setState(calc());
     const id = setInterval(() => setState(calc()), 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [since]);
+  }, [calc]);
 
   return state;
 }

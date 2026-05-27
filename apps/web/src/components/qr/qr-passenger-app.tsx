@@ -13,7 +13,9 @@ import {
   Users,
   ArrowRight,
   ChevronRight,
+  ChevronLeft,
   ExternalLink,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPedidoFromQR } from '@/app/qr/[locale]/actions';
@@ -67,8 +69,8 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Disfruta tu experiencia en el Dorado Lounge.',
     newSession: 'Nueva sesión',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'American Express',
-    wifi_pass: 'AmexLounge2025.',
+    wifi_name: '',
+    wifi_pass: '',
     wifi_connect_title: 'Conéctate',
     wifi_connect_subtitle: 'desde nuestra sala VIP',
     wifi_network_label: 'Nombre de la red',
@@ -87,6 +89,17 @@ const TEXTS: Record<string, Record<string, string>> = {
     dishPlural: 'platos',
     noDishesAvailable: 'No hay platos disponibles',
     selectAtLeastOne: 'Selecciona al menos un plato para continuar',
+    reviewOrder: 'Revisar pedido',
+    yourOrder: 'Tu pedido',
+    estimatedTime: 'Tiempo estimado',
+    totalEstimated: 'Tiempo total estimado',
+    min: 'min',
+    editOrder: 'Editar pedido',
+    sendOrder: 'Enviar pedido',
+    orderSentTitle: '¡Pedido enviado!',
+    preparingMsg: 'Tu pedido está siendo preparado',
+    nextGuestMsg: 'Siguiente comensal en un momento…',
+    noNotes: 'Sin notas',
   },
   en: {
     selectLanguage: 'Select your language',
@@ -117,8 +130,8 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Enjoy your experience at Dorado Lounge.',
     newSession: 'New session',
     wifi_title: 'Dorado Lounge Wi-Fi',
-    wifi_name: 'American Express',
-    wifi_pass: 'AmexLounge2025.',
+    wifi_name: '',
+    wifi_pass: '',
     wifi_connect_title: 'Connect',
     wifi_connect_subtitle: 'from our VIP lounge',
     wifi_network_label: 'Network name',
@@ -137,6 +150,17 @@ const TEXTS: Record<string, Record<string, string>> = {
     dishPlural: 'dishes',
     noDishesAvailable: 'No dishes available',
     selectAtLeastOne: 'Select at least one dish to continue',
+    reviewOrder: 'Review order',
+    yourOrder: 'Your order',
+    estimatedTime: 'Estimated time',
+    totalEstimated: 'Total estimated time',
+    min: 'min',
+    editOrder: 'Edit order',
+    sendOrder: 'Send order',
+    orderSentTitle: 'Order sent!',
+    preparingMsg: 'Your order is being prepared',
+    nextGuestMsg: 'Next guest in a moment…',
+    noNotes: 'No notes',
   },
   fr: {
     selectLanguage: 'Sélectionnez votre langue',
@@ -167,8 +191,8 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Profitez de votre expérience au Dorado Lounge.',
     newSession: 'Nouvelle session',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'American Express',
-    wifi_pass: 'AmexLounge2025.',
+    wifi_name: '',
+    wifi_pass: '',
     wifi_connect_title: 'Connectez-vous',
     wifi_connect_subtitle: 'depuis notre salon VIP',
     wifi_network_label: 'Nom du réseau',
@@ -187,6 +211,17 @@ const TEXTS: Record<string, Record<string, string>> = {
     dishPlural: 'plats',
     noDishesAvailable: 'Aucun plat disponible',
     selectAtLeastOne: 'Sélectionnez au moins un plat pour continuer',
+    reviewOrder: 'Vérifier la commande',
+    yourOrder: 'Votre commande',
+    estimatedTime: 'Temps estimé',
+    totalEstimated: 'Temps total estimé',
+    min: 'min',
+    editOrder: 'Modifier',
+    sendOrder: 'Envoyer la commande',
+    orderSentTitle: 'Commande envoyée !',
+    preparingMsg: 'Votre commande est en préparation',
+    nextGuestMsg: 'Prochain convive dans un moment…',
+    noNotes: 'Pas de notes',
   },
   pt: {
     selectLanguage: 'Selecione o seu idioma',
@@ -217,8 +252,8 @@ const TEXTS: Record<string, Record<string, string>> = {
     enjoyMessage: 'Aproveite sua experiência no Dorado Lounge.',
     newSession: 'Nova sessão',
     wifi_title: 'Wi-Fi Dorado Lounge',
-    wifi_name: 'American Express',
-    wifi_pass: 'AmexLounge2025.',
+    wifi_name: '',
+    wifi_pass: '',
     wifi_connect_title: 'Conecte-se',
     wifi_connect_subtitle: 'do nosso lounge VIP',
     wifi_network_label: 'Nome da rede',
@@ -237,24 +272,43 @@ const TEXTS: Record<string, Record<string, string>> = {
     dishPlural: 'pratos',
     noDishesAvailable: 'Nenhum prato disponível',
     selectAtLeastOne: 'Selecione pelo menos um prato para continuar',
+    reviewOrder: 'Revisar pedido',
+    yourOrder: 'Seu pedido',
+    estimatedTime: 'Tempo estimado',
+    totalEstimated: 'Tempo total estimado',
+    min: 'min',
+    editOrder: 'Editar pedido',
+    sendOrder: 'Enviar pedido',
+    orderSentTitle: 'Pedido enviado!',
+    preparingMsg: 'Seu pedido está sendo preparado',
+    nextGuestMsg: 'Próximo comensal em um momento…',
+    noNotes: 'Sem notas',
   },
 };
 
 const CATEGORY_ORDER: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante'];
 
+const ESTIMATED_MINUTES: Record<CategoriaMenu, number> = {
+  entrada: 10,
+  plato_fuerte: 20,
+  acompanante: 8,
+};
+
 const LOCALES = [
-  { code: 'es', label: 'Español' },
-  { code: 'en', label: 'English' },
-  { code: 'pt', label: 'Português' },
-  { code: 'fr', label: 'Français' },
+  { code: 'es', label: 'Español', flag: '🇪🇸', sub: 'Spanish' },
+  { code: 'en', label: 'English', flag: '🇺🇸', sub: 'Inglés' },
+  { code: 'pt', label: 'Português', flag: '🇧🇷', sub: 'Portuguese' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷', sub: 'French' },
 ];
 
 // ─── Wordmark Dorado Lounge — identidad propia, sin trade dress AmEx ─────────
 function DoradoLogo({
   size = 'md',
+  variant = 'dark',
   className = '',
 }: {
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'dark' | 'light';
   className?: string;
 }) {
   const sizes = {
@@ -263,10 +317,11 @@ function DoradoLogo({
     lg: { title: 'text-5xl', sub: 'text-xs', gap: 'gap-3', rule: 'w-14' },
   } as const;
   const s = sizes[size];
+  const titleColor = variant === 'light' ? 'text-[#00175A]' : 'text-[#FAF7F0]';
   return (
     <div className={`flex flex-col items-center ${s.gap} ${className}`}>
       <span
-        className={`font-serif ${s.title} font-medium tracking-[0.18em] text-[#FAF7F0] leading-none`}
+        className={`font-serif ${s.title} font-medium tracking-[0.18em] ${titleColor} leading-none`}
       >
         DORADO
       </span>
@@ -323,91 +378,72 @@ function DishCard({
     setExpanded(false);
   };
 
-  // Delay escalonado calculado dinámicamente
   const animDelay = Math.min(index * 70, 350);
+  const estimatedMin =
+    (receta.categoriaMenu ? ESTIMATED_MINUTES[receta.categoriaMenu] : undefined) ?? 15;
 
   return (
     <article
-      className={`dish-card rounded-2xl overflow-hidden border bg-[#1C1C24] cursor-pointer select-none transition-all duration-300 active:scale-[0.99] ${
+      className={`rounded-xl overflow-hidden border bg-white cursor-pointer select-none transition-all duration-300 active:scale-[0.99] ${
         selected
-          ? 'border-[#D4AF37] shadow-[0_0_24px_-6px_rgba(212,175,55,0.45)]'
+          ? 'border-[#016FD0] shadow-[0_0_16px_-4px_rgba(1,111,208,0.3)]'
           : expanded
-            ? 'border-[#D4AF37]/60 shadow-[0_0_24px_-6px_rgba(212,175,55,0.35)]'
-            : 'border-[#2a2a33] hover:border-[#D4AF37]/30 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.5)]'
+            ? 'border-[#016FD0]/40 shadow-[0_2px_16px_-4px_rgba(1,111,208,0.15)]'
+            : 'border-[#D6DEE8] hover:border-[#016FD0]/30 shadow-sm'
       }`}
-      style={{
-        animation: `dishFadeIn 0.45s cubic-bezier(0.22,1,0.36,1) ${animDelay}ms both`,
-      }}
+      style={{ animation: `dishFadeIn 0.45s cubic-bezier(0.22,1,0.36,1) ${animDelay}ms both` }}
       onClick={() => setExpanded((v) => !v)}
     >
-      {/* Foto banner 16:5 */}
-      <div className="relative w-full aspect-[16/5] overflow-hidden bg-[#0B0B0F]">
-        {receta.imagenUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={receta.imagenUrl}
-            alt={receta.nombre}
-            className={`w-full h-full object-cover transition-transform duration-700 ${
-              expanded ? 'scale-105' : 'scale-100'
-            }`}
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1C1C24] via-[#2a2418] to-[#3a2f15]">
-            <UtensilsCrossed className="h-6 w-6 text-[#D4AF37]/40" />
-            <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/60 font-medium">
-              Dorado Lounge
-            </span>
-          </div>
-        )}
-        {selected && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-            <div
-              className={`absolute top-2 right-2 bg-[#D4AF37] text-[#0B0B0F] text-[11px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 transition-transform duration-300 ${
-                pulseBadge ? 'scale-125' : 'scale-100'
-              }`}
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              {t['added']}
+      {/* Compact header — siempre visible */}
+      <div className="flex items-center gap-2.5 px-3 py-2">
+        <div className="shrink-0 w-11 h-11 rounded-lg overflow-hidden bg-[#E3EDF8]">
+          {receta.imagenUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={receta.imagenUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <UtensilsCrossed className="h-4 w-4 text-[#016FD0]/30" />
             </div>
-          </>
-        )}
-      </div>
-
-      {/* Cabecera siempre visible */}
-      <div className="px-3.5 pt-2.5 pb-3 flex items-start gap-2.5">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[#FAF7F0] text-[14px] font-bold leading-tight">{receta.nombre}</h3>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[#00175A] text-[13px] font-bold leading-tight truncate">
+            {receta.nombre}
+          </h3>
           {receta.descripcion && (
-            <p
-              className={`text-[#FAF7F0]/55 text-[11.5px] mt-0.5 leading-snug ${expanded ? '' : 'line-clamp-1'}`}
-            >
+            <p className="text-[#00175A]/45 text-[11px] mt-0.5 line-clamp-1">
               {receta.descripcion}
             </p>
           )}
+          <p className="text-[10px] text-[#016FD0]/50 mt-0.5 flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5" /> ~{estimatedMin} {t['min']}
+          </p>
         </div>
         <button
           onClick={handleAdd}
-          className={`shrink-0 h-7 px-3 rounded-full font-semibold text-[11px] transition-all active:scale-90 ${
+          className={`shrink-0 h-7 px-2.5 rounded-full font-semibold text-[10px] transition-all active:scale-90 ${
             selected
-              ? 'bg-[#0B0B0F] border border-[#D4AF37]/60 text-[#D4AF37]'
-              : 'text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_14px_-3px_rgba(212,175,55,0.7)]'
+              ? 'bg-white border border-[#016FD0]/50 text-[#016FD0]'
+              : 'text-white bg-[#016FD0] hover:bg-[#0157A6]'
           }`}
         >
           {selected ? (
-            <span className="flex items-center gap-1">
+            <span
+              className={`flex items-center gap-1 transition-transform duration-300 ${pulseBadge ? 'scale-110' : 'scale-100'}`}
+            >
               <CheckCircle2 className="h-3 w-3" />
-              {t['added']}
             </span>
           ) : (
-            t['addDish']
+            '+'
           )}
         </button>
         <ChevronDown
-          className={`h-4 w-4 mt-0.5 text-[#D4AF37]/60 transition-transform duration-300 ${
-            expanded ? 'rotate-180' : ''
-          }`}
+          className={`h-3.5 w-3.5 text-[#016FD0]/40 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
         />
       </div>
 
@@ -417,53 +453,68 @@ function DishCard({
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="px-3.5 pb-3.5 pt-1 space-y-2.5 border-t border-[#2a2a33]/60">
-            {/* Ingredientes */}
-            {receta.ingredientes.length > 0 && (
-              <div className="pt-2">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4AF37]/70 font-semibold mb-1.5">
-                  {t['viewIngredients']}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {receta.ingredientes.map((ing, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] text-[#FAF7F0]/75 bg-[#0B0B0F] border border-[#2a2a33] rounded-full px-2 py-0.5"
-                      style={{
-                        animation: expanded ? `dishFadeIn 0.3s ease-out ${i * 25}ms both` : 'none',
-                      }}
-                    >
-                      {ing.nombre}
-                    </span>
-                  ))}
-                </div>
+          <div className="border-t border-[#D6DEE8]">
+            {/* Foto grande */}
+            {receta.imagenUrl && (
+              <div className="w-full aspect-[16/7] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={receta.imagenUrl}
+                  alt={receta.nombre}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               </div>
             )}
-
-            {/* Nota */}
-            <textarea
-              rows={1}
-              placeholder={t['notePlaceholder']}
-              value={notas}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setNotas(e.target.value)}
-              className="w-full text-[12px] bg-[#0B0B0F] border border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] resize-none transition-colors"
-            />
-
-            {/* CTA principal */}
-            <button
-              onClick={handleAdd}
-              className="w-full h-9 rounded-full font-semibold text-[13px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all"
-            >
-              {selected ? (
-                <span className="flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {t['added']}
-                </span>
-              ) : (
-                t['addDish']
+            <div className="px-3 pb-3 pt-2 space-y-2">
+              {receta.descripcion && (
+                <p className="text-[12px] text-[#00175A]/55 leading-relaxed">
+                  {receta.descripcion}
+                </p>
               )}
-            </button>
+              {receta.ingredientes.length > 0 && (
+                <div>
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-[#016FD0]/60 font-semibold mb-1">
+                    {t['viewIngredients']}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {receta.ingredientes.map((ing, i) => (
+                      <span
+                        key={`${receta.id}-${ing.nombre}`}
+                        className="text-[10px] text-[#00175A]/65 bg-[#F0F5FB] border border-[#D6DEE8] rounded-full px-2 py-0.5"
+                        style={{
+                          animation: expanded
+                            ? `dishFadeIn 0.3s ease-out ${i * 25}ms both`
+                            : 'none',
+                        }}
+                      >
+                        {ing.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <textarea
+                rows={1}
+                placeholder={t['notePlaceholder']}
+                value={notas}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setNotas(e.target.value)}
+                className="w-full text-[12px] bg-[#F0F5FB] border border-[#D6DEE8] text-[#00175A] placeholder:text-[#00175A]/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#016FD0] focus:ring-1 focus:ring-[#016FD0]/20 resize-none transition-colors"
+              />
+              <button
+                onClick={handleAdd}
+                className="w-full h-9 rounded-full font-semibold text-[13px] text-white bg-[#016FD0] hover:bg-[#0157A6] active:scale-[0.97] transition-all"
+              >
+                {selected ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4" /> {t['added']}
+                  </span>
+                ) : (
+                  t['addDish']
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -480,6 +531,7 @@ function MenuScreen({
   onConfirm,
   loading,
   error,
+  sent,
 }: {
   recetas: PublicReceta[];
   locale: string;
@@ -488,9 +540,11 @@ function MenuScreen({
   onConfirm: (items: CartItem[]) => void;
   loading: boolean;
   error: string;
+  sent?: boolean | undefined;
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [showReview, setShowReview] = useState(false);
   const [emptyWarning, setEmptyWarning] = useState(false);
   const emptyWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -523,20 +577,17 @@ function MenuScreen({
   const inCartIds = new Set(cart.map((c) => c.receta.id));
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A]">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#0B0B0F]/95 backdrop-blur-md border-b border-[#1C1C24] px-4 py-3">
+      <header className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-[#D6DEE8] px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p
-              className="text-[10px] tracking-[0.3em] uppercase font-bold"
-              style={{ color: '#D4AF37' }}
-            >
+            <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-[#016FD0]">
               {t['guestLabel']} {currentComensal} {t['of']} {totalComensales}
             </p>
           </div>
           {totalItems > 0 && (
-            <span className="text-xs bg-[#D4AF37] text-[#0B0B0F] rounded-full px-3 py-1 font-bold tabular-nums shadow-[0_0_12px_-2px_rgba(212,175,55,0.5)]">
+            <span className="text-xs bg-[#016FD0] text-white rounded-full px-3 py-1 font-bold tabular-nums shadow-[0_2px_8px_-2px_rgba(1,111,208,0.4)]">
               {totalItems} {totalItems === 1 ? t['dishSingular'] : t['dishPlural']}
             </span>
           )}
@@ -552,8 +603,8 @@ function MenuScreen({
                   onClick={() => setActiveCategory(cat)}
                   className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95 ${
                     active
-                      ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37] shadow-[0_0_16px_-4px_rgba(212,175,55,0.5)]'
-                      : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40'
+                      ? 'bg-[#016FD0] text-white border-[#016FD0] shadow-[0_2px_12px_-4px_rgba(1,111,208,0.4)]'
+                      : 'border-[#D6DEE8] text-[#00175A]/55 hover:text-[#016FD0] hover:border-[#016FD0]/40'
                   }`}
                 >
                   {t[`categories_${cat}`]}
@@ -564,10 +615,10 @@ function MenuScreen({
         )}
       </header>
 
-      {/* Lista de platos — key compuesto fuerza re-animación al cambiar categoría */}
+      {/* Lista de platos */}
       <main key={activeCategory} className="flex-1 px-4 py-4 space-y-2.5">
         {(byCategory[activeCategory] ?? []).length === 0 ? (
-          <div className="flex flex-col items-center py-20 gap-3 text-[#FAF7F0]/40">
+          <div className="flex flex-col items-center py-20 gap-3 text-[#00175A]/35">
             <UtensilsCrossed className="h-10 w-10 opacity-50" />
             <p className="text-sm">{t['noDishesAvailable']}</p>
           </div>
@@ -585,15 +636,15 @@ function MenuScreen({
         )}
       </main>
 
-      {error && <p className="px-4 pb-2 text-sm text-red-400 text-center">{error}</p>}
+      {error && <p className="px-4 pb-2 text-sm text-red-500 text-center">{error}</p>}
 
-      {/* CTA fijo */}
-      <div className="sticky bottom-0 bg-[#0B0B0F]/95 backdrop-blur-md border-t border-[#1C1C24] px-4 py-3 safe-pb space-y-2">
+      {/* CTA fijo — abre review */}
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#D6DEE8] px-4 py-3 safe-pb space-y-2">
         {emptyWarning && (
-          <p className="text-xs text-[#D4AF37] text-center font-medium">{t['selectAtLeastOne']}</p>
+          <p className="text-xs text-[#016FD0] text-center font-medium">{t['selectAtLeastOne']}</p>
         )}
         <button
-          className="w-full h-12 rounded-full font-bold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:shadow-none"
+          className="w-full h-12 rounded-full font-bold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all disabled:opacity-50"
           onClick={() => {
             if (cart.length === 0) {
               setEmptyWarning(true);
@@ -602,36 +653,194 @@ function MenuScreen({
               return;
             }
             setEmptyWarning(false);
-            onConfirm(cart);
+            setShowReview(true);
           }}
           disabled={loading}
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t['sending']}
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-1.5">
-              {t['confirmOrder']}
-              <ChevronRight className="h-4 w-4" />
-            </span>
-          )}
+          <span className="flex items-center justify-center gap-1.5">
+            {t['reviewOrder']} ({totalItems})
+            <ChevronRight className="h-4 w-4" />
+          </span>
         </button>
       </div>
+
+      {/* ── Review overlay ── */}
+      {showReview && !sent && (
+        <div
+          className="fixed inset-0 z-50 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A] flex flex-col"
+          style={{ animation: 'reviewSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) both' }}
+        >
+          <div className="px-4 py-3 border-b border-[#D6DEE8] flex items-center gap-3 bg-white/80 backdrop-blur-sm">
+            <button
+              onClick={() => setShowReview(false)}
+              className="text-[#016FD0] hover:text-[#0157A6] transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <h2 className="font-bold text-base flex-1">{t['yourOrder']}</h2>
+            <span className="text-xs text-[#016FD0] font-semibold">
+              {t['guestLabel']} {currentComensal}/{totalComensales}
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
+            {cart.map((item, i) => {
+              const mins =
+                (item.receta.categoriaMenu
+                  ? ESTIMATED_MINUTES[item.receta.categoriaMenu]
+                  : undefined) ?? 15;
+              return (
+                <div
+                  key={item.receta.id}
+                  className="bg-white rounded-xl border border-[#D6DEE8] p-3 shadow-sm flex gap-3"
+                  style={{ animation: `dishFadeIn 0.35s ease-out ${i * 80}ms both` }}
+                >
+                  <div className="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-[#E3EDF8]">
+                    {item.receta.imagenUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.receta.imagenUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <UtensilsCrossed className="h-5 w-5 text-[#016FD0]/25" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[13px] text-[#00175A] truncate">
+                      {item.receta.nombre}
+                    </p>
+                    <p className="text-[11px] text-[#00175A]/45 mt-0.5">
+                      {item.notas || t['noNotes']}
+                    </p>
+                    <p className="text-[11px] text-[#016FD0]/60 mt-1 flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> ~{mins} {t['min']}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Tiempo total + confirmar */}
+          <div className="border-t border-[#D6DEE8] bg-white/80 backdrop-blur-sm px-4 py-3 safe-pb space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[#00175A]/60 flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-[#016FD0]" />
+                {t['totalEstimated']}
+              </span>
+              <span className="font-bold text-[#016FD0]">
+                ~
+                {Math.max(
+                  ...cart.map(
+                    (c) =>
+                      (c.receta.categoriaMenu
+                        ? ESTIMATED_MINUTES[c.receta.categoriaMenu]
+                        : undefined) ?? 15,
+                  ),
+                )}{' '}
+                {t['min']}
+              </span>
+            </div>
+            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            <button
+              className="w-full h-12 rounded-full font-bold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all disabled:opacity-50"
+              onClick={() => onConfirm(cart)}
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t['sending']}
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-1.5">
+                  {t['sendOrder']}
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sent animation overlay ── */}
+      {sent && (
+        <div
+          className="fixed inset-0 z-50 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] flex flex-col items-center justify-center text-center px-6"
+          style={{ animation: 'reviewSlideUp 0.3s ease-out both' }}
+        >
+          <div style={{ animation: 'sentPulse 0.6s cubic-bezier(0.22,1,0.36,1) both' }}>
+            <div className="w-20 h-20 mx-auto rounded-full bg-[#016FD0]/10 border-2 border-[#016FD0]/30 flex items-center justify-center mb-4">
+              <CheckCircle2
+                className="h-10 w-10 text-[#016FD0]"
+                style={{ animation: 'sentCheck 0.5s ease-out 0.2s both' }}
+              />
+            </div>
+            <h2 className="font-serif text-2xl text-[#00175A] mb-2">{t['orderSentTitle']}</h2>
+            <p className="text-sm text-[#00175A]/55 mb-1">{t['preparingMsg']}</p>
+            <p className="text-xs text-[#016FD0] font-semibold flex items-center justify-center gap-1">
+              <Clock className="h-3 w-3" />~
+              {Math.max(
+                ...cart.map(
+                  (c) =>
+                    (c.receta.categoriaMenu
+                      ? ESTIMATED_MINUTES[c.receta.categoriaMenu]
+                      : undefined) ?? 15,
+                ),
+              )}{' '}
+              {t['min']}
+            </p>
+            {currentComensal < totalComensales && (
+              <p className="mt-4 text-xs text-[#00175A]/40">{t['nextGuestMsg']}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes reviewSlideUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes sentPulse {
+          0%   { opacity: 0; transform: scale(0.8); }
+          60%  { transform: scale(1.05); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes sentCheck {
+          from { opacity: 0; transform: scale(0) rotate(-45deg); }
+          to   { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+      `}</style>
     </div>
   );
 }
 
 // ─── App principal ────────────────────────────────────────────────────────────
+interface WifiConfig {
+  networkName: string;
+  password: string;
+}
+
 interface QRPassengerAppProps {
   recetas: PublicReceta[];
   mesa: MesaInfo;
   token: string;
   initialLocale: string;
+  wifiConfig: WifiConfig;
 }
 
-export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassengerAppProps) {
+export function QRPassengerApp({
+  recetas,
+  mesa,
+  token,
+  initialLocale,
+  wifiConfig,
+}: QRPassengerAppProps) {
   const router = useRouter();
   const idPrefix = useId();
   const [locale, setLocale] = useState(initialLocale);
@@ -642,6 +851,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
   const [currentComensal, setCurrentComensal] = useState(1);
   const [loading, setLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
+  const [orderSent, setOrderSent] = useState(false);
   const orderCountRef = useRef(0);
   const { isOnline, pendingCount, syncing } = useOfflineSync();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -726,10 +936,12 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
     }
 
     setLoading(false);
+    setOrderSent(true);
+    await new Promise((r) => setTimeout(r, 2000));
+    setOrderSent(false);
 
     if (currentComensal < totalComensales) {
       setCurrentComensal((n) => n + 1);
-      // step sigue siendo 'menu', el componente se re-monta con nueva key
     } else {
       setStep('done');
     }
@@ -745,45 +957,80 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
-          {/* Halo dorado decorativo */}
-          <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-[#D4AF37]/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-[#D4AF37]/5 blur-3xl" />
+        <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A] relative overflow-hidden">
+          {/* Halos azules decorativos */}
+          <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[480px] h-[480px] rounded-full bg-[#016FD0]/8 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-[#016FD0]/5 blur-3xl" />
 
           {/* Logo top */}
-          <div className="relative">
-            <DoradoLogo size="lg" />
+          <div
+            className="relative"
+            style={{ animation: 'langFadeDown 0.8s cubic-bezier(0.22,1,0.36,1) both' }}
+          >
+            <DoradoLogo size="lg" variant="light" />
           </div>
 
           <div className="relative w-full space-y-7 text-center">
-            <div className="space-y-2">
-              <h1 className="font-serif text-xl tracking-[0.18em] uppercase text-[#FAF7F0]/90">
+            <div
+              className="space-y-2"
+              style={{ animation: 'langFadeDown 0.7s cubic-bezier(0.22,1,0.36,1) 0.15s both' }}
+            >
+              <h1 className="font-serif text-xl tracking-[0.18em] uppercase text-[#00175A]/90">
                 {t['tagline']}
               </h1>
-              <p className="text-[#FAF7F0]/55 text-sm">{t['selectLanguage']}</p>
+              <p className="text-[#00175A]/50 text-sm">{t['selectLanguage']}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {LOCALES.map((l) => (
+              {LOCALES.map((l, i) => (
                 <button
                   key={l.code}
                   onClick={() => handleLocaleSelect(l.code)}
-                  className={`py-4 rounded-2xl font-medium text-base transition-all active:scale-95 ${
-                    locale === l.code
-                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] text-[#0B0B0F] shadow-[0_0_24px_-4px_rgba(212,175,55,0.55)]'
-                      : 'bg-[#1C1C24] border border-[#2a2a33] text-[#FAF7F0]/80 hover:border-[#D4AF37]/40 hover:text-[#D4AF37]'
-                  }`}
+                  className="group relative flex flex-col items-center gap-2.5 py-5 px-3 rounded-3xl border bg-white border-[#D6DEE8] text-[#00175A] shadow-[0_2px_12px_-4px_rgba(0,23,90,0.08)] transition-all duration-300 hover:border-[#016FD0]/60 hover:shadow-[0_4px_24px_-6px_rgba(1,111,208,0.25)] active:scale-[0.95]"
+                  style={{
+                    animation: `langCardIn 0.6s cubic-bezier(0.22,1,0.36,1) ${300 + i * 100}ms both`,
+                  }}
                 >
-                  {l.label}
+                  <span
+                    className="text-4xl transition-transform duration-300 group-hover:scale-110 group-active:scale-95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
+                    style={{ filter: 'saturate(1.1)' }}
+                  >
+                    {l.flag}
+                  </span>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="font-semibold text-[15px] tracking-wide transition-colors duration-300 group-hover:text-[#016FD0]">
+                      {l.label}
+                    </span>
+                    <span className="text-[10px] text-[#00175A]/40 tracking-wider uppercase">
+                      {l.sub}
+                    </span>
+                  </div>
+                  {/* Borde azul AMEX animado al hover */}
+                  <span className="absolute inset-0 rounded-3xl border-2 border-[#016FD0] opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Línea legal (fair use nominativo) */}
-          <p className="relative text-[10px] text-[#FAF7F0]/35 tracking-[0.15em] uppercase text-center max-w-xs">
+          {/* Línea legal */}
+          <p
+            className="relative text-[10px] text-[#00175A]/35 tracking-[0.15em] uppercase text-center max-w-xs"
+            style={{ animation: 'langFadeDown 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both' }}
+          >
             {t['cardholderLegal']}
           </p>
         </div>
+
+        {/* Animaciones de entrada */}
+        <style>{`
+          @keyframes langCardIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.92); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes langFadeDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </>
     );
   }
@@ -802,31 +1049,33 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           <HubCard title={t['wifi_title'] ?? ''} onBack={() => setHubView('main')} locale={locale}>
             <div className="space-y-6">
               <div className="flex flex-col items-center gap-4 text-center">
-                <DoradoLogo size="sm" />
+                <DoradoLogo size="sm" variant="light" />
                 <div>
-                  <h3 className="font-serif text-3xl tracking-tight">{t['wifi_connect_title']}</h3>
-                  <p className="text-sm text-[#FAF7F0]/60 mt-1">{t['wifi_connect_subtitle']}</p>
+                  <h3 className="font-serif text-3xl tracking-tight text-[#00175A]">
+                    {t['wifi_connect_title']}
+                  </h3>
+                  <p className="text-sm text-[#00175A]/50 mt-1">{t['wifi_connect_subtitle']}</p>
                 </div>
-                <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-                  <Wifi className="h-7 w-7 text-[#D4AF37]" />
+                <div className="w-14 h-14 rounded-full bg-[#016FD0]/10 border border-[#016FD0]/25 flex items-center justify-center">
+                  <Wifi className="h-7 w-7 text-[#016FD0]" />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="rounded-2xl bg-[#1C1C24] border border-[#2a2a33] px-4 py-3">
-                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#D4AF37]/80 font-semibold">
+                <div className="rounded-2xl bg-white border border-[#D6DEE8] px-4 py-3 shadow-sm">
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#016FD0]/80 font-semibold">
                     {t['wifi_network_label']}
                   </p>
-                  <p className="text-lg font-bold mt-1 text-[#FAF7F0] select-all">
-                    {t['wifi_name']}
+                  <p className="text-lg font-bold mt-1 text-[#00175A] select-all">
+                    {wifiConfig.networkName}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#1C1C24] border border-[#2a2a33] px-4 py-3">
-                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#D4AF37]/80 font-semibold">
+                <div className="rounded-2xl bg-white border border-[#D6DEE8] px-4 py-3 shadow-sm">
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-[#016FD0]/80 font-semibold">
                     {t['wifi_password_label']}
                   </p>
-                  <p className="text-lg font-bold mt-1 font-mono tracking-wide text-[#FAF7F0] select-all">
-                    {t['wifi_pass']}
+                  <p className="text-lg font-bold mt-1 font-mono tracking-wide text-[#00175A] select-all">
+                    {wifiConfig.password}
                   </p>
                 </div>
               </div>
@@ -850,12 +1099,12 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             locale={locale}
           >
             <div className="space-y-5">
-              <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['benefits_text']}</p>
+              <p className="text-sm text-[#00175A]/65 leading-relaxed">{t['benefits_text']}</p>
               <a
                 href="https://www.americanexpress.com/es-co/network/beneficios/ofertas/?inav=co_menu_offers"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full h-12 rounded-2xl font-semibold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-2xl font-semibold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {t['benefits_cta']}
                 <ExternalLink className="h-4 w-4" />
@@ -879,7 +1128,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             onBack={() => setHubView('main')}
             locale={locale}
           >
-            <p className="text-sm text-[#FAF7F0]/70 leading-relaxed">{t['experience_text']}</p>
+            <p className="text-sm text-[#00175A]/65 leading-relaxed">{t['experience_text']}</p>
           </HubCard>
         </>
       );
@@ -893,15 +1142,17 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
+        <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A]">
           {/* Header */}
-          <div className="relative px-6 pt-10 pb-8 text-center bg-gradient-to-b from-[#1C1C24] to-[#0B0B0F] border-b border-[#2a2a33] overflow-hidden">
-            <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-[#D4AF37]/10 blur-3xl" />
+          <div className="relative px-6 pt-10 pb-8 text-center bg-gradient-to-b from-[#016FD0]/5 to-transparent border-b border-[#D6DEE8] overflow-hidden">
+            <div className="pointer-events-none absolute inset-x-0 -top-20 h-40 bg-[#016FD0]/6 blur-3xl" />
             <div className="relative flex flex-col items-center gap-4">
-              <DoradoLogo size="md" />
+              <DoradoLogo size="md" variant="light" />
               <div>
-                <h1 className="font-serif text-2xl tracking-tight">{t['welcome']}</h1>
-                <p className="text-[#D4AF37] text-[10px] tracking-[0.3em] uppercase mt-2 font-semibold">
+                <h1 className="font-serif text-2xl tracking-tight text-[#00175A]">
+                  {t['welcome']}
+                </h1>
+                <p className="text-[#016FD0] text-[10px] tracking-[0.3em] uppercase mt-2 font-semibold">
                   {mesa.mesaNumero} · {mesa.zona}
                 </p>
               </div>
@@ -933,7 +1184,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             />
           </div>
 
-          <p className="pb-6 text-center text-[9px] text-[#FAF7F0]/30 tracking-[0.2em] uppercase">
+          <p className="pb-6 text-center text-[9px] text-[#00175A]/30 tracking-[0.2em] uppercase">
             {t['cardholderLegal']}
           </p>
         </div>
@@ -953,13 +1204,13 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           syncing={syncing}
           locale={locale}
         />
-        <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
-          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full bg-[#D4AF37]/8 blur-3xl" />
+        <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-8 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A] relative overflow-hidden">
+          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full bg-[#016FD0]/6 blur-3xl" />
           <div className="relative text-center space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-              <Users className="h-8 w-8 text-[#D4AF37]" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#016FD0]/10 border border-[#016FD0]/25 flex items-center justify-center">
+              <Users className="h-8 w-8 text-[#016FD0]" />
             </div>
-            <h2 className="font-serif text-2xl">{t['howManyGuests']}</h2>
+            <h2 className="font-serif text-2xl text-[#00175A]">{t['howManyGuests']}</h2>
           </div>
           <div className="relative w-full max-w-xs space-y-4">
             <input
@@ -971,10 +1222,10 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
               value={guestInput}
               onChange={(e) => setGuestInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && valid && handleGuestsConfirm()}
-              className="w-full text-center text-2xl font-bold bg-[#1C1C24] border-2 border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#D4AF37] transition-colors"
+              className="w-full text-center text-2xl font-bold bg-white border-2 border-[#D6DEE8] text-[#00175A] placeholder:text-[#00175A]/30 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#016FD0] focus:ring-2 focus:ring-[#016FD0]/20 transition-all shadow-sm"
             />
             <button
-              className="w-full h-12 rounded-2xl font-semibold text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_28px_-6px_rgba(212,175,55,0.7)] active:scale-[0.98] transition-all disabled:opacity-40 disabled:hover:shadow-none flex items-center justify-center gap-1.5"
+              className="w-full h-12 rounded-2xl font-semibold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all disabled:opacity-40 disabled:hover:shadow-none flex items-center justify-center gap-1.5"
               disabled={!valid}
               onClick={handleGuestsConfirm}
             >
@@ -982,7 +1233,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
               <ArrowRight className="h-4 w-4" />
             </button>
             <button
-              className="w-full text-sm text-[#FAF7F0]/50 hover:text-[#FAF7F0] transition-colors py-2"
+              className="w-full text-sm text-[#00175A]/50 hover:text-[#016FD0] transition-colors py-2"
               onClick={() => setStep('hub')}
             >
               {t['back']}
@@ -1012,6 +1263,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
           onConfirm={handleConfirmOrder}
           loading={loading}
           error={orderError}
+          sent={orderSent}
         />
         {TURNSTILE_ENABLED ? (
           <div className="fixed bottom-2 right-2 z-50">
@@ -1035,21 +1287,21 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
         syncing={syncing}
         locale={locale}
       />
-      <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-[#0B0B0F] text-[#FAF7F0] relative overflow-hidden">
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-[#D4AF37]/12 blur-3xl" />
+      <div className="min-h-[100dvh] flex flex-col items-center justify-between px-6 py-12 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A] relative overflow-hidden">
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-[#016FD0]/8 blur-3xl" />
         <div className="relative">
-          <DoradoLogo size="md" />
+          <DoradoLogo size="md" variant="light" />
         </div>
         <div className="relative text-center space-y-4">
-          <div className="w-24 h-24 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shadow-[0_0_40px_-8px_rgba(212,175,55,0.5)]">
-            <CheckCircle2 className="h-12 w-12 text-[#D4AF37]" />
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#016FD0]/10 border border-[#016FD0]/30 flex items-center justify-center shadow-[0_0_40px_-8px_rgba(1,111,208,0.3)]">
+            <CheckCircle2 className="h-12 w-12 text-[#016FD0]" />
           </div>
-          <h2 className="font-serif text-3xl">{t['allDone']}</h2>
-          <p className="text-[#FAF7F0]/70 text-sm max-w-xs mx-auto leading-relaxed">
+          <h2 className="font-serif text-3xl text-[#00175A]">{t['allDone']}</h2>
+          <p className="text-[#00175A]/60 text-sm max-w-xs mx-auto leading-relaxed">
             {t['enjoyMessage']}
           </p>
           <button
-            className="mt-4 text-[#D4AF37] text-sm font-medium underline underline-offset-4 hover:text-[#E8C76A] transition-colors"
+            className="mt-4 text-[#016FD0] text-sm font-medium underline underline-offset-4 hover:text-[#0157A6] transition-colors"
             onClick={() => {
               setStep('welcome');
               setGuestInput('');
@@ -1060,7 +1312,7 @@ export function QRPassengerApp({ recetas, mesa, token, initialLocale }: QRPassen
             {t['newSession']}
           </button>
         </div>
-        <p className="relative text-center text-[9px] text-[#FAF7F0]/30 tracking-[0.2em] uppercase">
+        <p className="relative text-center text-[9px] text-[#00175A]/30 tracking-[0.2em] uppercase">
           {t['cardholderLegal']}
         </p>
       </div>
@@ -1085,12 +1337,12 @@ function HubButton({
       onClick={onClick}
       className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-semibold text-left transition-all active:scale-[0.98] ${
         primary
-          ? 'text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] shadow-[0_0_24px_-6px_rgba(212,175,55,0.55)]'
-          : 'bg-[#1C1C24] border border-[#2a2a33] text-[#FAF7F0] hover:border-[#D4AF37]/40'
+          ? 'text-white bg-[#016FD0] hover:bg-[#0157A6] shadow-[0_4px_20px_-4px_rgba(1,111,208,0.4)]'
+          : 'bg-white border border-[#D6DEE8] text-[#00175A] hover:border-[#016FD0]/50 hover:shadow-[0_2px_16px_-4px_rgba(1,111,208,0.15)] shadow-sm'
       }`}
     >
       <span className="flex items-center gap-3">
-        <span className={primary ? 'text-[#0B0B0F]' : 'text-[#D4AF37]'}>{icon}</span>
+        <span className={primary ? 'text-white' : 'text-[#016FD0]'}>{icon}</span>
         {label}
       </span>
       <ChevronRight className={`h-4 w-4 ${primary ? 'opacity-70' : 'opacity-40'}`} />
@@ -1111,15 +1363,15 @@ function HubCard({
 }) {
   const t = TEXTS[locale] ?? TEXTS['es']!;
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0B0B0F] text-[#FAF7F0]">
-      <div className="px-5 py-4 border-b border-[#2a2a33] flex items-center gap-3 bg-[#1C1C24]/40">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A]">
+      <div className="px-5 py-4 border-b border-[#D6DEE8] flex items-center gap-3 bg-white/60 backdrop-blur-sm">
         <button
           onClick={onBack}
-          className="text-sm text-[#D4AF37] hover:text-[#E8C76A] transition-colors font-medium"
+          className="text-sm text-[#016FD0] hover:text-[#0157A6] transition-colors font-medium"
         >
           ← {t['back']}
         </button>
-        <h2 className="font-bold text-base">{title}</h2>
+        <h2 className="font-bold text-base text-[#00175A]">{title}</h2>
       </div>
       <div className="flex-1 px-5 py-6">{children}</div>
     </div>
