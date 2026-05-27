@@ -48,9 +48,10 @@ interface PedidoCardProps {
   pedido: PedidoWithItems;
   onStateChange: (pedidoId: string, nuevoEstado: string) => void;
   onRefresh?: () => void;
+  readOnly?: boolean | undefined;
 }
 
-export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps) {
+export function PedidoCard({ pedido, onStateChange, onRefresh, readOnly }: PedidoCardProps) {
   const t = useTranslations('kds');
   const tZ = useTranslations('zonas');
   const [loading, setLoading] = useState(false);
@@ -127,31 +128,40 @@ export function PedidoCard({ pedido, onStateChange, onRefresh }: PedidoCardProps
       )}
 
       {/* Actions */}
-      <div className="pt-1">
-        {pedido.estado === 'creado' && (
-          <Button size="sm" className="w-full" onClick={handleIniciar} disabled={loading}>
-            <ChefHat className="h-4 w-4 mr-1.5" />
-            {t('iniciarPrep')}
-          </Button>
-        )}
-        {pedido.estado === 'en_preparacion' && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-full"
-            onClick={handleDespachar}
-            disabled={loading}
-          >
-            <Truck className="h-4 w-4 mr-1.5" />
-            {t('despachar')}
-          </Button>
-        )}
-        {pedido.estado === 'despachado' && (
+      {!readOnly && (
+        <div className="pt-1">
+          {pedido.estado === 'creado' && (
+            <Button size="sm" className="w-full" onClick={handleIniciar} disabled={loading}>
+              <ChefHat className="h-4 w-4 mr-1.5" />
+              {t('iniciarPrep')}
+            </Button>
+          )}
+          {pedido.estado === 'en_preparacion' && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="w-full"
+              onClick={handleDespachar}
+              disabled={loading}
+            >
+              <Truck className="h-4 w-4 mr-1.5" />
+              {t('despachar')}
+            </Button>
+          )}
+          {pedido.estado === 'despachado' && (
+            <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
+              {t('esperandoMesero')}
+            </Badge>
+          )}
+        </div>
+      )}
+      {readOnly && (
+        <div className="pt-1">
           <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
-            {t('esperandoMesero')}
+            {t(`evento.${pedido.estado}`)}
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

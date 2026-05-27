@@ -6,14 +6,16 @@ import { KdsBoard } from '@/components/kds/kds-board';
 export const dynamic = 'force-dynamic';
 
 export default async function CocinaPage() {
+  let ctx;
   try {
-    await assertCan('orders:read');
+    ctx = await assertCan('orders:read');
   } catch {
     redirect('/inventario');
   }
 
   const result = await getPedidos();
   const pedidos = result.ok ? result.value : [];
+  const readOnly = ctx.role === 'admin' || ctx.role === 'superuser';
 
-  return <KdsBoard initialPedidos={pedidos} />;
+  return <KdsBoard initialPedidos={pedidos} readOnly={readOnly} />;
 }

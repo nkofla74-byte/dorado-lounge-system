@@ -84,7 +84,7 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
       'personal_pasteleria',
     ],
   },
-  { href: '/cocina', labelKey: 'cocina', icon: MonitorCheck, roles: ['admin', 'chef'] },
+  { href: '/cocina', labelKey: 'cocina', icon: MonitorCheck, roles: ['chef'] },
   {
     href: '/cocina-fria',
     labelKey: 'cocinaFria',

@@ -74,9 +74,10 @@ interface AmexCardProps {
   pedido: PedidoWithItems;
   onRefresh: () => void;
   onOptimistic: (id: string, estado: string) => void;
+  readOnly?: boolean | undefined;
 }
 
-function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
+function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) {
   const t = useTranslations('kds');
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -165,50 +166,54 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
       )}
 
       {/* Acciones */}
-      <div className="pt-1 flex flex-col gap-1.5">
-        {pedido.estado === 'creado' && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full"
-            disabled={loading}
-            onClick={() => run(() => recibirEnCocina(pedido.id, pedido.version), 'recibido_cocina')}
-          >
-            <CheckCircle2 className="h-4 w-4 mr-1.5" />
-            {t('recibirCocina')}
-          </Button>
-        )}
-        {pedido.estado === 'recibido_cocina' && (
-          <Button
-            size="sm"
-            className="w-full"
-            disabled={loading}
-            onClick={() =>
-              run(() => iniciarPreparacion(pedido.id, pedido.version), 'en_preparacion')
-            }
-          >
-            <ChefHat className="h-4 w-4 mr-1.5" />
-            {t('iniciarPrep')}
-          </Button>
-        )}
-        {pedido.estado === 'en_preparacion' && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-full"
-            disabled={loading}
-            onClick={() => run(() => despacharPedido(pedido.id, pedido.version), 'despachado')}
-          >
-            <Truck className="h-4 w-4 mr-1.5" />
-            {t('despachar')}
-          </Button>
-        )}
-        {pedido.estado === 'despachado' && (
-          <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
-            {t('esperandoMesero')}
-          </Badge>
-        )}
-      </div>
+      {!readOnly && (
+        <div className="pt-1 flex flex-col gap-1.5">
+          {pedido.estado === 'creado' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={() =>
+                run(() => recibirEnCocina(pedido.id, pedido.version), 'recibido_cocina')
+              }
+            >
+              <CheckCircle2 className="h-4 w-4 mr-1.5" />
+              {t('recibirCocina')}
+            </Button>
+          )}
+          {pedido.estado === 'recibido_cocina' && (
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={loading}
+              onClick={() =>
+                run(() => iniciarPreparacion(pedido.id, pedido.version), 'en_preparacion')
+              }
+            >
+              <ChefHat className="h-4 w-4 mr-1.5" />
+              {t('iniciarPrep')}
+            </Button>
+          )}
+          {pedido.estado === 'en_preparacion' && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="w-full"
+              disabled={loading}
+              onClick={() => run(() => despacharPedido(pedido.id, pedido.version), 'despachado')}
+            >
+              <Truck className="h-4 w-4 mr-1.5" />
+              {t('despachar')}
+            </Button>
+          )}
+          {pedido.estado === 'despachado' && (
+            <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
+              {t('esperandoMesero')}
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Historia de trazabilidad */}
       <div className="border-t border-border/50 pt-2">
@@ -266,9 +271,10 @@ function AmexCard({ pedido, onRefresh, onOptimistic }: AmexCardProps) {
 
 interface KdsBoardAmexProps {
   initialPedidos: PedidoWithItems[];
+  readOnly?: boolean | undefined;
 }
 
-export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
+export function KdsBoardAmex({ initialPedidos, readOnly }: KdsBoardAmexProps) {
   const t = useTranslations('kds');
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
   const [refreshing, setRefreshing] = useState(false);
@@ -393,6 +399,7 @@ export function KdsBoardAmex({ initialPedidos }: KdsBoardAmexProps) {
               pedido={pedido}
               onRefresh={refresh}
               onOptimistic={handleOptimistic}
+              readOnly={readOnly}
             />
           ))}
         </div>

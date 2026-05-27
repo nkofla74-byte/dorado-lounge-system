@@ -48,9 +48,10 @@ const ZONA_KEYS: ZonaFiltro[] = [null, 'snack', 'buffet', 'amex'];
 
 interface KdsBoardProps {
   initialPedidos: PedidoWithItems[];
+  readOnly?: boolean | undefined;
 }
 
-export function KdsBoard({ initialPedidos }: KdsBoardProps) {
+export function KdsBoard({ initialPedidos, readOnly }: KdsBoardProps) {
   const t = useTranslations('kds');
   const tZ = useTranslations('zonas');
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
@@ -207,6 +208,7 @@ export function KdsBoard({ initialPedidos }: KdsBoardProps) {
                       pedido={pedido}
                       onStateChange={handleStateChange}
                       onRefresh={refresh}
+                      readOnly={readOnly}
                     />
                   ))
                 )}

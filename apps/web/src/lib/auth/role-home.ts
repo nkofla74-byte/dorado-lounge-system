@@ -28,7 +28,6 @@ export const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/produccion',
     '/pasteleria',
     '/pedidos',
-    '/cocina',
     '/cocina-fria',
     '/cocina-caliente',
     '/cocina-amex',

@@ -6,14 +6,16 @@ import { KdsBoardAmex } from '@/components/kds/kds-board-amex';
 export const dynamic = 'force-dynamic';
 
 export default async function CocinaAmexPage() {
+  let ctx;
   try {
-    await assertCan('cocina_amex:read');
+    ctx = await assertCan('cocina_amex:read');
   } catch {
     redirect('/inventario');
   }
 
   const result = await getPedidosAmexKds();
   const pedidos = result.ok ? result.value : [];
+  const readOnly = ctx.role === 'admin' || ctx.role === 'superuser';
 
-  return <KdsBoardAmex initialPedidos={pedidos} />;
+  return <KdsBoardAmex initialPedidos={pedidos} readOnly={readOnly} />;
 }
