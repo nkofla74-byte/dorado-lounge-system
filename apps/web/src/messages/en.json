@@ -1152,6 +1152,11 @@
   },
   "kds": {
     "titulo": "Kitchen — KDS",
+    "tituloCocinaFria": "Cold Kitchen — KDS",
+    "subtituloCocinaFria": "Incoming preparation requests for the cold kitchen",
+    "tituloCocinaCaliente": "Hot Kitchen — KDS",
+    "subtituloCocinaCaliente": "Incoming preparation requests for the hot kitchen",
+    "sinSolicitudes": "No pending preparation requests",
     "tituloAmex": "Amex Kitchen — KDS",
     "sinPedidosActivos": "No active orders",
     "sinPedidosAmex": "No active Amex orders",

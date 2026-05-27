@@ -47,7 +47,7 @@ const TENANT_OPERATIVO_SLUG = 'dorado-lounge';
 const LEGACY_TENANT_SLUGS = ['dorado-demo', 'plataforma']; // se borran si quedan vacíos
 const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com']; // se borran si reaparecen
 
-// Set de test: 11 usuarios, todos en el tenant operativo.
+// Set de test: 13 usuarios, todos en el tenant operativo.
 const TEST_USERS = [
   {
     email: 'superuser@gisat.com',
@@ -65,6 +65,18 @@ const TEST_USERS = [
     email: 'chef@dorado.test',
     nombre: 'Chef Principal',
     role: 'chef',
+    tenantSlug: TENANT_OPERATIVO_SLUG,
+  },
+  {
+    email: 'cocinafria@dorado.test',
+    nombre: 'Chef Cocina Fría',
+    role: 'chef_cocina_fria',
+    tenantSlug: TENANT_OPERATIVO_SLUG,
+  },
+  {
+    email: 'cocinacaliente@dorado.test',
+    nombre: 'Chef Cocina Caliente',
+    role: 'chef_cocina_caliente',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
@@ -239,7 +251,7 @@ async function main() {
   }
 
   console.log('\n────────────────────────────────────────────────────');
-  console.log(`Contraseña común para los 11 test users: ${PASSWORD}`);
+  console.log(`Contraseña común para los ${TEST_USERS.length} test users: ${PASSWORD}`);
   console.log(`Creados: ${created}  ·  Reseteados: ${updated}  ·  Errores: ${errors}`);
   console.log('────────────────────────────────────────────────────\n');
 
