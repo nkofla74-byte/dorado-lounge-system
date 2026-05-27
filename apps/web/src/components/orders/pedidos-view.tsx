@@ -12,6 +12,7 @@ import type { UserRole } from '@dorado/shared-types';
 
 type Tab = 'carta' | 'pedidos';
 
+const ADMIN_ROLES = new Set<UserRole>(['superuser', 'admin']);
 const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex']);
 const TOGGLE_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex', 'sous_chef']);
 
@@ -24,12 +25,13 @@ interface Props {
 
 export function PedidosView({ initialData, carta, userRole, error }: Props) {
   const t = useTranslations('pedidos');
+  const isAdmin = userRole ? ADMIN_ROLES.has(userRole) : false;
   const isMesero = userRole ? MESERO_ROLES.has(userRole) : false;
   const canToggle = userRole ? TOGGLE_ROLES.has(userRole) : false;
-  const [tab, setTab] = useState<Tab>(isMesero ? 'carta' : 'pedidos');
+  const [tab, setTab] = useState<Tab>(isAdmin ? 'pedidos' : isMesero ? 'carta' : 'pedidos');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const showCarta = isMesero || canToggle;
+  const showCarta = !isAdmin && (isMesero || canToggle);
   const tabs: { key: Tab; label: string; icon: typeof UtensilsCrossed }[] = showCarta
     ? [
         { key: 'carta', label: t('tabCarta'), icon: UtensilsCrossed },
@@ -75,7 +77,13 @@ export function PedidosView({ initialData, carta, userRole, error }: Props) {
       )}
 
       {tab === 'pedidos' && (
-        <PedidoTable key={refreshKey} initialData={initialData} userRole={userRole} error={error} />
+        <PedidoTable
+          key={refreshKey}
+          initialData={initialData}
+          userRole={userRole}
+          error={error}
+          readOnly={isAdmin}
+        />
       )}
     </div>
   );

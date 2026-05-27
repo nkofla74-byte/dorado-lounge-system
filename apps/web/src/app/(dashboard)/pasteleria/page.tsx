@@ -8,6 +8,7 @@ import { getPedidos } from '@/modules/orders/actions';
 import { getSolicitudesCocina } from '@/modules/production/actions';
 import { TandaTable } from '@/components/production/tanda-table';
 import { SolicitudesPanel } from '@/components/production/solicitudes-panel';
+import { ProduccionDashboard } from '@/components/production/produccion-dashboard';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pasteleria');
@@ -37,6 +38,7 @@ export default async function PasteleriaPage() {
 
   const user = userData.user;
   const userRole = user?.app_metadata?.role as string | undefined;
+  const isAdminView = userRole === 'admin' || userRole === 'superuser';
   const responsableNombre =
     (user?.user_metadata?.full_name as string | undefined) ??
     (user?.user_metadata?.name as string | undefined) ??
@@ -44,6 +46,19 @@ export default async function PasteleriaPage() {
     tLayout('usuarioFallback');
 
   const turnoActivo = turnoResult.ok ? turnoResult.value : null;
+  const allTandas = tandasResult.ok ? tandasResult.value : [];
+
+  if (isAdminView) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('dashboardTitle')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboardSubtitle')}</p>
+        </div>
+        <ProduccionDashboard tandas={allTandas} />
+      </div>
+    );
+  }
 
   const pedidosEspeciales = pedidosResult.ok
     ? pedidosResult.value.filter(
@@ -111,7 +126,7 @@ export default async function PasteleriaPage() {
 
       {/* Tandas de producción — filtradas a área pastelería */}
       <TandaTable
-        initialData={tandasResult.ok ? tandasResult.value : []}
+        initialData={allTandas}
         recetas={recetasResult.ok ? recetasResult.value : []}
         turnoActivo={turnoActivo}
         responsableNombre={responsableNombre}

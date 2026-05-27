@@ -143,6 +143,21 @@ function TiemposChips({ pedido }: { pedido: PedidoWithItems }) {
   );
 }
 
+const ZONA_COLORS: Record<string, string> = {
+  amex: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  snack: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  buffet: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+};
+
+function ZonaBadge({ zona }: { zona: string }) {
+  const tZ = useTranslations('zonas');
+  return (
+    <Badge className={cn('text-xs font-medium border', ZONA_COLORS[zona] ?? '')}>
+      {tZ.has(zona) ? tZ(zona as 'amex' | 'snack' | 'buffet') : zona}
+    </Badge>
+  );
+}
+
 function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
   const t = useTranslations('pedidos');
   if (items.length === 0)
@@ -180,6 +195,7 @@ interface PedidoTableProps {
   initialData: PedidoWithItems[];
   userRole: UserRole | undefined;
   error?: string | undefined;
+  readOnly?: boolean | undefined;
 }
 
 type ActionFn = (
@@ -187,11 +203,16 @@ type ActionFn = (
   version: number,
 ) => Promise<{ ok: boolean; value?: Pedido; error?: { message: string } }>;
 
-export function PedidoTable({ initialData, userRole, error: initialError }: PedidoTableProps) {
+export function PedidoTable({
+  initialData,
+  userRole,
+  error: initialError,
+  readOnly,
+}: PedidoTableProps) {
   const t = useTranslations('pedidos');
   const [data, setData] = useState(initialData);
   const [historial, setHistorial] = useState<PedidoWithItems[]>([]);
-  const [showHistorial, setShowHistorial] = useState(false);
+  const [showHistorial, setShowHistorial] = useState(!!readOnly);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(initialError);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -202,6 +223,14 @@ export function PedidoTable({ initialData, userRole, error: initialError }: Pedi
     const id = setInterval(() => setTick((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (readOnly) {
+      getPedidosHistorial().then((r) => {
+        if (r.ok) setHistorial(r.value);
+      });
+    }
+  }, [readOnly]);
 
   const isCocina = userRole ? COCINA_ROLES.has(userRole) : false;
   const isMesero = userRole ? MESERO_ROLES.has(userRole) : false;
@@ -325,7 +354,7 @@ export function PedidoTable({ initialData, userRole, error: initialError }: Pedi
               <TableHead>{t('colItems')}</TableHead>
               <TableHead>{t('colHace')}</TableHead>
               <TableHead>{t('colTiempos')}</TableHead>
-              <TableHead className="text-right">{t('colAcciones')}</TableHead>
+              {!readOnly && <TableHead className="text-right">{t('colAcciones')}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -363,130 +392,127 @@ export function PedidoTable({ initialData, userRole, error: initialError }: Pedi
                       <TableCell>
                         <TiemposChips pedido={pedido} />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* creado: mesero/recepción puede marcar recibido,
-                              cocina puede iniciar directo, todos cancelan */}
-                          {pedido.estado === 'creado' && (
-                            <>
-                              {canRecibir && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => recibirEnCocina(id, v))
-                                  }
-                                >
-                                  {t('recibirEnCocina')}
-                                </Button>
-                              )}
-                              {isCocina && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => iniciarPreparacion(id, v))
-                                  }
-                                >
-                                  {t('iniciarPrep')}
-                                </Button>
-                              )}
-                              {canCancel && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-xs text-muted-foreground"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => cancelarPedido(id, v))
-                                  }
-                                >
-                                  {t('cancelar')}
-                                </Button>
-                              )}
-                            </>
-                          )}
+                      {!readOnly && (
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {pedido.estado === 'creado' && (
+                              <>
+                                {canRecibir && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => recibirEnCocina(id, v))
+                                    }
+                                  >
+                                    {t('recibirEnCocina')}
+                                  </Button>
+                                )}
+                                {isCocina && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => iniciarPreparacion(id, v))
+                                    }
+                                  >
+                                    {t('iniciarPrep')}
+                                  </Button>
+                                )}
+                                {canCancel && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs text-muted-foreground"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => cancelarPedido(id, v))
+                                    }
+                                  >
+                                    {t('cancelar')}
+                                  </Button>
+                                )}
+                              </>
+                            )}
 
-                          {/* recibido_cocina: cocina inicia preparación */}
-                          {pedido.estado === 'recibido_cocina' && (
-                            <>
-                              {isCocina && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => iniciarPreparacion(id, v))
-                                  }
-                                >
-                                  {t('iniciarPrep')}
-                                </Button>
-                              )}
-                              {canCancel && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-xs text-muted-foreground"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => cancelarPedido(id, v))
-                                  }
-                                >
-                                  {t('cancelar')}
-                                </Button>
-                              )}
-                            </>
-                          )}
+                            {pedido.estado === 'recibido_cocina' && (
+                              <>
+                                {isCocina && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => iniciarPreparacion(id, v))
+                                    }
+                                  >
+                                    {t('iniciarPrep')}
+                                  </Button>
+                                )}
+                                {canCancel && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs text-muted-foreground"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => cancelarPedido(id, v))
+                                    }
+                                  >
+                                    {t('cancelar')}
+                                  </Button>
+                                )}
+                              </>
+                            )}
 
-                          {/* en_preparacion: cocina despacha o cancela */}
-                          {pedido.estado === 'en_preparacion' && (
-                            <>
-                              {isCocina && (
-                                <Button
-                                  size="sm"
-                                  className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => despacharPedido(id, v))
-                                  }
-                                >
-                                  {t('despachar')}
-                                </Button>
-                              )}
-                              {isCocina && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-xs text-muted-foreground"
-                                  disabled={isProcessing}
-                                  onClick={() =>
-                                    runAction(pedido, (id, v) => cancelarPedido(id, v))
-                                  }
-                                >
-                                  {t('cancelar')}
-                                </Button>
-                              )}
-                            </>
-                          )}
+                            {pedido.estado === 'en_preparacion' && (
+                              <>
+                                {isCocina && (
+                                  <Button
+                                    size="sm"
+                                    className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => despacharPedido(id, v))
+                                    }
+                                  >
+                                    {t('despachar')}
+                                  </Button>
+                                )}
+                                {isCocina && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs text-muted-foreground"
+                                    disabled={isProcessing}
+                                    onClick={() =>
+                                      runAction(pedido, (id, v) => cancelarPedido(id, v))
+                                    }
+                                  >
+                                    {t('cancelar')}
+                                  </Button>
+                                )}
+                              </>
+                            )}
 
-                          {/* despachado: mesero marca entregado (1 tap + confirm) */}
-                          {pedido.estado === 'despachado' && isMesero && (
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                              disabled={isProcessing}
-                              onClick={() => handleEntregar(pedido)}
-                            >
-                              {isProcessing ? t('procesando') : t('entregado')}
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                            {pedido.estado === 'despachado' && isMesero && (
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                disabled={isProcessing}
+                                onClick={() => handleEntregar(pedido)}
+                              >
+                                {isProcessing ? t('procesando') : t('entregado')}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
 
                     {rowErr && (
@@ -519,17 +545,19 @@ export function PedidoTable({ initialData, userRole, error: initialError }: Pedi
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-border">
                   <TableHead>{t('colMesa')}</TableHead>
+                  <TableHead>{t('colZona')}</TableHead>
                   <TableHead>{t('colEstado')}</TableHead>
                   <TableHead>{t('colItems')}</TableHead>
-                  <TableHead>{t('colHace')}</TableHead>
+                  {readOnly && <TableHead>{t('colCreado')}</TableHead>}
                   <TableHead>{t('colTiempos')}</TableHead>
+                  {readOnly && <TableHead>{t('colEntregado')}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {historial.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={readOnly ? 7 : 5}
                       className="text-center py-8 text-muted-foreground text-sm"
                     >
                       {t('sinHistorial')}
@@ -542,17 +570,41 @@ export function PedidoTable({ initialData, userRole, error: initialError }: Pedi
                         {pedido.numeroMesa ?? <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
+                        <ZonaBadge zona={pedido.zona} />
+                      </TableCell>
+                      <TableCell>
                         <EstadoBadge estado={pedido.estado} />
                       </TableCell>
                       <TableCell>
                         <ItemsSummary items={pedido.items} />
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatElapsed(pedido.updatedAt, t('ahora'))}
-                      </TableCell>
+                      {readOnly && (
+                        <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                          {pedido.createdAt.toLocaleDateString('es-CO', {
+                            day: '2-digit',
+                            month: 'short',
+                          })}{' '}
+                          {pedido.createdAt.toLocaleTimeString('es-CO', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </TableCell>
+                      )}
                       <TableCell>
                         <TiemposChips pedido={pedido} />
                       </TableCell>
+                      {readOnly && (
+                        <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                          {pedido.timestamps.entregadoAt
+                            ? pedido.timestamps.entregadoAt.toLocaleTimeString('es-CO', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : pedido.timestamps.canceladoAt
+                              ? t('estadoCancelado')
+                              : '—'}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}

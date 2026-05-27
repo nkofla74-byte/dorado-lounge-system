@@ -4,6 +4,7 @@ import { getTandas } from '@/modules/production/actions';
 import { getRecetas } from '@/modules/recipes/actions';
 import { getTurnoActivo } from '@/modules/turnos/actions';
 import { TandaTable } from '@/components/production/tanda-table';
+import { ProduccionDashboard } from '@/components/production/produccion-dashboard';
 import { createClient } from '@/lib/supabase/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,6 +31,19 @@ export default async function ProduccionPage() {
     'Usuario';
 
   const isSteward = userRole === 'steward';
+  const isAdminView = userRole === 'admin' || userRole === 'superuser';
+
+  if (isAdminView) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('dashboardTitle')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('dashboardSubtitle')}</p>
+        </div>
+        <ProduccionDashboard tandas={tandasResult.ok ? tandasResult.value : []} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
