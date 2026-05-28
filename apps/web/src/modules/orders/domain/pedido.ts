@@ -1,7 +1,7 @@
-import type { EstadoPedido, ZonaServicio } from '@dorado/shared-types';
+import type { EstadoPedido, ZonaServicio, AreaProduccion } from '@dorado/shared-types';
 import { PEDIDO_TRANSITIONS } from '@dorado/shared-types';
 
-export type { EstadoPedido, ZonaServicio };
+export type { EstadoPedido, ZonaServicio, AreaProduccion };
 export { PEDIDO_TRANSITIONS };
 
 export interface PedidoItem {
@@ -11,6 +11,8 @@ export interface PedidoItem {
   recetaNombre: string;
   cantidad: number;
   notas: string | null;
+  // Área productiva (KDS) a la que se ruteó el ítem al crear el pedido.
+  areaProduccion: AreaProduccion | null;
 }
 
 export interface Pedido {

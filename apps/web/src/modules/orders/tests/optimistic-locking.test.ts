@@ -6,6 +6,7 @@ import type {
   PedidoForDelivery,
   CreatePedidoInput,
   EstadoPedido,
+  AreaProduccion,
 } from '../domain/pedido';
 import type { OrderRepository } from '../application/ports/order-repository.port';
 
@@ -28,6 +29,7 @@ function makePedido(overrides: Partial<Pedido> = {}): PedidoWithItems {
         recetaNombre: 'Filete',
         cantidad: 1,
         notas: null,
+        areaProduccion: 'cocina_fria',
       },
     ],
     timestamps: {
@@ -46,6 +48,11 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
 
   return {
     pedidos,
+    async findRecetaAreas(_tenantId: string, recetaIds: string[]) {
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const id of recetaIds) out[id] = 'cocina_fria';
+      return out;
+    },
     async findActive(tenantId: string) {
       return pedidos.filter(
         (p) =>
@@ -61,7 +68,14 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
         .filter((p) => p.tenantId === tenantId && ['entregado', 'cancelado'].includes(p.estado))
         .slice(0, limit);
     },
-    async create(tenantId: string, userId: string, input: CreatePedidoInput) {
+    async create(
+      tenantId: string,
+      userId: string,
+      input: CreatePedidoInput,
+      _itemAreas: Record<string, AreaProduccion>,
+    ) {
+      void userId;
+      void _itemAreas;
       const existing = pedidos.find(
         (p) =>
           p.tenantId === tenantId &&

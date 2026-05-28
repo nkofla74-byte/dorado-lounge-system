@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { AppError } from '@/lib/result';
 import type { CocinaAmexRepository } from '../application/ports';
 import type { Pedido, PedidoWithItems, PedidoEvento, EstadoPedido } from '../domain/pedido-amex';
+import type { AreaProduccion } from '@dorado/shared-types';
 
 type ItemRow = {
   id: string;
@@ -10,6 +11,7 @@ type ItemRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
   receta: { nombre: string } | null;
 };
 
@@ -28,7 +30,7 @@ type PedidoRow = {
 
 const PEDIDO_SELECT = `
   id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
-  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre))
+  pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre))
 `;
 
 const PEDIDO_FLAT_SELECT =
@@ -60,6 +62,7 @@ function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
       recetaNombre: i.receta?.nombre ?? '',
       cantidad: i.cantidad,
       notas: i.notas,
+      areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
     })),
     timestamps: {
       recibidoCocinaAt: null,

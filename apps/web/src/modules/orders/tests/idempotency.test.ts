@@ -7,6 +7,7 @@ import type {
   PedidoForDelivery,
   CreatePedidoInput,
   EstadoPedido,
+  AreaProduccion,
 } from '../domain/pedido';
 import type { OrderRepository } from '../application/ports/order-repository.port';
 
@@ -16,6 +17,11 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
 
   return {
     pedidos,
+    async findRecetaAreas(_tenantId: string, recetaIds: string[]) {
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const id of recetaIds) out[id] = 'cocina_fria'; // permitida para amex/snack/buffet
+      return out;
+    },
     async findActive(tenantId: string) {
       return pedidos.filter(
         (p) => p.tenantId === tenantId && !['entregado', 'cancelado'].includes(p.estado),
@@ -29,7 +35,13 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
         .filter((p) => p.tenantId === tenantId && ['entregado', 'cancelado'].includes(p.estado))
         .slice(0, limit);
     },
-    async create(tenantId: string, userId: string, input: CreatePedidoInput) {
+    async create(
+      tenantId: string,
+      userId: string,
+      input: CreatePedidoInput,
+      itemAreas: Record<string, AreaProduccion>,
+    ) {
+      void userId;
       const compositeKey = `${tenantId}:${input.idempotencyKey}`;
       if (seenKeys.has(compositeKey)) {
         throw new Error('DUPLICATE_PEDIDO');
@@ -53,6 +65,7 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
           recetaNombre: 'Plato test',
           cantidad: item.cantidad,
           notas: null,
+          areaProduccion: itemAreas[item.recetaId] ?? null,
         })),
         timestamps: {
           recibidoCocinaAt: null,

@@ -10,6 +10,7 @@ import type {
   CreatePedidoInput,
   EstadoPedido,
   ZonaServicio,
+  AreaProduccion,
 } from '../domain/pedido';
 
 type ItemRow = {
@@ -18,6 +19,7 @@ type ItemRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
   receta: { nombre: string } | null;
 };
 
@@ -46,6 +48,7 @@ type ItemWithIngsRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
   receta: {
     nombre: string;
     porciones: number;
@@ -64,7 +67,7 @@ type PedidoWithIngsRow = Omit<PedidoRow, 'pedido_items'> & {
 
 const PEDIDO_SELECT = `
   id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
-  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre)),
+  pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre)),
   pedido_eventos(estado, created_at)
 `;
 
@@ -93,6 +96,7 @@ function toItem(i: ItemRow): PedidoItem {
     recetaNombre: i.receta?.nombre ?? '',
     cantidad: i.cantidad,
     notas: i.notas,
+    areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
   };
 }
 
@@ -133,6 +137,7 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
     recetaNombre: i.receta?.nombre ?? '',
     cantidad: i.cantidad,
     notas: i.notas,
+    areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
     recetaPorciones: i.receta?.porciones ?? 1,
     ingredientes: (i.receta?.receta_ingredientes ?? []).map((ri) => ({
       insumoId: ri.insumo_id,
@@ -190,10 +195,32 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findRecetaAreas(
+      tenantId: string,
+      recetaIds: string[],
+    ): Promise<Record<string, AreaProduccion | null>> {
+      if (recetaIds.length === 0) return {};
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('recetas')
+        .select('id, area_produccion')
+        .eq('tenant_id', tenantId)
+        .in('id', recetaIds);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const row of (data ?? []) as Array<{ id: string; area_produccion: string | null }>) {
+        out[row.id] = (row.area_produccion ?? null) as AreaProduccion | null;
+      }
+      return out;
+    },
+
     async create(
       tenantId: string,
       userId: string,
       input: CreatePedidoInput,
+      itemAreas: Record<string, AreaProduccion>,
     ): Promise<PedidoWithItems> {
       const supabase = await createClient();
 
@@ -231,9 +258,12 @@ export function createOrderRepository(): OrderRepository {
             receta_id: item.recetaId,
             cantidad: item.cantidad,
             notas: item.notas ?? null,
+            area_produccion: itemAreas[item.recetaId] ?? null,
           })),
         )
-        .select('id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre)');
+        .select(
+          'id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre)',
+        );
 
       if (itemsError) throw new AppError('DB_ERROR', 500, itemsError.message);
 
@@ -252,7 +282,7 @@ export function createOrderRepository(): OrderRepository {
           `
           id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
           pedido_items(
-            id, pedido_id, receta_id, cantidad, notas,
+            id, pedido_id, receta_id, cantidad, notas, area_produccion,
             receta:recetas(
               nombre, porciones,
               receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
