@@ -89,6 +89,14 @@ export const ZONA_AREAS_PERMITIDAS: Record<ZonaServicio, AreaProduccion[]> = {
   buffet: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
 };
 
+export const Prioridad = {
+  alta: 'alta',
+  normal: 'normal',
+  baja: 'baja',
+} as const;
+
+export type Prioridad = (typeof Prioridad)[keyof typeof Prioridad];
+
 export const CategoriaMenu = {
   entrada: 'entrada',
   plato_fuerte: 'plato_fuerte',

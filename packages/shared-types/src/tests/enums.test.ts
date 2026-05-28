@@ -12,6 +12,7 @@ import {
   TipoReceta,
   EstadoTanda,
   AreaProduccion,
+  Prioridad,
 } from '../enums';
 
 describe('UserRole', () => {
@@ -125,6 +126,12 @@ describe('AreaProduccion', () => {
 
   it('conserva el valor legacy `cocina` (inerte tras el split, no se reutiliza)', () => {
     expect(AreaProduccion).toHaveProperty('cocina', 'cocina');
+  });
+});
+
+describe('Prioridad', () => {
+  it('tiene alta, normal, baja', () => {
+    expect(Object.keys(Prioridad)).toEqual(['alta', 'normal', 'baja']);
   });
 });
 
