@@ -64,21 +64,6 @@ const USERS = [
     role: 'mesero_amex',
   },
   {
-    nombre: 'Recepción',
-    email: 'recepcion@dorado.test',
-    role: 'recepcion',
-  },
-  {
-    nombre: 'Personal Snack',
-    email: 'snack@dorado.test',
-    role: 'personal_snack',
-  },
-  {
-    nombre: 'Personal Buffet',
-    email: 'buffet@dorado.test',
-    role: 'personal_buffet',
-  },
-  {
     nombre: 'Personal Almacén',
     email: 'almacen@dorado.test',
     role: 'personal_almacen',

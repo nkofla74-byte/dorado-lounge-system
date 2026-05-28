@@ -1,26 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { CogsPerPassenger, ConsumoInsumo, AnalyticsFilters } from '../domain/kpi';
-import { getCogsPerPassenger } from '../application/get-cogs';
+import type { ConsumoInsumo, AnalyticsFilters } from '../domain/kpi';
 import { getConsumoVsProduccion } from '../application/get-consumo';
 import type { AnalyticsRepository } from '../application/ports/analytics-repository.port';
 
 // ── Factories ──────────────────────────────────────────────────────────────────
-
-function makeCogs(overrides: Partial<CogsPerPassenger> = {}): CogsPerPassenger {
-  return {
-    tenantId: 'tenant-1',
-    tenantNombre: null,
-    tenantSlug: null,
-    turnoId: 'turno-1',
-    turnoNombre: 'Turno mañana',
-    iniciadoAt: new Date('2026-05-04T06:00:00Z'),
-    cerradoAt: new Date('2026-05-04T14:00:00Z'),
-    totalPasajeros: 100,
-    cogsTotalCop: 500_000,
-    cogsPerPassenger: 5000,
-    ...overrides,
-  };
-}
 
 function makeConsumo(overrides: Partial<ConsumoInsumo> = {}): ConsumoInsumo {
   return {
@@ -43,35 +26,12 @@ function makeConsumo(overrides: Partial<ConsumoInsumo> = {}): ConsumoInsumo {
 
 function makeRepo(overrides: Partial<AnalyticsRepository> = {}): AnalyticsRepository {
   return {
-    getCogsPerPassenger: vi.fn().mockResolvedValue([]),
     getConsumoVsProduccion: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
 
 // ── Invariantes de KPI ────────────────────────────────────────────────────────
-
-describe('CogsPerPassenger', () => {
-  it('cogsPerPassenger es null cuando no hay pasajeros registrados', () => {
-    const kpi = makeCogs({ totalPasajeros: 0, cogsPerPassenger: null });
-    expect(kpi.cogsPerPassenger).toBeNull();
-  });
-
-  it('cogsPerPassenger = cogsTotalCop / totalPasajeros', () => {
-    const kpi = makeCogs({ cogsTotalCop: 500_000, totalPasajeros: 100, cogsPerPassenger: 5000 });
-    expect(kpi.cogsPerPassenger).toBe(kpi.cogsTotalCop / kpi.totalPasajeros);
-  });
-
-  it('turno sin cerrar tiene cerradoAt null', () => {
-    const kpi = makeCogs({ cerradoAt: null });
-    expect(kpi.cerradoAt).toBeNull();
-  });
-
-  it('cogsTotalCop es en COP (entero positivo para turno con consumo)', () => {
-    const kpi = makeCogs({ cogsTotalCop: 1_250_000 });
-    expect(kpi.cogsTotalCop).toBeGreaterThanOrEqual(0);
-  });
-});
 
 describe('ConsumoInsumo', () => {
   it('totalConsumo no supera totalEntradas + ajustes', () => {
@@ -107,25 +67,6 @@ describe('AnalyticsFilters', () => {
 });
 
 // ── Use cases ─────────────────────────────────────────────────────────────────
-
-describe('getCogsPerPassenger', () => {
-  it('delega al repositorio con tenantId y filtros', async () => {
-    const kpis = [makeCogs()];
-    const repo = makeRepo({ getCogsPerPassenger: vi.fn().mockResolvedValue(kpis) });
-    const filtros: AnalyticsFilters = { turnoId: 'turno-1' };
-
-    const result = await getCogsPerPassenger(repo, 'tenant-1', filtros);
-
-    expect(repo.getCogsPerPassenger).toHaveBeenCalledWith('tenant-1', filtros);
-    expect(result).toBe(kpis);
-  });
-
-  it('devuelve lista vacía cuando no hay datos', async () => {
-    const repo = makeRepo({ getCogsPerPassenger: vi.fn().mockResolvedValue([]) });
-    const result = await getCogsPerPassenger(repo, 'tenant-1', {});
-    expect(result).toHaveLength(0);
-  });
-});
 
 describe('getConsumoVsProduccion', () => {
   it('delega al repositorio con tenantId y filtros', async () => {

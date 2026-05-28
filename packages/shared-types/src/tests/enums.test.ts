@@ -14,8 +14,8 @@ import {
 } from '../enums';
 
 describe('UserRole', () => {
-  it('contiene los 13 roles del sistema', () => {
-    expect(Object.keys(UserRole)).toHaveLength(13);
+  it('contiene los 10 roles del sistema', () => {
+    expect(Object.keys(UserRole)).toHaveLength(10);
   });
 
   const REQUIRED_ROLES = [
@@ -26,9 +26,6 @@ describe('UserRole', () => {
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
-    'personal_snack',
-    'personal_buffet',
-    'recepcion',
     'personal_almacen',
     'personal_pasteleria',
     'steward',
