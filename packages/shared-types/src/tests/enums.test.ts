@@ -11,6 +11,7 @@ import {
   CategoriaMenu,
   TipoReceta,
   EstadoTanda,
+  AreaProduccion,
 } from '../enums';
 
 describe('UserRole', () => {
@@ -111,6 +112,19 @@ describe('CategoriaMenu', () => {
 describe('TipoReceta', () => {
   it('tiene produccion y servicio', () => {
     expect(Object.keys(TipoReceta)).toEqual(['produccion', 'servicio']);
+  });
+});
+
+describe('AreaProduccion', () => {
+  it('incluye las 4 áreas productivas (KDS): caliente, fría, pastelería, amex', () => {
+    expect(AreaProduccion).toHaveProperty('cocina_caliente', 'cocina_caliente');
+    expect(AreaProduccion).toHaveProperty('cocina_fria', 'cocina_fria');
+    expect(AreaProduccion).toHaveProperty('pasteleria', 'pasteleria');
+    expect(AreaProduccion).toHaveProperty('amex', 'amex');
+  });
+
+  it('conserva el valor legacy `cocina` (inerte tras el split, no se reutiliza)', () => {
+    expect(AreaProduccion).toHaveProperty('cocina', 'cocina');
   });
 });
 

@@ -60,7 +60,11 @@ export const TipoReceta = {
 export type TipoReceta = (typeof TipoReceta)[keyof typeof TipoReceta];
 
 export const AreaProduccion = {
+  // `cocina` es legacy: tras el split (refoco operacional 2026-05) las recetas
+  // se clasifican como caliente o fría. Se conserva inerte para datos previos.
   cocina: 'cocina',
+  cocina_caliente: 'cocina_caliente',
+  cocina_fria: 'cocina_fria',
   pasteleria: 'pasteleria',
   amex: 'amex',
 } as const;
