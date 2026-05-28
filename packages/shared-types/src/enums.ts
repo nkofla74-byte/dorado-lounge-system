@@ -79,6 +79,16 @@ export const ZonaServicio = {
 
 export type ZonaServicio = (typeof ZonaServicio)[keyof typeof ZonaServicio];
 
+// Matriz autoritativa de ruteo: a qué áreas productivas puede solicitar
+// producción cada zona de consumo. Un pedido se rutea POR PRODUCTO al área
+// que indica su receta; un pedido puede tocar varias áreas.
+// Regla: el área `amex` (cocina AMEX) sirve EXCLUSIVAMENTE a la zona AMEX.
+export const ZONA_AREAS_PERMITIDAS: Record<ZonaServicio, AreaProduccion[]> = {
+  amex: ['cocina_fria', 'amex'],
+  snack: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
+  buffet: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
+};
+
 export const CategoriaMenu = {
   entrada: 'entrada',
   plato_fuerte: 'plato_fuerte',
