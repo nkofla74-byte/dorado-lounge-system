@@ -23,6 +23,8 @@ export interface Pedido {
   estado: EstadoPedido;
   version: number;
   notas: string | null;
+  // Cocinero asignado a la preparación (trazabilidad de responsable).
+  cocineroId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

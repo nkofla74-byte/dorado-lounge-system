@@ -23,18 +23,19 @@ type PedidoRow = {
   estado: string;
   version: number;
   notas: string | null;
+  cocinero_id: string | null;
   created_at: string;
   updated_at: string;
   pedido_items: ItemRow[];
 };
 
 const PEDIDO_SELECT = `
-  id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
+  id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
   pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre))
 `;
 
 const PEDIDO_FLAT_SELECT =
-  'id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at';
+  'id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at';
 
 function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
   return {
@@ -45,6 +46,7 @@ function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
     estado: row.estado as EstadoPedido,
     version: row.version,
     notas: row.notas,
+    cocineroId: row.cocinero_id,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };

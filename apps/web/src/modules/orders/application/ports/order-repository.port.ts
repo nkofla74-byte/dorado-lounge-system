@@ -25,4 +25,11 @@ export interface OrderRepository {
   ): Promise<PedidoWithItems>;
   findByIdForDelivery(id: string, tenantId: string): Promise<PedidoForDelivery | null>;
   transition(id: string, tenantId: string, estado: EstadoPedido, version: number): Promise<Pedido>;
+  /** Asigna (o reasigna) el cocinero a cargo. Optimistic locking por `version`. */
+  asignarCocinero(
+    id: string,
+    tenantId: string,
+    cocineroId: string,
+    version: number,
+  ): Promise<Pedido>;
 }

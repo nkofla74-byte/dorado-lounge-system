@@ -36,6 +36,7 @@ type PedidoRow = {
   estado: string;
   version: number;
   notas: string | null;
+  cocinero_id: string | null;
   created_at: string;
   updated_at: string;
   pedido_items: ItemRow[];
@@ -66,13 +67,13 @@ type PedidoWithIngsRow = Omit<PedidoRow, 'pedido_items'> & {
 };
 
 const PEDIDO_SELECT = `
-  id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
+  id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
   pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre)),
   pedido_eventos(estado, created_at)
 `;
 
 const PEDIDO_FLAT_SELECT =
-  'id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at';
+  'id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at';
 
 function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
   return {
@@ -83,6 +84,7 @@ function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
     estado: row.estado as EstadoPedido,
     version: row.version,
     notas: row.notas,
+    cocineroId: row.cocinero_id,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -280,7 +282,7 @@ export function createOrderRepository(): OrderRepository {
         .from('pedidos')
         .select(
           `
-          id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
+          id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
           pedido_items(
             id, pedido_id, receta_id, cantidad, notas, area_produccion,
             receta:recetas(
@@ -324,6 +326,33 @@ export function createOrderRepository(): OrderRepository {
       }
       if (error?.code === '23514') {
         throw new AppError('INVALID_TRANSITION', 400, 'Transición de estado no permitida');
+      }
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
+    },
+
+    async asignarCocinero(
+      id: string,
+      tenantId: string,
+      cocineroId: string,
+      version: number,
+    ): Promise<Pedido> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .update({ cocinero_id: cocineroId, version: version + 1 })
+        .eq('id', id)
+        .eq('tenant_id', tenantId)
+        .eq('version', version)
+        .select(PEDIDO_FLAT_SELECT)
+        .single();
+
+      if (error?.code === 'PGRST116') {
+        throw new AppError(
+          'VERSION_CONFLICT',
+          409,
+          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
+        );
       }
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);

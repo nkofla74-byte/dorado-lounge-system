@@ -51,6 +51,7 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
         estado: 'creado',
         version: 1,
         notas: input.notas ?? null,
+        cocineroId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         items: input.items.map((item, idx) => ({
@@ -86,6 +87,13 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
         throw new Error('INVALID_TRANSITION');
       }
       pedidos[idx] = { ...pedidos[idx]!, estado, version: version + 1 };
+      return pedidos[idx]!;
+    },
+    async asignarCocinero(id: string, tenantId: string, cocineroId: string, version: number) {
+      const idx = pedidos.findIndex((p) => p.id === id && p.tenantId === tenantId);
+      if (idx === -1) throw new Error('NOT_FOUND');
+      if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
+      pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1 };
       return pedidos[idx]!;
     },
   };

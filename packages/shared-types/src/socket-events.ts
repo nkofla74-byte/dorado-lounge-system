@@ -75,6 +75,17 @@ export interface PedidoEstadoEvent {
   };
 }
 
+export interface PedidoCocineroEvent {
+  type: 'PEDIDO_COCINERO';
+  payload: {
+    pedidoId: string;
+    tenantId: string;
+    cocineroId: string;
+    zona: ZonaServicio;
+    updatedAt: string;
+  };
+}
+
 export interface StockOutEvent {
   type: 'STOCK_OUT';
   payload: {
@@ -180,6 +191,7 @@ export interface AlertaEvent {
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
+  | PedidoCocineroEvent
   | StockOutEvent
   | DespachoEvent
   | MensajeChatEvent

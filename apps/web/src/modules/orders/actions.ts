@@ -279,6 +279,54 @@ export async function iniciarPreparacion(
   }
 }
 
+export async function asignarCocinero(
+  pedidoId: string,
+  cocineroId: string,
+  version: number,
+): Promise<Result<Pedido>> {
+  try {
+    const ctx = await assertCan('orders:dispatch');
+    if (!cocineroId) {
+      return err(new AppError('VALIDATION', 400, 'Debe indicar el cocinero a asignar'));
+    }
+    const repo = createOrderRepository();
+
+    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
+    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    // Persistencia primero: la asignación queda en DB (optimistic locking) antes
+    // del broadcast. Si Socket.io falla, el dato sigue disponible.
+    const updated = await repo.asignarCocinero(pedidoId, ctx.tenantId, cocineroId, version);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: 'orders:asignar_cocinero',
+      resourceId: pedidoId,
+      resourceType: 'pedido',
+      payload: { cocineroId },
+    });
+
+    const cocineroPayload = {
+      type: 'PEDIDO_COCINERO' as const,
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        cocineroId,
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, cocineroPayload);
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, cocineroPayload);
+
+    return ok(updated);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 export async function despacharPedido(pedidoId: string, version: number): Promise<Result<Pedido>> {
   try {
     const ctx = await assertCan('orders:dispatch');

@@ -29,6 +29,7 @@ function makePedido(overrides: Partial<PedidoWithItems> = {}): PedidoWithItems {
     estado: 'creado',
     version: 1,
     notas: null,
+    cocineroId: null,
     items: [],
     timestamps: { ...EMPTY_TIMESTAMPS },
     createdAt: new Date(),
@@ -127,6 +128,15 @@ function createInMemoryRepo(
       p.updatedAt = new Date();
       return p;
     },
+    async asignarCocinero(id: string, tenantId: string, cocineroId: string, version: number) {
+      const p = pedidos.find((x) => x.id === id && x.tenantId === tenantId);
+      if (!p) throw new Error('NOT_FOUND');
+      if (p.version !== version) throw new Error('VERSION_CONFLICT');
+      p.cocineroId = cocineroId;
+      p.version++;
+      p.updatedAt = new Date();
+      return p;
+    },
   };
 }
 
@@ -204,6 +214,35 @@ describe('createPedido (application)', () => {
         items: [{ recetaId: 'rec-cal', cantidad: 1 }],
       }),
     ).rejects.toMatchObject({ code: 'AREA_NO_PERMITIDA' });
+  });
+});
+
+describe('asignarCocinero (via repo)', () => {
+  it('asigna el cocinero y aumenta la versión', async () => {
+    const repo = createInMemoryRepo();
+    const ped = await createPedido(repo, 'tenant-1', 'user-1', {
+      zona: 'amex',
+      idempotencyKey: 'cook-1',
+      items: [{ recetaId: 'rec-1', cantidad: 1 }],
+    });
+    const v0 = ped.version;
+    const updated = await repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-9', v0);
+    expect(updated.cocineroId).toBe('cocinero-9');
+    expect(updated.version).toBe(v0 + 1);
+  });
+
+  it('rechaza con VERSION_CONFLICT si la versión está desactualizada', async () => {
+    const repo = createInMemoryRepo();
+    const ped = await createPedido(repo, 'tenant-1', 'user-1', {
+      zona: 'amex',
+      idempotencyKey: 'cook-2',
+      items: [{ recetaId: 'rec-1', cantidad: 1 }],
+    });
+    const v0 = ped.version;
+    await repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-1', v0);
+    await expect(repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-2', v0)).rejects.toThrow(
+      'VERSION_CONFLICT',
+    );
   });
 });
 
