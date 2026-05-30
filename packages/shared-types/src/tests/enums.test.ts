@@ -96,11 +96,15 @@ describe('CapaInventario', () => {
 });
 
 describe('UnidadMedida', () => {
-  it('incluye kg, g, lb, l, ml, unidad, porcion', () => {
-    expect(Object.keys(UnidadMedida)).toHaveLength(7);
-    expect(UnidadMedida).toHaveProperty('kg');
-    expect(UnidadMedida).toHaveProperty('lb');
-    expect(UnidadMedida).toHaveProperty('porcion');
+  it('solo expone g, ml y unidad (F2 refoco operacional)', () => {
+    expect(Object.keys(UnidadMedida)).toEqual(['g', 'ml', 'unidad']);
+  });
+
+  it('no incluye unidades legadas kg/lb/l/porcion', () => {
+    expect(UnidadMedida).not.toHaveProperty('kg');
+    expect(UnidadMedida).not.toHaveProperty('lb');
+    expect(UnidadMedida).not.toHaveProperty('l');
+    expect(UnidadMedida).not.toHaveProperty('porcion');
   });
 });
 

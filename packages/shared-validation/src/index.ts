@@ -34,7 +34,8 @@ export const zonaServicioSchema = z.enum(['amex', 'snack', 'buffet']);
 
 export const capaInventarioSchema = z.enum(['capa_1', 'capa_2']);
 
-export const unidadMedidaSchema = z.enum(['kg', 'g', 'lb', 'l', 'ml', 'unidad', 'porcion']);
+// Refoco operacional (F2): unidades canónicas {g, ml, unidad}.
+export const unidadMedidaSchema = z.enum(['g', 'ml', 'unidad']);
 
 export const tipoMovimientoSchema = z.enum([
   'entrada',

@@ -34,7 +34,7 @@ type FormOutput = z.output<typeof createMermaSchema>;
 type CategoriaKey = 'operativa' | 'vencimiento' | 'accidente' | 'calidad' | 'otro';
 const CATEGORIAS: CategoriaKey[] = ['operativa', 'vencimiento', 'accidente', 'calidad', 'otro'];
 
-type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
+type UnidadKey = 'g' | 'ml' | 'unidad';
 
 const genKey = () => `merma-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 

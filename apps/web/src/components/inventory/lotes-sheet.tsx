@@ -38,7 +38,7 @@ interface LotesSheetProps {
   openInForm?: boolean;
 }
 
-type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
+type UnidadKey = 'g' | 'ml' | 'unidad';
 
 function expiryClass(fechaVencimiento: string | null): string {
   if (!fechaVencimiento) return 'text-muted-foreground';

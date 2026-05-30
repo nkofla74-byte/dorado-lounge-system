@@ -39,12 +39,9 @@ type AddIngForm = z.input<typeof addIngredienteSchema>;
 type AddIngOutput = z.output<typeof addIngredienteSchema>;
 
 const UNIDAD_LABEL: Record<string, string> = {
-  kg: 'kg',
   g: 'g',
-  l: 'L',
   ml: 'mL',
   unidad: 'und',
-  porcion: 'porc',
 };
 
 const formatCOP = (n: number) =>

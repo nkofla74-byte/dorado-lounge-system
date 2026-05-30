@@ -20,14 +20,13 @@ export const CapaInventario = {
 
 export type CapaInventario = (typeof CapaInventario)[keyof typeof CapaInventario];
 
+// Unidades canónicas tras el refoco operacional (F2, 2026-05-30):
+// peso → g · volumen → ml · contable → unidad. kg/lb/l/porcion quedan
+// inertes en el tipo SQL; aquí dejan de ser válidas para nuevas capturas.
 export const UnidadMedida = {
-  kg: 'kg',
   g: 'g',
-  lb: 'lb',
-  l: 'l',
   ml: 'ml',
   unidad: 'unidad',
-  porcion: 'porcion',
 } as const;
 
 export type UnidadMedida = (typeof UnidadMedida)[keyof typeof UnidadMedida];

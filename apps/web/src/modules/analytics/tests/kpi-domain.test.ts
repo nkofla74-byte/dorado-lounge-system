@@ -15,7 +15,7 @@ function makeConsumo(overrides: Partial<ConsumoInsumo> = {}): ConsumoInsumo {
     insumoId: 'ins-1',
     insumoNombre: 'Harina de maíz',
     capa: 'capa_1',
-    unidadMedida: 'kg',
+    unidadMedida: 'g',
     totalEntradas: 10,
     totalConsumo: 8,
     totalMerma: 0.5,

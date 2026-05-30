@@ -148,13 +148,9 @@
       "capa_2": "Production"
     },
     "unidad": {
-      "kg": "kg",
       "g": "g",
-      "l": "L",
       "ml": "mL",
-      "unidad": "unit",
-      "porcion": "portion",
-      "lb": "lb"
+      "unidad": "unit"
     },
     "actions": {
       "lotes": "Batches",
@@ -217,12 +213,9 @@
         "capa_2": "Production (Layer 2)"
       },
       "unidades": {
-        "kg": "Kilograms (kg)",
         "g": "Grams (g)",
-        "l": "Liters (L)",
         "ml": "Milliliters (mL)",
-        "unidad": "Unit",
-        "porcion": "Portion"
+        "unidad": "Unit"
       },
       "guardar": "Save item",
       "guardando": "Saving…",

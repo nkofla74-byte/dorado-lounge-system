@@ -142,13 +142,9 @@
       "capa_2": "Producción"
     },
     "unidad": {
-      "kg": "kg",
       "g": "g",
-      "l": "L",
       "ml": "mL",
-      "unidad": "und",
-      "porcion": "porc",
-      "lb": "lb"
+      "unidad": "und"
     },
     "actions": {
       "lotes": "Lotes",
@@ -211,12 +207,9 @@
         "capa_2": "Producción (Capa 2)"
       },
       "unidades": {
-        "kg": "Kilogramos (kg)",
         "g": "Gramos (g)",
-        "l": "Litros (L)",
         "ml": "Mililitros (mL)",
-        "unidad": "Unidad",
-        "porcion": "Porción"
+        "unidad": "Unidad"
       },
       "guardar": "Guardar insumo",
       "guardando": "Guardando…",

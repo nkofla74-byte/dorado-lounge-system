@@ -17,7 +17,7 @@ function makeRpcIngrediente(overrides: Record<string, unknown> = {}): Record<str
   return {
     insumo_id: 'insumo-1',
     insumo_nombre: 'Harina',
-    unidad_medida: 'kg',
+    unidad_medida: 'g',
     cantidad: '0.5',
     merma_coeficiente: '0.1',
     cantidad_bruta: '0.5556',
@@ -76,7 +76,7 @@ describe('costoRecetaFromRpcRow', () => {
     const ing = costo.ingredientes[0]!;
     expect(ing.insumoId).toBe('insumo-1');
     expect(ing.insumoNombre).toBe('Harina');
-    expect(ing.unidadMedida).toBe('kg');
+    expect(ing.unidadMedida).toBe('g');
     expect(ing.cantidad).toBe(0.5);
     expect(ing.mermaCoeficiente).toBe(0.1);
     expect(ing.cantidadBruta).toBeCloseTo(0.5556, 4);

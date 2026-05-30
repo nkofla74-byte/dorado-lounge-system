@@ -52,14 +52,17 @@
 - [ ] Las recetas ya tienen `areaProduccion` (nullable) — sin cambio de columna; sólo el dominio admite los nuevos valores.
 - **Criterio:** enum expone los 4 destinos productivos; typecheck + tests verdes.
 
-### F2 — Estandarización a g/ml
+### F2 — Estandarización a g/ml/unidad ✅
 
-**Files:** migración `*_unidades_g_ml.sql` · `enums.ts` (`UnidadMedida`) · `shared-validation` schemas
+> REVISADO 2026-05-30: el dueño decidió mantener `unidad` para insumos contables
+> ("por unidades solamente"). Enum final `{g, ml, unidad}` — no "solo g/ml".
 
-- [ ] Migración: convertir datos existentes (kg→g ×1000, l→ml ×1000, lb→g, unidad/porcion → revisar caso a caso) en `insumos.unidad_medida`, `lotes`, `receta_ingredientes`. Recalcular cantidades.
-- [ ] Reducir enum a `{g, ml}` (TS + SQL: requiere recrear el tipo o dejar los otros inertes; preferir inertes por la regla de no-DROP).
-- [ ] Schemas Zod sólo aceptan g/ml en captura.
-- **Criterio:** no quedan insumos/lotes/recetas en unidades ≠ g/ml; tests verdes. (SQL se verifica en CI.)
+**Files:** migración `20260530000000_unidades_g_ml.sql` · `enums.ts` (`UnidadMedida`) · `shared-validation` · `lib/units.ts` · selectores UI · messages es/en
+
+- [x] Migración: convertir datos existentes (kg→g ×1000, lb→g ×453.59237, l→ml ×1000) en `insumos`, `lotes` (cantidades + peso_unitario), `receta_ingredientes`. `unidad`/`porcion` no se convierten (aguacate intacto; no hay porcion). Idempotente, enum SQL inerte.
+- [x] Reducir enum TS+Zod a `{g, ml, unidad}`. Valores kg/lb/l/porcion quedan inertes en el tipo SQL (regla no-DROP).
+- [x] `lib/units.ts` reducido (familias de 1 miembro); selectores UI y messages solo g/ml/unidad.
+- **Criterio:** ✅ typecheck + lint + 394 tests verdes. SQL se verifica en CI; aplica al merge.
 
 ### F3 — Merma autoritativa en insumo
 

@@ -30,7 +30,7 @@ import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { Proveedor } from '@/modules/proveedores/domain/proveedor';
 import type { UnidadMedida, CapaInventario } from '@dorado/shared-types';
 
-const UNIDADES: UnidadMedida[] = ['kg', 'g', 'lb', 'l', 'ml', 'unidad', 'porcion'];
+const UNIDADES: UnidadMedida[] = ['g', 'ml', 'unidad'];
 
 interface Props {
   insumos: InsumoWithStock[];
@@ -51,14 +51,14 @@ export function NuevoIngresoDialog({ insumos }: Props) {
   const [modo, setModo] = useState<Modo>('existente');
   const [insumoId, setInsumoId] = useState('');
   const [nuevoNombre, setNuevoNombre] = useState('');
-  const [nuevaUnidad, setNuevaUnidad] = useState<UnidadMedida>('kg');
+  const [nuevaUnidad, setNuevaUnidad] = useState<UnidadMedida>('g');
   const [nuevaCapa, setNuevaCapa] = useState<CapaInventario>('capa_1');
   const [nuevoStockMinimo, setNuevoStockMinimo] = useState('0');
 
   const [proveedorId, setProveedorId] = useState('');
   const [cantidadEmpaques, setCantidadEmpaques] = useState('1');
   const [pesoUnitario, setPesoUnitario] = useState('');
-  const [unidadPeso, setUnidadPeso] = useState<UnidadMedida>('kg');
+  const [unidadPeso, setUnidadPeso] = useState<UnidadMedida>('g');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [costoUnitario, setCostoUnitario] = useState('');
 
@@ -73,13 +73,13 @@ export function NuevoIngresoDialog({ insumos }: Props) {
     setModo('existente');
     setInsumoId('');
     setNuevoNombre('');
-    setNuevaUnidad('kg');
+    setNuevaUnidad('g');
     setNuevaCapa('capa_1');
     setNuevoStockMinimo('0');
     setProveedorId('');
     setCantidadEmpaques('1');
     setPesoUnitario('');
-    setUnidadPeso('kg');
+    setUnidadPeso('g');
     setFechaVencimiento('');
     setCostoUnitario('');
     setError('');

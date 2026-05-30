@@ -1,16 +1,15 @@
 import type { UnidadMedida } from '@dorado/shared-types';
 
 // Factores hacia la unidad canónica de cada familia.
-// Peso → gramos. Volumen → mililitros.
+// Tras el refoco operacional (F2) las unidades válidas son {g, ml, unidad},
+// por lo que cada familia tiene un único miembro canónico. La maquinaria de
+// conversión se conserva por si alguna familia vuelve a tener variantes.
 const WEIGHT_TO_G: Partial<Record<UnidadMedida, number>> = {
   g: 1,
-  kg: 1000,
-  lb: 453.59237,
 };
 
 const VOLUME_TO_ML: Partial<Record<UnidadMedida, number>> = {
   ml: 1,
-  l: 1000,
 };
 
 export type FamiliaUnidad = 'peso' | 'volumen' | 'discreta';
