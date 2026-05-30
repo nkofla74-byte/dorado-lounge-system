@@ -22,13 +22,22 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_porciones    integer;
-  v_costo_total  numeric := 0;
-  v_completo     boolean := true;
-  v_ing          record;
-  v_precio       numeric(14,2);
-  v_ingredientes jsonb := '[]'::jsonb;
+  v_caller_tenant uuid;
+  v_porciones     integer;
+  v_costo_total   numeric := 0;
+  v_completo      boolean := true;
+  v_ing           record;
+  v_precio        numeric(14,2);
+  v_ingredientes  jsonb := '[]'::jsonb;
 BEGIN
+  -- Guard de tenant (preservado de 20260515000004_costos_tenant_guard): el
+  -- caller solo puede consultar costos de su propio tenant (BOLA). auth.jwt()
+  -- inyecta tenant_id vía app_metadata.
+  v_caller_tenant := (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid;
+  IF v_caller_tenant IS NULL OR v_caller_tenant != p_tenant_id THEN
+    RETURN jsonb_build_object('error', 'Acceso no autorizado');
+  END IF;
+
   SELECT porciones INTO v_porciones
   FROM public.recetas
   WHERE id         = p_receta_id

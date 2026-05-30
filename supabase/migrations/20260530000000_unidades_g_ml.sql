@@ -48,16 +48,25 @@ SET cantidad = ri.cantidad * 1000
 FROM insumos i
 WHERE i.id = ri.insumo_id AND ri.unidad_display IS NULL AND i.unidad_medida = 'l';
 
--- 3) Cantidades de lote (expresadas en la unidad base del insumo).
---    Debe correr ANTES de voltear insumos (paso 5).
+-- 3) Cantidades de lote (expresadas en la unidad base del insumo) Y su costo
+--    unitario. La cantidad se multiplica por el factor (kg→g ×1000); el
+--    costo_unitario es COP por unidad base, por lo que se DIVIDE por el mismo
+--    factor (COP/kg → COP/g). Así `fn_costo_receta` (cantidad × costo_unitario)
+--    queda invariante al cambio de unidad. Debe correr ANTES de voltear insumos.
 UPDATE lotes l
 SET cantidad_inicial = l.cantidad_inicial * 1000,
-    cantidad_actual  = l.cantidad_actual * 1000
+    cantidad_actual  = l.cantidad_actual * 1000,
+    costo_unitario   = CASE WHEN l.costo_unitario IS NOT NULL
+                            THEN round(l.costo_unitario / 1000, 4)
+                            ELSE NULL END
 FROM insumos i
 WHERE i.id = l.insumo_id AND i.unidad_medida IN ('kg', 'l');
 UPDATE lotes l
 SET cantidad_inicial = l.cantidad_inicial * 453.59237,
-    cantidad_actual  = l.cantidad_actual * 453.59237
+    cantidad_actual  = l.cantidad_actual * 453.59237,
+    costo_unitario   = CASE WHEN l.costo_unitario IS NOT NULL
+                            THEN round(l.costo_unitario / 453.59237, 4)
+                            ELSE NULL END
 FROM insumos i
 WHERE i.id = l.insumo_id AND i.unidad_medida = 'lb';
 
