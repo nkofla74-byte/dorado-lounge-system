@@ -64,14 +64,21 @@
 - [x] `lib/units.ts` reducido (familias de 1 miembro); selectores UI y messages solo g/ml/unidad.
 - **Criterio:** ✅ typecheck + lint + 394 tests verdes. SQL se verifica en CI; aplica al merge.
 
-### F3 — Merma autoritativa en insumo
+### F3 — Merma autoritativa en insumo, aplicada en RECEPCIÓN ✅
 
-**Files:** `inventory/domain/merma.ts` · `recipes/*` · migración de datos
+> REVISADO 2026-05-30 (Opción 1 del dueño): la merma se aplica UNA VEZ en la
+> recepción. El inventario guarda el NETO; el consumo descuenta neto directo.
+> Antes era merma-en-consumo (`bruto=requerida/(1-coef)`).
 
-- [ ] El cálculo `bruto = requerida/(1-coef)` usa `insumos.merma_default` como coeficiente autoritativo.
-- [ ] `receta_ingredientes.merma_coeficiente` deja de ser override: se sincroniza/deriva del insumo (o se ignora en el descuento). Migrar datos: poblar `merma_default` desde el valor de receta cuando falte.
-- [ ] Mantener coverage 90%+ en `merma.ts`. Tests de que el descuento usa la merma del insumo.
-- **Criterio:** un cambio de merma del insumo se refleja en todas sus recetas; tests verdes.
+**Files:** `inventory/domain/merma.ts` · `inventory/actions.ts` (createLote) · `orders/actions.ts` · `production/actions.ts` · `nuevo-ingreso-dialog` + i18n · migraciones `20260530000001_merma_recepcion`, `20260530000002_costo_receta_sin_merma`
+
+- [x] `merma.ts`: `aplicarMermaRecepcion(comprado,coef)=comprado×(1-coef)` + `costoUnitarioNeto=costo/(1-coef)` (preserva valor total). Se conservan `cantidadConMerma`/`mermaAbsoluta` como utilidades (ya no se usan en descuento/costo).
+- [x] Recepción (`createLote`): netea cantidad y costo usando `insumos.merma_default`; movimiento entrada en neto.
+- [x] Consumo: `orders` y `production` descuentan la cantidad neta directa (eliminado `cantidadConMerma`).
+- [x] Costo: RPC `fn_costo_receta` sin inflar (`cantidad×precio` neto).
+- [x] Migración datos: poblar `merma_default` desde el coef único de recetas + netear stock existente (cantidad+costo). Idempotente. `receta_ingredientes.merma_coeficiente` queda histórico.
+- [x] UI: preview comprado/merma/disponible en nuevo ingreso. Coverage merma.ts mantenido (+12 tests).
+- **Criterio:** ✅ lint+typecheck+406 tests verdes. SQL aplica al merge vía CI.
 
 ---
 

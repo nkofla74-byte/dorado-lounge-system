@@ -274,6 +274,9 @@
     },
     "nuevoIngreso": {
       "trigger": "New intake",
+      "compraBruta": "Purchased",
+      "mermaAplicada": "Waste",
+      "netoDisponible": "Available (net)",
       "title": "New warehouse intake",
       "description": "Register a supplier delivery. Creates the item in the catalog if it does not exist yet.",
       "modoExistente": "Existing item",

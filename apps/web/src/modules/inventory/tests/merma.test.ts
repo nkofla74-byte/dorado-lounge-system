@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { cantidadConMerma, mermaAbsoluta, MermaError } from '../domain/merma';
+import {
+  cantidadConMerma,
+  mermaAbsoluta,
+  aplicarMermaRecepcion,
+  costoUnitarioNeto,
+  MermaError,
+} from '../domain/merma';
 
 describe('cantidadConMerma', () => {
   // ── Casos normales ──────────────────────────────────────────────────────────
@@ -128,5 +134,67 @@ describe('mermaAbsoluta', () => {
       // Tolerancia por redondeo de 4 decimales
       expect(Math.abs(merma + 100 - bruto)).toBeLessThan(0.0002);
     }
+  });
+});
+
+describe('aplicarMermaRecepcion (modelo F3: merma en recepción)', () => {
+  it('sin merma devuelve la cantidad comprada intacta', () => {
+    expect(aplicarMermaRecepcion(10000, 0)).toBe(10000);
+  });
+
+  it('merma 15%: 10 kg comprados → 8.5 kg netos', () => {
+    expect(aplicarMermaRecepcion(10000, 0.15)).toBe(8500);
+  });
+
+  it('merma 10%: 60 piezas → 54 netas', () => {
+    expect(aplicarMermaRecepcion(60, 0.1)).toBe(54);
+  });
+
+  it('redondea a 4 decimales', () => {
+    // 100 × (1 - 0.333) = 66.7
+    expect(aplicarMermaRecepcion(100, 0.333)).toBe(66.7);
+  });
+
+  it('cantidad cero produce cero', () => {
+    expect(aplicarMermaRecepcion(0, 0.2)).toBe(0);
+  });
+
+  it('lanza MermaError con comprado negativo', () => {
+    expect(() => aplicarMermaRecepcion(-1, 0.1)).toThrow(MermaError);
+  });
+
+  it('lanza MermaError con coeficiente fuera de rango', () => {
+    expect(() => aplicarMermaRecepcion(100, 1)).toThrow(MermaError);
+    expect(() => aplicarMermaRecepcion(100, -0.1)).toThrow(MermaError);
+  });
+});
+
+describe('costoUnitarioNeto (preserva valor total del lote)', () => {
+  it('sin merma el costo no cambia', () => {
+    expect(costoUnitarioNeto(10, 0)).toBe(10);
+  });
+
+  it('merma 15%: costo bruto 10 → neto 11.7647', () => {
+    // 10 / (1 - 0.15) = 11.76470… → 11.7647
+    expect(costoUnitarioNeto(10, 0.15)).toBe(11.7647);
+  });
+
+  it('preserva valor total: comprado×costoBruto === neto×costoNeto', () => {
+    const comprado = 10000;
+    const costoBruto = 28.5;
+    for (const c of [0, 0.05, 0.1, 0.15]) {
+      const neto = aplicarMermaRecepcion(comprado, c);
+      const costoNeto = costoUnitarioNeto(costoBruto, c);
+      expect(Math.abs(neto * costoNeto - comprado * costoBruto)).toBeLessThan(0.5);
+    }
+  });
+
+  it('costo cero produce cero', () => {
+    expect(costoUnitarioNeto(0, 0.2)).toBe(0);
+  });
+
+  it('lanza MermaError con costo negativo o coeficiente inválido', () => {
+    expect(() => costoUnitarioNeto(-1, 0.1)).toThrow(MermaError);
+    expect(() => costoUnitarioNeto(10, 1)).toThrow(MermaError);
   });
 });

@@ -10,7 +10,6 @@ import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
-import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
@@ -402,14 +401,15 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
     const adminClient = createAdminClient();
     for (const item of pedido.items) {
       for (const ing of item.ingredientes) {
+        // Modelo F3: la merma se aplicó en la recepción (stock ya es neto),
+        // por lo que el consumo descuenta la cantidad neta de la receta directa.
         const cantidadNeta = (ing.cantidadPorBatch / item.recetaPorciones) * item.cantidad;
-        const cantidadBruta = cantidadConMerma(cantidadNeta, ing.mermaCoeficiente);
         const idempotencyKey = `pedido:${pedidoId}:item:${item.id}:ing:${ing.insumoId}`;
 
         const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
           p_tenant_id: ctx.tenantId,
           p_insumo_id: ing.insumoId,
-          p_cantidad: cantidadBruta,
+          p_cantidad: cantidadNeta,
           p_idempotency_key: idempotencyKey,
           p_tipo: 'salida_receta',
           p_referencia_id: pedidoId,

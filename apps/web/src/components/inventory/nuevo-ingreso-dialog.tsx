@@ -87,6 +87,12 @@ export function NuevoIngresoDialog({ insumos }: Props) {
 
   const unidadLabel = (u: UnidadMedida) => (tUnidad.has(u) ? tUnidad(u) : u);
 
+  // Preview de merma en recepción (modelo F3): el stock guardado es el neto.
+  const selectedInsumo = insumos.find((i) => i.id === insumoId);
+  const mermaPreview = modo === 'existente' ? (selectedInsumo?.mermaDefault ?? 0) : 0;
+  const compradoPreview = (Number(cantidadEmpaques) || 0) * (Number(pesoUnitario) || 0);
+  const netoPreview = Math.round(compradoPreview * (1 - mermaPreview) * 10_000) / 10_000;
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -328,6 +334,20 @@ export function NuevoIngresoDialog({ insumos }: Props) {
               </Select>
             </div>
           </div>
+
+          {/* Preview merma en recepción (modelo F3): se almacena el neto */}
+          {compradoPreview > 0 && mermaPreview > 0 && (
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">
+                {t('compraBruta')}: {compradoPreview} {unidadLabel(unidadPeso)}
+                {' · '}
+                {t('mermaAplicada')}: {(mermaPreview * 100).toFixed(0)}%
+              </span>
+              <span className="font-medium">
+                {t('netoDisponible')}: {netoPreview} {unidadLabel(unidadPeso)}
+              </span>
+            </div>
+          )}
 
           {/* Fecha vencimiento + costo */}
           <div className="grid grid-cols-2 gap-3">
