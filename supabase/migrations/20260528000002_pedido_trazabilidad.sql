@@ -21,8 +21,11 @@ END $$;
 ALTER TABLE public.pedidos
   ADD COLUMN IF NOT EXISTS prioridad public.prioridad_pedido NOT NULL DEFAULT 'normal';
 
+-- cocinero_id referencia public.users (que SÍ tiene tenant_id), igual que
+-- responsable_id, para mantener la coherencia multi-tenant y permitir validar
+-- que el cocinero pertenezca al tenant del pedido. (auth.users no tiene tenant_id.)
 ALTER TABLE public.pedidos
-  ADD COLUMN IF NOT EXISTS cocinero_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS cocinero_id uuid REFERENCES public.users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.pedido_items
   ADD COLUMN IF NOT EXISTS area_produccion public.area_produccion;

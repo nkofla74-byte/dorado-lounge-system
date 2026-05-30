@@ -290,6 +290,22 @@ export async function asignarCocinero(
     }
     const repo = createOrderRepository();
 
+    // Validar que el cocinero pertenezca a este tenant (defensa multi-tenant:
+    // cocinero_id es FK a public.users pero el id llega del cliente).
+    const supabase = await createClient();
+    const { data: cocinero } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', cocineroId)
+      .eq('tenant_id', ctx.tenantId)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (!cocinero) {
+      return err(
+        new AppError('VALIDATION', 400, 'El cocinero no pertenece a este establecimiento'),
+      );
+    }
+
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
 

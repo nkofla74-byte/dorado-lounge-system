@@ -226,47 +226,52 @@ export function createOrderRepository(): OrderRepository {
     ): Promise<PedidoWithItems> {
       const supabase = await createClient();
 
-      const { data: pedidoData, error: pedidoError } = await supabase
-        .from('pedidos')
-        .insert({
-          tenant_id: tenantId,
-          responsable_id: userId,
-          zona: input.zona,
-          numero_mesa: input.numeroMesa ?? null,
-          notas: input.notas ?? null,
-          idempotency_key: input.idempotencyKey,
-          turno_id: input.turnoId ?? null,
-        })
-        .select(PEDIDO_FLAT_SELECT)
-        .single();
+      // Creación atómica (pedido + ítems en una transacción) vía RPC, para no
+      // dejar pedidos huérfanos si falla el insert de ítems. Ver migración
+      // 20260530000004_fn_crear_pedido.sql.
+      const { data: nuevoPedidoId, error: rpcError } = await supabase.rpc('fn_crear_pedido', {
+        p_tenant_id: tenantId,
+        p_responsable_id: userId,
+        p_zona: input.zona,
+        p_numero_mesa: input.numeroMesa ?? null,
+        p_notas: input.notas ?? null,
+        p_idempotency_key: input.idempotencyKey,
+        p_turno_id: input.turnoId ?? null,
+        p_items: input.items.map((item) => ({
+          receta_id: item.recetaId,
+          cantidad: item.cantidad,
+          notas: item.notas ?? null,
+          area_produccion: itemAreas[item.recetaId] ?? null,
+        })),
+      });
 
-      if (pedidoError) {
-        if (pedidoError.code === '23505') {
+      if (rpcError) {
+        if (rpcError.code === '23505') {
           throw new AppError(
             'DUPLICATE_PEDIDO',
             409,
             'Pedido duplicado: esta operación ya fue registrada',
           );
         }
-        throw new AppError('DB_ERROR', 500, pedidoError.message);
+        throw new AppError('DB_ERROR', 500, rpcError.message);
       }
+
+      // Hidratar el pedido recién creado (lectura, ya persistido atómicamente).
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_FLAT_SELECT)
+        .eq('id', nuevoPedidoId as string)
+        .eq('tenant_id', tenantId)
+        .single();
+      if (pedidoError) throw new AppError('DB_ERROR', 500, pedidoError.message);
 
       const { data: itemsData, error: itemsError } = await supabase
         .from('pedido_items')
-        .insert(
-          input.items.map((item) => ({
-            tenant_id: tenantId,
-            pedido_id: pedidoData.id,
-            receta_id: item.recetaId,
-            cantidad: item.cantidad,
-            notas: item.notas ?? null,
-            area_produccion: itemAreas[item.recetaId] ?? null,
-          })),
-        )
         .select(
           'id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre)',
-        );
-
+        )
+        .eq('pedido_id', nuevoPedidoId as string)
+        .eq('tenant_id', tenantId);
       if (itemsError) throw new AppError('DB_ERROR', 500, itemsError.message);
 
       return {
