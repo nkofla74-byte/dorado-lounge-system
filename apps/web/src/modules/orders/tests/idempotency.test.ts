@@ -30,6 +30,15 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
     async findActiveByZona(tenantId: string, zona: string) {
       return (await this.findActive(tenantId)).filter((p) => p.zona === zona);
     },
+    async findActiveByArea(tenantId: string, area: string) {
+      return pedidos.filter(
+        (p) =>
+          p.tenantId === tenantId &&
+          p.estado !== 'entregado' &&
+          p.estado !== 'cancelado' &&
+          (p.items ?? []).some((i) => i.areaProduccion === area),
+      );
+    },
     async findRecent(tenantId: string, limit: number) {
       return pedidos
         .filter((p) => p.tenantId === tenantId && ['entregado', 'cancelado'].includes(p.estado))

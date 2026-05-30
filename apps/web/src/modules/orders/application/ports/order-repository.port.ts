@@ -10,6 +10,8 @@ import type {
 export interface OrderRepository {
   findActive(tenantId: string): Promise<PedidoWithItems[]>;
   findActiveByZona(tenantId: string, zona: string): Promise<PedidoWithItems[]>;
+  /** Pedidos activos con al menos un ítem ruteado a un área productiva (KDS por área). */
+  findActiveByArea(tenantId: string, area: AreaProduccion): Promise<PedidoWithItems[]>;
   findRecent(tenantId: string, limit: number): Promise<PedidoWithItems[]>;
   /** Área productiva de cada receta (null si no está clasificada). Para ruteo. */
   findRecetaAreas(

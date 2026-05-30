@@ -8,12 +8,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
+import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import { CHANNELS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
-import type { Pedido, PedidoWithItems, PedidoEvento } from './domain/pedido';
+import type { Pedido, PedidoWithItems, PedidoEvento, AreaProduccion } from './domain/pedido';
 
 // ── Carta de servicio (incluye inactivas para toggle) ────────────────────────
 
@@ -88,6 +89,27 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
     const ctx = await assertCan('orders:read');
     const repo = createOrderRepository();
     return ok(await getPedidosUseCase(repo, ctx.tenantId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// KDS por área (cocina fría / caliente). El permiso se valida por área para que
+// cada cocinero solo acceda a su cola; admin/superuser tienen ambas.
+const AREA_KDS_PERM: Partial<Record<AreaProduccion, string>> = {
+  cocina_fria: 'cocina_fria:read',
+  cocina_caliente: 'cocina_caliente:read',
+};
+
+export async function getPedidosByArea(area: AreaProduccion): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const perm = AREA_KDS_PERM[area];
+    if (!perm) {
+      return err(new AppError('VALIDATION', 400, `Área de KDS no soportada: ${area}`));
+    }
+    const ctx = await assertCan(perm);
+    const repo = createOrderRepository();
+    return ok(await getPedidosByAreaUseCase(repo, ctx.tenantId, area));
   } catch (e) {
     return err(toAppError(e));
   }

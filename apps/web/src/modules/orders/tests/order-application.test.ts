@@ -70,6 +70,15 @@ function createInMemoryRepo(
           p.estado !== 'cancelado',
       );
     },
+    async findActiveByArea(tenantId: string, area: string) {
+      return pedidos.filter(
+        (p) =>
+          p.tenantId === tenantId &&
+          p.estado !== 'entregado' &&
+          p.estado !== 'cancelado' &&
+          (p.items ?? []).some((i) => i.areaProduccion === area),
+      );
+    },
     async findRecent(tenantId: string, limit: number) {
       return pedidos
         .filter((p) => p.tenantId === tenantId)

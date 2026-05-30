@@ -182,6 +182,30 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findActiveByArea(tenantId: string, area: AreaProduccion): Promise<PedidoWithItems[]> {
+      const supabase = await createClient();
+      // `pedido_items!inner` + filtro por área: devuelve solo pedidos con al menos
+      // un ítem ruteado a esta área, y embebe únicamente esos ítems (vista enfocada
+      // por KDS). El estado del pedido es compartido (modelo a nivel de pedido).
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(
+          `
+          id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
+          pedido_items!inner(id, pedido_id, receta_id, cantidad, notas, area_produccion, receta:recetas(nombre)),
+          pedido_eventos(estado, created_at)
+        `,
+        )
+        .eq('tenant_id', tenantId)
+        .eq('pedido_items.area_produccion', area)
+        .is('deleted_at', null)
+        .in('estado', ['creado', 'recibido_cocina', 'en_preparacion', 'despachado'])
+        .order('created_at', { ascending: true });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
     async findRecent(tenantId: string, limit: number): Promise<PedidoWithItems[]> {
       const supabase = await createClient();
       const { data, error } = await supabase
