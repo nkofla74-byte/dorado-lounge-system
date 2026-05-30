@@ -116,12 +116,12 @@
 
 ## NÚCLEO — KDS por área e interfaces de origen
 
-### K1 — KDS Cocina Caliente / Fría (funcionales)
+### K1 — KDS Cocina Caliente / Fría (funcionales) ✅
 
-**Files:** `apps/web/src/app/(dashboard)/cocina-caliente/*` · `cocina-fria/*` · módulo/queries de cola por área
+**Files:** `cocina-fria/page.tsx` · `cocina-caliente/page.tsx` · `components/kds/kds-board-area.tsx` · `orders` (findActiveByArea, getPedidosByArea)
 
-- [ ] Pantalla por área: cola de pedidos ruteados a esa área (recepción → en_preparacion → despachado), timers, prioridad visible. Táctil, modo oscuro, i18n. Replicar patrón `cocina-amex`.
-- **Criterio:** un pedido ruteado a cocina_caliente aparece en su KDS y avanza por estados con descuento FEFO al despachar.
+- [x] Cola por área (`pedido_items!inner` filtrado por `area_produccion`); board kanban nuevos/preparación/despacho reutilizando `PedidoCard` (timer + urgencia); canal COCINA; permiso por área. Páginas dejan de ser stubs (cierra A1 de la auditoría).
+- **Criterio:** ✅ pedido ruteado a un área aparece en su KDS y avanza por estados (descuento FEFO ocurre en la entrega del mesero, modelo vigente). Limitación conocida: estado a nivel de pedido (compartido si toca varias áreas).
 
 ### K2 — Interfaces de origen Snack / Buffet
 
