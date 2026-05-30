@@ -5,6 +5,9 @@
 **Alcance:** Enjambre enfocado de 5 agentes (Arquitectura+Código muerto, Lógica de Negocio/Inventario, Seguridad, Base de Datos, QA/Cobertura).
 **Modalidad:** auditoría del DELTA del "refoco operacional" sobre una base con auditoría enterprise previa ya resuelta.
 
+> **Actualización 2026-05-30 (post-auditoría):** **C1, C2, C3 y C4 RESUELTOS.**
+> C1/C2 en commit `ed2255f`; C3 (cocinero_id→`public.users` + validación de tenant en `asignarCocinero`) y C4 (RPC atómica `fn_crear_pedido`) en commit `caa104c`, validado contra prod por rollback. **Merge-blocker restante: C5** (cobertura rota + actions/RPC/RBAC/RLS sin tests).
+
 > Honestidad brutal: el **núcleo de dominio está bien diseñado** (hexagonal enforced, FEFO atómico, merma-en-recepción correcta, 406 tests de dominio verdes). Pero el sprint de refoco dejó **regresiones críticas en migraciones** y una **capa de orquestación (actions/RPC) sin pruebas ni cobertura medida**. Dos críticos introducidos esta sesión **ya fueron corregidos**; el resto es merge-blocker pendiente.
 
 ---
