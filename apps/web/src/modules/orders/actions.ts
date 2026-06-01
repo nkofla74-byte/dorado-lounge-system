@@ -261,58 +261,6 @@ export async function recibirEnCocina(pedidoId: string, version: number): Promis
   }
 }
 
-export async function iniciarPreparacion(
-  pedidoId: string,
-  version: number,
-): Promise<Result<Pedido>> {
-  try {
-    const ctx = await assertCan('orders:dispatch');
-    const repo = createOrderRepository();
-
-    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
-    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
-
-    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('en_preparacion')) {
-      return err(
-        new AppError(
-          'INVALID_TRANSITION',
-          400,
-          `No se puede iniciar un pedido en estado '${pedido.estado}'`,
-        ),
-      );
-    }
-
-    const updated = await repo.transition(pedidoId, ctx.tenantId, 'en_preparacion', version);
-
-    await auditLog({
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      action: 'orders:iniciar_preparacion',
-      resourceId: pedidoId,
-      resourceType: 'pedido',
-      payload: {},
-    });
-
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_ESTADO',
-      payload: {
-        pedidoId,
-        tenantId: ctx.tenantId,
-        estadoAnterior: pedido.estado,
-        estadoNuevo: 'en_preparacion',
-        zona: pedido.zona,
-        updatedAt:
-          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
-      },
-    });
-
-    void registrarEvento(ctx.tenantId, pedidoId, 'en_preparacion', ctx.userId);
-    return ok(updated);
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}
-
 export async function asignarCocinero(
   pedidoId: string,
   cocineroId: string,
@@ -371,58 +319,6 @@ export async function asignarCocinero(
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, cocineroPayload);
     await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, cocineroPayload);
 
-    return ok(updated);
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}
-
-export async function despacharPedido(pedidoId: string, version: number): Promise<Result<Pedido>> {
-  try {
-    const ctx = await assertCan('orders:dispatch');
-    const repo = createOrderRepository();
-
-    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
-    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
-
-    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('despachado')) {
-      return err(
-        new AppError(
-          'INVALID_TRANSITION',
-          400,
-          `No se puede despachar un pedido en estado '${pedido.estado}'`,
-        ),
-      );
-    }
-
-    const updated = await repo.transition(pedidoId, ctx.tenantId, 'despachado', version);
-
-    await auditLog({
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      action: 'orders:despachar_pedido',
-      resourceId: pedidoId,
-      resourceType: 'pedido',
-      payload: {},
-    });
-
-    const despachoPayload = {
-      type: 'PEDIDO_ESTADO' as const,
-      payload: {
-        pedidoId,
-        tenantId: ctx.tenantId,
-        estadoAnterior: pedido.estado,
-        estadoNuevo: 'despachado' as const,
-        zona: pedido.zona,
-        updatedAt:
-          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
-      },
-    };
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, despachoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, despachoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.AMEX, despachoPayload);
-
-    void registrarEvento(ctx.tenantId, pedidoId, 'despachado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));

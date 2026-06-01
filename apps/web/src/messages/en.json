@@ -1208,7 +1208,11 @@
       "entregado": "Delivered",
       "cancelado": "Canceled"
     },
-    "solicitudPreparacionToast": "Request from {zona}: {descripcion}"
+    "solicitudPreparacionToast": "Request from {zona}: {descripcion}",
+    "iniciarItem": "Start",
+    "marcarListo": "Ready",
+    "recall": "Reopen",
+    "progresoArea": "{n}/{total} ready"
   },
   "pedidos": {
     "estadoCreado": "Created",

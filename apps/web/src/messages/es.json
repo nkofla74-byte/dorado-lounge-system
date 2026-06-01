@@ -1202,7 +1202,11 @@
       "entregado": "Entregado",
       "cancelado": "Cancelado"
     },
-    "solicitudPreparacionToast": "Solicitud de {zona}: {descripcion}"
+    "solicitudPreparacionToast": "Solicitud de {zona}: {descripcion}",
+    "iniciarItem": "Iniciar",
+    "marcarListo": "Listo",
+    "recall": "Reabrir",
+    "progresoArea": "{n}/{total} listos"
   },
   "pedidos": {
     "estadoCreado": "Creado",

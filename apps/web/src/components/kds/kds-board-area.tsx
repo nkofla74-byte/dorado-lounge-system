@@ -5,8 +5,8 @@ import { useTranslations } from 'next-intl';
 import { CHANNELS } from '@dorado/shared-types';
 import { useSocket } from '@/lib/socket/use-socket';
 import { PedidoCard } from './pedido-card';
+import { estadoAreaDePedido } from './area-estado';
 import { getPedidosByArea } from '@/modules/orders/actions';
-import { toast } from 'sonner';
 import type { PedidoWithItems, AreaProduccion } from '@/modules/orders/domain/pedido';
 import type { SocketEvent } from '@dorado/shared-types';
 
@@ -53,7 +53,10 @@ interface KdsBoardAreaProps {
 /**
  * KDS enfocado por área productiva (cocina fría / caliente). Muestra solo los
  * pedidos con ítems ruteados a esta área. Escucha el canal COCINA (donde se
- * difunden PEDIDO_CREADO / PEDIDO_ESTADO) y recarga la cola del área.
+ * difunden PEDIDO_CREADO / PEDIDO_ESTADO / ITEM_ESTADO) y recarga la cola del área.
+ *
+ * La columna de cada pedido se determina por el estado de sus ítems en esta área
+ * (via estadoAreaDePedido), no por el estado global del pedido.
  */
 export function KdsBoardArea({
   area,
@@ -70,21 +73,6 @@ export function KdsBoardArea({
     const result = await getPedidosByArea(area);
     if (result.ok) setPedidos(result.value);
   }, [area]);
-
-  const handleStateChange = useCallback((pedidoId: string, nuevoEstado: string) => {
-    setPedidos((prev) =>
-      prev.map((p) =>
-        p.id === pedidoId
-          ? {
-              ...p,
-              estado: nuevoEstado as PedidoWithItems['estado'],
-              version: p.version + 1,
-              updatedAt: new Date(),
-            }
-          : p,
-      ),
-    );
-  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -104,6 +92,11 @@ export function KdsBoardArea({
           refresh();
         }
       }
+      if (event.type === 'ITEM_ESTADO') {
+        // Un ítem de algún pedido cambió de estado — recargar para reflejar
+        // el nuevo estado del ítem y la clasificación de columna.
+        refresh();
+      }
     };
 
     socket.on('event', handleEvent);
@@ -118,7 +111,7 @@ export function KdsBoardArea({
 
   const byState = (estado: ColumnDef['key']) =>
     pedidos
-      .filter((p) => p.estado === estado)
+      .filter((p) => estadoAreaDePedido(p, area) === estado)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   return (
@@ -164,7 +157,8 @@ export function KdsBoardArea({
                     <PedidoCard
                       key={pedido.id}
                       pedido={pedido}
-                      onStateChange={handleStateChange}
+                      area={area}
+                      pedidoVersion={pedido.version}
                       onRefresh={refresh}
                       readOnly={readOnly}
                     />
