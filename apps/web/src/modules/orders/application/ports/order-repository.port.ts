@@ -4,6 +4,7 @@ import type {
   PedidoForDelivery,
   CreatePedidoInput,
   EstadoPedido,
+  EstadoItem,
   AreaProduccion,
 } from '../../domain/pedido';
 
@@ -34,4 +35,26 @@ export interface OrderRepository {
     cocineroId: string,
     version: number,
   ): Promise<Pedido>;
+  /** Carga los datos mínimos de un ítem para validar la transición de estado. */
+  findItemForTransition(
+    itemId: string,
+    tenantId: string,
+  ): Promise<{
+    itemId: string;
+    pedidoId: string;
+    area: AreaProduccion | null;
+    estado: EstadoItem;
+    pedidoEstado: EstadoPedido;
+    pedidoVersion: number;
+    zona: string;
+  } | null>;
+  /** Aplica una transición de estado a un ítem y recomputa el estado del pedido. */
+  transitionItem(args: {
+    itemId: string;
+    pedidoId: string;
+    tenantId: string;
+    nuevoEstado: EstadoItem;
+    actorId: string;
+    pedidoVersion: number;
+  }): Promise<{ pedidoEstado: EstadoPedido; pedidoVersion: number }>;
 }

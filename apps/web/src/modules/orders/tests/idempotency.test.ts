@@ -76,6 +76,11 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
           cantidad: item.cantidad,
           notas: null,
           areaProduccion: itemAreas[item.recetaId] ?? null,
+          estado: 'pendiente' as const,
+          enPreparacionAt: null,
+          listoAt: null,
+          iniciadoPor: null,
+          listoPor: null,
         })),
         timestamps: {
           recibidoCocinaAt: null,
@@ -107,6 +112,12 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
       if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
       pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1 };
       return pedidos[idx]!;
+    },
+    async findItemForTransition() {
+      return null;
+    },
+    async transitionItem() {
+      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
     },
   };
 }

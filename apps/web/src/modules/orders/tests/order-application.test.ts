@@ -107,6 +107,11 @@ function createInMemoryRepo(
           cantidad: it.cantidad,
           notas: it.notas ?? null,
           areaProduccion: itemAreas[it.recetaId] ?? null,
+          estado: 'pendiente' as const,
+          enPreparacionAt: null,
+          listoAt: null,
+          iniciadoPor: null,
+          listoPor: null,
         })),
       });
       pedidos.push(ped);
@@ -145,6 +150,12 @@ function createInMemoryRepo(
       p.version++;
       p.updatedAt = new Date();
       return p;
+    },
+    async findItemForTransition() {
+      return null;
+    },
+    async transitionItem() {
+      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
     },
   };
 }

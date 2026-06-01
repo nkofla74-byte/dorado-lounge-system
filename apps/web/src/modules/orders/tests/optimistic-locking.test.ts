@@ -30,7 +30,12 @@ function makePedido(overrides: Partial<Pedido> = {}): PedidoWithItems {
         recetaNombre: 'Filete',
         cantidad: 1,
         notas: null,
-        areaProduccion: 'cocina_fria',
+        areaProduccion: 'cocina_fria' as const,
+        estado: 'pendiente' as const,
+        enPreparacionAt: null,
+        listoAt: null,
+        iniciadoPor: null,
+        listoPor: null,
       },
     ],
     timestamps: {
@@ -130,6 +135,12 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
       if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
       pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1, updatedAt: new Date() };
       return pedidos[idx]!;
+    },
+    async findItemForTransition() {
+      return null;
+    },
+    async transitionItem() {
+      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
     },
   };
 }
