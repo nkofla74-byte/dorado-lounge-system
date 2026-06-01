@@ -146,3 +146,17 @@ export const PEDIDO_TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
   entregado: [],
   cancelado: [],
 };
+
+export const EstadoItem = {
+  pendiente: 'pendiente',
+  en_preparacion: 'en_preparacion',
+  listo: 'listo',
+} as const;
+
+export type EstadoItem = (typeof EstadoItem)[keyof typeof EstadoItem];
+
+export const ITEM_TRANSITIONS: Record<EstadoItem, EstadoItem[]> = {
+  pendiente: ['en_preparacion'],
+  en_preparacion: ['listo'],
+  listo: ['en_preparacion'], // solo vía recall
+};

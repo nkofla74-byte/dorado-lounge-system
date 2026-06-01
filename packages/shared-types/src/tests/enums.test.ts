@@ -13,6 +13,8 @@ import {
   EstadoTanda,
   AreaProduccion,
   Prioridad,
+  EstadoItem,
+  ITEM_TRANSITIONS,
 } from '../enums';
 
 describe('UserRole', () => {
@@ -147,5 +149,25 @@ describe('EstadoTanda', () => {
       'completada',
       'cancelada',
     ]);
+  });
+});
+
+describe('EstadoItem + ITEM_TRANSITIONS', () => {
+  it('tiene los 3 estados', () => {
+    expect(Object.values(EstadoItem)).toEqual(['pendiente', 'en_preparacion', 'listo']);
+  });
+  it('cada estado tiene transiciones definidas', () => {
+    for (const e of Object.values(EstadoItem)) {
+      expect(ITEM_TRANSITIONS).toHaveProperty(e);
+    }
+  });
+  it('listo solo retrocede a en_preparacion (recall)', () => {
+    expect(ITEM_TRANSITIONS.listo).toEqual(['en_preparacion']);
+  });
+  it('las transiciones apuntan a estados válidos', () => {
+    const valid = new Set(Object.values(EstadoItem));
+    for (const targets of Object.values(ITEM_TRANSITIONS)) {
+      for (const t of targets) expect(valid.has(t)).toBe(true);
+    }
   });
 });
