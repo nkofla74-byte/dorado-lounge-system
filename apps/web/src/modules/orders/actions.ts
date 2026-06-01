@@ -12,9 +12,16 @@ import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-p
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
-import { CHANNELS } from '@dorado/shared-types';
+import { CHANNELS, ITEM_TRANSITIONS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
-import type { Pedido, PedidoWithItems, PedidoEvento, AreaProduccion } from './domain/pedido';
+import type {
+  Pedido,
+  PedidoWithItems,
+  PedidoEvento,
+  AreaProduccion,
+  EstadoItem,
+  ZonaServicio,
+} from './domain/pedido';
 
 // ── Carta de servicio (incluye inactivas para toggle) ────────────────────────
 
@@ -99,6 +106,12 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
 const AREA_KDS_PERM: Partial<Record<AreaProduccion, string>> = {
   cocina_fria: 'cocina_fria:read',
   cocina_caliente: 'cocina_caliente:read',
+};
+
+const AREA_WRITE_PERM: Partial<Record<AreaProduccion, string>> = {
+  cocina_fria: 'cocina_fria:write',
+  cocina_caliente: 'cocina_caliente:write',
+  amex: 'cocina_amex:write',
 };
 
 export async function getPedidosByArea(area: AreaProduccion): Promise<Result<PedidoWithItems[]>> {
@@ -585,6 +598,113 @@ export async function getEventosPedido(pedidoId: string): Promise<Result<PedidoE
   } catch (e) {
     return err(toAppError(e));
   }
+}
+
+// ── Transiciones de ítem KDS ──────────────────────────────────────────────────
+
+async function ejecutarTransicionItem(
+  itemId: string,
+  version: number,
+  nuevoEstado: EstadoItem,
+  accionAudit: string,
+): Promise<Result<{ pedidoEstado: string }>> {
+  try {
+    // Resolver tenant del actor con un permiso base de cocina; el permiso fino
+    // por área se exige abajo según el área real del ítem.
+    const ctxBase = await assertCan('orders:read');
+    const repo = createOrderRepository();
+
+    const item = await repo.findItemForTransition(itemId, ctxBase.tenantId);
+    if (!item) return err(new AppError('NOT_FOUND', 404, 'Ítem no encontrado'));
+    if (item.area === null) {
+      return err(new AppError('VALIDATION', 400, 'El ítem no tiene área productiva asignada'));
+    }
+
+    const perm = AREA_WRITE_PERM[item.area];
+    if (!perm) return err(new AppError('VALIDATION', 400, `Área sin despacho KDS: ${item.area}`));
+    const ctx = await assertCan(perm);
+
+    if (!ITEM_TRANSITIONS[item.estado].includes(nuevoEstado)) {
+      return err(
+        new AppError(
+          'INVALID_TRANSITION',
+          400,
+          `No se puede pasar el ítem de '${item.estado}' a '${nuevoEstado}'`,
+        ),
+      );
+    }
+    if (nuevoEstado === 'en_preparacion' && item.estado === 'listo') {
+      if (['entregado', 'cancelado'].includes(item.pedidoEstado)) {
+        return err(
+          new AppError('INVALID_TRANSITION', 400, 'No se puede hacer recall de un pedido cerrado'),
+        );
+      }
+    }
+
+    const result = await repo.transitionItem({
+      itemId,
+      pedidoId: item.pedidoId,
+      tenantId: ctx.tenantId,
+      nuevoEstado,
+      actorId: ctx.userId,
+      pedidoVersion: version,
+    });
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: accionAudit,
+      resourceId: itemId,
+      resourceType: 'pedido_item',
+      payload: { area: item.area, nuevoEstado, pedidoId: item.pedidoId },
+    });
+
+    const updatedAt = new Date().toISOString();
+    const itemEvento = {
+      type: 'ITEM_ESTADO' as const,
+      payload: {
+        pedidoId: item.pedidoId,
+        itemId,
+        tenantId: ctx.tenantId,
+        area: item.area,
+        estadoAnterior: item.estado as 'pendiente' | 'en_preparacion' | 'listo',
+        estadoNuevo: nuevoEstado as 'pendiente' | 'en_preparacion' | 'listo',
+        updatedAt,
+      },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, itemEvento);
+    if (item.area === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, itemEvento);
+    }
+    if (result.pedidoEstado === 'despachado') {
+      await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
+        type: 'PEDIDO_ESTADO',
+        payload: {
+          pedidoId: item.pedidoId,
+          tenantId: ctx.tenantId,
+          estadoAnterior: item.pedidoEstado,
+          estadoNuevo: result.pedidoEstado,
+          zona: item.zona as ZonaServicio,
+          updatedAt,
+        },
+      });
+    }
+
+    void registrarEvento(ctx.tenantId, item.pedidoId, result.pedidoEstado, ctx.userId);
+    return ok({ pedidoEstado: result.pedidoEstado });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function iniciarItem(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'en_preparacion', 'orders:iniciar_item');
+}
+export async function marcarItemListo(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'listo', 'orders:marcar_item_listo');
+}
+export async function recallItem(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'en_preparacion', 'orders:recall_item');
 }
 
 export async function toggleDisponibilidadPlato(
