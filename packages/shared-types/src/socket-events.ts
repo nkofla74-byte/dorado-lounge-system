@@ -75,6 +75,19 @@ export interface PedidoEstadoEvent {
   };
 }
 
+export interface ItemEstadoEvent {
+  type: 'ITEM_ESTADO';
+  payload: {
+    pedidoId: string;
+    itemId: string;
+    tenantId: string;
+    area: string; // AreaProduccion del ítem
+    estadoAnterior: 'pendiente' | 'en_preparacion' | 'listo';
+    estadoNuevo: 'pendiente' | 'en_preparacion' | 'listo';
+    updatedAt: string;
+  };
+}
+
 export interface PedidoCocineroEvent {
   type: 'PEDIDO_COCINERO';
   payload: {
@@ -191,6 +204,7 @@ export interface AlertaEvent {
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
+  | ItemEstadoEvent
   | PedidoCocineroEvent
   | StockOutEvent
   | DespachoEvent
