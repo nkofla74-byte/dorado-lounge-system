@@ -10,20 +10,14 @@
     "produccion": "Producción",
     "pasteleria": "Pastelería",
     "pedidos": "Pedidos",
-    "vuelos": "Vuelos",
     "qrGenerator": "Generador QR",
-    "buffet": "Buffet",
-    "snack": "Snack",
     "turnos": "Turnos",
-    "afluencia": "Afluencia",
     "analytics": "Analytics",
     "costos": "Costos",
     "personal": "Personal",
     "proveedores": "Proveedores",
     "alertas": "Alertas",
-    "auditoria": "Auditoría",
     "featureFlags": "Feature Flags",
-    "permisos": "Permisos",
     "tenants": "Tenants",
     "plataforma": "Plataforma",
     "cerrarSesion": "Cerrar sesión"
@@ -148,13 +142,9 @@
       "capa_2": "Producción"
     },
     "unidad": {
-      "kg": "kg",
       "g": "g",
-      "l": "L",
       "ml": "mL",
-      "unidad": "und",
-      "porcion": "porc",
-      "lb": "lb"
+      "unidad": "und"
     },
     "actions": {
       "lotes": "Lotes",
@@ -217,12 +207,9 @@
         "capa_2": "Producción (Capa 2)"
       },
       "unidades": {
-        "kg": "Kilogramos (kg)",
         "g": "Gramos (g)",
-        "l": "Litros (L)",
         "ml": "Mililitros (mL)",
-        "unidad": "Unidad",
-        "porcion": "Porción"
+        "unidad": "Unidad"
       },
       "guardar": "Guardar insumo",
       "guardando": "Guardando…",
@@ -281,6 +268,9 @@
     },
     "nuevoIngreso": {
       "trigger": "Nuevo ingreso",
+      "compraBruta": "Comprado",
+      "mermaAplicada": "Merma",
+      "netoDisponible": "Disponible (neto)",
       "title": "Nuevo ingreso al almacén",
       "description": "Registra una entrega de proveedor. Crea el insumo si aún no está en el catálogo.",
       "modoExistente": "Insumo existente",
@@ -1212,7 +1202,11 @@
       "entregado": "Entregado",
       "cancelado": "Cancelado"
     },
-    "solicitudPreparacionToast": "Solicitud de {zona}: {descripcion}"
+    "solicitudPreparacionToast": "Solicitud de {zona}: {descripcion}",
+    "iniciarItem": "Iniciar",
+    "marcarListo": "Listo",
+    "recall": "Reabrir",
+    "progresoArea": "{n}/{total} listos"
   },
   "pedidos": {
     "estadoCreado": "Creado",

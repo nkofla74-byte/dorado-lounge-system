@@ -10,6 +10,7 @@ import { getInsumos as getInsumosUseCase } from './application/get-insumos';
 import { createInsumo as createInsumoUseCase } from './application/create-insumo';
 import { updateInsumo as updateInsumoUseCase } from './application/update-insumo';
 import { createLote as createLoteUseCase } from './application/create-lote';
+import { aplicarMermaRecepcion, costoUnitarioNeto } from './domain/merma';
 import {
   createInsumoSchema,
   updateInsumoSchema,
@@ -304,27 +305,46 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const admin = createAdminClient();
+
+    // Modelo F3: la merma del insumo se aplica UNA VEZ, aquí en la recepción.
+    // Se almacena el peso NETO usable y el costo unitario NETO (preservando el
+    // valor total del lote). El consumo posterior descuenta neto directo.
+    const { data: insumoRow } = await admin
+      .from('insumos')
+      .select('merma_default')
+      .eq('id', parsed.data.insumoId)
+      .eq('tenant_id', ctx.tenantId)
+      .single();
+    const merma = Number(insumoRow?.merma_default ?? 0);
+
+    const cantidadNeta = aplicarMermaRecepcion(parsed.data.cantidadInicial, merma);
+    const costoNeto =
+      parsed.data.costoUnitario != null
+        ? costoUnitarioNeto(parsed.data.costoUnitario, merma)
+        : parsed.data.costoUnitario;
+
     const repo = createInsumoRepository();
     const lote = await createLoteUseCase(repo, ctx.tenantId, {
       insumoId: parsed.data.insumoId,
-      cantidadInicial: parsed.data.cantidadInicial,
+      cantidadInicial: cantidadNeta,
       fechaVencimiento: parsed.data.fechaVencimiento,
       proveedor: parsed.data.proveedor,
       proveedorId: parsed.data.proveedorId,
-      costoUnitario: parsed.data.costoUnitario,
+      costoUnitario: costoNeto,
       cantidadEmpaques: parsed.data.cantidadEmpaques,
       pesoUnitario: parsed.data.pesoUnitario,
       unidadPeso: parsed.data.unidadPeso,
     });
 
-    // Registra movimiento de entrada (movimientos_inventario no tiene INSERT RLS)
-    const admin = createAdminClient();
+    // Registra movimiento de entrada con la cantidad NETA (coherente con stock).
+    // movimientos_inventario no tiene INSERT RLS → admin client.
     await admin.from('movimientos_inventario').insert({
       tenant_id: ctx.tenantId,
       insumo_id: parsed.data.insumoId,
       lote_id: lote.id,
       tipo: 'entrada',
-      cantidad: parsed.data.cantidadInicial,
+      cantidad: cantidadNeta,
       usuario_id: ctx.userId,
     });
 

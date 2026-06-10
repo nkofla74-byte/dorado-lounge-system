@@ -8,10 +8,6 @@
     {
       "path": "/api/cron/check-alertas",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/flights-snapshot",
-      "schedule": "30 4 * * *"
     }
   ]
 }

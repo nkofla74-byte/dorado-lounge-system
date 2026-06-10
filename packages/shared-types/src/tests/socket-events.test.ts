@@ -54,15 +54,6 @@ describe('CHANNEL_ACL', () => {
     expect(CHANNEL_ACL['sala:amex']).toContain('mesero_amex');
   });
 
-  it('personal_snack no puede acceder a sala:amex', () => {
-    expect(CHANNEL_ACL['sala:amex']).not.toContain('personal_snack');
-  });
-
-  it('zonas de despacho no se hablan entre sí (snack no ve buffet, buffet no ve snack)', () => {
-    expect(CHANNEL_ACL['sala:snack']).not.toContain('personal_buffet');
-    expect(CHANNEL_ACL['sala:buffet']).not.toContain('personal_snack');
-  });
-
   it('no hay arrays vacíos en ACL', () => {
     for (const [channel, roles] of Object.entries(CHANNEL_ACL)) {
       expect(roles.length, `ACL vacío para ${channel}`).toBeGreaterThan(0);

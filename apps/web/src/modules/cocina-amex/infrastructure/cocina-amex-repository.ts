@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { AppError } from '@/lib/result';
 import type { CocinaAmexRepository } from '../application/ports';
 import type { Pedido, PedidoWithItems, PedidoEvento, EstadoPedido } from '../domain/pedido-amex';
+import type { AreaProduccion, EstadoItem } from '@dorado/shared-types';
 
 type ItemRow = {
   id: string;
@@ -10,6 +11,12 @@ type ItemRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
+  estado: string | null;
+  en_preparacion_at: string | null;
+  listo_at: string | null;
+  iniciado_por: string | null;
+  listo_por: string | null;
   receta: { nombre: string } | null;
 };
 
@@ -21,18 +28,19 @@ type PedidoRow = {
   estado: string;
   version: number;
   notas: string | null;
+  cocinero_id: string | null;
   created_at: string;
   updated_at: string;
   pedido_items: ItemRow[];
 };
 
 const PEDIDO_SELECT = `
-  id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
-  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre))
+  id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
+  pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, estado, en_preparacion_at, listo_at, iniciado_por, listo_por, receta:recetas(nombre))
 `;
 
 const PEDIDO_FLAT_SELECT =
-  'id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at';
+  'id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at';
 
 function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
   return {
@@ -43,6 +51,7 @@ function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
     estado: row.estado as EstadoPedido,
     version: row.version,
     notas: row.notas,
+    cocineroId: row.cocinero_id,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -60,6 +69,12 @@ function toPedidoWithItems(row: PedidoRow): PedidoWithItems {
       recetaNombre: i.receta?.nombre ?? '',
       cantidad: i.cantidad,
       notas: i.notas,
+      areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
+      estado: (i.estado ?? 'pendiente') as EstadoItem,
+      enPreparacionAt: i.en_preparacion_at ? new Date(i.en_preparacion_at) : null,
+      listoAt: i.listo_at ? new Date(i.listo_at) : null,
+      iniciadoPor: i.iniciado_por ?? null,
+      listoPor: i.listo_por ?? null,
     })),
     timestamps: {
       recibidoCocinaAt: null,

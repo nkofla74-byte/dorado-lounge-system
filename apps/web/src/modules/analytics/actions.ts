@@ -4,25 +4,11 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createAnalyticsRepository } from './infrastructure/analytics-repository';
-import { getCogsPerPassenger as getCogsUseCase } from './application/get-cogs';
 import { getConsumoVsProduccion as getConsumoUseCase } from './application/get-consumo';
 import type { Result } from '@/lib/result';
-import type { CogsPerPassenger, ConsumoInsumo, AnalyticsFilters } from './domain/kpi';
+import type { ConsumoInsumo, AnalyticsFilters } from './domain/kpi';
 
 // Superuser opera cross-tenant; cualquier otro rol queda acotado a su tenant.
-export async function fetchCogsPerPassenger(
-  filters: AnalyticsFilters = {},
-): Promise<Result<CogsPerPassenger[]>> {
-  try {
-    const ctx = await assertCan('analytics:read');
-    const scope = ctx.role === 'superuser' ? null : ctx.tenantId;
-    const repo = createAnalyticsRepository();
-    return ok(await getCogsUseCase(repo, scope, filters));
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}
-
 export async function fetchConsumoVsProduccion(
   filters: AnalyticsFilters = {},
 ): Promise<Result<ConsumoInsumo[]>> {

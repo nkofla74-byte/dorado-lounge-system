@@ -31,9 +31,7 @@ type RoleKey =
   | 'chef_cocina_fria'
   | 'chef_cocina_caliente'
   | 'sous_chef'
-  | 'mesero_amex'
-  | 'personal_snack'
-  | 'personal_buffet';
+  | 'mesero_amex';
 
 const ASSIGNABLE_ROLES: RoleKey[] = [
   'admin',
@@ -42,8 +40,6 @@ const ASSIGNABLE_ROLES: RoleKey[] = [
   'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
-  'personal_snack',
-  'personal_buffet',
 ];
 
 interface Props {

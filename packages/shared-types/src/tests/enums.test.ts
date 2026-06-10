@@ -11,11 +11,15 @@ import {
   CategoriaMenu,
   TipoReceta,
   EstadoTanda,
+  AreaProduccion,
+  Prioridad,
+  EstadoItem,
+  ITEM_TRANSITIONS,
 } from '../enums';
 
 describe('UserRole', () => {
-  it('contiene los 13 roles del sistema', () => {
-    expect(Object.keys(UserRole)).toHaveLength(13);
+  it('contiene los 10 roles del sistema', () => {
+    expect(Object.keys(UserRole)).toHaveLength(10);
   });
 
   const REQUIRED_ROLES = [
@@ -26,9 +30,6 @@ describe('UserRole', () => {
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
-    'personal_snack',
-    'personal_buffet',
-    'recepcion',
     'personal_almacen',
     'personal_pasteleria',
     'steward',
@@ -97,11 +98,15 @@ describe('CapaInventario', () => {
 });
 
 describe('UnidadMedida', () => {
-  it('incluye kg, g, lb, l, ml, unidad, porcion', () => {
-    expect(Object.keys(UnidadMedida)).toHaveLength(7);
-    expect(UnidadMedida).toHaveProperty('kg');
-    expect(UnidadMedida).toHaveProperty('lb');
-    expect(UnidadMedida).toHaveProperty('porcion');
+  it('solo expone g, ml y unidad (F2 refoco operacional)', () => {
+    expect(Object.keys(UnidadMedida)).toEqual(['g', 'ml', 'unidad']);
+  });
+
+  it('no incluye unidades legadas kg/lb/l/porcion', () => {
+    expect(UnidadMedida).not.toHaveProperty('kg');
+    expect(UnidadMedida).not.toHaveProperty('lb');
+    expect(UnidadMedida).not.toHaveProperty('l');
+    expect(UnidadMedida).not.toHaveProperty('porcion');
   });
 });
 
@@ -117,6 +122,25 @@ describe('TipoReceta', () => {
   });
 });
 
+describe('AreaProduccion', () => {
+  it('incluye las 4 áreas productivas (KDS): caliente, fría, pastelería, amex', () => {
+    expect(AreaProduccion).toHaveProperty('cocina_caliente', 'cocina_caliente');
+    expect(AreaProduccion).toHaveProperty('cocina_fria', 'cocina_fria');
+    expect(AreaProduccion).toHaveProperty('pasteleria', 'pasteleria');
+    expect(AreaProduccion).toHaveProperty('amex', 'amex');
+  });
+
+  it('conserva el valor legacy `cocina` (inerte tras el split, no se reutiliza)', () => {
+    expect(AreaProduccion).toHaveProperty('cocina', 'cocina');
+  });
+});
+
+describe('Prioridad', () => {
+  it('tiene alta, normal, baja', () => {
+    expect(Object.keys(Prioridad)).toEqual(['alta', 'normal', 'baja']);
+  });
+});
+
 describe('EstadoTanda', () => {
   it('tiene 4 estados', () => {
     expect(Object.keys(EstadoTanda)).toEqual([
@@ -125,5 +149,25 @@ describe('EstadoTanda', () => {
       'completada',
       'cancelada',
     ]);
+  });
+});
+
+describe('EstadoItem + ITEM_TRANSITIONS', () => {
+  it('tiene los 3 estados', () => {
+    expect(Object.values(EstadoItem)).toEqual(['pendiente', 'en_preparacion', 'listo']);
+  });
+  it('cada estado tiene transiciones definidas', () => {
+    for (const e of Object.values(EstadoItem)) {
+      expect(ITEM_TRANSITIONS).toHaveProperty(e);
+    }
+  });
+  it('listo solo retrocede a en_preparacion (recall)', () => {
+    expect(ITEM_TRANSITIONS.listo).toEqual(['en_preparacion']);
+  });
+  it('las transiciones apuntan a estados válidos', () => {
+    const valid = new Set(Object.values(EstadoItem));
+    for (const targets of Object.values(ITEM_TRANSITIONS)) {
+      for (const t of targets) expect(valid.has(t)).toBe(true);
+    }
   });
 });

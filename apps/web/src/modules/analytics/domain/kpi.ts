@@ -1,16 +1,3 @@
-export interface CogsPerPassenger {
-  tenantId: string;
-  tenantNombre: string | null;
-  tenantSlug: string | null;
-  turnoId: string;
-  turnoNombre: string;
-  iniciadoAt: Date;
-  cerradoAt: Date | null;
-  totalPasajeros: number;
-  cogsTotalCop: number;
-  cogsPerPassenger: number | null;
-}
-
 export interface ConsumoInsumo {
   tenantId: string;
   tenantNombre: string | null;

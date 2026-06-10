@@ -9,8 +9,11 @@ import type {
   PedidoItemConIngredientes,
   CreatePedidoInput,
   EstadoPedido,
+  EstadoItem,
   ZonaServicio,
+  AreaProduccion,
 } from '../domain/pedido';
+import { estadoPedidoDesdeItems } from '../domain/item-estado';
 
 type ItemRow = {
   id: string;
@@ -18,6 +21,12 @@ type ItemRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
+  estado: string | null;
+  en_preparacion_at: string | null;
+  listo_at: string | null;
+  iniciado_por: string | null;
+  listo_por: string | null;
   receta: { nombre: string } | null;
 };
 
@@ -34,6 +43,7 @@ type PedidoRow = {
   estado: string;
   version: number;
   notas: string | null;
+  cocinero_id: string | null;
   created_at: string;
   updated_at: string;
   pedido_items: ItemRow[];
@@ -46,6 +56,12 @@ type ItemWithIngsRow = {
   receta_id: string;
   cantidad: number;
   notas: string | null;
+  area_produccion: string | null;
+  estado: string | null;
+  en_preparacion_at: string | null;
+  listo_at: string | null;
+  iniciado_por: string | null;
+  listo_por: string | null;
   receta: {
     nombre: string;
     porciones: number;
@@ -63,13 +79,13 @@ type PedidoWithIngsRow = Omit<PedidoRow, 'pedido_items'> & {
 };
 
 const PEDIDO_SELECT = `
-  id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
-  pedido_items(id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre)),
+  id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
+  pedido_items(id, pedido_id, receta_id, cantidad, notas, area_produccion, estado, en_preparacion_at, listo_at, iniciado_por, listo_por, receta:recetas(nombre)),
   pedido_eventos(estado, created_at)
 `;
 
 const PEDIDO_FLAT_SELECT =
-  'id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at';
+  'id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at';
 
 function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
   return {
@@ -80,6 +96,7 @@ function toPedido(row: Omit<PedidoRow, 'pedido_items'>): Pedido {
     estado: row.estado as EstadoPedido,
     version: row.version,
     notas: row.notas,
+    cocineroId: row.cocinero_id,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -93,6 +110,12 @@ function toItem(i: ItemRow): PedidoItem {
     recetaNombre: i.receta?.nombre ?? '',
     cantidad: i.cantidad,
     notas: i.notas,
+    areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
+    estado: (i.estado ?? 'pendiente') as EstadoItem,
+    enPreparacionAt: i.en_preparacion_at ? new Date(i.en_preparacion_at) : null,
+    listoAt: i.listo_at ? new Date(i.listo_at) : null,
+    iniciadoPor: i.iniciado_por ?? null,
+    listoPor: i.listo_por ?? null,
   };
 }
 
@@ -133,6 +156,12 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
     recetaNombre: i.receta?.nombre ?? '',
     cantidad: i.cantidad,
     notas: i.notas,
+    areaProduccion: (i.area_produccion ?? null) as AreaProduccion | null,
+    estado: (i.estado ?? 'pendiente') as EstadoItem,
+    enPreparacionAt: i.en_preparacion_at ? new Date(i.en_preparacion_at) : null,
+    listoAt: i.listo_at ? new Date(i.listo_at) : null,
+    iniciadoPor: i.iniciado_por ?? null,
+    listoPor: i.listo_por ?? null,
     recetaPorciones: i.receta?.porciones ?? 1,
     ingredientes: (i.receta?.receta_ingredientes ?? []).map((ri) => ({
       insumoId: ri.insumo_id,
@@ -175,6 +204,30 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findActiveByArea(tenantId: string, area: AreaProduccion): Promise<PedidoWithItems[]> {
+      const supabase = await createClient();
+      // `pedido_items!inner` + filtro por área: devuelve solo pedidos con al menos
+      // un ítem ruteado a esta área, y embebe únicamente esos ítems (vista enfocada
+      // por KDS). El estado del pedido es compartido (modelo a nivel de pedido).
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(
+          `
+          id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
+          pedido_items!inner(id, pedido_id, receta_id, cantidad, notas, area_produccion, estado, en_preparacion_at, listo_at, iniciado_por, listo_por, receta:recetas(nombre)),
+          pedido_eventos(estado, created_at)
+        `,
+        )
+        .eq('tenant_id', tenantId)
+        .eq('pedido_items.area_produccion', area)
+        .is('deleted_at', null)
+        .in('estado', ['creado', 'recibido_cocina', 'en_preparacion', 'despachado'])
+        .order('created_at', { ascending: true });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
     async findRecent(tenantId: string, limit: number): Promise<PedidoWithItems[]> {
       const supabase = await createClient();
       const { data, error } = await supabase
@@ -190,51 +243,81 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findRecetaAreas(
+      tenantId: string,
+      recetaIds: string[],
+    ): Promise<Record<string, AreaProduccion | null>> {
+      if (recetaIds.length === 0) return {};
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('recetas')
+        .select('id, area_produccion')
+        .eq('tenant_id', tenantId)
+        .in('id', recetaIds);
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const row of (data ?? []) as Array<{ id: string; area_produccion: string | null }>) {
+        out[row.id] = (row.area_produccion ?? null) as AreaProduccion | null;
+      }
+      return out;
+    },
+
     async create(
       tenantId: string,
       userId: string,
       input: CreatePedidoInput,
+      itemAreas: Record<string, AreaProduccion>,
     ): Promise<PedidoWithItems> {
       const supabase = await createClient();
 
-      const { data: pedidoData, error: pedidoError } = await supabase
-        .from('pedidos')
-        .insert({
-          tenant_id: tenantId,
-          responsable_id: userId,
-          zona: input.zona,
-          numero_mesa: input.numeroMesa ?? null,
-          notas: input.notas ?? null,
-          idempotency_key: input.idempotencyKey,
-          turno_id: input.turnoId ?? null,
-        })
-        .select(PEDIDO_FLAT_SELECT)
-        .single();
+      // Creación atómica (pedido + ítems en una transacción) vía RPC, para no
+      // dejar pedidos huérfanos si falla el insert de ítems. Ver migración
+      // 20260530000004_fn_crear_pedido.sql.
+      const { data: nuevoPedidoId, error: rpcError } = await supabase.rpc('fn_crear_pedido', {
+        p_tenant_id: tenantId,
+        p_responsable_id: userId,
+        p_zona: input.zona,
+        p_numero_mesa: input.numeroMesa ?? null,
+        p_notas: input.notas ?? null,
+        p_idempotency_key: input.idempotencyKey,
+        p_turno_id: input.turnoId ?? null,
+        p_items: input.items.map((item) => ({
+          receta_id: item.recetaId,
+          cantidad: item.cantidad,
+          notas: item.notas ?? null,
+          area_produccion: itemAreas[item.recetaId] ?? null,
+        })),
+      });
 
-      if (pedidoError) {
-        if (pedidoError.code === '23505') {
+      if (rpcError) {
+        if (rpcError.code === '23505') {
           throw new AppError(
             'DUPLICATE_PEDIDO',
             409,
             'Pedido duplicado: esta operación ya fue registrada',
           );
         }
-        throw new AppError('DB_ERROR', 500, pedidoError.message);
+        throw new AppError('DB_ERROR', 500, rpcError.message);
       }
+
+      // Hidratar el pedido recién creado (lectura, ya persistido atómicamente).
+      const { data: pedidoData, error: pedidoError } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_FLAT_SELECT)
+        .eq('id', nuevoPedidoId as string)
+        .eq('tenant_id', tenantId)
+        .single();
+      if (pedidoError) throw new AppError('DB_ERROR', 500, pedidoError.message);
 
       const { data: itemsData, error: itemsError } = await supabase
         .from('pedido_items')
-        .insert(
-          input.items.map((item) => ({
-            tenant_id: tenantId,
-            pedido_id: pedidoData.id,
-            receta_id: item.recetaId,
-            cantidad: item.cantidad,
-            notas: item.notas ?? null,
-          })),
+        .select(
+          'id, pedido_id, receta_id, cantidad, notas, area_produccion, estado, en_preparacion_at, listo_at, iniciado_por, listo_por, receta:recetas(nombre)',
         )
-        .select('id, pedido_id, receta_id, cantidad, notas, receta:recetas(nombre)');
-
+        .eq('pedido_id', nuevoPedidoId as string)
+        .eq('tenant_id', tenantId);
       if (itemsError) throw new AppError('DB_ERROR', 500, itemsError.message);
 
       return {
@@ -250,9 +333,10 @@ export function createOrderRepository(): OrderRepository {
         .from('pedidos')
         .select(
           `
-          id, tenant_id, numero_mesa, zona, estado, version, notas, created_at, updated_at,
+          id, tenant_id, numero_mesa, zona, estado, version, notas, cocinero_id, created_at, updated_at,
           pedido_items(
-            id, pedido_id, receta_id, cantidad, notas,
+            id, pedido_id, receta_id, cantidad, notas, area_produccion,
+            estado, en_preparacion_at, listo_at, iniciado_por, listo_por,
             receta:recetas(
               nombre, porciones,
               receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
@@ -297,6 +381,136 @@ export function createOrderRepository(): OrderRepository {
       }
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
+    },
+
+    async asignarCocinero(
+      id: string,
+      tenantId: string,
+      cocineroId: string,
+      version: number,
+    ): Promise<Pedido> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .update({ cocinero_id: cocineroId, version: version + 1 })
+        .eq('id', id)
+        .eq('tenant_id', tenantId)
+        .eq('version', version)
+        .select(PEDIDO_FLAT_SELECT)
+        .single();
+
+      if (error?.code === 'PGRST116') {
+        throw new AppError(
+          'VERSION_CONFLICT',
+          409,
+          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
+        );
+      }
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
+    },
+
+    async findItemForTransition(itemId: string, tenantId: string) {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedido_items')
+        .select(
+          'id, estado, area_produccion, pedido_id, pedidos!inner(estado, version, zona, tenant_id)',
+        )
+        .eq('id', itemId)
+        .eq('pedidos.tenant_id', tenantId)
+        .maybeSingle();
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      if (!data) return null;
+      const p = data.pedidos as unknown as { estado: EstadoPedido; version: number; zona: string };
+      return {
+        itemId: data.id as string,
+        pedidoId: data.pedido_id as string,
+        area: (data.area_produccion ?? null) as AreaProduccion | null,
+        estado: (data.estado ?? 'pendiente') as EstadoItem,
+        pedidoEstado: p.estado,
+        pedidoVersion: p.version,
+        zona: p.zona,
+      };
+    },
+
+    async transitionItem(args: {
+      itemId: string;
+      pedidoId: string;
+      tenantId: string;
+      nuevoEstado: EstadoItem;
+      actorId: string;
+      pedidoVersion: number;
+    }): Promise<{ pedidoEstado: EstadoPedido; pedidoVersion: number }> {
+      const { itemId, pedidoId, tenantId, nuevoEstado, actorId, pedidoVersion } = args;
+      const supabase = await createClient();
+      const now = new Date().toISOString();
+      const itemPatch: Record<string, unknown> = { estado: nuevoEstado };
+      if (nuevoEstado === 'en_preparacion') {
+        itemPatch['en_preparacion_at'] = now;
+        itemPatch['iniciado_por'] = actorId;
+      } else if (nuevoEstado === 'listo') {
+        itemPatch['listo_at'] = now;
+        itemPatch['listo_por'] = actorId;
+      }
+
+      const { error: upErr } = await supabase
+        .from('pedido_items')
+        .update(itemPatch)
+        .eq('id', itemId)
+        .eq('pedido_id', pedidoId)
+        .eq('tenant_id', tenantId);
+      if (upErr) throw new AppError('DB_ERROR', 500, upErr.message);
+
+      const { error: evErr } = await supabase.from('pedido_item_eventos').insert({
+        tenant_id: tenantId,
+        pedido_id: pedidoId,
+        item_id: itemId,
+        estado: nuevoEstado,
+        actor_id: actorId,
+      });
+      if (evErr) throw new AppError('DB_ERROR', 500, evErr.message);
+
+      const { data: itemsRows, error: itErr } = await supabase
+        .from('pedido_items')
+        .select('estado')
+        .eq('pedido_id', pedidoId);
+      if (itErr) throw new AppError('DB_ERROR', 500, itErr.message);
+
+      const { data: pedRow, error: pedErr } = await supabase
+        .from('pedidos')
+        .select('estado')
+        .eq('id', pedidoId)
+        .eq('tenant_id', tenantId)
+        .single();
+      if (pedErr) throw new AppError('DB_ERROR', 500, pedErr.message);
+
+      const nuevoEstadoPedido = estadoPedidoDesdeItems(
+        (itemsRows ?? []) as { estado: EstadoItem }[],
+        (pedRow?.estado ?? 'recibido_cocina') as EstadoPedido,
+      );
+
+      const { data: updated, error: pErr } = await supabase
+        .from('pedidos')
+        .update({ estado: nuevoEstadoPedido, version: pedidoVersion + 1, updated_at: now })
+        .eq('id', pedidoId)
+        .eq('tenant_id', tenantId)
+        .eq('version', pedidoVersion)
+        .select('estado, version')
+        .single();
+      if (pErr?.code === 'PGRST116') {
+        throw new AppError(
+          'VERSION_CONFLICT',
+          409,
+          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
+        );
+      }
+      if (pErr || !updated) throw new AppError('DB_ERROR', 500, pErr?.message ?? 'Update falló');
+
+      return {
+        pedidoEstado: updated.estado as EstadoPedido,
+        pedidoVersion: updated.version as number,
+      };
     },
   };
 }

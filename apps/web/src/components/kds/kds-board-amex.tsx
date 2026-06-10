@@ -337,6 +337,10 @@ export function KdsBoardAmex({ initialPedidos, readOnly }: KdsBoardAmexProps) {
           );
         }
       }
+      if (event.type === 'ITEM_ESTADO') {
+        // Un ítem cambió estado — recargar para reflejar progreso por ítem.
+        refresh();
+      }
     };
 
     socket.on('event', handleEvent);

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { RefreshCw, AlertTriangle, BarChart3, Package } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,19 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  fetchCogsPerPassenger,
-  fetchConsumoVsProduccion,
-  refreshAnalytics,
-} from '@/modules/analytics/actions';
-import { KpiCards } from './kpi-cards';
-import { CogsTable } from './cogs-table';
+import { fetchConsumoVsProduccion, refreshAnalytics } from '@/modules/analytics/actions';
 import { ConsumoTable } from './consumo-table';
-import type { CogsPerPassenger, ConsumoInsumo } from '@/modules/analytics/domain/kpi';
+import type { ConsumoInsumo } from '@/modules/analytics/domain/kpi';
 import type { Turno } from '@/modules/turnos/domain/turno';
 
 interface AnalyticsPanelProps {
-  initialCogs: CogsPerPassenger[];
   initialConsumo: ConsumoInsumo[];
   turnos: Turno[];
   showTenant?: boolean;
@@ -33,14 +26,12 @@ interface AnalyticsPanelProps {
 }
 
 export function AnalyticsPanel({
-  initialCogs,
   initialConsumo,
   turnos,
   showTenant = false,
   error,
 }: AnalyticsPanelProps) {
   const t = useTranslations('analytics');
-  const [cogs, setCogs] = useState<CogsPerPassenger[]>(initialCogs);
   const [consumo, setConsumo] = useState<ConsumoInsumo[]>(initialConsumo);
   const [turnoId, setTurnoId] = useState<string>('');
   const [desde, setDesde] = useState<string>('');
@@ -59,15 +50,9 @@ export function AnalyticsPanel({
     if (resolvedHasta) filters.hasta = resolvedHasta;
 
     startTransition(async () => {
-      const [cogsResult, consumoResult] = await Promise.all([
-        fetchCogsPerPassenger(filters),
-        fetchConsumoVsProduccion(filters),
-      ]);
-
-      if (cogsResult.ok) setCogs(cogsResult.value);
-      else setLoadError(cogsResult.error.message);
-
+      const consumoResult = await fetchConsumoVsProduccion(filters);
       if (consumoResult.ok) setConsumo(consumoResult.value);
+      else setLoadError(consumoResult.error.message);
     });
   };
 
@@ -165,18 +150,6 @@ export function AnalyticsPanel({
           {loadError}
         </div>
       )}
-
-      {/* KPI cards */}
-      <KpiCards data={cogs} />
-
-      {/* COGS por turno */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">{t('cogsTitle')}</h2>
-        </div>
-        <CogsTable data={cogs} showTenant={showTenant} />
-      </section>
 
       {/* Consumo vs producción */}
       <section className="space-y-3">

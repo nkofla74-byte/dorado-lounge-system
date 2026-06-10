@@ -13,7 +13,7 @@ function makeInsumo(overrides: Partial<Insumo> = {}): Insumo {
     nombre: 'Harina de trigo',
     codigo: 'HT-001',
     capa: 'capa_1',
-    unidadMedida: 'kg',
+    unidadMedida: 'g',
     stockMinimo: 5,
     mermaDefault: 0.05,
     activo: true,
@@ -117,7 +117,7 @@ describe('createInsumo (application)', () => {
     const result = await createInsumo(repo, 'tenant-1', {
       nombre: 'Azúcar',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 10,
       mermaDefault: 0.02,
     });
@@ -131,7 +131,7 @@ describe('createInsumo (application)', () => {
     await createInsumo(repo, 'tenant-1', {
       nombre: 'Sal',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 2,
       mermaDefault: 0,
     });
@@ -143,14 +143,14 @@ describe('createInsumo (application)', () => {
     const a = await createInsumo(repo, 'tenant-1', {
       nombre: 'A',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 0,
       mermaDefault: 0,
     });
     const b = await createInsumo(repo, 'tenant-1', {
       nombre: 'B',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 0,
       mermaDefault: 0,
     });
@@ -164,7 +164,7 @@ describe('updateInsumo (application)', () => {
     const ins = await createInsumo(repo, 'tenant-1', {
       nombre: 'Harina',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 5,
       mermaDefault: 0.05,
     });
@@ -198,7 +198,7 @@ describe('createLote (application)', () => {
     const ins = await createInsumo(repo, 'tenant-1', {
       nombre: 'Leche',
       capa: 'capa_1',
-      unidadMedida: 'l',
+      unidadMedida: 'ml',
       stockMinimo: 10,
       mermaDefault: 0,
     });
@@ -217,7 +217,7 @@ describe('createLote (application)', () => {
     const ins = await createInsumo(repo, 'tenant-1', {
       nombre: 'Mantequilla',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 2,
       mermaDefault: 0,
     });
@@ -231,7 +231,7 @@ describe('createLote (application)', () => {
     const ins = await createInsumo(repo, 'tenant-1', {
       nombre: 'Sal',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 0,
       mermaDefault: 0,
     });
@@ -246,7 +246,7 @@ describe('getInsumos (application)', () => {
     await createInsumo(repo, 'tenant-1', {
       nombre: 'Activo',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
       stockMinimo: 0,
       mermaDefault: 0,
     });

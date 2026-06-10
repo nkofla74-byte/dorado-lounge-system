@@ -49,8 +49,6 @@ const STOCK_OUT_ROLES = new Set<UserRole | string>([
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',
-  'personal_snack',
-  'personal_buffet',
 ]);
 const MERMA_ROLES = new Set<UserRole | string>([
   'superuser',
@@ -59,8 +57,6 @@ const MERMA_ROLES = new Set<UserRole | string>([
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',
-  'personal_snack',
-  'personal_buffet',
   'personal_almacen',
 ]);
 

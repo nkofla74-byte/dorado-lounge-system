@@ -8,6 +8,7 @@ import type {
   PedidoForDelivery,
   CreatePedidoInput,
   EstadoPedido,
+  AreaProduccion,
 } from '../domain/pedido';
 import type { OrderRepository } from '../application/ports/order-repository.port';
 
@@ -28,6 +29,7 @@ function makePedido(overrides: Partial<PedidoWithItems> = {}): PedidoWithItems {
     estado: 'creado',
     version: 1,
     notas: null,
+    cocineroId: null,
     items: [],
     timestamps: { ...EMPTY_TIMESTAMPS },
     createdAt: new Date(),
@@ -36,12 +38,24 @@ function makePedido(overrides: Partial<PedidoWithItems> = {}): PedidoWithItems {
   };
 }
 
-function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } {
+// `recetaAreas`: área por recetaId que devolverá findRecetaAreas. Por defecto
+// 'cocina_fria' (permitida para AMEX, Snack y Buffet) para que los pedidos de
+// prueba ruteen sin violar la matriz salvo que el test lo configure aposta.
+function createInMemoryRepo(
+  recetaAreas: Record<string, AreaProduccion | null> = {},
+): OrderRepository & { pedidos: PedidoWithItems[] } {
   const pedidos: PedidoWithItems[] = [];
   let counter = 0;
 
   return {
     pedidos,
+    async findRecetaAreas(_tenantId: string, recetaIds: string[]) {
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const id of recetaIds) {
+        out[id] = id in recetaAreas ? recetaAreas[id]! : 'cocina_fria';
+      }
+      return out;
+    },
     async findActive(tenantId: string) {
       return pedidos.filter(
         (p) => p.tenantId === tenantId && p.estado !== 'entregado' && p.estado !== 'cancelado',
@@ -56,13 +70,28 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
           p.estado !== 'cancelado',
       );
     },
+    async findActiveByArea(tenantId: string, area: string) {
+      return pedidos.filter(
+        (p) =>
+          p.tenantId === tenantId &&
+          p.estado !== 'entregado' &&
+          p.estado !== 'cancelado' &&
+          (p.items ?? []).some((i) => i.areaProduccion === area),
+      );
+    },
     async findRecent(tenantId: string, limit: number) {
       return pedidos
         .filter((p) => p.tenantId === tenantId)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, limit);
     },
-    async create(tenantId: string, userId: string, input: CreatePedidoInput) {
+    async create(
+      tenantId: string,
+      userId: string,
+      input: CreatePedidoInput,
+      itemAreas: Record<string, AreaProduccion>,
+    ) {
+      void userId;
       counter++;
       const ped = makePedido({
         id: `ped-${counter}`,
@@ -77,6 +106,12 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
           recetaNombre: `Receta ${idx + 1}`,
           cantidad: it.cantidad,
           notas: it.notas ?? null,
+          areaProduccion: itemAreas[it.recetaId] ?? null,
+          estado: 'pendiente' as const,
+          enPreparacionAt: null,
+          listoAt: null,
+          iniciadoPor: null,
+          listoPor: null,
         })),
       });
       pedidos.push(ped);
@@ -106,6 +141,21 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
       p.version++;
       p.updatedAt = new Date();
       return p;
+    },
+    async asignarCocinero(id: string, tenantId: string, cocineroId: string, version: number) {
+      const p = pedidos.find((x) => x.id === id && x.tenantId === tenantId);
+      if (!p) throw new Error('NOT_FOUND');
+      if (p.version !== version) throw new Error('VERSION_CONFLICT');
+      p.cocineroId = cocineroId;
+      p.version++;
+      p.updatedAt = new Date();
+      return p;
+    },
+    async findItemForTransition() {
+      return null;
+    },
+    async transitionItem() {
+      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
     },
   };
 }
@@ -148,6 +198,71 @@ describe('createPedido (application)', () => {
     const a = await createPedido(repo, 'tenant-1', 'user-1', { ...input, idempotencyKey: 'k1' });
     const b = await createPedido(repo, 'tenant-1', 'user-1', { ...input, idempotencyKey: 'k2' });
     expect(a.id).not.toBe(b.id);
+  });
+
+  it('rutea cada item al área de su receta y la persiste', async () => {
+    const repo = createInMemoryRepo({ 'rec-fria': 'cocina_fria', 'rec-amex': 'amex' });
+    const ped = await createPedido(repo, 'tenant-1', 'user-1', {
+      zona: 'amex',
+      idempotencyKey: 'route-1',
+      items: [
+        { recetaId: 'rec-fria', cantidad: 1 },
+        { recetaId: 'rec-amex', cantidad: 1 },
+      ],
+    });
+    const areas = ped.items.map((i) => i.areaProduccion).sort();
+    expect(areas).toEqual(['amex', 'cocina_fria']);
+  });
+
+  it('rechaza un pedido con una receta sin área de producción', async () => {
+    const repo = createInMemoryRepo({ 'rec-sin': null });
+    await expect(
+      createPedido(repo, 'tenant-1', 'user-1', {
+        zona: 'snack',
+        idempotencyKey: 'sin-1',
+        items: [{ recetaId: 'rec-sin', cantidad: 1 }],
+      }),
+    ).rejects.toMatchObject({ code: 'RECETA_SIN_AREA' });
+  });
+
+  it('rechaza rutear a un área no permitida para la zona (AMEX → cocina_caliente)', async () => {
+    const repo = createInMemoryRepo({ 'rec-cal': 'cocina_caliente' });
+    await expect(
+      createPedido(repo, 'tenant-1', 'user-1', {
+        zona: 'amex',
+        idempotencyKey: 'noperm-1',
+        items: [{ recetaId: 'rec-cal', cantidad: 1 }],
+      }),
+    ).rejects.toMatchObject({ code: 'AREA_NO_PERMITIDA' });
+  });
+});
+
+describe('asignarCocinero (via repo)', () => {
+  it('asigna el cocinero y aumenta la versión', async () => {
+    const repo = createInMemoryRepo();
+    const ped = await createPedido(repo, 'tenant-1', 'user-1', {
+      zona: 'amex',
+      idempotencyKey: 'cook-1',
+      items: [{ recetaId: 'rec-1', cantidad: 1 }],
+    });
+    const v0 = ped.version;
+    const updated = await repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-9', v0);
+    expect(updated.cocineroId).toBe('cocinero-9');
+    expect(updated.version).toBe(v0 + 1);
+  });
+
+  it('rechaza con VERSION_CONFLICT si la versión está desactualizada', async () => {
+    const repo = createInMemoryRepo();
+    const ped = await createPedido(repo, 'tenant-1', 'user-1', {
+      zona: 'amex',
+      idempotencyKey: 'cook-2',
+      items: [{ recetaId: 'rec-1', cantidad: 1 }],
+    });
+    const v0 = ped.version;
+    await repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-1', v0);
+    await expect(repo.asignarCocinero(ped.id, 'tenant-1', 'cocinero-2', v0)).rejects.toThrow(
+      'VERSION_CONFLICT',
+    );
   });
 });
 

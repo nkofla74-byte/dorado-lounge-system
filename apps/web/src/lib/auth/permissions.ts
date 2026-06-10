@@ -11,22 +11,13 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
-    'personal_snack',
-    'personal_buffet',
     'personal_almacen',
     'personal_pasteleria',
     'steward',
   ],
   'inventory:write': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
-  'inventory:stock_out': ['admin', 'chef', 'sous_chef', 'personal_snack', 'personal_buffet'],
-  'inventory:merma': [
-    'admin',
-    'chef',
-    'sous_chef',
-    'personal_snack',
-    'personal_buffet',
-    'personal_almacen',
-  ],
+  'inventory:stock_out': ['admin', 'chef', 'sous_chef'],
+  'inventory:merma': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
   // Recetas
   'recipes:read': [
     'admin',
@@ -86,31 +77,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'sous_chef',
     'mesero_amex',
   ],
-  // Buffet
-  'buffet:read': [
-    'admin',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'personal_buffet',
-  ],
-  'buffet:write': ['admin', 'personal_buffet'],
-  // Snack
-  'snack:read': [
-    'admin',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'personal_snack',
-  ],
-  'snack:write': ['admin', 'personal_snack'],
   // Analytics
   'analytics:read': ['admin'],
-  // Afluencia
-  'afluencia:read': ['admin', 'chef', 'sous_chef', 'recepcion'],
-  'afluencia:write': ['admin', 'chef', 'sous_chef', 'recepcion'],
   // Turnos
   'turnos:read': [
     'admin',
@@ -118,10 +86,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
-    'recepcion',
     'mesero_amex',
-    'personal_snack',
-    'personal_buffet',
     'personal_pasteleria',
     'personal_almacen',
     'steward',
@@ -132,10 +97,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
-    'recepcion',
     'mesero_amex',
-    'personal_snack',
-    'personal_buffet',
     'personal_pasteleria',
     'personal_almacen',
     'steward',
@@ -153,9 +115,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
-    'recepcion',
-    'personal_snack',
-    'personal_buffet',
     'personal_almacen',
     'personal_pasteleria',
     'steward',
@@ -167,22 +126,13 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
-    'recepcion',
-    'personal_snack',
-    'personal_buffet',
     'personal_almacen',
     'personal_pasteleria',
     'steward',
   ],
-  // Auditoría
-  'audit:read': ['admin'],
   // Feature flags
   'feature_flags:read': ['admin'],
   'feature_flags:write': [], // solo superuser — manejado por el bypass
-  // Vuelos El Dorado (Sprint 6)
-  'flights:read': ['admin', 'chef', 'sous_chef', 'mesero_amex', 'recepcion'],
-  // Estadísticas de vuelos — solo gerencia operativa
-  'flights:stats:read': ['admin', 'recepcion'],
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],

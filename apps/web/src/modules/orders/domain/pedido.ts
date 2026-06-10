@@ -1,7 +1,7 @@
-import type { EstadoPedido, ZonaServicio } from '@dorado/shared-types';
+import type { EstadoPedido, ZonaServicio, AreaProduccion, EstadoItem } from '@dorado/shared-types';
 import { PEDIDO_TRANSITIONS } from '@dorado/shared-types';
 
-export type { EstadoPedido, ZonaServicio };
+export type { EstadoPedido, ZonaServicio, AreaProduccion, EstadoItem };
 export { PEDIDO_TRANSITIONS };
 
 export interface PedidoItem {
@@ -11,6 +11,14 @@ export interface PedidoItem {
   recetaNombre: string;
   cantidad: number;
   notas: string | null;
+  // Área productiva (KDS) a la que se ruteó el ítem al crear el pedido.
+  areaProduccion: AreaProduccion | null;
+  // Estado por ítem (KDS: despacho por área).
+  estado: EstadoItem;
+  enPreparacionAt: Date | null;
+  listoAt: Date | null;
+  iniciadoPor: string | null;
+  listoPor: string | null;
 }
 
 export interface Pedido {
@@ -21,6 +29,8 @@ export interface Pedido {
   estado: EstadoPedido;
   version: number;
   notas: string | null;
+  // Cocinero asignado a la preparación (trazabilidad de responsable).
+  cocineroId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

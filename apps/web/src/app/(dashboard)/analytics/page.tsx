@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { fetchCogsPerPassenger, fetchConsumoVsProduccion } from '@/modules/analytics/actions';
+import { fetchConsumoVsProduccion } from '@/modules/analytics/actions';
 import { getTurnos } from '@/modules/turnos/actions';
 import { AnalyticsPanel } from '@/components/analytics/analytics-panel';
 import type { UserRole } from '@dorado/shared-types';
@@ -22,8 +22,7 @@ export default async function AnalyticsPage() {
 
   // Para superuser ocultamos el selector de turnos: cada turno pertenece a una
   // sala específica y el filtro pierde sentido en una vista cross-tenant.
-  const [cogsResult, consumoResult, turnosResult] = await Promise.all([
-    fetchCogsPerPassenger(),
+  const [consumoResult, turnosResult] = await Promise.all([
     fetchConsumoVsProduccion(),
     isSuperuser ? Promise.resolve(null) : getTurnos(),
   ]);
@@ -35,11 +34,10 @@ export default async function AnalyticsPage() {
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
       <AnalyticsPanel
-        initialCogs={cogsResult.ok ? cogsResult.value : []}
         initialConsumo={consumoResult.ok ? consumoResult.value : []}
         turnos={turnosResult && turnosResult.ok ? turnosResult.value : []}
         showTenant={isSuperuser}
-        error={cogsResult.ok ? undefined : cogsResult.error.message}
+        error={consumoResult.ok ? undefined : consumoResult.error.message}
       />
     </div>
   );

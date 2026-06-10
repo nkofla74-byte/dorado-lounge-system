@@ -148,13 +148,9 @@
       "capa_2": "Production"
     },
     "unidad": {
-      "kg": "kg",
       "g": "g",
-      "l": "L",
       "ml": "mL",
-      "unidad": "unit",
-      "porcion": "portion",
-      "lb": "lb"
+      "unidad": "unit"
     },
     "actions": {
       "lotes": "Batches",
@@ -217,12 +213,9 @@
         "capa_2": "Production (Layer 2)"
       },
       "unidades": {
-        "kg": "Kilograms (kg)",
         "g": "Grams (g)",
-        "l": "Liters (L)",
         "ml": "Milliliters (mL)",
-        "unidad": "Unit",
-        "porcion": "Portion"
+        "unidad": "Unit"
       },
       "guardar": "Save item",
       "guardando": "Saving…",
@@ -281,6 +274,9 @@
     },
     "nuevoIngreso": {
       "trigger": "New intake",
+      "compraBruta": "Purchased",
+      "mermaAplicada": "Waste",
+      "netoDisponible": "Available (net)",
       "title": "New warehouse intake",
       "description": "Register a supplier delivery. Creates the item in the catalog if it does not exist yet.",
       "modoExistente": "Existing item",
@@ -1212,7 +1208,11 @@
       "entregado": "Delivered",
       "cancelado": "Canceled"
     },
-    "solicitudPreparacionToast": "Request from {zona}: {descripcion}"
+    "solicitudPreparacionToast": "Request from {zona}: {descripcion}",
+    "iniciarItem": "Start",
+    "marcarListo": "Ready",
+    "recall": "Reopen",
+    "progresoArea": "{n}/{total} ready"
   },
   "pedidos": {
     "estadoCreado": "Created",

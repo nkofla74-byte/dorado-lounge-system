@@ -18,9 +18,6 @@ const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
   admin: CHANNELS.ADMIN,
   superuser: CHANNELS.ADMIN,
   mesero_amex: CHANNELS.AMEX,
-  recepcion: CHANNELS.AMEX,
-  personal_snack: CHANNELS.SNACK,
-  personal_buffet: CHANNELS.BUFFET,
   personal_pasteleria: CHANNELS.BROADCAST_COCINA,
   steward: CHANNELS.BROADCAST_COCINA,
   personal_almacen: CHANNELS.BROADCAST_ADMIN,
@@ -33,9 +30,6 @@ type ChatTituloKey =
   | 'sous_chef'
   | 'admin'
   | 'mesero_amex'
-  | 'recepcion'
-  | 'personal_snack'
-  | 'personal_buffet'
   | 'personal_pasteleria'
   | 'steward'
   | 'personal_almacen'
@@ -49,9 +43,6 @@ const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
   admin: 'admin',
   superuser: 'admin',
   mesero_amex: 'mesero_amex',
-  recepcion: 'recepcion',
-  personal_snack: 'personal_snack',
-  personal_buffet: 'personal_buffet',
   personal_pasteleria: 'personal_pasteleria',
   steward: 'steward',
   personal_almacen: 'personal_almacen',

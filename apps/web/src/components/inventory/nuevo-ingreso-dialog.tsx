@@ -30,7 +30,7 @@ import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { Proveedor } from '@/modules/proveedores/domain/proveedor';
 import type { UnidadMedida, CapaInventario } from '@dorado/shared-types';
 
-const UNIDADES: UnidadMedida[] = ['kg', 'g', 'lb', 'l', 'ml', 'unidad', 'porcion'];
+const UNIDADES: UnidadMedida[] = ['g', 'ml', 'unidad'];
 
 interface Props {
   insumos: InsumoWithStock[];
@@ -51,14 +51,14 @@ export function NuevoIngresoDialog({ insumos }: Props) {
   const [modo, setModo] = useState<Modo>('existente');
   const [insumoId, setInsumoId] = useState('');
   const [nuevoNombre, setNuevoNombre] = useState('');
-  const [nuevaUnidad, setNuevaUnidad] = useState<UnidadMedida>('kg');
+  const [nuevaUnidad, setNuevaUnidad] = useState<UnidadMedida>('g');
   const [nuevaCapa, setNuevaCapa] = useState<CapaInventario>('capa_1');
   const [nuevoStockMinimo, setNuevoStockMinimo] = useState('0');
 
   const [proveedorId, setProveedorId] = useState('');
   const [cantidadEmpaques, setCantidadEmpaques] = useState('1');
   const [pesoUnitario, setPesoUnitario] = useState('');
-  const [unidadPeso, setUnidadPeso] = useState<UnidadMedida>('kg');
+  const [unidadPeso, setUnidadPeso] = useState<UnidadMedida>('g');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
   const [costoUnitario, setCostoUnitario] = useState('');
 
@@ -73,19 +73,25 @@ export function NuevoIngresoDialog({ insumos }: Props) {
     setModo('existente');
     setInsumoId('');
     setNuevoNombre('');
-    setNuevaUnidad('kg');
+    setNuevaUnidad('g');
     setNuevaCapa('capa_1');
     setNuevoStockMinimo('0');
     setProveedorId('');
     setCantidadEmpaques('1');
     setPesoUnitario('');
-    setUnidadPeso('kg');
+    setUnidadPeso('g');
     setFechaVencimiento('');
     setCostoUnitario('');
     setError('');
   }
 
   const unidadLabel = (u: UnidadMedida) => (tUnidad.has(u) ? tUnidad(u) : u);
+
+  // Preview de merma en recepción (modelo F3): el stock guardado es el neto.
+  const selectedInsumo = insumos.find((i) => i.id === insumoId);
+  const mermaPreview = modo === 'existente' ? (selectedInsumo?.mermaDefault ?? 0) : 0;
+  const compradoPreview = (Number(cantidadEmpaques) || 0) * (Number(pesoUnitario) || 0);
+  const netoPreview = Math.round(compradoPreview * (1 - mermaPreview) * 10_000) / 10_000;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -328,6 +334,20 @@ export function NuevoIngresoDialog({ insumos }: Props) {
               </Select>
             </div>
           </div>
+
+          {/* Preview merma en recepción (modelo F3): se almacena el neto */}
+          {compradoPreview > 0 && mermaPreview > 0 && (
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">
+                {t('compraBruta')}: {compradoPreview} {unidadLabel(unidadPeso)}
+                {' · '}
+                {t('mermaAplicada')}: {(mermaPreview * 100).toFixed(0)}%
+              </span>
+              <span className="font-medium">
+                {t('netoDisponible')}: {netoPreview} {unidadLabel(unidadPeso)}
+              </span>
+            </div>
+          )}
 
           {/* Fecha vencimiento + costo */}
           <div className="grid grid-cols-2 gap-3">

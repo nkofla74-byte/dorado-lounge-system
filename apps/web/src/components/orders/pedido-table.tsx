@@ -18,15 +18,12 @@ import {
   getPedidos,
   getPedidosHistorial,
   recibirEnCocina,
-  iniciarPreparacion,
-  despacharPedido,
   entregarPedido,
   cancelarPedido,
 } from '@/modules/orders/actions';
 import type { PedidoWithItems, Pedido, EstadoPedido } from '@/modules/orders/domain/pedido';
 import type { UserRole } from '@dorado/shared-types';
 
-const COCINA_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef']);
 const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex']);
 const RECIBIR_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
 const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
@@ -232,7 +229,6 @@ export function PedidoTable({
     }
   }, [readOnly]);
 
-  const isCocina = userRole ? COCINA_ROLES.has(userRole) : false;
   const isMesero = userRole ? MESERO_ROLES.has(userRole) : false;
   const canRecibir = userRole ? RECIBIR_ROLES.has(userRole) : false;
   const canCancel = userRole ? CANCEL_ROLES.has(userRole) : false;
@@ -410,19 +406,6 @@ export function PedidoTable({
                                     {t('recibirEnCocina')}
                                   </Button>
                                 )}
-                                {isCocina && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 text-xs"
-                                    disabled={isProcessing}
-                                    onClick={() =>
-                                      runAction(pedido, (id, v) => iniciarPreparacion(id, v))
-                                    }
-                                  >
-                                    {t('iniciarPrep')}
-                                  </Button>
-                                )}
                                 {canCancel && (
                                   <Button
                                     size="sm"
@@ -441,19 +424,6 @@ export function PedidoTable({
 
                             {pedido.estado === 'recibido_cocina' && (
                               <>
-                                {isCocina && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 text-xs"
-                                    disabled={isProcessing}
-                                    onClick={() =>
-                                      runAction(pedido, (id, v) => iniciarPreparacion(id, v))
-                                    }
-                                  >
-                                    {t('iniciarPrep')}
-                                  </Button>
-                                )}
                                 {canCancel && (
                                   <Button
                                     size="sm"
@@ -472,19 +442,7 @@ export function PedidoTable({
 
                             {pedido.estado === 'en_preparacion' && (
                               <>
-                                {isCocina && (
-                                  <Button
-                                    size="sm"
-                                    className="h-7 text-xs bg-violet-600 hover:bg-violet-700 text-white"
-                                    disabled={isProcessing}
-                                    onClick={() =>
-                                      runAction(pedido, (id, v) => despacharPedido(id, v))
-                                    }
-                                  >
-                                    {t('despachar')}
-                                  </Button>
-                                )}
-                                {isCocina && (
+                                {canCancel && (
                                   <Button
                                     size="sm"
                                     variant="ghost"

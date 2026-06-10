@@ -35,9 +35,6 @@ const USERS = [
   { nombre: 'Chef Demo', email: 'chef@dorado.test', role: 'chef' },
   { nombre: 'Sous Chef Demo', email: 'soushef@dorado.test', role: 'sous_chef' },
   { nombre: 'Mesero Amex Demo', email: 'mesero@dorado.test', role: 'mesero_amex' },
-  { nombre: 'Recepción Demo', email: 'recepcion@dorado.test', role: 'recepcion' },
-  { nombre: 'Personal Snack Demo', email: 'snack@dorado.test', role: 'personal_snack' },
-  { nombre: 'Personal Buffet Demo', email: 'buffet@dorado.test', role: 'personal_buffet' },
   { nombre: 'Personal Almacén Demo', email: 'almacen@dorado.test', role: 'personal_almacen' },
   {
     nombre: 'Personal Pastelería Demo',
