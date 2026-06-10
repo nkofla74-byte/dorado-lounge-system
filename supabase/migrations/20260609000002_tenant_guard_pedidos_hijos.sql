@@ -19,7 +19,7 @@ $$;
 
 DROP TRIGGER IF EXISTS tg_pedido_item_tenant ON public.pedido_items;
 CREATE TRIGGER tg_pedido_item_tenant
-  BEFORE INSERT OR UPDATE ON public.pedido_items
+  BEFORE INSERT OR UPDATE OF pedido_id, receta_id, tenant_id ON public.pedido_items
   FOR EACH ROW EXECUTE FUNCTION public.fn_validate_pedido_item_tenant();
 
 -- ── pedido_eventos: pedido_id del mismo tenant ───────────────────────────────
@@ -34,7 +34,7 @@ $$;
 
 DROP TRIGGER IF EXISTS tg_pedido_evento_tenant ON public.pedido_eventos;
 CREATE TRIGGER tg_pedido_evento_tenant
-  BEFORE INSERT OR UPDATE ON public.pedido_eventos
+  BEFORE INSERT OR UPDATE OF pedido_id, tenant_id ON public.pedido_eventos
   FOR EACH ROW EXECUTE FUNCTION public.fn_validate_pedido_evento_tenant();
 
 -- ── pedido_item_eventos: pedido_id e item_id del mismo tenant ────────────────
@@ -50,5 +50,5 @@ $$;
 
 DROP TRIGGER IF EXISTS tg_pedido_item_evento_tenant ON public.pedido_item_eventos;
 CREATE TRIGGER tg_pedido_item_evento_tenant
-  BEFORE INSERT OR UPDATE ON public.pedido_item_eventos
+  BEFORE INSERT OR UPDATE OF pedido_id, item_id, tenant_id ON public.pedido_item_eventos
   FOR EACH ROW EXECUTE FUNCTION public.fn_validate_pedido_item_evento_tenant();
