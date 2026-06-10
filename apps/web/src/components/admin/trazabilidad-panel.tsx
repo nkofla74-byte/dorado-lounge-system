@@ -22,13 +22,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getTrazabilidadPedidos, getTrazaPedido } from '@/modules/orders/actions';
-import type { TrazaFiltros, TrazaPedidoSummary, TrazaPedidoDetalle } from '@/modules/orders/actions';
+import type {
+  TrazaFiltros,
+  TrazaPedidoSummary,
+  TrazaPedidoDetalle,
+} from '@/modules/orders/actions';
 import { cn } from '@/lib/utils';
 
-const ESTADO_VARIANT: Record<
-  string,
-  'default' | 'secondary' | 'destructive' | 'outline'
-> = {
+const ESTADO_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   creado: 'outline',
   recibido_cocina: 'secondary',
   en_preparacion: 'secondary',
@@ -72,9 +73,7 @@ function TimelineRow({ entry, t }: TimelineRowProps) {
         {t(`tipo.${entry.tipo}`)}
       </Badge>
       <span className="flex-1">
-        {entry.itemNombre && (
-          <span className="font-medium">{entry.itemNombre} — </span>
-        )}
+        {entry.itemNombre && <span className="font-medium">{entry.itemNombre} — </span>}
         <span>{t(`estadoLabel.${entry.estado}`, { fallback: entry.estado })}</span>
       </span>
       {entry.actorNombre && (
@@ -266,7 +265,10 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
               <>
                 <TableRow
                   key={row.pedidoId}
-                  className={cn('cursor-pointer hover:bg-muted/50', expandedId === row.pedidoId && 'bg-muted/30')}
+                  className={cn(
+                    'cursor-pointer hover:bg-muted/50',
+                    expandedId === row.pedidoId && 'bg-muted/30',
+                  )}
                   onClick={() => toggleRow(row.pedidoId)}
                 >
                   <TableCell className="pr-0 pl-3">
