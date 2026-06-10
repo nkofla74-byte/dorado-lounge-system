@@ -17,6 +17,7 @@
     "personal": "Personal",
     "proveedores": "Proveedores",
     "alertas": "Alertas",
+    "trazabilidad": "Trazabilidad",
     "featureFlags": "Feature Flags",
     "tenants": "Tenants",
     "plataforma": "Plataforma",
@@ -1165,5 +1166,47 @@
     "qrInvalido": "QR inválido",
     "qrInvalidoHint": "Escanea el código QR de tu mesa para continuar.",
     "cambiarIdiomaAria": "Cambiar idioma"
+  },
+  "trazabilidad": {
+    "metaTitle": "Trazabilidad — Dorado Lounge",
+    "pageTitle": "Trazabilidad de pedidos",
+    "pageSubtitle": "Historial completo de pedidos con timeline de responsables y tiempos",
+    "cargando": "Cargando…",
+    "sinResultados": "No hay pedidos con los filtros aplicados.",
+    "sinEventos": "Sin eventos registrados.",
+    "timeline": "Timeline",
+    "filtros": {
+      "desde": "Desde",
+      "hasta": "Hasta",
+      "zona": "Zona",
+      "estado": "Estado",
+      "mesa": "Mesa",
+      "todas": "Todas",
+      "todos": "Todos",
+      "mesaPlaceholder": "Ej: A1",
+      "buscar": "Buscar"
+    },
+    "cols": {
+      "fecha": "Fecha",
+      "zona": "Zona",
+      "mesa": "Mesa",
+      "estado": "Estado",
+      "responsable": "Responsable",
+      "items": "Ítems"
+    },
+    "tipo": {
+      "pedido": "Pedido",
+      "item": "Ítem"
+    },
+    "estadoLabel": {
+      "creado": "Creado",
+      "recibido_cocina": "En cocina",
+      "en_preparacion": "En preparación",
+      "despachado": "Despachado",
+      "entregado": "Entregado",
+      "cancelado": "Cancelado",
+      "pendiente": "Pendiente",
+      "listo": "Listo"
+    }
   }
 }

@@ -69,6 +69,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'orders:dispatch': ['admin', 'chef', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef'],
   'orders:deliver': ['admin', 'mesero_amex'],
+  'orders:trace': ['admin'], // panel de trazabilidad — solo admin
   'orders:cancel': [
     'admin',
     'chef',

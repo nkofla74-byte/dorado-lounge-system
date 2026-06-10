@@ -21,6 +21,7 @@
     "personal": "Staff",
     "proveedores": "Suppliers",
     "alertas": "Alerts",
+    "trazabilidad": "Traceability",
     "auditoria": "Audit Log",
     "featureFlags": "Feature Flags",
     "permisos": "Permissions",
@@ -1171,5 +1172,47 @@
     "qrInvalido": "Invalid QR",
     "qrInvalidoHint": "Scan your table's QR code to continue.",
     "cambiarIdiomaAria": "Change language"
+  },
+  "trazabilidad": {
+    "metaTitle": "Traceability — Dorado Lounge",
+    "pageTitle": "Order traceability",
+    "pageSubtitle": "Full order history with responsible party and timing timeline",
+    "cargando": "Loading…",
+    "sinResultados": "No orders match the applied filters.",
+    "sinEventos": "No events recorded.",
+    "timeline": "Timeline",
+    "filtros": {
+      "desde": "From",
+      "hasta": "To",
+      "zona": "Zone",
+      "estado": "Status",
+      "mesa": "Table",
+      "todas": "All",
+      "todos": "All",
+      "mesaPlaceholder": "e.g. A1",
+      "buscar": "Search"
+    },
+    "cols": {
+      "fecha": "Date",
+      "zona": "Zone",
+      "mesa": "Table",
+      "estado": "Status",
+      "responsable": "Responsible",
+      "items": "Items"
+    },
+    "tipo": {
+      "pedido": "Order",
+      "item": "Item"
+    },
+    "estadoLabel": {
+      "creado": "Created",
+      "recibido_cocina": "In kitchen",
+      "en_preparacion": "In preparation",
+      "despachado": "Dispatched",
+      "entregado": "Delivered",
+      "cancelado": "Cancelled",
+      "pendiente": "Pending",
+      "listo": "Ready"
+    }
   }
 }

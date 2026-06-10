@@ -21,6 +21,7 @@ import {
   Settings2,
   Bell,
   Store,
+  GitBranch,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -140,6 +141,7 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     roles: ['admin', 'personal_almacen'],
   },
   { href: '/admin/alertas', labelKey: 'alertas', icon: Bell, roles: ['admin'] },
+  { href: '/admin/trazabilidad', labelKey: 'trazabilidad', icon: GitBranch, roles: ['admin'] },
   { href: '/admin/feature-flags', labelKey: 'featureFlags', icon: Settings2, roles: ['admin'] },
 ];
 
@@ -172,6 +174,7 @@ const ICON_COLORS: Record<string, string> = {
   '/admin/personal': 'text-slate-400',
   '/admin/proveedores': 'text-sky-400',
   '/admin/alertas': 'text-amber-400',
+  '/admin/trazabilidad': 'text-teal-400',
   '/admin/feature-flags': 'text-zinc-400',
   '/admin/tenants': 'text-violet-400',
 };

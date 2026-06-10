@@ -23,6 +23,11 @@ import type {
   EstadoItem,
   ZonaServicio,
 } from './domain/pedido';
+import type {
+  TrazaFiltros,
+  TrazaPedidoSummary,
+  TrazaPedidoDetalle,
+} from './application/get-trazabilidad';
 
 // ── Carta de servicio (incluye inactivas para toggle) ────────────────────────
 
@@ -628,3 +633,182 @@ export async function toggleDisponibilidadPlato(
     return err(toAppError(e));
   }
 }
+
+// ── Trazabilidad admin ────────────────────────────────────────────────────────
+
+export async function getTrazabilidadPedidos(
+  filtros: TrazaFiltros,
+): Promise<Result<TrazaPedidoSummary[]>> {
+  try {
+    const ctx = await assertCan('orders:trace');
+    const admin = createAdminClient();
+
+    let query = admin
+      .from('pedidos')
+      .select('id, zona, numero_mesa, estado, cocinero_id, created_at, pedido_items(id)')
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false })
+      .limit(filtros.limit ?? 50);
+
+    if (filtros.desde) query = query.gte('created_at', filtros.desde);
+    if (filtros.hasta) query = query.lte('created_at', filtros.hasta);
+    if (filtros.zona) query = query.eq('zona', filtros.zona);
+    if (filtros.estado) query = query.eq('estado', filtros.estado);
+    if (filtros.mesa) query = query.eq('numero_mesa', filtros.mesa);
+
+    const { data, error } = await query;
+    if (error) return err(toAppError(new Error(error.message)));
+
+    const rows = (data ?? []) as Array<{
+      id: string;
+      zona: string;
+      numero_mesa: string | null;
+      estado: string;
+      cocinero_id: string | null;
+      created_at: string;
+      pedido_items: { id: string }[];
+    }>;
+
+    const cocineroIds = Array.from(
+      new Set(rows.map((r) => r.cocinero_id).filter((id): id is string => id != null)),
+    );
+    let cocineroMap: Record<string, string> = {};
+    if (cocineroIds.length > 0) {
+      const { data: users } = await admin.from('users').select('id, nombre').in('id', cocineroIds);
+      cocineroMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
+    }
+
+    return ok(
+      rows.map((r) => ({
+        pedidoId: r.id,
+        zona: r.zona,
+        numeroMesa: r.numero_mesa ?? null,
+        estado: r.estado,
+        responsableNombre: r.cocinero_id ? (cocineroMap[r.cocinero_id] ?? null) : null,
+        cantidadItems: r.pedido_items.length,
+        createdAt: r.created_at,
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedidoDetalle>> {
+  try {
+    const ctx = await assertCan('orders:trace');
+    const admin = createAdminClient();
+
+    const { data: pedido, error: pError } = await admin
+      .from('pedidos')
+      .select(
+        'id, zona, numero_mesa, estado, cocinero_id, created_at, pedido_items(id, area_produccion, cantidad, receta:recetas(nombre))',
+      )
+      .eq('id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .single();
+
+    if (pError || !pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    type PedidoRowTraza = {
+      id: string;
+      zona: string;
+      numero_mesa: string | null;
+      estado: string;
+      cocinero_id: string | null;
+      created_at: string;
+      pedido_items: Array<{
+        id: string;
+        area_produccion: string | null;
+        cantidad: number;
+        receta: { nombre: string } | { nombre: string }[] | null;
+      }>;
+    };
+    const pedidoRow = pedido as unknown as PedidoRowTraza;
+
+    const { data: pedidoEvs } = await admin
+      .from('pedido_eventos')
+      .select('estado, actor_id, created_at')
+      .eq('pedido_id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: true });
+
+    const { data: itemEvs } = await admin
+      .from('pedido_item_eventos')
+      .select('item_id, estado, actor_id, created_at')
+      .eq('pedido_id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: true });
+
+    const allActorIds = Array.from(
+      new Set(
+        [
+          ...(pedidoEvs ?? []).map((e: { actor_id: string | null }) => e.actor_id),
+          ...(itemEvs ?? []).map((e: { actor_id: string | null }) => e.actor_id),
+          pedidoRow.cocinero_id,
+        ].filter((id): id is string => id != null),
+      ),
+    );
+    let actorMap: Record<string, string> = {};
+    if (allActorIds.length > 0) {
+      const { data: users } = await admin.from('users').select('id, nombre').in('id', allActorIds);
+      actorMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
+    }
+
+    const getRecetaNombre = (receta: { nombre: string } | { nombre: string }[] | null): string => {
+      if (!receta) return '';
+      if (Array.isArray(receta)) return receta[0]?.nombre ?? '';
+      return receta.nombre;
+    };
+
+    const itemNameMap = Object.fromEntries(
+      pedidoRow.pedido_items.map((i) => [i.id, getRecetaNombre(i.receta)]),
+    );
+
+    type PedidoEvRow = { estado: string; actor_id: string | null; created_at: string };
+    type ItemEvRow = {
+      item_id: string;
+      estado: string;
+      actor_id: string | null;
+      created_at: string;
+    };
+
+    const pedidoEntries = (pedidoEvs ?? []).map((e: PedidoEvRow) => ({
+      tipo: 'pedido' as const,
+      estado: e.estado,
+      actorNombre: e.actor_id ? (actorMap[e.actor_id] ?? null) : null,
+      at: e.created_at,
+    }));
+
+    const itemEntries = (itemEvs ?? []).map((e: ItemEvRow) => {
+      const entry: TrazaPedidoDetalle['timeline'][number] = {
+        tipo: 'item' as const,
+        estado: e.estado,
+        actorNombre: e.actor_id ? (actorMap[e.actor_id] ?? null) : null,
+        at: e.created_at,
+      };
+      const nombre = itemNameMap[e.item_id];
+      if (nombre) entry.itemNombre = nombre;
+      return entry;
+    });
+
+    const timeline: TrazaPedidoDetalle['timeline'] = [...pedidoEntries, ...itemEntries].sort(
+      (a, b) => a.at.localeCompare(b.at),
+    );
+
+    return ok({
+      pedidoId: pedidoRow.id,
+      zona: pedidoRow.zona,
+      numeroMesa: pedidoRow.numero_mesa ?? null,
+      estado: pedidoRow.estado,
+      creadoPor: pedidoRow.cocinero_id ? (actorMap[pedidoRow.cocinero_id] ?? null) : null,
+      cocineroId: pedidoRow.cocinero_id ?? null,
+      createdAt: pedidoRow.created_at,
+      timeline,
+    });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export type { TrazaFiltros, TrazaPedidoSummary, TrazaPedidoDetalle };
