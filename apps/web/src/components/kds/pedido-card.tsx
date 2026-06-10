@@ -107,6 +107,7 @@ export function PedidoCard({ pedido, area, pedidoVersion, onRefresh, readOnly }:
 
   return (
     <div
+      data-testid={`pedido-card-${pedido.id}`}
       className={`rounded-lg border bg-card p-4 space-y-3 shadow-sm transition-all ${urgencyClass(urgencySince, allListo)}`}
     >
       {/* Header */}

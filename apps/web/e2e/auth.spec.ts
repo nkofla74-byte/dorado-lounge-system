@@ -22,7 +22,7 @@ test.describe('Login', () => {
     const meseroAuthPath = './e2e/.auth/mesero.json';
     const fs = await import('fs');
     if (!fs.existsSync(meseroAuthPath)) {
-      test.skip();
+      test.skip(true, 'requiere auth file de mesero (.auth/mesero.json)');
       return;
     }
 
