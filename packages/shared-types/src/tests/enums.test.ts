@@ -111,8 +111,13 @@ describe('UnidadMedida', () => {
 });
 
 describe('CategoriaMenu', () => {
-  it('tiene entrada, plato_fuerte, acompanante', () => {
-    expect(Object.keys(CategoriaMenu)).toEqual(['entrada', 'plato_fuerte', 'acompanante']);
+  it('tiene entrada, plato_fuerte, acompanante, postre', () => {
+    expect(Object.keys(CategoriaMenu)).toEqual([
+      'entrada',
+      'plato_fuerte',
+      'acompanante',
+      'postre',
+    ]);
   });
 });
 

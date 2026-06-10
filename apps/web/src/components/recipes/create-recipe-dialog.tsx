@@ -45,7 +45,7 @@ interface CreateRecipeDialogProps {
 
 type ZonaKey = 'amex' | 'snack' | 'buffet';
 const ZONAS: ZonaKey[] = ['amex', 'snack', 'buffet'];
-const CATEGORIAS: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante'];
+const CATEGORIAS: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante', 'postre'];
 
 export function CreateRecipeDialog({
   open,
@@ -88,6 +88,7 @@ export function CreateRecipeDialog({
     entrada: tIng('categoriaEntrada'),
     plato_fuerte: tIng('categoriaPlatoFuerte'),
     acompanante: tIng('categoriaAcompanante'),
+    postre: tIng('categoriaPostre'),
   };
 
   // Insumos disponibles para ingredientes: capa_1 (materias primas) siempre;

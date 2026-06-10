@@ -763,7 +763,8 @@
   "categoriasMenu": {
     "entrada": "Entrada",
     "plato_fuerte": "Plato fuerte",
-    "acompanante": "Acompañante"
+    "acompanante": "Acompañante",
+    "postre": "Postre"
   },
   "recipes": {
     "pageTitle": "Recetas",
@@ -1073,6 +1074,7 @@
     "categoriaEntrada": "Entrada",
     "categoriaPlatoFuerte": "Plato fuerte",
     "categoriaAcompanante": "Acompañante",
+    "categoriaPostre": "Postre",
     "ingredienteCount": "{count, plural, one {# ingrediente} other {# ingredientes}}",
     "porcionCount": "{count, plural, one {# porción} other {# porciones}}",
     "costoPorPorcion": "/ porción",

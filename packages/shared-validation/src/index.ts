@@ -66,7 +66,7 @@ export const estadoTandaSchema = z.enum(['planificada', 'en_proceso', 'completad
 
 export const tipoRecetaSchema = z.enum(['produccion', 'servicio']);
 
-export const categoriaMenuSchema = z.enum(['entrada', 'plato_fuerte', 'acompanante']);
+export const categoriaMenuSchema = z.enum(['entrada', 'plato_fuerte', 'acompanante', 'postre']);
 
 // ── Valores de dominio ────────────────────────────────────────────────────────
 

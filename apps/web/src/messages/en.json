@@ -760,7 +760,8 @@
   "categoriasMenu": {
     "entrada": "Starter",
     "plato_fuerte": "Main course",
-    "acompanante": "Side"
+    "acompanante": "Side",
+    "postre": "Dessert"
   },
   "recipes": {
     "pageTitle": "Recipes",
@@ -1079,6 +1080,7 @@
     "categoriaEntrada": "Starter",
     "categoriaPlatoFuerte": "Main course",
     "categoriaAcompanante": "Side dish",
+    "categoriaPostre": "Dessert",
     "ingredienteCount": "{count, plural, one {# ingredient} other {# ingredients}}",
     "porcionCount": "{count, plural, one {# portion} other {# portions}}",
     "costoPorPorcion": "/ portion",

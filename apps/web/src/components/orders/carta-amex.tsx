@@ -32,7 +32,7 @@ interface Props {
   canToggle?: boolean;
 }
 
-const CATEGORIAS: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante'];
+const CATEGORIAS: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante', 'postre'];
 const genKey = () => `ord-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 function DishCard({
