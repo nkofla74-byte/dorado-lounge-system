@@ -8,13 +8,26 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
+import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
-import { cantidadConMerma } from '@/modules/inventory/utilities';
+import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
-import { CHANNELS } from '@dorado/shared-types';
+import { CHANNELS, ITEM_TRANSITIONS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
-import type { Pedido, PedidoWithItems, PedidoEvento } from './domain/pedido';
+import type {
+  Pedido,
+  PedidoWithItems,
+  PedidoEvento,
+  AreaProduccion,
+  EstadoItem,
+  ZonaServicio,
+} from './domain/pedido';
+import type {
+  TrazaFiltros,
+  TrazaPedidoSummary,
+  TrazaPedidoDetalle,
+} from './application/get-trazabilidad';
 
 // ── Carta de servicio (incluye inactivas para toggle) ────────────────────────
 
@@ -89,6 +102,33 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
     const ctx = await assertCan('orders:read');
     const repo = createOrderRepository();
     return ok(await getPedidosUseCase(repo, ctx.tenantId));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// KDS por área (cocina fría / caliente). El permiso se valida por área para que
+// cada cocinero solo acceda a su cola; admin/superuser tienen ambas.
+const AREA_KDS_PERM: Partial<Record<AreaProduccion, string>> = {
+  cocina_fria: 'cocina_fria:read',
+  cocina_caliente: 'cocina_caliente:read',
+};
+
+const AREA_WRITE_PERM: Partial<Record<AreaProduccion, string>> = {
+  cocina_fria: 'cocina_fria:write',
+  cocina_caliente: 'cocina_caliente:write',
+  amex: 'cocina_amex:write',
+};
+
+export async function getPedidosByArea(area: AreaProduccion): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const perm = AREA_KDS_PERM[area];
+    if (!perm) {
+      return err(new AppError('VALIDATION', 400, `Área de KDS no soportada: ${area}`));
+    }
+    const ctx = await assertCan(perm);
+    const repo = createOrderRepository();
+    return ok(await getPedidosByAreaUseCase(repo, ctx.tenantId, area));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -227,104 +267,64 @@ export async function recibirEnCocina(pedidoId: string, version: number): Promis
   }
 }
 
-export async function iniciarPreparacion(
+export async function asignarCocinero(
   pedidoId: string,
+  cocineroId: string,
   version: number,
 ): Promise<Result<Pedido>> {
   try {
     const ctx = await assertCan('orders:dispatch');
+    if (!cocineroId) {
+      return err(new AppError('VALIDATION', 400, 'Debe indicar el cocinero a asignar'));
+    }
     const repo = createOrderRepository();
+
+    // Validar que el cocinero pertenezca a este tenant (defensa multi-tenant:
+    // cocinero_id es FK a public.users pero el id llega del cliente).
+    const supabase = await createClient();
+    const { data: cocinero } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', cocineroId)
+      .eq('tenant_id', ctx.tenantId)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (!cocinero) {
+      return err(
+        new AppError('VALIDATION', 400, 'El cocinero no pertenece a este establecimiento'),
+      );
+    }
 
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
 
-    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('en_preparacion')) {
-      return err(
-        new AppError(
-          'INVALID_TRANSITION',
-          400,
-          `No se puede iniciar un pedido en estado '${pedido.estado}'`,
-        ),
-      );
-    }
-
-    const updated = await repo.transition(pedidoId, ctx.tenantId, 'en_preparacion', version);
+    // Persistencia primero: la asignación queda en DB (optimistic locking) antes
+    // del broadcast. Si Socket.io falla, el dato sigue disponible.
+    const updated = await repo.asignarCocinero(pedidoId, ctx.tenantId, cocineroId, version);
 
     await auditLog({
       tenantId: ctx.tenantId,
       userId: ctx.userId,
-      action: 'orders:iniciar_preparacion',
+      action: 'orders:asignar_cocinero',
       resourceId: pedidoId,
       resourceType: 'pedido',
-      payload: {},
+      payload: { cocineroId },
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_ESTADO',
+    const cocineroPayload = {
+      type: 'PEDIDO_COCINERO' as const,
       payload: {
         pedidoId,
         tenantId: ctx.tenantId,
-        estadoAnterior: pedido.estado,
-        estadoNuevo: 'en_preparacion',
-        zona: pedido.zona,
-        updatedAt:
-          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
-      },
-    });
-
-    void registrarEvento(ctx.tenantId, pedidoId, 'en_preparacion', ctx.userId);
-    return ok(updated);
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}
-
-export async function despacharPedido(pedidoId: string, version: number): Promise<Result<Pedido>> {
-  try {
-    const ctx = await assertCan('orders:dispatch');
-    const repo = createOrderRepository();
-
-    const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
-    if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
-
-    if (!PEDIDO_TRANSITIONS[pedido.estado].includes('despachado')) {
-      return err(
-        new AppError(
-          'INVALID_TRANSITION',
-          400,
-          `No se puede despachar un pedido en estado '${pedido.estado}'`,
-        ),
-      );
-    }
-
-    const updated = await repo.transition(pedidoId, ctx.tenantId, 'despachado', version);
-
-    await auditLog({
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      action: 'orders:despachar_pedido',
-      resourceId: pedidoId,
-      resourceType: 'pedido',
-      payload: {},
-    });
-
-    const despachoPayload = {
-      type: 'PEDIDO_ESTADO' as const,
-      payload: {
-        pedidoId,
-        tenantId: ctx.tenantId,
-        estadoAnterior: pedido.estado,
-        estadoNuevo: 'despachado' as const,
+        cocineroId,
         zona: pedido.zona,
         updatedAt:
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     };
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, despachoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, despachoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.AMEX, despachoPayload);
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, cocineroPayload);
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, cocineroPayload);
 
-    void registrarEvento(ctx.tenantId, pedidoId, 'despachado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -349,35 +349,28 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       );
     }
 
-    // Descontar stock via FEFO. La cantidad por ítem es:
-    // cantidadNeta = (cantidadPorBatch / recetaPorciones) * cantidad_pedida
     const adminClient = createAdminClient();
-    for (const item of pedido.items) {
-      for (const ing of item.ingredientes) {
-        const cantidadNeta = (ing.cantidadPorBatch / item.recetaPorciones) * item.cantidad;
-        const cantidadBruta = cantidadConMerma(cantidadNeta, ing.mermaCoeficiente);
-        const idempotencyKey = `pedido:${pedidoId}:item:${item.id}:ing:${ing.insumoId}`;
+    const descuentos = calcularDescuentosPedido(pedidoId, pedido.items);
+    for (const d of descuentos) {
+      const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
+        p_tenant_id: ctx.tenantId,
+        p_insumo_id: d.insumoId,
+        p_cantidad: d.cantidad,
+        p_idempotency_key: d.idempotencyKey,
+        p_tipo: 'salida_receta',
+        p_referencia_id: pedidoId,
+        p_referencia_tipo: 'pedido',
+        p_usuario_id: ctx.userId,
+      });
 
-        const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
-          p_tenant_id: ctx.tenantId,
-          p_insumo_id: ing.insumoId,
-          p_cantidad: cantidadBruta,
-          p_idempotency_key: idempotencyKey,
-          p_tipo: 'salida_receta',
-          p_referencia_id: pedidoId,
-          p_referencia_tipo: 'pedido',
-          p_usuario_id: ctx.userId,
-        });
-
-        if (error) {
-          throw new AppError(
-            error.code === 'P0001' ? 'STOCK_INSUFICIENTE' : 'FEFO_ERROR',
-            error.code === 'P0001' ? 409 : 500,
-            error.code === 'P0001'
-              ? `Stock insuficiente para: ${ing.insumoNombre}`
-              : `Error al descontar stock de '${ing.insumoNombre}'. Intenta de nuevo.`,
-          );
-        }
+      if (error) {
+        throw new AppError(
+          error.code === 'P0001' ? 'STOCK_INSUFICIENTE' : 'FEFO_ERROR',
+          error.code === 'P0001' ? 409 : 500,
+          error.code === 'P0001'
+            ? `Stock insuficiente para: ${d.insumoNombre}`
+            : `Error al descontar stock de '${d.insumoNombre}'. Intenta de nuevo.`,
+        );
       }
     }
 
@@ -500,6 +493,294 @@ export async function getEventosPedido(pedidoId: string): Promise<Result<PedidoE
     return err(toAppError(e));
   }
 }
+
+// ── Transiciones de ítem KDS ──────────────────────────────────────────────────
+
+async function ejecutarTransicionItem(
+  itemId: string,
+  version: number,
+  nuevoEstado: EstadoItem,
+  accionAudit: string,
+): Promise<Result<{ pedidoEstado: string }>> {
+  try {
+    // Resolver tenant del actor con un permiso base de cocina; el permiso fino
+    // por área se exige abajo según el área real del ítem.
+    const ctxBase = await assertCan('orders:read');
+    const repo = createOrderRepository();
+
+    const item = await repo.findItemForTransition(itemId, ctxBase.tenantId);
+    if (!item) return err(new AppError('NOT_FOUND', 404, 'Ítem no encontrado'));
+    if (item.area === null) {
+      return err(new AppError('VALIDATION', 400, 'El ítem no tiene área productiva asignada'));
+    }
+
+    const perm = AREA_WRITE_PERM[item.area];
+    if (!perm) return err(new AppError('VALIDATION', 400, `Área sin despacho KDS: ${item.area}`));
+    const ctx = await assertCan(perm);
+
+    if (!ITEM_TRANSITIONS[item.estado].includes(nuevoEstado)) {
+      return err(
+        new AppError(
+          'INVALID_TRANSITION',
+          400,
+          `No se puede pasar el ítem de '${item.estado}' a '${nuevoEstado}'`,
+        ),
+      );
+    }
+    if (nuevoEstado === 'en_preparacion' && item.estado === 'listo') {
+      if (['entregado', 'cancelado'].includes(item.pedidoEstado)) {
+        return err(
+          new AppError('INVALID_TRANSITION', 400, 'No se puede hacer recall de un pedido cerrado'),
+        );
+      }
+    }
+
+    const result = await repo.transitionItem({
+      itemId,
+      pedidoId: item.pedidoId,
+      tenantId: ctx.tenantId,
+      nuevoEstado,
+      actorId: ctx.userId,
+      pedidoVersion: version,
+    });
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: accionAudit,
+      resourceId: itemId,
+      resourceType: 'pedido_item',
+      payload: { area: item.area, nuevoEstado, pedidoId: item.pedidoId },
+    });
+
+    const updatedAt = new Date().toISOString();
+    const itemEvento = {
+      type: 'ITEM_ESTADO' as const,
+      payload: {
+        pedidoId: item.pedidoId,
+        itemId,
+        tenantId: ctx.tenantId,
+        area: item.area,
+        estadoAnterior: item.estado as 'pendiente' | 'en_preparacion' | 'listo',
+        estadoNuevo: nuevoEstado as 'pendiente' | 'en_preparacion' | 'listo',
+        updatedAt,
+      },
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, itemEvento);
+    if (item.area === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, itemEvento);
+    }
+    if (result.pedidoEstado === 'despachado') {
+      await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
+        type: 'PEDIDO_ESTADO',
+        payload: {
+          pedidoId: item.pedidoId,
+          tenantId: ctx.tenantId,
+          estadoAnterior: item.pedidoEstado,
+          estadoNuevo: result.pedidoEstado,
+          zona: item.zona as ZonaServicio,
+          updatedAt,
+        },
+      });
+    }
+
+    void registrarEvento(ctx.tenantId, item.pedidoId, result.pedidoEstado, ctx.userId);
+    return ok({ pedidoEstado: result.pedidoEstado });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function iniciarItem(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'en_preparacion', 'orders:iniciar_item');
+}
+export async function marcarItemListo(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'listo', 'orders:marcar_item_listo');
+}
+export async function recallItem(itemId: string, version: number) {
+  return ejecutarTransicionItem(itemId, version, 'en_preparacion', 'orders:recall_item');
+}
+
+// ── Trazabilidad admin ────────────────────────────────────────────────────────
+
+export async function getTrazabilidadPedidos(
+  filtros: TrazaFiltros,
+): Promise<Result<TrazaPedidoSummary[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const admin = createAdminClient();
+
+    let query = admin
+      .from('pedidos')
+      .select('id, zona, numero_mesa, estado, cocinero_id, created_at, pedido_items(id)')
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false })
+      .limit(filtros.limit ?? 50);
+
+    if (filtros.desde) query = query.gte('created_at', filtros.desde);
+    if (filtros.hasta) query = query.lte('created_at', filtros.hasta);
+    if (filtros.zona) query = query.eq('zona', filtros.zona);
+    if (filtros.estado) query = query.eq('estado', filtros.estado);
+    if (filtros.mesa) query = query.eq('numero_mesa', filtros.mesa);
+
+    const { data, error } = await query;
+    if (error) return err(toAppError(new Error(error.message)));
+
+    const rows = (data ?? []) as Array<{
+      id: string;
+      zona: string;
+      numero_mesa: string | null;
+      estado: string;
+      cocinero_id: string | null;
+      created_at: string;
+      pedido_items: { id: string }[];
+    }>;
+
+    const cocineroIds = Array.from(
+      new Set(rows.map((r) => r.cocinero_id).filter((id): id is string => id != null)),
+    );
+    let cocineroMap: Record<string, string> = {};
+    if (cocineroIds.length > 0) {
+      const { data: users } = await admin.from('users').select('id, nombre').in('id', cocineroIds);
+      cocineroMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
+    }
+
+    return ok(
+      rows.map((r) => ({
+        pedidoId: r.id,
+        zona: r.zona,
+        numeroMesa: r.numero_mesa ?? null,
+        estado: r.estado,
+        responsableNombre: r.cocinero_id ? (cocineroMap[r.cocinero_id] ?? null) : null,
+        cantidadItems: r.pedido_items.length,
+        createdAt: r.created_at,
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedidoDetalle>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const admin = createAdminClient();
+
+    const { data: pedido, error: pError } = await admin
+      .from('pedidos')
+      .select(
+        'id, zona, numero_mesa, estado, cocinero_id, created_at, pedido_items(id, area_produccion, cantidad, receta:recetas(nombre))',
+      )
+      .eq('id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .single();
+
+    if (pError || !pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    type PedidoRowTraza = {
+      id: string;
+      zona: string;
+      numero_mesa: string | null;
+      estado: string;
+      cocinero_id: string | null;
+      created_at: string;
+      pedido_items: Array<{
+        id: string;
+        area_produccion: string | null;
+        cantidad: number;
+        receta: { nombre: string } | { nombre: string }[] | null;
+      }>;
+    };
+    const pedidoRow = pedido as unknown as PedidoRowTraza;
+
+    const { data: pedidoEvs } = await admin
+      .from('pedido_eventos')
+      .select('estado, actor_id, created_at')
+      .eq('pedido_id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: true });
+
+    const { data: itemEvs } = await admin
+      .from('pedido_item_eventos')
+      .select('item_id, estado, actor_id, created_at')
+      .eq('pedido_id', pedidoId)
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: true });
+
+    const allActorIds = Array.from(
+      new Set(
+        [
+          ...(pedidoEvs ?? []).map((e: { actor_id: string | null }) => e.actor_id),
+          ...(itemEvs ?? []).map((e: { actor_id: string | null }) => e.actor_id),
+          pedidoRow.cocinero_id,
+        ].filter((id): id is string => id != null),
+      ),
+    );
+    let actorMap: Record<string, string> = {};
+    if (allActorIds.length > 0) {
+      const { data: users } = await admin.from('users').select('id, nombre').in('id', allActorIds);
+      actorMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
+    }
+
+    const getRecetaNombre = (
+      receta: { nombre: string } | { nombre: string }[] | null,
+    ): string => {
+      if (!receta) return '';
+      if (Array.isArray(receta)) return receta[0]?.nombre ?? '';
+      return receta.nombre;
+    };
+
+    const itemNameMap = Object.fromEntries(
+      pedidoRow.pedido_items.map((i) => [i.id, getRecetaNombre(i.receta)]),
+    );
+
+    type PedidoEvRow = { estado: string; actor_id: string | null; created_at: string };
+    type ItemEvRow = {
+      item_id: string;
+      estado: string;
+      actor_id: string | null;
+      created_at: string;
+    };
+
+    const pedidoEntries = (pedidoEvs ?? []).map((e: PedidoEvRow) => ({
+      tipo: 'pedido' as const,
+      estado: e.estado,
+      actorNombre: e.actor_id ? (actorMap[e.actor_id] ?? null) : null,
+      at: e.created_at,
+    }));
+
+    const itemEntries = (itemEvs ?? []).map((e: ItemEvRow) => {
+      const entry: TrazaPedidoDetalle['timeline'][number] = {
+        tipo: 'item' as const,
+        estado: e.estado,
+        actorNombre: e.actor_id ? (actorMap[e.actor_id] ?? null) : null,
+        at: e.created_at,
+      };
+      const nombre = itemNameMap[e.item_id];
+      if (nombre) entry.itemNombre = nombre;
+      return entry;
+    });
+
+    const timeline: TrazaPedidoDetalle['timeline'] = [...pedidoEntries, ...itemEntries].sort(
+      (a, b) => a.at.localeCompare(b.at),
+    );
+
+    return ok({
+      pedidoId: pedidoRow.id,
+      zona: pedidoRow.zona,
+      numeroMesa: pedidoRow.numero_mesa ?? null,
+      estado: pedidoRow.estado,
+      creadoPor: pedidoRow.cocinero_id ? (actorMap[pedidoRow.cocinero_id] ?? null) : null,
+      cocineroId: pedidoRow.cocinero_id ?? null,
+      createdAt: pedidoRow.created_at,
+      timeline,
+    });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export type { TrazaFiltros, TrazaPedidoSummary, TrazaPedidoDetalle };
 
 export async function toggleDisponibilidadPlato(
   recetaId: string,
