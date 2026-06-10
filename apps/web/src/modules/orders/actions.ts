@@ -11,6 +11,7 @@ import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema } from '@dorado/shared-validation';
+import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import { CHANNELS, ITEM_TRANSITIONS } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
@@ -343,36 +344,28 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       );
     }
 
-    // Descontar stock via FEFO. La cantidad por ítem es:
-    // cantidadNeta = (cantidadPorBatch / recetaPorciones) * cantidad_pedida
     const adminClient = createAdminClient();
-    for (const item of pedido.items) {
-      for (const ing of item.ingredientes) {
-        // Modelo F3: la merma se aplicó en la recepción (stock ya es neto),
-        // por lo que el consumo descuenta la cantidad neta de la receta directa.
-        const cantidadNeta = (ing.cantidadPorBatch / item.recetaPorciones) * item.cantidad;
-        const idempotencyKey = `pedido:${pedidoId}:item:${item.id}:ing:${ing.insumoId}`;
+    const descuentos = calcularDescuentosPedido(pedidoId, pedido.items);
+    for (const d of descuentos) {
+      const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
+        p_tenant_id: ctx.tenantId,
+        p_insumo_id: d.insumoId,
+        p_cantidad: d.cantidad,
+        p_idempotency_key: d.idempotencyKey,
+        p_tipo: 'salida_receta',
+        p_referencia_id: pedidoId,
+        p_referencia_tipo: 'pedido',
+        p_usuario_id: ctx.userId,
+      });
 
-        const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
-          p_tenant_id: ctx.tenantId,
-          p_insumo_id: ing.insumoId,
-          p_cantidad: cantidadNeta,
-          p_idempotency_key: idempotencyKey,
-          p_tipo: 'salida_receta',
-          p_referencia_id: pedidoId,
-          p_referencia_tipo: 'pedido',
-          p_usuario_id: ctx.userId,
-        });
-
-        if (error) {
-          throw new AppError(
-            error.code === 'P0001' ? 'STOCK_INSUFICIENTE' : 'FEFO_ERROR',
-            error.code === 'P0001' ? 409 : 500,
-            error.code === 'P0001'
-              ? `Stock insuficiente para: ${ing.insumoNombre}`
-              : `Error al descontar stock de '${ing.insumoNombre}'. Intenta de nuevo.`,
-          );
-        }
+      if (error) {
+        throw new AppError(
+          error.code === 'P0001' ? 'STOCK_INSUFICIENTE' : 'FEFO_ERROR',
+          error.code === 'P0001' ? 409 : 500,
+          error.code === 'P0001'
+            ? `Stock insuficiente para: ${d.insumoNombre}`
+            : `Error al descontar stock de '${d.insumoNombre}'. Intenta de nuevo.`,
+        );
       }
     }
 
