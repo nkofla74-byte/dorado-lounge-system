@@ -145,6 +145,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Coverage (dominio web — thresholds 75%/90%)
+        run: pnpm --filter @dorado/web exec vitest run --coverage
+
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
