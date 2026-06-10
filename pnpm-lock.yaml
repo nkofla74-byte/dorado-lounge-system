@@ -5,7 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  brace-expansion: '>=5.0.6'
+  brace-expansion@1: '>=1.1.12 <2'
+  brace-expansion@2: '>=2.0.2 <3'
+  brace-expansion@5: '>=5.0.6'
   fast-uri: '>=3.1.2'
   postcss: '>=8.5.10'
   ws: '>=8.20.1'
@@ -3168,6 +3170,9 @@ packages:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
     engines: {node: '>= 0.4'}
 
+  balanced-match@1.0.2:
+    resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
@@ -3190,6 +3195,12 @@ packages:
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
+
+  brace-expansion@1.1.15:
+    resolution: {integrity: sha512-EwOCDEex4quD37XhqM3omwtMoJjr//isUZz1JopUNWms+4Z2ViyM/k1YIRePpoVNnQhENnxtFjLaxNHrT7xIUg==}
+
+  brace-expansion@2.1.1:
+    resolution: {integrity: sha512-WR1cURNjuvBLMZBMbqM0UoE+WAfdUcEV1ccD8PVBVOI+Z3ND4+SZbN8RsfT2bMuG1qwz5RFvPukSZm5fF2D5eA==}
 
   brace-expansion@5.0.6:
     resolution: {integrity: sha512-kLpxurY4Z4r9sgMsyG0Z9uzsBlgiU/EFKhj/h91/8yHu0edo7XuixOIH3VcJ8kkxs6/jPzoI6U9Vj3WqbMQ94g==}
@@ -3318,6 +3329,9 @@ packages:
 
   compare-func@2.0.0:
     resolution: {integrity: sha512-zHig5N+tPWARooBnb0Zx1MFcdfpyJrfTJ3Y5L+IFvUm8rM74hHz66z0gw0x4tijh5CorKkKUCnW82R2vmpeCRA==}
+
+  concat-map@0.0.1:
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   conventional-changelog-angular@8.3.1:
     resolution: {integrity: sha512-6gfI3otXK5Ph5DfCOI1dblr+kN3FAm5a97hYoQkqNZxOaYa5WKfXH+AnpsmS+iUH2mgVC2Cg2Qw9m5OKcmNrIg==}
@@ -8424,6 +8438,8 @@ snapshots:
 
   axobject-query@4.1.0: {}
 
+  balanced-match@1.0.2: {}
+
   balanced-match@4.0.4: {}
 
   base64-js@1.5.1: {}
@@ -8437,6 +8453,15 @@ snapshots:
       require-from-string: 2.0.2
 
   binary-extensions@2.3.0: {}
+
+  brace-expansion@1.1.15:
+    dependencies:
+      balanced-match: 1.0.2
+      concat-map: 0.0.1
+
+  brace-expansion@2.1.1:
+    dependencies:
+      balanced-match: 1.0.2
 
   brace-expansion@5.0.6:
     dependencies:
@@ -8570,6 +8595,8 @@ snapshots:
     dependencies:
       array-ify: 1.0.0
       dot-prop: 5.3.0
+
+  concat-map@0.0.1: {}
 
   conventional-changelog-angular@8.3.1:
     dependencies:
@@ -9956,11 +9983,11 @@ snapshots:
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 5.0.6
+      brace-expansion: 1.1.15
 
   minimatch@9.0.9:
     dependencies:
-      brace-expansion: 5.0.6
+      brace-expansion: 2.1.1
 
   minimist@1.2.8: {}
 
