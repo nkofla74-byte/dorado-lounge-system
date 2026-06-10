@@ -47,16 +47,21 @@ CREATE POLICY "pedido_item_eventos_tenant_insert" ON public.pedido_item_eventos
     )
   );
 
--- 3) Backfill del estado de ítems según el estado del pedido
+-- 3) Backfill del estado de ítems según el estado del pedido (idempotente:
+--    solo toca ítems que siguen en el default 'pendiente').
 UPDATE public.pedido_items it
 SET estado = 'listo', listo_at = p.updated_at
 FROM public.pedidos p
-WHERE it.pedido_id = p.id AND p.estado IN ('despachado', 'entregado');
+WHERE it.pedido_id = p.id
+  AND p.estado IN ('despachado', 'entregado')
+  AND it.estado = 'pendiente';
 
 UPDATE public.pedido_items it
 SET estado = 'en_preparacion', en_preparacion_at = p.updated_at
 FROM public.pedidos p
-WHERE it.pedido_id = p.id AND p.estado = 'en_preparacion';
+WHERE it.pedido_id = p.id
+  AND p.estado = 'en_preparacion'
+  AND it.estado = 'pendiente';
 
 COMMENT ON COLUMN public.pedido_items.estado IS 'KDS: pendiente|en_preparacion|listo. Despacho por área.';
 COMMENT ON TABLE public.pedido_item_eventos IS 'Append-only: traza por ítem (quién/cuándo). Recalls = nueva fila.';
