@@ -147,7 +147,6 @@ jobs:
 
       - name: Coverage (dominio web — thresholds 75%/90%)
         run: pnpm --filter @dorado/web exec vitest run --coverage
-        continue-on-error: true
 
   audit:
     name: Security Audit

@@ -32,7 +32,9 @@
       "@parcel/watcher"
     ],
     "overrides": {
-      "brace-expansion": ">=5.0.6",
+      "brace-expansion@1": ">=1.1.12 <2",
+      "brace-expansion@2": ">=2.0.2 <3",
+      "brace-expansion@5": ">=5.0.6",
       "fast-uri": ">=3.1.2",
       "postcss": ">=8.5.10",
       "ws": ">=8.20.1"
