@@ -57,6 +57,7 @@ const TEXTS: Record<string, Record<string, string>> = {
     categories_entrada: 'Entradas',
     categories_plato_fuerte: 'Plato fuerte',
     categories_acompanante: 'Acompañantes',
+    categories_postre: 'Postres',
     viewIngredients: 'Ver ingredientes',
     hideIngredients: 'Ocultar ingredientes',
     notePlaceholder: 'Agrega una nota para este plato…',
@@ -118,6 +119,7 @@ const TEXTS: Record<string, Record<string, string>> = {
     categories_entrada: 'Starters',
     categories_plato_fuerte: 'Main Course',
     categories_acompanante: 'Sides',
+    categories_postre: 'Desserts',
     viewIngredients: 'View ingredients',
     hideIngredients: 'Hide ingredients',
     notePlaceholder: 'Add a note for this dish…',
@@ -179,6 +181,7 @@ const TEXTS: Record<string, Record<string, string>> = {
     categories_entrada: 'Entrées',
     categories_plato_fuerte: 'Plat principal',
     categories_acompanante: 'Accompagnements',
+    categories_postre: 'Desserts',
     viewIngredients: 'Voir les ingrédients',
     hideIngredients: 'Masquer les ingrédients',
     notePlaceholder: 'Ajoutez une note pour ce plat…',
@@ -240,6 +243,7 @@ const TEXTS: Record<string, Record<string, string>> = {
     categories_entrada: 'Entradas',
     categories_plato_fuerte: 'Prato principal',
     categories_acompanante: 'Acompanhamentos',
+    categories_postre: 'Sobremesas',
     viewIngredients: 'Ver ingredientes',
     hideIngredients: 'Ocultar ingredientes',
     notePlaceholder: 'Adicione uma observação para este prato…',
@@ -286,12 +290,13 @@ const TEXTS: Record<string, Record<string, string>> = {
   },
 };
 
-const CATEGORY_ORDER: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante'];
+const CATEGORY_ORDER: CategoriaMenu[] = ['entrada', 'plato_fuerte', 'acompanante', 'postre'];
 
 const ESTIMATED_MINUTES: Record<CategoriaMenu, number> = {
   entrada: 10,
   plato_fuerte: 20,
   acompanante: 8,
+  postre: 10,
 };
 
 const LOCALES = [

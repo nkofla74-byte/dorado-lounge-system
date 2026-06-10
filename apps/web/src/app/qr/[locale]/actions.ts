@@ -15,7 +15,7 @@ export interface PublicIngrediente {
   unidadMedida: string;
 }
 
-export type CategoriaMenu = 'entrada' | 'plato_fuerte' | 'acompanante';
+export type CategoriaMenu = 'entrada' | 'plato_fuerte' | 'acompanante' | 'postre';
 
 export interface PublicReceta {
   id: string;

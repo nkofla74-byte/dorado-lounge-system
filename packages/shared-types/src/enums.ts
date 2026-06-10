@@ -100,6 +100,7 @@ export const CategoriaMenu = {
   entrada: 'entrada',
   plato_fuerte: 'plato_fuerte',
   acompanante: 'acompanante',
+  postre: 'postre',
 } as const;
 
 export type CategoriaMenu = (typeof CategoriaMenu)[keyof typeof CategoriaMenu];

@@ -76,6 +76,7 @@ export function IngredientsSheet({
     entrada: t('categoriaEntrada'),
     plato_fuerte: t('categoriaPlatoFuerte'),
     acompanante: t('categoriaAcompanante'),
+    postre: t('categoriaPostre'),
   };
   const [serverError, setServerError] = useState('');
   const [showForm, setShowForm] = useState(false);
