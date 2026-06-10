@@ -601,6 +601,39 @@ export async function recallItem(itemId: string, version: number) {
   return ejecutarTransicionItem(itemId, version, 'en_preparacion', 'orders:recall_item');
 }
 
+export async function toggleDisponibilidadPlato(
+  recetaId: string,
+  activo: boolean,
+): Promise<Result<{ id: string; activo: boolean }>> {
+  try {
+    const ctx = await assertCan('recipes:write');
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from('recetas')
+      .update({ activo })
+      .eq('id', recetaId)
+      .eq('tenant_id', ctx.tenantId)
+      .select('id, activo')
+      .single();
+
+    if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: activo ? 'recetas:habilitar' : 'recetas:inhabilitar',
+      resourceId: recetaId,
+      resourceType: 'receta',
+      payload: { activo },
+    });
+
+    return ok({ id: data.id as string, activo: data.activo as boolean });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 // ── Trazabilidad admin ────────────────────────────────────────────────────────
 
 export async function getTrazabilidadPedidos(
@@ -722,9 +755,7 @@ export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedi
       actorMap = Object.fromEntries((users ?? []).map((u) => [u.id, u.nombre as string]));
     }
 
-    const getRecetaNombre = (
-      receta: { nombre: string } | { nombre: string }[] | null,
-    ): string => {
+    const getRecetaNombre = (receta: { nombre: string } | { nombre: string }[] | null): string => {
       if (!receta) return '';
       if (Array.isArray(receta)) return receta[0]?.nombre ?? '';
       return receta.nombre;
@@ -781,36 +812,3 @@ export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedi
 }
 
 export type { TrazaFiltros, TrazaPedidoSummary, TrazaPedidoDetalle };
-
-export async function toggleDisponibilidadPlato(
-  recetaId: string,
-  activo: boolean,
-): Promise<Result<{ id: string; activo: boolean }>> {
-  try {
-    const ctx = await assertCan('recipes:write');
-    const admin = createAdminClient();
-
-    const { data, error } = await admin
-      .from('recetas')
-      .update({ activo })
-      .eq('id', recetaId)
-      .eq('tenant_id', ctx.tenantId)
-      .select('id, activo')
-      .single();
-
-    if (error) throw new AppError('DB_ERROR', 500, error.message);
-
-    await auditLog({
-      tenantId: ctx.tenantId,
-      userId: ctx.userId,
-      action: activo ? 'recetas:habilitar' : 'recetas:inhabilitar',
-      resourceId: recetaId,
-      resourceType: 'receta',
-      payload: { activo },
-    });
-
-    return ok({ id: data.id as string, activo: data.activo as boolean });
-  } catch (e) {
-    return err(toAppError(e));
-  }
-}

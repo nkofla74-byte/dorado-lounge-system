@@ -41,9 +41,6 @@ type RoleKey =
   | 'chef_cocina_caliente'
   | 'sous_chef'
   | 'mesero_amex'
-  | 'personal_snack'
-  | 'personal_buffet'
-  | 'recepcion'
   | 'personal_almacen'
   | 'personal_pasteleria'
   | 'steward';
@@ -55,9 +52,6 @@ const ASSIGNABLE_ROLES: RoleKey[] = [
   'chef_cocina_caliente',
   'sous_chef',
   'mesero_amex',
-  'personal_snack',
-  'personal_buffet',
-  'recepcion',
   'personal_almacen',
   'personal_pasteleria',
   'steward',
@@ -82,9 +76,6 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
       'chef',
       'sous_chef',
       'mesero_amex',
-      'personal_snack',
-      'personal_buffet',
-      'recepcion',
       'personal_almacen',
       'personal_pasteleria',
       'steward',

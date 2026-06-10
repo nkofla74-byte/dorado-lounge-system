@@ -28,10 +28,10 @@ interface ParsedRow {
 }
 
 const TEMPLATE_CSV =
-  'nombre,codigo,capa,unidad_medida,stock_minimo\nHarina de maíz,HAR-001,capa_1,kg,10\nLeche entera,LECH-001,capa_1,l,5\nPandebono,PAN-001,capa_2,unidad,0\n';
+  'nombre,codigo,capa,unidad_medida,stock_minimo\nHarina de maíz,HAR-001,capa_1,g,10000\nLeche entera,LECH-001,capa_1,ml,5000\nPandebono,PAN-001,capa_2,unidad,0\n';
 
 const VALID_CAPAS = ['capa_1', 'capa_2'];
-const VALID_UNIDADES = ['kg', 'g', 'l', 'ml', 'unidad', 'porcion'];
+const VALID_UNIDADES = ['g', 'ml', 'unidad'];
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];

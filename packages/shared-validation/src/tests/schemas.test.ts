@@ -141,7 +141,7 @@ describe('createInsumoSchema', () => {
     const result = createInsumoSchema.safeParse({
       nombre: 'Pollo',
       capa: 'capa_1',
-      unidadMedida: 'kg',
+      unidadMedida: 'g',
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -152,7 +152,7 @@ describe('createInsumoSchema', () => {
 
   it('rechaza nombre vacío', () => {
     expect(
-      createInsumoSchema.safeParse({ nombre: '', capa: 'capa_1', unidadMedida: 'kg' }).success,
+      createInsumoSchema.safeParse({ nombre: '', capa: 'capa_1', unidadMedida: 'g' }).success,
     ).toBe(false);
   });
 });
@@ -172,7 +172,7 @@ describe('createLoteSchema', () => {
       cantidadInicial: 10,
       cantidadEmpaques: 5,
       pesoUnitario: 2,
-      unidadPeso: 'kg',
+      unidadPeso: 'g',
     });
     expect(result.success).toBe(true);
   });

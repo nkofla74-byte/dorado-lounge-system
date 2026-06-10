@@ -6,9 +6,6 @@ export const UserRole = {
   chef_cocina_caliente: 'chef_cocina_caliente',
   sous_chef: 'sous_chef',
   mesero_amex: 'mesero_amex',
-  personal_snack: 'personal_snack',
-  personal_buffet: 'personal_buffet',
-  recepcion: 'recepcion',
   personal_almacen: 'personal_almacen',
   personal_pasteleria: 'personal_pasteleria',
   steward: 'steward',
@@ -23,14 +20,13 @@ export const CapaInventario = {
 
 export type CapaInventario = (typeof CapaInventario)[keyof typeof CapaInventario];
 
+// Unidades canónicas tras el refoco operacional (F2, 2026-05-30):
+// peso → g · volumen → ml · contable → unidad. kg/lb/l/porcion quedan
+// inertes en el tipo SQL; aquí dejan de ser válidas para nuevas capturas.
 export const UnidadMedida = {
-  kg: 'kg',
   g: 'g',
-  lb: 'lb',
-  l: 'l',
   ml: 'ml',
   unidad: 'unidad',
-  porcion: 'porcion',
 } as const;
 
 export type UnidadMedida = (typeof UnidadMedida)[keyof typeof UnidadMedida];
@@ -63,7 +59,11 @@ export const TipoReceta = {
 export type TipoReceta = (typeof TipoReceta)[keyof typeof TipoReceta];
 
 export const AreaProduccion = {
+  // `cocina` es legacy: tras el split (refoco operacional 2026-05) las recetas
+  // se clasifican como caliente o fría. Se conserva inerte para datos previos.
   cocina: 'cocina',
+  cocina_caliente: 'cocina_caliente',
+  cocina_fria: 'cocina_fria',
   pasteleria: 'pasteleria',
   amex: 'amex',
 } as const;
@@ -77,6 +77,24 @@ export const ZonaServicio = {
 } as const;
 
 export type ZonaServicio = (typeof ZonaServicio)[keyof typeof ZonaServicio];
+
+// Matriz autoritativa de ruteo: a qué áreas productivas puede solicitar
+// producción cada zona de consumo. Un pedido se rutea POR PRODUCTO al área
+// que indica su receta; un pedido puede tocar varias áreas.
+// Regla: el área `amex` (cocina AMEX) sirve EXCLUSIVAMENTE a la zona AMEX.
+export const ZONA_AREAS_PERMITIDAS: Record<ZonaServicio, AreaProduccion[]> = {
+  amex: ['cocina_fria', 'amex'],
+  snack: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
+  buffet: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
+};
+
+export const Prioridad = {
+  alta: 'alta',
+  normal: 'normal',
+  baja: 'baja',
+} as const;
+
+export type Prioridad = (typeof Prioridad)[keyof typeof Prioridad];
 
 export const CategoriaMenu = {
   entrada: 'entrada',
@@ -127,4 +145,18 @@ export const PEDIDO_TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
   despachado: ['entregado'],
   entregado: [],
   cancelado: [],
+};
+
+export const EstadoItem = {
+  pendiente: 'pendiente',
+  en_preparacion: 'en_preparacion',
+  listo: 'listo',
+} as const;
+
+export type EstadoItem = (typeof EstadoItem)[keyof typeof EstadoItem];
+
+export const ITEM_TRANSITIONS: Record<EstadoItem, EstadoItem[]> = {
+  pendiente: ['en_preparacion'],
+  en_preparacion: ['listo'],
+  listo: ['en_preparacion'], // solo vía recall
 };

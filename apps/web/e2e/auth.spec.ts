@@ -22,7 +22,7 @@ test.describe('Login', () => {
     const meseroAuthPath = './e2e/.auth/mesero.json';
     const fs = await import('fs');
     if (!fs.existsSync(meseroAuthPath)) {
-      test.skip();
+      test.skip(true, 'requiere auth file de mesero (.auth/mesero.json)');
       return;
     }
 
@@ -52,15 +52,14 @@ test.describe('Login', () => {
     await expect(page).toHaveURL(/\/cocina/);
   });
 
-  test('login recepcion redirige a /afluencia sin loop', async ({ page }) => {
+  test('login mesero_amex redirige a /pedidos sin loop', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel('Correo electrónico').fill(process.env.E2E_RECEPCION_EMAIL!);
-    await page.getByLabel('Contraseña').fill(process.env.E2E_RECEPCION_PASSWORD!);
+    await page.getByLabel('Correo electrónico').fill(process.env.E2E_MESERO_AMEX_EMAIL!);
+    await page.getByLabel('Contraseña').fill(process.env.E2E_MESERO_AMEX_PASSWORD!);
     await page.getByRole('button', { name: 'Ingresar' }).click();
 
-    await expect(page).toHaveURL(/\/afluencia/);
-    // Verificar que no hay loop: la URL no vuelve a /login ni a /pedidos
+    await expect(page).toHaveURL(/\/pedidos/);
+    // Verificar que no hay loop: la URL no vuelve a /login
     await expect(page).not.toHaveURL(/\/login/);
-    await expect(page).not.toHaveURL(/\/pedidos/);
   });
 });

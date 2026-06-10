@@ -4,66 +4,16 @@ import { createClient } from '@/lib/supabase/server';
 import { Sidebar, MobileTopBar } from '@/components/layout/sidebar';
 import { OfflineBanner } from '@/components/layout/offline-banner';
 import { SocketProvider } from '@/lib/socket/socket-provider';
-import { ChatPanel } from '@/components/chat/chat-panel';
 import { TurnoGuard } from '@/components/turnos/turno-guard';
 import { getMiTurnoActivo } from '@/modules/turnos/actions';
-import { CHANNELS, type UserRole, type Channel } from '@dorado/shared-types';
-
-// Canal de chat por rol — cada nodo habla en su sala operativa
-const ROLE_CHAT_CHANNEL: Partial<Record<UserRole, Channel>> = {
-  chef: CHANNELS.COCINA,
-  chef_cocina_fria: CHANNELS.COCINA_FRIA,
-  chef_cocina_caliente: CHANNELS.COCINA_CALIENTE,
-  sous_chef: CHANNELS.COCINA_AMEX,
-  admin: CHANNELS.ADMIN,
-  superuser: CHANNELS.ADMIN,
-  mesero_amex: CHANNELS.AMEX,
-  recepcion: CHANNELS.AMEX,
-  personal_snack: CHANNELS.SNACK,
-  personal_buffet: CHANNELS.BUFFET,
-  personal_pasteleria: CHANNELS.BROADCAST_COCINA,
-  steward: CHANNELS.BROADCAST_COCINA,
-  personal_almacen: CHANNELS.BROADCAST_ADMIN,
-};
-
-type ChatTituloKey =
-  | 'chef'
-  | 'chef_cocina_fria'
-  | 'chef_cocina_caliente'
-  | 'sous_chef'
-  | 'admin'
-  | 'mesero_amex'
-  | 'recepcion'
-  | 'personal_snack'
-  | 'personal_buffet'
-  | 'personal_pasteleria'
-  | 'steward'
-  | 'personal_almacen'
-  | 'default';
-
-const CHAT_TITULO_KEYS: Partial<Record<UserRole, ChatTituloKey>> = {
-  chef: 'chef',
-  chef_cocina_fria: 'chef_cocina_fria',
-  chef_cocina_caliente: 'chef_cocina_caliente',
-  sous_chef: 'sous_chef',
-  admin: 'admin',
-  superuser: 'admin',
-  mesero_amex: 'mesero_amex',
-  recepcion: 'recepcion',
-  personal_snack: 'personal_snack',
-  personal_buffet: 'personal_buffet',
-  personal_pasteleria: 'personal_pasteleria',
-  steward: 'steward',
-  personal_almacen: 'personal_almacen',
-};
+import type { UserRole } from '@dorado/shared-types';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const [{ data: userData }, locale, tLayout, tChatTitulo] = await Promise.all([
+  const [{ data: userData }, locale, tLayout] = await Promise.all([
     supabase.auth.getUser(),
     getLocale(),
     getTranslations('layout'),
-    getTranslations('layout.chatTitulo'),
   ]);
 
   const user = userData.user;
@@ -83,13 +33,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token ?? '';
-  const chatCanal = ROLE_CHAT_CHANNEL[role] ?? null;
-  const chatTitulo = tChatTitulo(CHAT_TITULO_KEYS[role] ?? 'default');
 
   const sidebarUser = { name, email: user.email ?? '', role };
 
-  // Fetch del turno activo del usuario (null si no tiene). Solo aplica a roles
-  // operativos — admin/superuser quedan excluidos dentro del TurnoGuard.
   const miTurnoResult = await getMiTurnoActivo();
   const miTurno = miTurnoResult.ok ? miTurnoResult.value : null;
 
@@ -105,9 +51,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
 
       <TurnoGuard role={role} userName={name} initialTurno={miTurno} />
-
-      {/* Chat flotante — solo para roles con canal de chat asignado */}
-      {chatCanal && <ChatPanel canal={chatCanal} userId={user.id} titulo={chatTitulo} />}
     </SocketProvider>
   );
 }

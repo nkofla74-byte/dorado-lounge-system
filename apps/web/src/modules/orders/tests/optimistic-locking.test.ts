@@ -6,6 +6,7 @@ import type {
   PedidoForDelivery,
   CreatePedidoInput,
   EstadoPedido,
+  AreaProduccion,
 } from '../domain/pedido';
 import type { OrderRepository } from '../application/ports/order-repository.port';
 
@@ -18,6 +19,7 @@ function makePedido(overrides: Partial<Pedido> = {}): PedidoWithItems {
     estado: 'creado',
     version: 1,
     notas: null,
+    cocineroId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     items: [
@@ -28,6 +30,12 @@ function makePedido(overrides: Partial<Pedido> = {}): PedidoWithItems {
         recetaNombre: 'Filete',
         cantidad: 1,
         notas: null,
+        areaProduccion: 'cocina_fria' as const,
+        estado: 'pendiente' as const,
+        enPreparacionAt: null,
+        listoAt: null,
+        iniciadoPor: null,
+        listoPor: null,
       },
     ],
     timestamps: {
@@ -46,6 +54,11 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
 
   return {
     pedidos,
+    async findRecetaAreas(_tenantId: string, recetaIds: string[]) {
+      const out: Record<string, AreaProduccion | null> = {};
+      for (const id of recetaIds) out[id] = 'cocina_fria';
+      return out;
+    },
     async findActive(tenantId: string) {
       return pedidos.filter(
         (p) =>
@@ -56,12 +69,28 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
     async findActiveByZona(tenantId: string, zona: string) {
       return (await this.findActive(tenantId)).filter((p) => p.zona === zona);
     },
+    async findActiveByArea(tenantId: string, area: string) {
+      return pedidos.filter(
+        (p) =>
+          p.tenantId === tenantId &&
+          p.estado !== 'entregado' &&
+          p.estado !== 'cancelado' &&
+          (p.items ?? []).some((i) => i.areaProduccion === area),
+      );
+    },
     async findRecent(tenantId: string, limit: number) {
       return pedidos
         .filter((p) => p.tenantId === tenantId && ['entregado', 'cancelado'].includes(p.estado))
         .slice(0, limit);
     },
-    async create(tenantId: string, userId: string, input: CreatePedidoInput) {
+    async create(
+      tenantId: string,
+      userId: string,
+      input: CreatePedidoInput,
+      _itemAreas: Record<string, AreaProduccion>,
+    ) {
+      void userId;
+      void _itemAreas;
       const existing = pedidos.find(
         (p) =>
           p.tenantId === tenantId &&
@@ -99,6 +128,19 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
 
       pedidos[idx] = { ...pedidos[idx]!, estado, version: version + 1, updatedAt: new Date() };
       return pedidos[idx]!;
+    },
+    async asignarCocinero(id: string, tenantId: string, cocineroId: string, version: number) {
+      const idx = pedidos.findIndex((p) => p.id === id && p.tenantId === tenantId);
+      if (idx === -1) throw new Error('NOT_FOUND');
+      if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
+      pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1, updatedAt: new Date() };
+      return pedidos[idx]!;
+    },
+    async findItemForTransition() {
+      return null;
+    },
+    async transitionItem() {
+      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
     },
   };
 }

@@ -29,20 +29,11 @@ describe('canAccess', () => {
     expect(canAccess('superuser', '/cocina-amex')).toBe(true);
   });
 
-  it('recepcion solo accede a /afluencia y /vuelos', () => {
-    expect(canAccess('recepcion', '/afluencia')).toBe(true);
-    expect(canAccess('recepcion', '/afluencia/turno/123')).toBe(true);
-    expect(canAccess('recepcion', '/vuelos')).toBe(true);
-    expect(canAccess('recepcion', '/pedidos')).toBe(false);
-    expect(canAccess('recepcion', '/inventario')).toBe(false);
-    expect(canAccess('recepcion', '/cocina')).toBe(false);
-  });
-
-  it('mesero_amex solo accede a /pedidos y /vuelos', () => {
+  it('mesero_amex solo accede a /pedidos', () => {
     expect(canAccess('mesero_amex', '/pedidos')).toBe(true);
-    expect(canAccess('mesero_amex', '/vuelos')).toBe(true);
+    expect(canAccess('mesero_amex', '/pedidos/123')).toBe(true);
     expect(canAccess('mesero_amex', '/inventario')).toBe(false);
-    expect(canAccess('mesero_amex', '/afluencia')).toBe(false);
+    expect(canAccess('mesero_amex', '/cocina')).toBe(false);
   });
 
   it('personal_almacen puede acceder a /admin/proveedores', () => {
@@ -52,14 +43,14 @@ describe('canAccess', () => {
   });
 
   it('no confunde prefijos parciales (/co no da acceso a /cocina)', () => {
-    expect(canAccess('recepcion', '/afluencia-falsa')).toBe(false);
+    expect(canAccess('chef', '/cocinaX')).toBe(false);
     expect(canAccess('mesero_amex', '/pedidosX')).toBe(false);
   });
 });
 
 describe('getRoleHome', () => {
   it('devuelve la ruta correcta para cada rol', () => {
-    expect(getRoleHome('recepcion')).toBe('/afluencia');
+    expect(getRoleHome('mesero_amex')).toBe('/pedidos');
     expect(getRoleHome('admin')).toBe('/inventario');
     expect(getRoleHome('chef')).toBe('/cocina');
     expect(getRoleHome('sous_chef')).toBe('/cocina-amex');
@@ -73,17 +64,17 @@ describe('getRoleHome', () => {
 
 describe('getSafeNext', () => {
   it('acepta rutas internas válidas', () => {
-    expect(getSafeNext('/afluencia', 'recepcion')).toBe('/afluencia');
+    expect(getSafeNext('/pedidos', 'mesero_amex')).toBe('/pedidos');
     expect(getSafeNext('/inventario/lotes', 'admin')).toBe('/inventario/lotes');
   });
 
   it('rechaza rutas externas y devuelve el home del rol', () => {
-    expect(getSafeNext('https://evil.com', 'recepcion')).toBe('/afluencia');
+    expect(getSafeNext('https://evil.com', 'mesero_amex')).toBe('/pedidos');
     expect(getSafeNext('//evil.com', 'admin')).toBe('/inventario');
   });
 
   it('rechaza /login para evitar redirect loops', () => {
-    expect(getSafeNext('/login', 'recepcion')).toBe('/afluencia');
+    expect(getSafeNext('/login', 'mesero_amex')).toBe('/pedidos');
   });
 
   it('acepta null/undefined devolviendo el home del rol', () => {

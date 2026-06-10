@@ -9,7 +9,6 @@ import { createClient } from '@/lib/supabase/server';
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
 import { createTandaSchema } from '@dorado/shared-validation';
-import { cantidadConMerma } from '@/modules/inventory/utilities';
 import { TANDA_TRANSITIONS } from './domain/tanda';
 import type { Result } from '@/lib/result';
 import type { Tanda } from './domain/tanda';
@@ -121,9 +120,11 @@ export async function completarTanda(tandaId: string): Promise<Result<Tanda>> {
     // Atomic FEFO deduction + state transition via single Postgres RPC.
     // All ingredient deductions and the state change happen in one transaction.
     const adminClient = createAdminClient();
+    // Modelo F3: la merma se aplicó en la recepción (stock ya es neto), por lo
+    // que se descuenta la cantidad neta de la receta directa, sin inflar.
     const ingredientesPayload = tanda.ingredientes.map((ing) => ({
       insumo_id: ing.insumoId,
-      cantidad_bruta: cantidadConMerma(ing.cantidad * tanda.cantidadTandas, ing.mermaCoeficiente),
+      cantidad_bruta: ing.cantidad * tanda.cantidadTandas,
       insumo_nombre: ing.insumoNombre,
     }));
 
@@ -211,31 +212,7 @@ export interface SolicitudCocina {
   createdAt: string;
 }
 
-export async function getSolicitudesCocina(limit = 20): Promise<Result<SolicitudCocina[]>> {
-  try {
-    const ctx = await assertCan('production:read');
-    const supabase = await createClient();
-
-    const { data, error: dbError } = await supabase
-      .from('mensajes_chat')
-      .select('id, contenido, created_at')
-      .eq('tenant_id', ctx.tenantId)
-      .eq('canal', 'sala:broadcast:cocina')
-      .eq('tipo', 'alert')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (dbError) throw new AppError('DB_ERROR', 500, dbError.message);
-
-    return ok(
-      (data ?? []).map((r) => ({
-        id: r.id as string,
-        descripcion: r.contenido as string,
-        zona: 'snack/buffet',
-        createdAt: r.created_at as string,
-      })),
-    );
-  } catch (e) {
-    return err(toAppError(e));
-  }
+export async function getSolicitudesCocina(_limit = 20): Promise<Result<SolicitudCocina[]>> {
+  // mensajes_chat eliminado (refoco operacional 2026-05-28); retorna vacío.
+  return ok([]);
 }

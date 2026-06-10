@@ -1,6 +1,6 @@
 # Dorado Lounge System
 
-SaaS multi-tenant para gestión de sala VIP aeroportuaria (Dorado Lounge, El Dorado, Bogotá). Cubre recepción, cocinas (general + AMEX), pastelería, snack, buffet, almacén y administración.
+SaaS multi-tenant para gestión de sala VIP aeroportuaria (Dorado Lounge, El Dorado, Bogotá). Cubre recepción de bodega, 4 KDS por área (cocina caliente, cocina fría, pastelería, AMEX), trazabilidad por ítem y administración.
 
 ## Quick Start
 
@@ -18,7 +18,7 @@ pnpm dev                                        # web :3000 + socket :3001
 pnpm dev              # dev servers (web + socket) en paralelo
 pnpm lint             # ESLint
 pnpm typecheck        # TypeScript strict
-pnpm test             # Vitest (390 tests)
+pnpm test             # Vitest
 ```
 
 ## Stack
@@ -27,6 +27,6 @@ Next.js 15 (App Router) | Supabase (Postgres + Auth + Storage) | Socket.io | Tai
 
 ## Architecture
 
-Monorepo con pnpm workspaces. Módulos hexagonales (`domain -> application -> infrastructure -> actions.ts`). Multi-tenant con RLS en Postgres. Inventario FEFO atómico vía RPC. Optimistic locking en pedidos.
+Monorepo con pnpm workspaces. Módulos hexagonales (`domain -> application -> infrastructure -> actions.ts`). Multi-tenant con RLS en Postgres. Inventario FEFO atómico vía RPC. Optimistic locking en pedidos. Estado por ítem en KDS con log append-only.
 
 Detalles en `CLAUDE.md` y `ARCHITECTURE.md`.

@@ -32,10 +32,10 @@ type FormInput = z.input<typeof createInsumoSchema>;
 type FormOutput = z.output<typeof createInsumoSchema>;
 
 type CapaKey = 'capa_1' | 'capa_2';
-type UnidadKey = 'kg' | 'g' | 'l' | 'ml' | 'unidad' | 'porcion';
+type UnidadKey = 'g' | 'ml' | 'unidad';
 
 const CAPAS: CapaKey[] = ['capa_1', 'capa_2'];
-const UNIDADES: UnidadKey[] = ['kg', 'g', 'l', 'ml', 'unidad', 'porcion'];
+const UNIDADES: UnidadKey[] = ['g', 'ml', 'unidad'];
 
 interface CreateInsumoDialogProps {
   open: boolean;

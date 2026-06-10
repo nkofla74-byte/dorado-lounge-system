@@ -63,21 +63,6 @@ export function KdsBoard({ initialPedidos, readOnly }: KdsBoardProps) {
     if (result.ok) setPedidos(result.value);
   }, []);
 
-  const handleStateChange = useCallback((pedidoId: string, nuevoEstado: string) => {
-    setPedidos((prev) =>
-      prev.map((p) =>
-        p.id === pedidoId
-          ? {
-              ...p,
-              estado: nuevoEstado as PedidoWithItems['estado'],
-              version: p.version + 1,
-              updatedAt: new Date(),
-            }
-          : p,
-      ),
-    );
-  }, []);
-
   useEffect(() => {
     if (!socket) return;
 
@@ -118,6 +103,10 @@ export function KdsBoard({ initialPedidos, readOnly }: KdsBoardProps) {
             ),
           );
         }
+      }
+      if (event.type === 'ITEM_ESTADO') {
+        // Item state changed — reload to reflect updated item states.
+        refresh();
       }
     };
 
@@ -206,7 +195,6 @@ export function KdsBoard({ initialPedidos, readOnly }: KdsBoardProps) {
                     <PedidoCard
                       key={pedido.id}
                       pedido={pedido}
-                      onStateChange={handleStateChange}
                       onRefresh={refresh}
                       readOnly={readOnly}
                     />

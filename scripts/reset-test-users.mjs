@@ -106,24 +106,6 @@ const TEST_USERS = [
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'recepcion@dorado.test',
-    nombre: 'Recepción',
-    role: 'recepcion',
-    tenantSlug: TENANT_OPERATIVO_SLUG,
-  },
-  {
-    email: 'snack@dorado.test',
-    nombre: 'Personal Snack',
-    role: 'personal_snack',
-    tenantSlug: TENANT_OPERATIVO_SLUG,
-  },
-  {
-    email: 'buffet@dorado.test',
-    nombre: 'Personal Buffet',
-    role: 'personal_buffet',
-    tenantSlug: TENANT_OPERATIVO_SLUG,
-  },
-  {
     email: 'almacen@dorado.test',
     nombre: 'Personal Almacén',
     role: 'personal_almacen',

@@ -10,12 +10,8 @@ export const CHANNELS = {
   COCINA_CALIENTE: 'sala:cocina:caliente',
   COCINA_AMEX: 'sala:cocina:amex',
   AMEX: 'sala:amex',
-  SNACK: 'sala:snack',
-  BUFFET: 'sala:buffet',
   ADMIN: 'sala:admin',
   STUART_AMEX: 'sala:stuart:amex',
-  STUART_SNACK: 'sala:stuart:snack',
-  STUART_BUFFET: 'sala:stuart:buffet',
   BROADCAST_COCINA: 'sala:broadcast:cocina',
   BROADCAST_ADMIN: 'sala:broadcast:admin',
 } as const;
@@ -36,29 +32,9 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:cocina:fria': ['chef_cocina_fria', 'chef', 'admin', 'superuser'],
   'sala:cocina:caliente': ['chef_cocina_caliente', 'chef', 'admin', 'superuser'],
   'sala:cocina:amex': ['sous_chef', 'chef', 'admin', 'superuser'],
-  'sala:amex': ['mesero_amex', 'recepcion', 'admin', 'superuser'],
-  'sala:snack': ['personal_snack', 'admin', 'superuser'],
-  'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
+  'sala:amex': ['mesero_amex', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
-  'sala:stuart:amex': ['mesero_amex', 'recepcion', 'chef', 'sous_chef', 'admin', 'superuser'],
-  'sala:stuart:snack': [
-    'personal_snack',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'admin',
-    'superuser',
-  ],
-  'sala:stuart:buffet': [
-    'personal_buffet',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'admin',
-    'superuser',
-  ],
+  'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:broadcast:cocina': [
     'chef',
     'chef_cocina_fria',
@@ -94,6 +70,30 @@ export interface PedidoEstadoEvent {
     tenantId: string;
     estadoAnterior: EstadoPedido;
     estadoNuevo: EstadoPedido;
+    zona: ZonaServicio;
+    updatedAt: string;
+  };
+}
+
+export interface ItemEstadoEvent {
+  type: 'ITEM_ESTADO';
+  payload: {
+    pedidoId: string;
+    itemId: string;
+    tenantId: string;
+    area: string; // AreaProduccion del ítem
+    estadoAnterior: 'pendiente' | 'en_preparacion' | 'listo';
+    estadoNuevo: 'pendiente' | 'en_preparacion' | 'listo';
+    updatedAt: string;
+  };
+}
+
+export interface PedidoCocineroEvent {
+  type: 'PEDIDO_COCINERO';
+  payload: {
+    pedidoId: string;
+    tenantId: string;
+    cocineroId: string;
     zona: ZonaServicio;
     updatedAt: string;
   };
@@ -204,6 +204,8 @@ export interface AlertaEvent {
 export type SocketEvent =
   | PedidoCreadoEvent
   | PedidoEstadoEvent
+  | ItemEstadoEvent
+  | PedidoCocineroEvent
   | StockOutEvent
   | DespachoEvent
   | MensajeChatEvent

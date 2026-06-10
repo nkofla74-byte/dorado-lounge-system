@@ -97,12 +97,8 @@ describe('canJoinChannel', () => {
     expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:amex')).toBe(false);
   });
 
-  it('permite a personal_snack unirse a sala:snack', () => {
-    expect(canJoinChannel(makeSocketWithRole('personal_snack') as never, 'sala:snack')).toBe(true);
-  });
-
   it('permite a admin unirse a cualquier canal', () => {
-    const channels = ['sala:cocina', 'sala:amex', 'sala:snack', 'sala:buffet', 'sala:admin'];
+    const channels = ['sala:cocina', 'sala:amex', 'sala:admin'];
     for (const ch of channels) {
       expect(canJoinChannel(makeSocketWithRole('admin') as never, ch)).toBe(true);
     }
@@ -120,9 +116,7 @@ describe('canJoinChannel', () => {
     expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:stuart:amex')).toBe(true);
   });
 
-  it('deniega a personal_snack en sala:stuart:buffet', () => {
-    expect(
-      canJoinChannel(makeSocketWithRole('personal_snack') as never, 'sala:stuart:buffet'),
-    ).toBe(false);
+  it('deniega a mesero_amex en sala:cocina', () => {
+    expect(canJoinChannel(makeSocketWithRole('mesero_amex') as never, 'sala:cocina')).toBe(false);
   });
 });
