@@ -883,16 +883,6 @@
     "dashboardTitle": "An unexpected error occurred",
     "intentarDeNuevo": "Try again"
   },
-  "chat": {
-    "abrirChat": "Open chat",
-    "cerrarChat": "Close chat",
-    "cargandoMensajes": "Loading messages…",
-    "sinMensajes": "No messages yet",
-    "irAlFinal": "Go to bottom",
-    "errorEnviar": "Could not send message",
-    "inputPlaceholder": "Message… (Enter to send)",
-    "enviar": "Send"
-  },
   "costos": {
     "metaTitle": "Costs — Dorado Lounge",
     "pageTitle": "Real-time costs",

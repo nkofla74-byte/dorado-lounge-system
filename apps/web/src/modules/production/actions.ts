@@ -212,31 +212,7 @@ export interface SolicitudCocina {
   createdAt: string;
 }
 
-export async function getSolicitudesCocina(limit = 20): Promise<Result<SolicitudCocina[]>> {
-  try {
-    const ctx = await assertCan('production:read');
-    const supabase = await createClient();
-
-    const { data, error: dbError } = await supabase
-      .from('mensajes_chat')
-      .select('id, contenido, created_at')
-      .eq('tenant_id', ctx.tenantId)
-      .eq('canal', 'sala:broadcast:cocina')
-      .eq('tipo', 'alert')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (dbError) throw new AppError('DB_ERROR', 500, dbError.message);
-
-    return ok(
-      (data ?? []).map((r) => ({
-        id: r.id as string,
-        descripcion: r.contenido as string,
-        zona: 'snack/buffet',
-        createdAt: r.created_at as string,
-      })),
-    );
-  } catch (e) {
-    return err(toAppError(e));
-  }
+export async function getSolicitudesCocina(_limit = 20): Promise<Result<SolicitudCocina[]>> {
+  // mensajes_chat eliminado (refoco operacional 2026-05-28); retorna vacío.
+  return ok([]);
 }

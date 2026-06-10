@@ -745,16 +745,6 @@
     "export": "Exportar",
     "noData": "Sin datos disponibles"
   },
-  "chat": {
-    "abrirChat": "Abrir chat",
-    "cerrarChat": "Cerrar chat",
-    "cargandoMensajes": "Cargando mensajes…",
-    "sinMensajes": "Sin mensajes aún",
-    "irAlFinal": "Ir al final",
-    "errorEnviar": "No se pudo enviar el mensaje",
-    "inputPlaceholder": "Mensaje… (Enter para enviar)",
-    "enviar": "Enviar"
-  },
   "errors": {
     "notFound": "Página no encontrada",
     "volverInicio": "Volver al inicio",
