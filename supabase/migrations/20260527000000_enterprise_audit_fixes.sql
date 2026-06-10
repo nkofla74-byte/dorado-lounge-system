@@ -35,15 +35,17 @@ CREATE POLICY "turnos_insert_staff" ON public.turnos
   );
 
 DROP POLICY IF EXISTS "turnos_update_own" ON public.turnos;
+-- La columna de turnos es responsable_id (no usuario_id — ese nombre nunca
+-- existió en la tabla; bug detectado al aplicar en prod el 2026-06-10).
 CREATE POLICY "turnos_update_own" ON public.turnos
   FOR UPDATE TO authenticated
   USING (
     tenant_id = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid
-    AND usuario_id = auth.uid()
+    AND responsable_id = auth.uid()
   )
   WITH CHECK (
     tenant_id = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')::uuid
-    AND usuario_id = auth.uid()
+    AND responsable_id = auth.uid()
   );
 
 -- ─────────────────────────────────────────────────────────────────────────────
