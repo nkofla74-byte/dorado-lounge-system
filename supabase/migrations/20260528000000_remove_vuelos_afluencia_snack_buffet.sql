@@ -39,6 +39,30 @@ REVOKE ALL ON FUNCTION public.refresh_analytics_views() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.refresh_analytics_views() FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.refresh_analytics_views() TO service_role;
 
+-- ── 4b. Retención (20260513000000): la vista y la función de purga dependen
+-- de afluencia_ingresos. La vista se recrea solo con mensajes_chat (que aún
+-- existe en este punto; 20260609000004 la elimina del todo). Se des-agenda
+-- cualquier job pg_cron que invoque la purga de afluencia.
+DROP VIEW IF EXISTS public.v_retencion_estado;
+CREATE OR REPLACE VIEW public.v_retencion_estado AS
+SELECT
+  'mensajes_chat'      AS tabla,
+  count(*)             AS registros_total,
+  count(*) FILTER (WHERE created_at < now() - interval '90 days') AS registros_a_purgar,
+  min(created_at)      AS registro_mas_antiguo
+FROM public.mensajes_chat;
+
+DROP FUNCTION IF EXISTS public.fn_purgar_afluencia_antigua();
+
+DO $$
+DECLARE j record;
+BEGIN
+  FOR j IN SELECT jobid FROM cron.job WHERE command ILIKE '%fn_purgar_afluencia_antigua%' LOOP
+    PERFORM cron.unschedule(j.jobid);
+  END LOOP;
+EXCEPTION WHEN undefined_table OR insufficient_privilege THEN NULL;
+END $$;
+
 -- ── 5. Tablas de los módulos eliminados ──────────────────────────────────────
 DROP TABLE IF EXISTS public.pasajeros_ingreso;
 DROP TABLE IF EXISTS public.afluencia_ingresos;

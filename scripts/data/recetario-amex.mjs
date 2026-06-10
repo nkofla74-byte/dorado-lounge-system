@@ -15,8 +15,33 @@
 
 export const TENANT_DEFAULT = 'dorado-lounge';
 
-// Insumos capa_1 nuevos (los existentes se reutilizan por nombre, case-insensitive).
+// Insumos capa_1 del recetario. Si ya existen en el tenant (por nombre,
+// case-insensitive) se reutilizan; si no, se crean. Autosuficiente tras el
+// archivado del catálogo demo (20260530000003).
 export const INSUMOS_CAPA1 = [
+  // Básicos que el recetario comparte con el catálogo previo
+  { nombre: 'Aceite de coco', unidad: 'ml' },
+  { nombre: 'Aguacate', unidad: 'g' },
+  { nombre: 'Ají dulce', unidad: 'g' },
+  { nombre: 'Ajo', unidad: 'g' },
+  { nombre: 'Arroz', unidad: 'g' },
+  { nombre: 'Cebolla roja', unidad: 'g' },
+  { nombre: 'Cilantro', unidad: 'g' },
+  { nombre: 'Contramuslo de pollo', unidad: 'g' },
+  { nombre: 'Espinaca', unidad: 'g' },
+  { nombre: 'Maíz dulce', unidad: 'g' },
+  { nombre: 'Mantequilla', unidad: 'g' },
+  { nombre: 'Panela molida', unidad: 'g' },
+  { nombre: 'Papa criolla', unidad: 'g' },
+  { nombre: 'Pulpa de corozo', unidad: 'ml' },
+  { nombre: 'Queso parmesano', unidad: 'g' },
+  { nombre: 'Sal', unidad: 'g' },
+  { nombre: 'Tomillo', unidad: 'g' },
+  { nombre: 'Vino blanco', unidad: 'ml' },
+  { nombre: 'Vino tinto', unidad: 'ml' },
+  { nombre: 'Zanahoria', unidad: 'g' },
+  { nombre: 'Zumo de limón', unidad: 'ml' },
+  // Nuevos del recetario oficial
   { nombre: 'Pulpa de lulo', unidad: 'g' },
   { nombre: 'Panela', unidad: 'g' },
   { nombre: 'Vinagre de frutas', unidad: 'ml' },
