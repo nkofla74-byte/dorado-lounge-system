@@ -619,16 +619,20 @@ CREATE TABLE pedidos (
   entregado_at  timestamptz
 );
 
--- Tickets de buffet: agregado por turno (no por evento)
-CREATE TABLE buffet_tickets_turno (
+-- ELIMINADO (refoco operacional 2026-05-28): buffet_tickets_turno
+-- ELIMINADO (refoco operacional 2026-05-28): afluencia_ingresos
+-- ELIMINADO (refoco operacional 2026-05-28): mensajes_chat (migración 20260609000004)
+-- ELIMINADO (refoco operacional 2026-05-28): vuelos / vuelo_snapshots
+
+-- Log de eventos por ítem de pedido (append-only, inmutable)
+CREATE TABLE pedido_item_eventos (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id       uuid NOT NULL REFERENCES tenants(id),
-  turno_id        uuid NOT NULL REFERENCES turnos(id),
-  total_tickets   int NOT NULL CHECK (total_tickets >= 0),
-  registrado_por  uuid NOT NULL REFERENCES users(id),
-  registrado_at   timestamptz NOT NULL DEFAULT now(),
-  observaciones   text,
-  UNIQUE (tenant_id, turno_id)                          -- un solo cierre por turno
+  pedido_id       uuid NOT NULL REFERENCES pedidos(id),
+  item_id         uuid NOT NULL REFERENCES pedido_items(id),
+  estado          text NOT NULL,
+  actor_id        uuid REFERENCES users(id),
+  created_at      timestamptz NOT NULL DEFAULT now()
 );
 
 -- Eventos de dominio: append-only
@@ -734,31 +738,31 @@ CREATE UNIQUE INDEX ON mv_consumo_vs_produccion_turno (tenant_id, turno_id, insu
 
 Esta es la sección que justifica todo el sistema. Si algo aquí está mal, el producto no funciona.
 
-### 9.1 Función pura del coeficiente de merma
+### 9.1 Modelo F3 — Merma en recepción (2026-05-30)
+
+**Decisión:** la merma se aplica UNA VEZ al recibir el lote, no al consumir. El inventario almacena la cantidad NETA utilizable; el consumo descuenta cantidades netas directas sin aplicar coeficiente.
 
 ```typescript
 // modules/inventory/domain/merma.ts
-import { z } from 'zod';
-
-export const Cantidad = z.number().nonnegative();
-export const Coeficiente = z.number().min(0).max(0.9999);
-
 /**
- * Aplica el coeficiente de merma a una cantidad requerida.
- * Si una receta requiere 150g de pollo limpio y la merma es 0.25,
- * el sistema debe descontar 200g de pollo crudo del lote.
+ * Modelo F3: aplica merma en la recepción.
+ * inventarioNeto = comprado × (1 - coef)
+ * costoUnitarioNeto = costoTotal / inventarioNeto  (preserva valor total del lote)
  *
- * cantidad_a_descontar = cantidad_requerida / (1 - coeficiente)
+ * La fuente autoritativa del coeficiente es insumos.merma_default.
+ * receta_ingredientes.merma_coeficiente es solo referencia histórica.
  */
-export function cantidadConMerma(cantidadRequerida: number, coeficiente: number): number {
-  Cantidad.parse(cantidadRequerida);
-  Coeficiente.parse(coeficiente);
-  // Redondear a 4 decimales para evitar drift de punto flotante
-  return Math.round((cantidadRequerida / (1 - coeficiente)) * 10000) / 10000;
+export function aplicarMermaRecepcion(comprado: number, coef: number): number {
+  return Math.round(comprado * (1 - coef) * 10000) / 10000;
+}
+
+export function costoUnitarioNeto(costoTotal: number, comprado: number, coef: number): number {
+  const neto = aplicarMermaRecepcion(comprado, coef);
+  return Math.round((costoTotal / neto) * 10000) / 10000;
 }
 ```
 
-Esta función **no tiene dependencias**. Vive en `domain/`. Tiene tests exhaustivos: límites (0, 0.99), errores (>=1, <0), precisión, idempotencia. Si falla un solo test, el deploy se bloquea.
+Coverage 90%+ obligatorio en este módulo. Si falla un test, el deploy se bloquea.
 
 ### 9.2 Política FEFO — descuento desde lotes
 
@@ -1689,4 +1693,24 @@ FF_FLIGHTS_INTEGRATION_ENABLED=false
 
 ---
 
-_v1.0 — Mayo 2026 · Autor: Principal Software Architect (sesión inicial Claude Code) · Próxima revisión obligatoria: cierre de Sprint 1_
+---
+
+## ADR — Refoco Operacional (2026-05-28 / 2026-06-01)
+
+**Contexto:** El sistema original incluía módulos de vuelos, afluencia, snack, buffet y chat que añadían complejidad sin generar valor operacional para el Dorado Lounge.
+
+**Decisión:** Pivote de plataforma ERP genérica a plataforma operacional enfocada:
+
+- **Eliminados:** módulos `flights`, `afluencia`, `snack` (como módulo), `buffet` (como módulo), `chat`; tablas `vuelos*`, `afluencia_ingresos`, `buffet_tickets_turno`, `mensajes_chat`.
+- **Split área:** `chef` genérico → `chef_cocina_caliente` + `chef_cocina_fria` (4 KDS por área).
+- **Ruteo por matriz:** `ZONA_AREAS_PERMITIDAS` en shared-types define qué zonas de origen pueden pedir a qué áreas de producción.
+- **Estado por ítem:** `pedido_items.estado` con log append-only `pedido_item_eventos`; despacho granular por ítem en cada KDS.
+- **Merma en recepción (F3):** stock guarda cantidad neta; consumo descuenta sin coeficiente. Fuente autoritativa: `insumos.merma_default`.
+- **Unidades estandarizadas:** `{g, ml, unidad}` — elimina ambigüedades en cálculo de costos.
+- **Snack/Buffet como zonas de origen** (no módulos): siguen existiendo como `personal_snack` / `personal_buffet` con UI K2 pendiente; el descuento de stock ocurre al entregar el pedido.
+
+**Consecuencias:** Codebase más pequeño (~9000 líneas eliminadas), menor superficie de bugs, KDS operacional desde el día 1. Analytics pierde `cogs_per_passenger` y `cash_outflow_per_passenger` hasta implementar afluencia en K2/K3.
+
+---
+
+_v1.1 — Junio 2026 · Correcciones de drift post-refoco operacional (§ER, §Merma F3, ADR refoco)_
