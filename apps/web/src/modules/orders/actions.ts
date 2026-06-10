@@ -640,7 +640,7 @@ export async function getTrazabilidadPedidos(
   filtros: TrazaFiltros,
 ): Promise<Result<TrazaPedidoSummary[]>> {
   try {
-    const ctx = await assertCan('orders:read');
+    const ctx = await assertCan('orders:trace');
     const admin = createAdminClient();
 
     let query = admin
@@ -696,7 +696,7 @@ export async function getTrazabilidadPedidos(
 
 export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedidoDetalle>> {
   try {
-    const ctx = await assertCan('orders:read');
+    const ctx = await assertCan('orders:trace');
     const admin = createAdminClient();
 
     const { data: pedido, error: pError } = await admin

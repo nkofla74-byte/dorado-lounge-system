@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { Fragment, useEffect, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +38,9 @@ const ESTADO_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   cancelado: 'destructive',
 };
 
+// Radix Select no admite value="" en SelectItem — sentinela para "sin filtro".
+const ALL = '__all__';
+
 const ZONAS = ['amex', 'snack', 'buffet'] as const;
 const ESTADOS = [
   'creado',
@@ -74,7 +77,7 @@ function TimelineRow({ entry, t }: TimelineRowProps) {
       </Badge>
       <span className="flex-1">
         {entry.itemNombre && <span className="font-medium">{entry.itemNombre} — </span>}
-        <span>{t(`estadoLabel.${entry.estado}`, { fallback: entry.estado })}</span>
+        <span>{t(`estadoLabel.${entry.estado}`)}</span>
       </span>
       {entry.actorNombre && (
         <span className="text-xs text-muted-foreground shrink-0">{entry.actorNombre}</span>
@@ -93,13 +96,13 @@ function ExpandedRow({ pedidoId }: ExpandedRowProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  if (!detalle && !error && !isPending) {
+  useEffect(() => {
     startTransition(async () => {
       const res = await getTrazaPedido(pedidoId);
       if (res.ok) setDetalle(res.value);
       else setError(res.error.message);
     });
-  }
+  }, [pedidoId, startTransition]);
 
   if (isPending) {
     return (
@@ -194,12 +197,12 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted-foreground">{t('filtros.zona')}</label>
-          <Select value={zona} onValueChange={setZona}>
+          <Select value={zona || ALL} onValueChange={(v) => setZona(v === ALL ? '' : v)}>
             <SelectTrigger className="h-8 text-sm w-36">
               <SelectValue placeholder={t('filtros.todas')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t('filtros.todas')}</SelectItem>
+              <SelectItem value={ALL}>{t('filtros.todas')}</SelectItem>
               {ZONAS.map((z) => (
                 <SelectItem key={z} value={z}>
                   {z}
@@ -210,15 +213,15 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted-foreground">{t('filtros.estado')}</label>
-          <Select value={estado} onValueChange={setEstado}>
+          <Select value={estado || ALL} onValueChange={(v) => setEstado(v === ALL ? '' : v)}>
             <SelectTrigger className="h-8 text-sm w-44">
               <SelectValue placeholder={t('filtros.todos')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t('filtros.todos')}</SelectItem>
+              <SelectItem value={ALL}>{t('filtros.todos')}</SelectItem>
               {ESTADOS.map((e) => (
                 <SelectItem key={e} value={e}>
-                  {t(`estadoLabel.${e}`, { fallback: e })}
+                  {t(`estadoLabel.${e}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -262,9 +265,8 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
               </TableRow>
             )}
             {rows.map((row) => (
-              <>
+              <Fragment key={row.pedidoId}>
                 <TableRow
-                  key={row.pedidoId}
                   className={cn(
                     'cursor-pointer hover:bg-muted/50',
                     expandedId === row.pedidoId && 'bg-muted/30',
@@ -283,20 +285,20 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
                   <TableCell className="text-sm">{row.numeroMesa ?? '—'}</TableCell>
                   <TableCell>
                     <Badge variant={ESTADO_VARIANT[row.estado] ?? 'outline'}>
-                      {t(`estadoLabel.${row.estado}`, { fallback: row.estado })}
+                      {t(`estadoLabel.${row.estado}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{row.responsableNombre ?? '—'}</TableCell>
                   <TableCell className="text-sm text-right">{row.cantidadItems}</TableCell>
                 </TableRow>
                 {expandedId === row.pedidoId && (
-                  <TableRow key={`${row.pedidoId}-detail`} className="hover:bg-transparent">
+                  <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="p-0">
                       <ExpandedRow pedidoId={row.pedidoId} />
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
