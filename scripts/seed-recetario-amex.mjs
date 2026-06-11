@@ -127,16 +127,22 @@ async function main() {
       }
       return existente;
     }
-    const nuevo = {
-      tenant_id: tenant.id,
-      nombre,
-      capa,
-      unidad_medida: unidad,
-      stock_minimo: 0,
-      merma_default: 0,
-    };
     let row = { id: `dry-${norm(nombre)}`, nombre, capa, unidad_medida: unidad };
     if (APPLY) {
+      // insumos.codigo es NOT NULL (20260518000001) — SKU autogenerado por RPC.
+      const { data: codigo, error: codErr } = await admin.rpc('fn_siguiente_codigo_insumo', {
+        p_tenant: tenant.id,
+      });
+      if (codErr) throw new Error(`Generando código para '${nombre}': ${codErr.message}`);
+      const nuevo = {
+        tenant_id: tenant.id,
+        nombre,
+        codigo,
+        capa,
+        unidad_medida: unidad,
+        stock_minimo: 0,
+        merma_default: 0,
+      };
       const { data, error } = await admin
         .from('insumos')
         .insert(nuevo)
