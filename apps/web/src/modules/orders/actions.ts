@@ -13,7 +13,7 @@ import { createPedido as createPedidoUseCase } from './application/create-pedido
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
-import { CHANNELS, ITEM_TRANSITIONS } from '@dorado/shared-types';
+import { CHANNELS, ITEM_TRANSITIONS, ZONA_CHANNEL } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type {
   Pedido,
@@ -262,8 +262,10 @@ export async function recibirEnCocina(pedidoId: string, version: number): Promis
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     };
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.AMEX, eventoPayload);
+    if (pedido.zona === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
+    }
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], eventoPayload);
 
     void registrarEvento(ctx.tenantId, pedidoId, 'recibido_cocina', ctx.userId);
     return ok(updated);
@@ -391,6 +393,18 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
     });
 
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'entregado',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    });
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], {
       type: 'PEDIDO_ESTADO',
       payload: {
         pedidoId,
@@ -579,7 +593,7 @@ async function ejecutarTransicionItem(
       await emitEvent(ctx.tenantId, CHANNELS.COCINA_PASTELERIA, itemEvento);
     }
     if (result.pedidoEstado === 'despachado') {
-      await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
+      await emitEvent(ctx.tenantId, ZONA_CHANNEL[item.zona as ZonaServicio], {
         type: 'PEDIDO_ESTADO',
         payload: {
           pedidoId: item.pedidoId,

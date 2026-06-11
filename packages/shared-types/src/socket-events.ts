@@ -11,6 +11,8 @@ export const CHANNELS = {
   COCINA_AMEX: 'sala:cocina:amex',
   COCINA_PASTELERIA: 'sala:cocina:pasteleria',
   AMEX: 'sala:amex',
+  SNACK: 'sala:snack',
+  BUFFET: 'sala:buffet',
   ADMIN: 'sala:admin',
   STUART_AMEX: 'sala:stuart:amex',
   BROADCAST_COCINA: 'sala:broadcast:cocina',
@@ -35,6 +37,8 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:cocina:amex': ['sous_chef', 'chef', 'admin', 'superuser'],
   'sala:cocina:pasteleria': ['personal_pasteleria', 'chef', 'admin', 'superuser'],
   'sala:amex': ['mesero_amex', 'admin', 'superuser'],
+  'sala:snack': ['personal_snack', 'admin', 'superuser'],
+  'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
   'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:broadcast:cocina': [
@@ -48,6 +52,14 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
     'superuser',
   ],
   'sala:broadcast:admin': ['personal_almacen', 'admin', 'superuser'],
+};
+
+// Canal de notificación de cada zona de servicio. Las zonas no se hablan
+// entre sí — cada una recibe solo los eventos de sus propios pedidos.
+export const ZONA_CHANNEL: Record<ZonaServicio, Channel> = {
+  amex: CHANNELS.AMEX,
+  snack: CHANNELS.SNACK,
+  buffet: CHANNELS.BUFFET,
 };
 
 // ── Tipos de eventos ──────────────────────────────────────────────────────────
