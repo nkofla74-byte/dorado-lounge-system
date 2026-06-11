@@ -27,6 +27,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'sous_chef',
     'mesero_amex',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
   ],
   'recipes:write': ['admin'],
   // Producción
@@ -37,6 +39,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_caliente',
     'sous_chef',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
     'steward',
   ],
   'production:write': [
@@ -57,8 +61,10 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'sous_chef',
     'mesero_amex',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
   ],
-  'orders:create': ['admin', 'mesero_amex'],
+  'orders:create': ['admin', 'mesero_amex', 'personal_snack', 'personal_buffet'],
   'orders:receive': [
     'admin',
     'chef',
@@ -68,7 +74,7 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'mesero_amex',
   ],
   'orders:dispatch': ['admin', 'chef', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef'],
-  'orders:deliver': ['admin', 'mesero_amex'],
+  'orders:deliver': ['admin', 'mesero_amex', 'personal_snack', 'personal_buffet'],
   'orders:trace': ['admin'], // panel de trazabilidad — solo admin
   'orders:cancel': [
     'admin',
@@ -77,6 +83,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
+    'personal_snack',
+    'personal_buffet',
   ],
   // Analytics
   'analytics:read': ['admin'],
@@ -89,6 +97,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'sous_chef',
     'mesero_amex',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
     'personal_almacen',
     'steward',
   ],
@@ -100,6 +110,8 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'sous_chef',
     'mesero_amex',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
     'personal_almacen',
     'steward',
   ],
