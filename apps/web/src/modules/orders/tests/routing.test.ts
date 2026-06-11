@@ -9,10 +9,11 @@ describe('ZONA_AREAS_PERMITIDAS (matriz autoritativa)', () => {
     expect(ZONA_AREAS_PERMITIDAS).toHaveProperty('buffet');
   });
 
-  it('AMEX rutea a cocina_fria y al área amex (cocina AMEX)', () => {
-    expect(ZONA_AREAS_PERMITIDAS.amex).toEqual(expect.arrayContaining(['cocina_fria', 'amex']));
+  it('AMEX rutea a cocina_fria, cocina AMEX y pastelería (postres de la carta)', () => {
+    expect(ZONA_AREAS_PERMITIDAS.amex).toEqual(
+      expect.arrayContaining(['cocina_fria', 'amex', 'pasteleria']),
+    );
     expect(ZONA_AREAS_PERMITIDAS.amex).not.toContain('cocina_caliente');
-    expect(ZONA_AREAS_PERMITIDAS.amex).not.toContain('pasteleria');
   });
 
   it('Snack y Buffet rutean a caliente, fría y pastelería', () => {
@@ -34,6 +35,7 @@ describe('zonaPuedeSolicitar', () => {
     expect(zonaPuedeSolicitar('snack', 'cocina_caliente')).toBe(true);
     expect(zonaPuedeSolicitar('amex', 'cocina_fria')).toBe(true);
     expect(zonaPuedeSolicitar('amex', 'amex')).toBe(true);
+    expect(zonaPuedeSolicitar('amex', 'pasteleria')).toBe(true);
   });
 
   it('rechaza combinaciones fuera de la matriz', () => {

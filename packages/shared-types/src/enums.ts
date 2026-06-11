@@ -82,8 +82,10 @@ export type ZonaServicio = (typeof ZonaServicio)[keyof typeof ZonaServicio];
 // producción cada zona de consumo. Un pedido se rutea POR PRODUCTO al área
 // que indica su receta; un pedido puede tocar varias áreas.
 // Regla: el área `amex` (cocina AMEX) sirve EXCLUSIVAMENTE a la zona AMEX.
+// `pasteleria` en amex: los postres de la carta oficial (flan, cocadas,
+// enyucado) los produce pastelería — recetario 2026-06-10.
 export const ZONA_AREAS_PERMITIDAS: Record<ZonaServicio, AreaProduccion[]> = {
-  amex: ['cocina_fria', 'amex'],
+  amex: ['cocina_fria', 'amex', 'pasteleria'],
   snack: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
   buffet: ['cocina_caliente', 'cocina_fria', 'pasteleria'],
 };
