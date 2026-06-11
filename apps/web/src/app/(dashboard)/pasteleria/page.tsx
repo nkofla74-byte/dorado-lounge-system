@@ -4,11 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import { getTandas } from '@/modules/production/actions';
 import { getRecetas } from '@/modules/recipes/actions';
 import { getTurnoActivo } from '@/modules/turnos/actions';
-import { getPedidos } from '@/modules/orders/actions';
+import { getPedidosByArea } from '@/modules/orders/actions';
 import { getSolicitudesCocina } from '@/modules/production/actions';
 import { TandaTable } from '@/components/production/tanda-table';
 import { SolicitudesPanel } from '@/components/production/solicitudes-panel';
 import { ProduccionDashboard } from '@/components/production/produccion-dashboard';
+import { KdsBoardArea } from '@/components/kds/kds-board-area';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pasteleria');
@@ -18,20 +19,21 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PasteleriaPage() {
   const supabase = await createClient();
   const t = await getTranslations('pasteleria');
+  const tKds = await getTranslations('kds');
   const tLayout = await getTranslations('layout');
 
   const [
     tandasResult,
     recetasResult,
     turnoResult,
-    pedidosResult,
+    pedidosKdsResult,
     solicitudesResult,
     { data: userData },
   ] = await Promise.all([
     getTandas(),
     getRecetas(),
     getTurnoActivo(),
-    getPedidos(),
+    getPedidosByArea('pasteleria'),
     getSolicitudesCocina(),
     supabase.auth.getUser(),
   ]);
@@ -60,12 +62,6 @@ export default async function PasteleriaPage() {
     );
   }
 
-  const pedidosEspeciales = pedidosResult.ok
-    ? pedidosResult.value.filter(
-        (p) => p.zona === 'amex' && (p.estado === 'creado' || p.estado === 'en_preparacion'),
-      )
-    : [];
-
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -91,38 +87,14 @@ export default async function PasteleriaPage() {
         }}
       />
 
-      {/* Pedidos especiales activos desde Amex */}
-      {pedidosEspeciales.length > 0 && (
-        <div className="rounded-lg border border-violet-200 bg-violet-50 dark:bg-violet-950/20 dark:border-violet-800 p-4 space-y-3">
-          <p className="text-sm font-semibold text-violet-800 dark:text-violet-300">
-            {t('pedidosEspeciales', { n: pedidosEspeciales.length })}
-          </p>
-          <ul className="space-y-1.5">
-            {pedidosEspeciales.map((p) => (
-              <li
-                key={p.id}
-                className="flex items-center justify-between rounded-md bg-background border border-border px-3 py-2 text-sm"
-              >
-                <span className="font-medium">{p.numeroMesa ?? t('sinMesa')}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">
-                    {p.items.map((i) => `${i.cantidad}× ${i.recetaNombre}`).join(', ')}
-                  </span>
-                  <span
-                    className={
-                      p.estado === 'creado'
-                        ? 'text-xs text-blue-600 dark:text-blue-400'
-                        : 'text-xs text-amber-600 dark:text-amber-400'
-                    }
-                  >
-                    {p.estado === 'creado' ? t('estadoNuevo') : t('estadoEnPreparacion')}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* KDS de pedidos ruteados a pastelería (postres de la carta) */}
+      <KdsBoardArea
+        area="pasteleria"
+        titulo={tKds('tituloPasteleria')}
+        subtitulo={tKds('subtituloPasteleria')}
+        initialPedidos={pedidosKdsResult.ok ? pedidosKdsResult.value : []}
+        embedded
+      />
 
       {/* Tandas de producción — filtradas a área pastelería */}
       <TandaTable

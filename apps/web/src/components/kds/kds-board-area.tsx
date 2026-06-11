@@ -42,12 +42,22 @@ const COLUMNS: ColumnDef[] = [
   },
 ];
 
+// Canal que difunde los eventos de cada área. Fría/caliente comparten el canal
+// genérico de cocina; pastelería tiene el suyo (su rol no integra sala:cocina).
+const AREA_CHANNEL: Record<string, (typeof CHANNELS)[keyof typeof CHANNELS]> = {
+  cocina_fria: CHANNELS.COCINA,
+  cocina_caliente: CHANNELS.COCINA,
+  pasteleria: CHANNELS.COCINA_PASTELERIA,
+};
+
 interface KdsBoardAreaProps {
   area: AreaProduccion;
   titulo: string;
   subtitulo: string;
   initialPedidos: PedidoWithItems[];
   readOnly?: boolean | undefined;
+  // Embebido en otra página: sin padding exterior ni encabezado h1.
+  embedded?: boolean | undefined;
 }
 
 /**
@@ -64,6 +74,7 @@ export function KdsBoardArea({
   subtitulo,
   initialPedidos,
   readOnly,
+  embedded,
 }: KdsBoardAreaProps) {
   const t = useTranslations('kds');
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
@@ -74,10 +85,12 @@ export function KdsBoardArea({
     if (result.ok) setPedidos(result.value);
   }, [area]);
 
+  const channel = AREA_CHANNEL[area] ?? CHANNELS.COCINA;
+
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit('join', CHANNELS.COCINA);
+    socket.emit('join', channel);
 
     const handleEvent = (event: SocketEvent) => {
       if (event.type === 'PEDIDO_CREADO') {
@@ -105,9 +118,9 @@ export function KdsBoardArea({
     return () => {
       socket.off('event', handleEvent);
       socket.off('connect', refresh);
-      socket.emit('leave', CHANNELS.COCINA);
+      socket.emit('leave', channel);
     };
-  }, [socket, refresh]);
+  }, [socket, refresh, channel]);
 
   const byState = (estado: ColumnDef['key']) =>
     pedidos
@@ -115,11 +128,15 @@ export function KdsBoardArea({
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   return (
-    <div className="p-6 space-y-4">
+    <div className={embedded ? 'space-y-4' : 'p-6 space-y-4'}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+          {embedded ? (
+            <h2 className="text-base font-semibold">{titulo}</h2>
+          ) : (
+            <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+          )}
           <p className="text-sm text-muted-foreground mt-0.5">
             {pedidos.length === 0 ? subtitulo : t('pedidosActivos', { n: pedidos.length })}
           </p>

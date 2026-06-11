@@ -112,12 +112,14 @@ export async function getPedidos(): Promise<Result<PedidoWithItems[]>> {
 const AREA_KDS_PERM: Partial<Record<AreaProduccion, string>> = {
   cocina_fria: 'cocina_fria:read',
   cocina_caliente: 'cocina_caliente:read',
+  pasteleria: 'pasteleria:read',
 };
 
 const AREA_WRITE_PERM: Partial<Record<AreaProduccion, string>> = {
   cocina_fria: 'cocina_fria:write',
   cocina_caliente: 'cocina_caliente:write',
   amex: 'cocina_amex:write',
+  pasteleria: 'pasteleria:write',
 };
 
 export async function getPedidosByArea(area: AreaProduccion): Promise<Result<PedidoWithItems[]>> {
@@ -205,6 +207,9 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, pedidoCreadoPayload);
     if (pedido.zona === 'amex') {
       await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, pedidoCreadoPayload);
+    }
+    if (pedido.items.some((i) => i.areaProduccion === 'pasteleria')) {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_PASTELERIA, pedidoCreadoPayload);
     }
 
     void registrarEvento(ctx.tenantId, pedido.id, 'creado', ctx.userId);
@@ -569,6 +574,9 @@ async function ejecutarTransicionItem(
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, itemEvento);
     if (item.area === 'amex') {
       await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, itemEvento);
+    }
+    if (item.area === 'pasteleria') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_PASTELERIA, itemEvento);
     }
     if (result.pedidoEstado === 'despachado') {
       await emitEvent(ctx.tenantId, CHANNELS.AMEX, {

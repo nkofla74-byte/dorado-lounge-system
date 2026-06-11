@@ -60,6 +60,26 @@ describe('transiciones de ítem KDS (actions)', () => {
     expect(mocks.auditLog).toHaveBeenCalled();
   });
 
+  it('ítem de pastelería exige pasteleria:write y emite al canal del área', async () => {
+    mocks.findItemForTransition.mockResolvedValue({
+      itemId: 'i2',
+      pedidoId: 'p2',
+      area: 'pasteleria',
+      estado: 'pendiente',
+      pedidoEstado: 'recibido_cocina',
+      pedidoVersion: 1,
+      zona: 'amex',
+    });
+    mocks.transitionItem.mockResolvedValue({ pedidoEstado: 'en_preparacion', pedidoVersion: 2 });
+
+    const result = await iniciarItem('i2', 1);
+
+    expect(result.ok).toBe(true);
+    expect(mocks.assertCan).toHaveBeenCalledWith('pasteleria:write');
+    const canales = mocks.emitEvent.mock.calls.map((c) => (c as unknown[])[1]);
+    expect(canales).toContain('sala:cocina:pasteleria');
+  });
+
   it('rechaza recall de un ítem cuyo pedido ya está cerrado', async () => {
     mocks.findItemForTransition.mockResolvedValue({
       itemId: 'i1',

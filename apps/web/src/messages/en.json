@@ -946,6 +946,8 @@
     "subtituloCocinaFria": "Incoming preparation requests for the cold kitchen",
     "tituloCocinaCaliente": "Hot Kitchen — KDS",
     "subtituloCocinaCaliente": "Incoming preparation requests for the hot kitchen",
+    "tituloPasteleria": "Order queue — KDS",
+    "subtituloPasteleria": "Menu desserts routed to the pastry station",
     "sinSolicitudes": "No pending preparation requests",
     "tituloAmex": "Amex Kitchen — KDS",
     "sinPedidosActivos": "No active orders",

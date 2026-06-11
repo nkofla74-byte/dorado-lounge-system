@@ -143,6 +143,9 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Cocina Caliente — KDS exclusivo
   'cocina_caliente:read': ['admin', 'chef_cocina_caliente'],
   'cocina_caliente:write': ['admin', 'chef_cocina_caliente'],
+  // Pastelería — KDS de pedidos (postres ruteados al área)
+  'pasteleria:read': ['admin', 'personal_pasteleria'],
+  'pasteleria:write': ['admin', 'personal_pasteleria'],
   // Proveedores — gestión de proveedores e historial compras
   'proveedores:read': ['admin', 'personal_almacen'],
   'proveedores:write': ['admin', 'personal_almacen'],
