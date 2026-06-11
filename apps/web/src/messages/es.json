@@ -940,6 +940,8 @@
     "subtituloCocinaFria": "Cola de solicitudes de preparación dirigidas a cocina fría",
     "tituloCocinaCaliente": "Cocina Caliente — KDS",
     "subtituloCocinaCaliente": "Cola de solicitudes de preparación dirigidas a cocina caliente",
+    "tituloPasteleria": "Pedidos en cola — KDS",
+    "subtituloPasteleria": "Postres de la carta ruteados a pastelería",
     "sinSolicitudes": "Sin solicitudes de preparación pendientes",
     "tituloAmex": "Cocina Amex — KDS",
     "sinPedidosActivos": "Sin pedidos activos",
