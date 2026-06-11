@@ -137,12 +137,13 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],
-  // Cocina Fría — KDS exclusivo
-  'cocina_fria:read': ['admin', 'chef_cocina_fria'],
-  'cocina_fria:write': ['admin', 'chef_cocina_fria'],
-  // Cocina Caliente — KDS exclusivo
-  'cocina_caliente:read': ['admin', 'chef_cocina_caliente'],
-  'cocina_caliente:write': ['admin', 'chef_cocina_caliente'],
+  // Cocina Fría — KDS de área. `chef` (jefe de cocina) supervisa ambas áreas
+  // desde /cocina — coherente con CHANNEL_ACL (sala:cocina:fria incluye chef).
+  'cocina_fria:read': ['admin', 'chef', 'chef_cocina_fria'],
+  'cocina_fria:write': ['admin', 'chef', 'chef_cocina_fria'],
+  // Cocina Caliente — KDS de área
+  'cocina_caliente:read': ['admin', 'chef', 'chef_cocina_caliente'],
+  'cocina_caliente:write': ['admin', 'chef', 'chef_cocina_caliente'],
   // Pastelería — KDS de pedidos (postres ruteados al área)
   'pasteleria:read': ['admin', 'personal_pasteleria'],
   'pasteleria:write': ['admin', 'personal_pasteleria'],

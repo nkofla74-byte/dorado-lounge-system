@@ -948,6 +948,8 @@
     "subtituloCocinaCaliente": "Incoming preparation requests for the hot kitchen",
     "tituloPasteleria": "Order queue — KDS",
     "subtituloPasteleria": "Menu desserts routed to the pastry station",
+    "tituloCocinaGeneral": "Kitchen — General KDS",
+    "subtituloCocinaGeneral": "Supervisor view: hot and cold kitchen queues",
     "sinSolicitudes": "No pending preparation requests",
     "tituloAmex": "Amex Kitchen — KDS",
     "sinPedidosActivos": "No active orders",
