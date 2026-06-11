@@ -8,6 +8,7 @@ describe('calcularDescuentosPedido', () => {
         id: 'i1',
         cantidad: 2,
         recetaPorciones: 4,
+        recetaTipo: 'servicio',
         ingredientes: [{ insumoId: 'ins1', insumoNombre: 'Pan', cantidadPorBatch: 100 }],
       },
     ]);
@@ -28,6 +29,7 @@ describe('calcularDescuentosPedido', () => {
         id: 'i1',
         cantidad: 1,
         recetaPorciones: 2,
+        recetaTipo: 'servicio',
         ingredientes: [
           { insumoId: 'ins1', insumoNombre: 'Harina', cantidadPorBatch: 200 },
           { insumoId: 'ins2', insumoNombre: 'Azúcar', cantidadPorBatch: 50 },
@@ -37,6 +39,7 @@ describe('calcularDescuentosPedido', () => {
         id: 'i2',
         cantidad: 3,
         recetaPorciones: 6,
+        recetaTipo: 'servicio',
         ingredientes: [{ insumoId: 'ins3', insumoNombre: 'Leche', cantidadPorBatch: 300 }],
       },
     ]);
@@ -57,9 +60,46 @@ describe('calcularDescuentosPedido', () => {
         id: 'ITEM-1',
         cantidad: 1,
         recetaPorciones: 1,
+        recetaTipo: 'servicio',
         ingredientes: [{ insumoId: 'INS-A', insumoNombre: 'X', cantidadPorBatch: 10 }],
       },
     ]);
     expect(descuentos[0]?.idempotencyKey).toBe('pedido:PED-99:item:ITEM-1:ing:INS-A');
+  });
+
+  it('excluye ítems de recetas tipo produccion — el FEFO ya corrió en fn_completar_tanda', () => {
+    const descuentos = calcularDescuentosPedido('p1', [
+      {
+        id: 'i1',
+        cantidad: 2,
+        recetaPorciones: 1,
+        recetaTipo: 'produccion',
+        ingredientes: [{ insumoId: 'ins1', insumoNombre: 'Arroz', cantidadPorBatch: 5000 }],
+      },
+      {
+        id: 'i2',
+        cantidad: 1,
+        recetaPorciones: 4,
+        recetaTipo: 'servicio',
+        ingredientes: [{ insumoId: 'ins2', insumoNombre: 'Pollo', cantidadPorBatch: 800 }],
+      },
+    ]);
+
+    expect(descuentos).toHaveLength(1);
+    expect(descuentos[0]?.insumoId).toBe('ins2');
+    expect(descuentos[0]?.cantidad).toBe(200);
+  });
+
+  it('pedido compuesto solo por elaboraciones produce cero descuentos', () => {
+    const descuentos = calcularDescuentosPedido('p2', [
+      {
+        id: 'i1',
+        cantidad: 3,
+        recetaPorciones: 1,
+        recetaTipo: 'produccion',
+        ingredientes: [{ insumoId: 'ins1', insumoNombre: 'Arroz', cantidadPorBatch: 5000 }],
+      },
+    ]);
+    expect(descuentos).toHaveLength(0);
   });
 });

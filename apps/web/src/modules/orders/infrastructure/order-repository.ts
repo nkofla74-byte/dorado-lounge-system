@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { OrderRepository } from '../application/ports/order-repository.port';
+import type { TipoReceta } from '@dorado/shared-types';
 import type {
   Pedido,
   PedidoItem,
@@ -65,6 +66,7 @@ type ItemWithIngsRow = {
   receta: {
     nombre: string;
     porciones: number;
+    tipo_receta: string;
     receta_ingredientes: Array<{
       insumo_id: string;
       cantidad: number;
@@ -163,6 +165,7 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
     iniciadoPor: i.iniciado_por ?? null,
     listoPor: i.listo_por ?? null,
     recetaPorciones: i.receta?.porciones ?? 1,
+    recetaTipo: (i.receta?.tipo_receta ?? 'servicio') as TipoReceta,
     ingredientes: (i.receta?.receta_ingredientes ?? []).map((ri) => ({
       insumoId: ri.insumo_id,
       insumoNombre: ri.insumo?.nombre ?? '',
@@ -338,7 +341,7 @@ export function createOrderRepository(): OrderRepository {
             id, pedido_id, receta_id, cantidad, notas, area_produccion,
             estado, en_preparacion_at, listo_at, iniciado_por, listo_por,
             receta:recetas(
-              nombre, porciones,
+              nombre, porciones, tipo_receta,
               receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
             )
           )

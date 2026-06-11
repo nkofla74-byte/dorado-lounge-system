@@ -125,6 +125,7 @@ function createInMemoryRepo(
         items: p.items.map((it) => ({
           ...it,
           recetaPorciones: 1,
+          recetaTipo: 'servicio' as const,
           ingredientes: [],
         })),
       };

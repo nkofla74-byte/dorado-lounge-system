@@ -64,6 +64,7 @@ describe('entregarPedido (actions)', () => {
         iniciadoPor: null,
         listoPor: null,
         recetaPorciones: 4,
+        recetaTipo: 'servicio',
         ingredientes: [
           { insumoId: 'ins1', insumoNombre: 'Pan', cantidadPorBatch: 100, mermaCoeficiente: 0 },
         ],
@@ -111,5 +112,58 @@ describe('entregarPedido (actions)', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('INVALID_TRANSITION');
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('entregar pedido de solo elaboraciones NO invoca fn_descontar_insumo_fefo', async () => {
+    mocks.findByIdForDelivery.mockResolvedValue({
+      id: 'p1',
+      tenantId: 't1',
+      numeroMesa: null,
+      zona: 'buffet',
+      estado: 'despachado',
+      version: 4,
+      notas: null,
+      cocineroId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      items: [
+        {
+          id: 'i1',
+          pedidoId: 'p1',
+          recetaId: 'r1',
+          recetaNombre: 'Arroz blanco',
+          cantidad: 2,
+          notas: null,
+          areaProduccion: 'cocina_caliente',
+          estado: 'listo',
+          enPreparacionAt: null,
+          listoAt: null,
+          iniciadoPor: null,
+          listoPor: null,
+          recetaPorciones: 1,
+          recetaTipo: 'produccion',
+          ingredientes: [
+            {
+              insumoId: 'ins1',
+              insumoNombre: 'Arroz',
+              cantidadPorBatch: 5000,
+              mermaCoeficiente: 0,
+            },
+          ],
+        },
+      ],
+    });
+    mocks.transition.mockResolvedValue({
+      id: 'p1',
+      estado: 'entregado',
+      version: 5,
+      updatedAt: new Date(),
+    });
+
+    const result = await entregarPedido('p1', 4);
+
+    expect(result.ok).toBe(true);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.transition).toHaveBeenCalledWith('p1', 't1', 'entregado', 4);
   });
 });
