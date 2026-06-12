@@ -32,11 +32,32 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const supabase = await createClient();
+    const { data: receta } = await supabase
+      .from('recetas')
+      .select('tipo_receta')
+      .eq('id', parsed.data.recetaId)
+      .eq('tenant_id', ctx.tenantId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (!receta) {
+      return err(new AppError('NOT_FOUND', 404, 'Receta no encontrada'));
+    }
+    if (receta.tipo_receta !== 'produccion') {
+      // Principio Rector: una tanda solo produce recetas de producción. Una
+      // tanda de receta de servicio duplicaría el FEFO (tanda + entrega).
+      return err(
+        new AppError('VALIDATION', 422, 'Solo las recetas de producción se elaboran por tandas'),
+      );
+    }
+
     const repo = createProductionRepository();
     const tanda = await createTandaUseCase(repo, ctx.tenantId, {
       recetaId: parsed.data.recetaId,
       cantidadTandas: parsed.data.cantidadTandas,
       zonaDestino: parsed.data.zonaDestino,
+      pedidoItemId: parsed.data.pedidoItemId ?? null,
       idempotencyKey: parsed.data.idempotencyKey,
       responsableId: ctx.userId,
       turnoId: parsed.data.turnoId ?? null,

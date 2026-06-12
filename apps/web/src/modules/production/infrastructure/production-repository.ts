@@ -10,7 +10,7 @@ import type {
 } from '../domain/tanda';
 
 const TANDA_COLUMNS = `
-  id, tenant_id, receta_id, cantidad_tandas, estado, zona_destino, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
+  id, tenant_id, receta_id, cantidad_tandas, estado, zona_destino, pedido_item_id, responsable_id, turno_id, notas, started_at, completed_at, created_at, updated_at,
   receta:recetas(nombre),
   responsable:users!tandas_produccion_responsable_id_fkey(nombre),
   turno:turnos(nombre)
@@ -23,6 +23,7 @@ type TandaRow = {
   cantidad_tandas: number;
   estado: string;
   zona_destino: string | null;
+  pedido_item_id: string | null;
   responsable_id: string | null;
   turno_id: string | null;
   notas: string | null;
@@ -56,6 +57,7 @@ function toTanda(row: TandaRow): Tanda {
     cantidadTandas: row.cantidad_tandas,
     estado: row.estado as EstadoTanda,
     zonaDestino: row.zona_destino as ZonaServicio | null,
+    pedidoItemId: row.pedido_item_id ?? null,
     responsableId: row.responsable_id,
     responsableNombre: row.responsable?.nombre ?? null,
     turnoId: row.turno_id,
@@ -97,6 +99,27 @@ export function createProductionRepository(): ProductionRepository {
       return (data as unknown as TandaRow[]).map(toTanda);
     },
 
+    async findCompletadasByZona(
+      tenantId: string,
+      zona: string,
+      horasVentana: number,
+    ): Promise<Tanda[]> {
+      const supabase = await createClient();
+      const desde = new Date(Date.now() - horasVentana * 60 * 60 * 1000).toISOString();
+
+      const { data, error } = await supabase
+        .from('tandas_produccion')
+        .select(TANDA_COLUMNS)
+        .eq('tenant_id', tenantId)
+        .eq('zona_destino', zona)
+        .eq('estado', 'completada')
+        .gte('completed_at', desde)
+        .order('completed_at', { ascending: false });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as TandaRow[]).map(toTanda);
+    },
+
     async create(tenantId: string, input: CreateTandaInput): Promise<Tanda> {
       const supabase = await createClient();
 
@@ -109,6 +132,7 @@ export function createProductionRepository(): ProductionRepository {
           responsable_id: input.responsableId ?? null,
           cantidad_tandas: input.cantidadTandas,
           zona_destino: input.zonaDestino,
+          pedido_item_id: input.pedidoItemId ?? null,
           notas: input.notas ?? null,
           idempotency_key: input.idempotencyKey,
         })
