@@ -8,10 +8,11 @@ import { createProductionRepository } from './infrastructure/production-reposito
 import { createClient } from '@/lib/supabase/server';
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
+import { getTandasDisponibles } from './application/get-tandas-disponibles';
 import { createTandaSchema } from '@dorado/shared-validation';
 import { TANDA_TRANSITIONS } from './domain/tanda';
 import type { Result } from '@/lib/result';
-import type { Tanda } from './domain/tanda';
+import type { Tanda, ZonaServicio } from './domain/tanda';
 
 export async function getTandas(): Promise<Result<Tanda[]>> {
   try {
@@ -221,6 +222,16 @@ export async function cancelarTanda(tandaId: string): Promise<Result<Tanda>> {
     });
 
     return ok(updated);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getTandasDisponiblesZona(zona: ZonaServicio): Promise<Result<Tanda[]>> {
+  try {
+    const ctx = await assertCan('production:read');
+    const repo = createProductionRepository();
+    return ok(await getTandasDisponibles(repo, ctx.tenantId, zona));
   } catch (e) {
     return err(toAppError(e));
   }
