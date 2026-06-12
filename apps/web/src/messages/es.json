@@ -1214,5 +1214,43 @@
       "pendiente": "Pendiente",
       "listo": "Listo"
     }
+  },
+  "zonaView": {
+    "metaTitleSnack": "Snack — Dorado Lounge",
+    "metaTitleBuffet": "Buffet — Dorado Lounge",
+    "tituloSnack": "Barra Snack",
+    "tituloBuffet": "Buffet",
+    "subtitulo": "Pedidos de elaboraciones a cocina",
+    "tabPedir": "Pedir",
+    "tabPedidos": "Pedidos activos",
+    "tabDisponibilidad": "Disponibilidad",
+    "tabTurno": "Mi turno",
+    "nuevoPedido": "Nuevo pedido",
+    "sinElaboraciones": "No hay elaboraciones disponibles para esta zona",
+    "sinPedidos": "Sin pedidos activos",
+    "sinTandas": "Sin producción disponible en las últimas 24 h",
+    "sinHistorial": "Sin pedidos en el turno activo",
+    "colTandas": "Tandas",
+    "haceMinutos": "hace {n} min",
+    "confirmarEntrega": "Confirmar recibido",
+    "cancelarPedido": "Cancelar pedido",
+    "metricaPedidosTurno": "Pedidos del turno",
+    "metricaEntregados": "Entregados",
+    "metricaTiempoPromedio": "Tiempo promedio de entrega",
+    "minutos": "{n} min",
+    "create": {
+      "title": "Pedir elaboraciones",
+      "srDescription": "Solicita elaboraciones estandarizadas a las cocinas de tu zona.",
+      "items": "Elaboraciones",
+      "recetaPlaceholder": "Seleccionar elaboración",
+      "cantidadTandas": "Tandas",
+      "agregarItem": "Agregar elaboración",
+      "notas": "Notas",
+      "notasPlaceholder": "Indicaciones para cocina…",
+      "optional": "(opcional)",
+      "guardar": "Enviar pedido",
+      "guardando": "Enviando…",
+      "cancelar": "Cancelar"
+    }
   }
 }

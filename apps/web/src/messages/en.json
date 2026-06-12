@@ -1220,5 +1220,43 @@
       "pendiente": "Pending",
       "listo": "Ready"
     }
+  },
+  "zonaView": {
+    "metaTitleSnack": "Snack Bar — Dorado Lounge",
+    "metaTitleBuffet": "Buffet — Dorado Lounge",
+    "tituloSnack": "Snack Bar",
+    "tituloBuffet": "Buffet",
+    "subtitulo": "Order prepared items from the kitchen",
+    "tabPedir": "Order",
+    "tabPedidos": "Active orders",
+    "tabDisponibilidad": "Availability",
+    "tabTurno": "My shift",
+    "nuevoPedido": "New order",
+    "sinElaboraciones": "No prepared items available for this zone",
+    "sinPedidos": "No active orders",
+    "sinTandas": "No production available in the last 24 h",
+    "sinHistorial": "No orders in the active shift",
+    "colTandas": "Batches",
+    "haceMinutos": "{n} min ago",
+    "confirmarEntrega": "Confirm received",
+    "cancelarPedido": "Cancel order",
+    "metricaPedidosTurno": "Shift orders",
+    "metricaEntregados": "Delivered",
+    "metricaTiempoPromedio": "Average delivery time",
+    "minutos": "{n} min",
+    "create": {
+      "title": "Order prepared items",
+      "srDescription": "Request standardized prepared items from your zone's kitchens.",
+      "items": "Items",
+      "recetaPlaceholder": "Select item",
+      "cantidadTandas": "Batches",
+      "agregarItem": "Add item",
+      "notas": "Notes",
+      "notasPlaceholder": "Instructions for kitchen…",
+      "optional": "(optional)",
+      "guardar": "Send order",
+      "guardando": "Sending…",
+      "cancelar": "Cancel"
+    }
   }
 }

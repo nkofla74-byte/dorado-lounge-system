@@ -1,0 +1,244 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { createPedidoSchema } from '@dorado/shared-validation';
+import { createPedido } from '@/modules/orders/actions';
+import type { CartaElaboracion } from '@/modules/orders/actions';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { ZonaServicio } from '@/modules/orders/domain/pedido';
+import type { z } from 'zod';
+
+type FormInput = z.input<typeof createPedidoSchema>;
+type FormOutput = z.output<typeof createPedidoSchema>;
+
+interface CreatePedidoZonaDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+  zona: ZonaServicio;
+  elaboraciones: CartaElaboracion[];
+}
+
+const genKey = () => `zon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+export function CreatePedidoZonaDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  zona,
+  elaboraciones,
+}: CreatePedidoZonaDialogProps) {
+  const t = useTranslations('zonaView.create');
+  const [serverError, setServerError] = useState('');
+  const idempotencyKeyRef = useRef(genKey());
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(createPedidoSchema),
+    defaultValues: {
+      zona,
+      idempotencyKey: idempotencyKeyRef.current,
+      items: [{ recetaId: '', cantidad: 1 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
+
+  const onSubmit = async (values: FormOutput) => {
+    setServerError('');
+    const result = await createPedido(values);
+    if (!result.ok) {
+      setServerError(result.error.message);
+      return;
+    }
+    idempotencyKeyRef.current = genKey();
+    reset({
+      zona,
+      idempotencyKey: idempotencyKeyRef.current,
+      items: [{ recetaId: '', cantidad: 1 }],
+    });
+    onCreated();
+  };
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      reset({
+        zona,
+        idempotencyKey: idempotencyKeyRef.current,
+        items: [{ recetaId: '', cantidad: 1 }],
+      });
+      setServerError('');
+    }
+    onOpenChange(isOpen);
+  };
+
+  const formErrors = errors as Record<string, { message?: string }>;
+  const itemErrors = (errors.items ?? []) as Array<
+    { recetaId?: { message?: string }; cantidad?: { message?: string } } | undefined
+  >;
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('srDescription')}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+          {/* Ítems */}
+          <div className="space-y-2">
+            <Label>{t('items')} *</Label>
+
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex items-start gap-2">
+                <div className="flex-1 space-y-1">
+                  <Select
+                    onValueChange={(v) =>
+                      setValue(`items.${index}.recetaId`, v, { shouldValidate: true })
+                    }
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={t('recetaPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {elaboraciones.length === 0 ? (
+                        <SelectItem value="_empty" disabled>
+                          {t('recetaPlaceholder')}
+                        </SelectItem>
+                      ) : (
+                        elaboraciones.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.nombre}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {itemErrors[index]?.recetaId && (
+                    <p className="text-xs text-destructive">
+                      {itemErrors[index]?.recetaId?.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-20 space-y-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className="h-9"
+                    aria-label={t('cantidadTandas')}
+                    {...register(`items.${index}.cantidad`, { valueAsNumber: true })}
+                  />
+                  {itemErrors[index]?.cantidad && (
+                    <p className="text-xs text-destructive">
+                      {itemErrors[index]?.cantidad?.message}
+                    </p>
+                  )}
+                </div>
+
+                {fields.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-dashed"
+              onClick={() => append({ recetaId: '', cantidad: 1 })}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              {t('agregarItem')}
+            </Button>
+
+            {formErrors.items && typeof formErrors.items.message === 'string' && (
+              <p className="text-xs text-destructive">{formErrors.items.message}</p>
+            )}
+          </div>
+
+          {/* Notas */}
+          <div className="space-y-1.5">
+            <Label htmlFor="notas-zona">
+              {t('notas')}{' '}
+              <span className="text-muted-foreground font-normal">{t('optional')}</span>
+            </Label>
+            <textarea
+              id="notas-zona"
+              rows={2}
+              placeholder={t('notasPlaceholder')}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              {...register('notas')}
+            />
+          </div>
+
+          {serverError && (
+            <Alert variant="destructive">
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleClose(false)}
+              disabled={isSubmitting}
+            >
+              {t('cancelar')}
+            </Button>
+            <Button type="submit" disabled={isSubmitting || elaboraciones.length === 0}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('guardando')}
+                </>
+              ) : (
+                t('guardar')
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
