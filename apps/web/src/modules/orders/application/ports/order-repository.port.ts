@@ -6,11 +6,14 @@ import type {
   EstadoPedido,
   EstadoItem,
   AreaProduccion,
+  ZonaServicio,
 } from '../../domain/pedido';
 
 export interface OrderRepository {
   findActive(tenantId: string): Promise<PedidoWithItems[]>;
   findActiveByZona(tenantId: string, zona: string): Promise<PedidoWithItems[]>;
+  /** Pedidos del turno dado para una zona (historial y métricas del turno). */
+  findByTurnoZona(tenantId: string, turnoId: string, zona: string): Promise<PedidoWithItems[]>;
   /** Pedidos activos con al menos un ítem ruteado a un área productiva (KDS por área). */
   findActiveByArea(tenantId: string, area: AreaProduccion): Promise<PedidoWithItems[]>;
   findRecent(tenantId: string, limit: number): Promise<PedidoWithItems[]>;
@@ -46,7 +49,7 @@ export interface OrderRepository {
     estado: EstadoItem;
     pedidoEstado: EstadoPedido;
     pedidoVersion: number;
-    zona: string;
+    zona: ZonaServicio;
   } | null>;
   /** Aplica una transición de estado a un ítem y recomputa el estado del pedido. */
   transitionItem(args: {

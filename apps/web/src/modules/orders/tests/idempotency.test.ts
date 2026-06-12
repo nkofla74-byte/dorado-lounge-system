@@ -113,6 +113,10 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
       pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1 };
       return pedidos[idx]!;
     },
+    async findByTurnoZona(tenantId: string, turnoId: string, zona: string) {
+      void turnoId;
+      return await this.findActiveByZona(tenantId, zona);
+    },
     async findItemForTransition() {
       return null;
     },

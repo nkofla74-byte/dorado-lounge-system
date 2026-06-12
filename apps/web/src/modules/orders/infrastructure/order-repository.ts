@@ -207,6 +207,25 @@ export function createOrderRepository(): OrderRepository {
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
     },
 
+    async findByTurnoZona(
+      tenantId: string,
+      turnoId: string,
+      zona: string,
+    ): Promise<PedidoWithItems[]> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_SELECT)
+        .eq('tenant_id', tenantId)
+        .eq('turno_id', turnoId)
+        .eq('zona', zona)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
     async findActiveByArea(tenantId: string, area: AreaProduccion): Promise<PedidoWithItems[]> {
       const supabase = await createClient();
       // `pedido_items!inner` + filtro por área: devuelve solo pedidos con al menos
@@ -425,7 +444,11 @@ export function createOrderRepository(): OrderRepository {
         .maybeSingle();
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       if (!data) return null;
-      const p = data.pedidos as unknown as { estado: EstadoPedido; version: number; zona: string };
+      const p = data.pedidos as unknown as {
+        estado: EstadoPedido;
+        version: number;
+        zona: ZonaServicio;
+      };
       return {
         itemId: data.id as string,
         pedidoId: data.pedido_id as string,

@@ -645,14 +645,14 @@ async function ejecutarTransicionItem(
       await emitEvent(ctx.tenantId, CHANNELS.COCINA_PASTELERIA, itemEvento);
     }
     if (result.pedidoEstado === 'despachado') {
-      await emitEvent(ctx.tenantId, ZONA_CHANNEL[item.zona as ZonaServicio], {
+      await emitEvent(ctx.tenantId, ZONA_CHANNEL[item.zona], {
         type: 'PEDIDO_ESTADO',
         payload: {
           pedidoId: item.pedidoId,
           tenantId: ctx.tenantId,
           estadoAnterior: item.pedidoEstado,
           estadoNuevo: result.pedidoEstado,
-          zona: item.zona as ZonaServicio,
+          zona: item.zona,
           updatedAt,
         },
       });
@@ -880,6 +880,39 @@ export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedi
       createdAt: pedidoRow.created_at,
       timeline,
     });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// ── Vista de zona (snack/buffet) ──────────────────────────────────────────────
+
+export async function getPedidosZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const repo = createOrderRepository();
+    return ok(await repo.findActiveByZona(ctx.tenantId, zona));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getPedidosTurnoZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+    const supabase = await createClient();
+    const { data: turno } = await supabase
+      .from('turnos')
+      .select('id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('activo', true)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (!turno) return ok([]);
+
+    const repo = createOrderRepository();
+    return ok(await repo.findByTurnoZona(ctx.tenantId, turno.id, zona));
   } catch (e) {
     return err(toAppError(e));
   }
