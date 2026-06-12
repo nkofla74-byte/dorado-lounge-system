@@ -13,7 +13,12 @@ import { createPedido as createPedidoUseCase } from './application/create-pedido
 import { createPedidoSchema } from '@dorado/shared-validation';
 import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
-import { CHANNELS, ITEM_TRANSITIONS, ZONA_CHANNEL } from '@dorado/shared-types';
+import {
+  CHANNELS,
+  ITEM_TRANSITIONS,
+  ZONA_CHANNEL,
+  ZONA_AREAS_PERMITIDAS,
+} from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type {
   Pedido,
@@ -73,6 +78,53 @@ export async function getCartaServicio(): Promise<Result<CartaReceta[]>> {
             return { nombre: (insumo?.['nombre'] as string) ?? '' };
           },
         ),
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// ── Catálogo de elaboraciones (snack/buffet) ─────────────────────────────────
+// Las zonas de origen piden ELABORACIONES (recetas tipo produccion con
+// cantidades estandarizadas por tanda), no platos de carta.
+
+export interface CartaElaboracion {
+  id: string;
+  nombre: string;
+  area: AreaProduccion;
+  porciones: number;
+}
+
+export async function getCartaElaboraciones(
+  zona: ZonaServicio,
+): Promise<Result<CartaElaboracion[]>> {
+  try {
+    const ctx = await assertCan('recipes:read');
+    const areasPermitidas = ZONA_AREAS_PERMITIDAS[zona];
+    if (!areasPermitidas) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${zona}`));
+    }
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('recetas')
+      .select('id, nombre, area_produccion, porciones')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('tipo_receta', 'produccion')
+      .eq('activo', true)
+      .in('area_produccion', areasPermitidas)
+      .is('deleted_at', null)
+      .order('nombre');
+
+    if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+    return ok(
+      (data ?? []).map((r: Record<string, unknown>) => ({
+        id: r['id'] as string,
+        nombre: r['nombre'] as string,
+        area: r['area_produccion'] as AreaProduccion,
+        porciones: (r['porciones'] as number) ?? 1,
       })),
     );
   } catch (e) {
