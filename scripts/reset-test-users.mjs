@@ -1,7 +1,7 @@
 /**
  * Reconcilia el set canónico de usuarios de prueba contra el estado actual de Supabase.
  *
- * Garantiza que existan exactamente estos 11 usuarios, todos con password Admin123,
+ * Garantiza que existan exactamente estos 12 usuarios, todos con password Admin123,
  * todos en el tenant operativo "dorado-lounge":
  *   - superuser@gisat.com (rol superuser — bypass total, prepara apertura a más tenants)
  *   - admin@gisat.com + 9 roles operativos
@@ -61,7 +61,7 @@ const TENANT_OPERATIVO_SLUG = 'dorado-lounge';
 const LEGACY_TENANT_SLUGS = ['dorado-demo', 'plataforma']; // se borran si quedan vacíos
 const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com']; // se borran si reaparecen
 
-// Set de test: 13 usuarios, todos en el tenant operativo.
+// Set de test: 12 usuarios, todos en el tenant operativo.
 const TEST_USERS = [
   {
     email: 'superuser@gisat.com',
@@ -115,6 +115,18 @@ const TEST_USERS = [
     email: 'pasteleria@dorado.test',
     nombre: 'Personal Pastelería',
     role: 'personal_pasteleria',
+    tenantSlug: TENANT_OPERATIVO_SLUG,
+  },
+  {
+    email: 'snack@dorado.test',
+    nombre: 'Personal Snack',
+    role: 'personal_snack',
+    tenantSlug: TENANT_OPERATIVO_SLUG,
+  },
+  {
+    email: 'buffet@dorado.test',
+    nombre: 'Personal Buffet',
+    role: 'personal_buffet',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
