@@ -8,7 +8,7 @@
 --   28 lotes con fechas de vencimiento variadas (para probar FEFO)
 --   Movimientos de entrada (ledger inicial)
 --   2 recetas de producción + 6 recetas de servicio (amex/snack/buffet)
---   1 turno activo | afluencia de muestra | 2 pedidos de KDS
+--   1 turno activo (bloque 6a2) | 2 pedidos de KDS
 --
 -- Contraseña de todos los usuarios: DoradoTest2024!
 -- Idempotente: ON CONFLICT DO NOTHING
@@ -188,11 +188,18 @@ BEGIN
   INSERT INTO public.lotes (
     id, tenant_id, insumo_id,
     cantidad_inicial, cantidad_actual,
-    fecha_recibido, fecha_vencimiento, proveedor, costo_unitario
+    fecha_recibido, fecha_vencimiento, proveedor, costo_unitario,
+    codigo
   )
-  VALUES
+  SELECT v.id, v.tenant_id, v.insumo_id,
+         v.cantidad_inicial, v.cantidad_actual,
+         v.fecha_recibido, v.fecha_vencimiento, v.proveedor, v.costo_unitario,
+         -- codigo es NOT NULL + UNIQUE (tenant, codigo) desde 20260518000001;
+         -- derivado del orden de los ids fijos → determinista entre corridas.
+         'SEED-L' || lpad((row_number() OVER (ORDER BY v.id))::text, 3, '0')
+  FROM (VALUES
     -- Pechuga de pollo
-    ('d0ead0f0-4100-0000-0000-000000000001', v_tenant, i_pollo,
+    ('d0ead0f0-4100-0000-0000-000000000001'::uuid, v_tenant, i_pollo,
       5.0000,  5.0000, CURRENT_DATE - 3, CURRENT_DATE + 4,  'Pollo Olímpico S.A.',   14800.00),
     ('d0ead0f0-4100-0000-0000-000000000002', v_tenant, i_pollo,
      10.0000, 10.0000, CURRENT_DATE - 1, CURRENT_DATE + 9,  'Pollo Olímpico S.A.',   14500.00),
@@ -283,6 +290,8 @@ BEGIN
     ('d0ead0f0-4200-0000-0000-000000000002', v_tenant, i_ensalada,
       8.0000,  8.0000, CURRENT_DATE,     CURRENT_DATE + 1,  NULL, NULL)
 
+  ) AS v(id, tenant_id, insumo_id, cantidad_inicial, cantidad_actual,
+         fecha_recibido, fecha_vencimiento, proveedor, costo_unitario)
   ON CONFLICT (id) DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
@@ -320,7 +329,7 @@ BEGIN
     (r_prod_pande, v_tenant,
      'Producción Pandebono', 'produccion', i_pandebono, 12, 'pasteleria'),
     (r_prod_ensa, v_tenant,
-     'Producción Ensalada Mixta', 'produccion', i_ensalada, 4, 'cocina')
+     'Producción Ensalada Mixta', 'produccion', i_ensalada, 4, 'cocina_fria')
   ON CONFLICT (id) DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
@@ -331,17 +340,18 @@ BEGIN
     zona, porciones, area_produccion, categoria_menu, descripcion
   )
   VALUES
-    -- Zona Amex
+    -- Zona Amex — rutea a cocina_fria / amex / pasteleria (ZONA_AREAS_PERMITIDAS);
+    -- lo caliente de amex lo produce el área 'amex' (cocina AMEX dedicada).
     (r_bandeja_ej, v_tenant, 'Bandeja Ejecutiva', 'servicio',
-     'amex', 1, 'cocina', 'plato_fuerte',
+     'amex', 1, 'amex', 'plato_fuerte',
      'Pechuga de pollo a la plancha con arroz blanco, frijoles rojos y ensalada de la casa'),
 
     (r_ensalada_sv, v_tenant, 'Ensalada Fresca', 'servicio',
-     'amex', 1, 'cocina', 'entrada',
+     'amex', 1, 'cocina_fria', 'entrada',
      'Ensalada mixta con tomate, aguacate y aderezo de la casa'),
 
     (r_jugo_nrj, v_tenant, 'Jugo de Naranja Natural', 'servicio',
-     'amex', 1, 'cocina', NULL,
+     'amex', 1, 'cocina_fria', NULL,
      'Jugo de naranja recién exprimido, sin azúcar añadida'),
 
     -- Zona Snack
@@ -349,11 +359,11 @@ BEGIN
      'snack', 1, 'pasteleria', NULL, NULL),
 
     (r_cafe_am, v_tenant, 'Café Americano', 'servicio',
-     'snack', 1, 'cocina', NULL, NULL),
+     'snack', 1, 'cocina_caliente', NULL, NULL),
 
     -- Zona Buffet
     (r_buffet, v_tenant, 'Servicio Buffet Completo', 'servicio',
-     'buffet', 1, 'cocina', NULL, NULL)
+     'buffet', 1, 'cocina_caliente', NULL, NULL)
 
   ON CONFLICT (id) DO NOTHING;
 
@@ -405,10 +415,13 @@ BEGIN
   -- ──────────────────────────────────────────────────────────────────────────
   -- 10. TURNO ACTIVO
   -- ──────────────────────────────────────────────────────────────────────────
-  INSERT INTO public.turnos (id, tenant_id, nombre, teamlider, responsable_id, iniciado_at, activo)
+  -- Bloques fijos de 8h (20260522000001): turnos vivos requieren bloque y la
+  -- app inserta nombre = bloque. Misma convención aquí.
+  INSERT INTO public.turnos (id, tenant_id, nombre, bloque, teamlider, responsable_id, iniciado_at, activo)
   VALUES (
     v_turno, v_tenant,
-    'Turno A — 06:00–14:00',
+    '6a2',
+    '6a2',
     'Ana García',
     u_admin,
     (CURRENT_DATE + time '06:00:00')::timestamptz,
@@ -417,18 +430,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
-  -- 11. AFLUENCIA DE PASAJEROS (muestra del turno actual)
-  -- ──────────────────────────────────────────────────────────────────────────
-  INSERT INTO public.afluencia_ingresos
-    (tenant_id, turno_id, cantidad, zona, vuelo_numero, registrado_por, ingresado_at)
-  VALUES
-    (v_tenant, v_turno, 12, 'amex',   'AV 101', u_chef, now() - interval '90 min'),
-    (v_tenant, v_turno, 28, 'buffet', 'LA 543', u_chef, now() - interval '60 min'),
-    (v_tenant, v_turno,  8, 'snack',  'AV 204', u_chef, now() - interval '30 min'),
-    (v_tenant, v_turno,  5, 'amex',   'LA 210', u_chef, now() - interval '10 min');
-
-  -- ──────────────────────────────────────────────────────────────────────────
-  -- 12. PEDIDOS DE MUESTRA (para probar el KDS desde el primer arranque)
+  -- 11. PEDIDOS DE MUESTRA (para probar el KDS desde el primer arranque)
   -- ──────────────────────────────────────────────────────────────────────────
 
   -- Pedido 1: recién creado, esperando en KDS (estado: creado)
@@ -442,10 +444,10 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO public.pedido_items (tenant_id, pedido_id, receta_id, cantidad)
+  INSERT INTO public.pedido_items (tenant_id, pedido_id, receta_id, cantidad, area_produccion)
   VALUES
-    (v_tenant, v_pedido_1, r_bandeja_ej,  2),
-    (v_tenant, v_pedido_1, r_jugo_nrj,    2)
+    (v_tenant, v_pedido_1, r_bandeja_ej,  2, 'amex'),
+    (v_tenant, v_pedido_1, r_jugo_nrj,    2, 'cocina_fria')
   ON CONFLICT DO NOTHING;
 
   -- Pedido 2: en preparación (estado: en_preparacion)
@@ -459,11 +461,11 @@ BEGIN
   )
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO public.pedido_items (tenant_id, pedido_id, receta_id, cantidad)
+  INSERT INTO public.pedido_items (tenant_id, pedido_id, receta_id, cantidad, area_produccion)
   VALUES
-    (v_tenant, v_pedido_2, r_bandeja_ej,  1),
-    (v_tenant, v_pedido_2, r_ensalada_sv, 1),
-    (v_tenant, v_pedido_2, r_jugo_nrj,    1)
+    (v_tenant, v_pedido_2, r_bandeja_ej,  1, 'amex'),
+    (v_tenant, v_pedido_2, r_ensalada_sv, 1, 'cocina_fria'),
+    (v_tenant, v_pedido_2, r_jugo_nrj,    1, 'cocina_fria')
   ON CONFLICT DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
@@ -471,9 +473,9 @@ BEGIN
   RAISE NOTICE '  Usuarios  : superuser | admin | chef | soschef | amex | snack | buffet';
   RAISE NOTICE '  Contraseña: DoradoTest2024!';
   RAISE NOTICE '  Insumos   : 15 capa_1 + 2 capa_2';
-  RAISE NOTICE '  Lotes     : 28 (con fechas FEFO variadas)';
+  RAISE NOTICE '  Lotes     : 29 (con fechas FEFO variadas)';
   RAISE NOTICE '  Recetas   : 2 producción + 6 servicio (amex/snack/buffet)';
-  RAISE NOTICE '  Turno     : Turno A activo desde las 06:00';
+  RAISE NOTICE '  Turno     : bloque 6a2 activo desde las 06:00';
   RAISE NOTICE '  Pedidos   : 2 pedidos en KDS (Mesa 5 creado, Mesa 3 en preparacion)';
 
 END $$;
