@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useFormatter } from 'next-intl';
 import { ShoppingBasket, ClipboardList, PackageCheck, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ZONA_CHANNEL } from '@dorado/shared-types';
@@ -18,6 +18,7 @@ import type { PedidoWithItems, ZonaServicio } from '@/modules/orders/domain/pedi
 import type { Tanda } from '@/modules/production/domain/tanda';
 import type { SocketEvent } from '@dorado/shared-types';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CreatePedidoZonaDialog } from './create-pedido-zona-dialog';
 
 type Tab = 'pedidos' | 'disponibilidad' | 'turno';
@@ -41,12 +42,14 @@ export function ZonaView({
 }: ZonaViewProps) {
   const t = useTranslations('zonaView');
   const tPedidos = useTranslations('pedidos');
+  const format = useFormatter();
 
   const [tab, setTab] = useState<Tab>('pedidos');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pedidos, setPedidos] = useState<PedidoWithItems[]>(initialPedidos);
   const [tandas, setTandas] = useState<Tanda[]>(initialTandas);
   const [turnoPedidos, setTurnoPedidos] = useState<PedidoWithItems[]>(initialTurnoPedidos);
+  const [actionError, setActionError] = useState('');
 
   const socket = useSocket();
   const channel = ZONA_CHANNEL[zona];
@@ -97,12 +100,14 @@ export function ZonaView({
   );
 
   const handleEntregar = async (p: PedidoWithItems) => {
-    await entregarPedido(p.id, p.version);
+    const result = await entregarPedido(p.id, p.version);
+    setActionError(result.ok ? '' : result.error.message);
     await refresh();
   };
 
   const handleCancelar = async (p: PedidoWithItems) => {
-    await cancelarPedido(p.id, p.version);
+    const result = await cancelarPedido(p.id, p.version);
+    setActionError(result.ok ? '' : result.error.message);
     await refresh();
   };
 
@@ -174,6 +179,12 @@ export function ZonaView({
         ))}
       </div>
 
+      {actionError && (
+        <Alert variant="destructive">
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Tab: Pedidos activos */}
       {tab === 'pedidos' && (
         <div className="space-y-3">
@@ -232,7 +243,7 @@ export function ZonaView({
                     {tanda.completedAt && (
                       <>
                         {' · '}
-                        {tanda.completedAt.toLocaleTimeString()}
+                        {format.dateTime(tanda.completedAt, { hour: '2-digit', minute: '2-digit' })}
                       </>
                     )}
                   </p>
