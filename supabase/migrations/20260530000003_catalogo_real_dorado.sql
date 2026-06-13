@@ -19,6 +19,11 @@
 --
 -- Idempotente: el soft-delete del catálogo viejo excluye los códigos nuevos; los
 -- INSERT usan ON CONFLICT / NOT EXISTS. Re-ejecutar no duplica ni borra lo nuevo.
+--
+-- DBs frescas (preview branches sin datos): el tenant no existe, así que esta
+-- migración es un no-op — los INSERT están gateados por EXISTS sobre tenants y
+-- los UPDATE/JOIN no encuentran filas. Sin el gate, el INSERT a proveedores
+-- viola la FK tenant_id y rompe la cadena de migraciones del branch.
 -- =============================================================================
 
 BEGIN;
@@ -110,7 +115,11 @@ INSERT INTO _cat (codigo, nombre, unidad, prov, stock, costo) VALUES
 INSERT INTO public.proveedores (id, tenant_id, nombre, activo)
 SELECT gen_random_uuid(), 'b03fab11-83c7-481e-a892-42357152b59b', p.nombre, true
 FROM (SELECT DISTINCT prov AS nombre FROM _cat) p
-WHERE NOT EXISTS (
+WHERE EXISTS (
+  SELECT 1 FROM public.tenants t
+  WHERE t.id = 'b03fab11-83c7-481e-a892-42357152b59b'
+)
+AND NOT EXISTS (
   SELECT 1 FROM public.proveedores x
   WHERE x.tenant_id = 'b03fab11-83c7-481e-a892-42357152b59b'
     AND x.nombre = p.nombre
@@ -150,6 +159,10 @@ INSERT INTO public.insumos
 SELECT gen_random_uuid(), 'b03fab11-83c7-481e-a892-42357152b59b',
        c.nombre, c.codigo, 'capa_1', c.unidad::public.unidad_medida, 0, 0, true
 FROM _cat c
+WHERE EXISTS (
+  SELECT 1 FROM public.tenants t
+  WHERE t.id = 'b03fab11-83c7-481e-a892-42357152b59b'
+)
 ON CONFLICT (tenant_id, codigo) DO NOTHING;
 
 -- ── 4) Lotes con stock (idempotente por (insumo, codigo de lote)) ────────────
