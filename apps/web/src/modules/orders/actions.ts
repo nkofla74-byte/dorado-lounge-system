@@ -1,6 +1,7 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
+import { zonaPermitidaParaRol } from '@/lib/auth/permissions';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
@@ -10,7 +11,7 @@ import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
-import { createPedidoSchema } from '@dorado/shared-validation';
+import { createPedidoSchema, zonaServicioSchema } from '@dorado/shared-validation';
 import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import {
@@ -19,6 +20,7 @@ import {
   ZONA_CHANNEL,
   ZONA_AREAS_PERMITIDAS,
 } from '@dorado/shared-types';
+import type { UserRole } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type {
   Pedido,
@@ -105,6 +107,8 @@ export async function getCartaElaboraciones(
     if (!areasPermitidas) {
       return err(new AppError('VALIDATION', 400, `Zona desconocida: ${zona}`));
     }
+    const zonaError = guardZona(ctx.role, zona);
+    if (zonaError) return err(zonaError);
 
     const admin = createAdminClient();
     const { data, error } = await admin
@@ -133,6 +137,14 @@ export async function getCartaElaboraciones(
 }
 
 // ── Trazabilidad — fire-and-forget ────────────────────────────────────────────
+// Roles de zona (personal_snack/personal_buffet) solo operan su propia zona.
+function guardZona(role: UserRole, zona: string): AppError | null {
+  if (!zonaPermitidaParaRol(role, zona)) {
+    return new AppError('FORBIDDEN', 403, `El rol '${role}' no puede operar la zona '${zona}'`);
+  }
+  return null;
+}
+
 async function registrarEvento(
   tenantId: string,
   pedidoId: string,
@@ -207,11 +219,16 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const zonaError = guardZona(ctx.role, parsed.data.zona);
+    if (zonaError) return err(zonaError);
+
+    // 1 turno activo por (tenant, usuario) — el pedido se vincula al turno del creador
     const supabase = await createClient();
     const { data: turnoData } = await supabase
       .from('turnos')
       .select('id')
       .eq('tenant_id', ctx.tenantId)
+      .eq('responsable_id', ctx.userId)
       .eq('activo', true)
       .is('deleted_at', null)
       .maybeSingle();
@@ -398,6 +415,9 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
 
+    const zonaError = guardZona(ctx.role, pedido.zona);
+    if (zonaError) return err(zonaError);
+
     if (!PEDIDO_TRANSITIONS[pedido.estado].includes('entregado')) {
       return err(
         new AppError(
@@ -484,6 +504,9 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
 
+    const zonaError = guardZona(ctx.role, pedido.zona);
+    if (zonaError) return err(zonaError);
+
     if (!PEDIDO_TRANSITIONS[pedido.estado].includes('cancelado')) {
       return err(
         new AppError(
@@ -505,18 +528,20 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
       payload: {},
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_ESTADO',
+    const canceladoPayload = {
+      type: 'PEDIDO_ESTADO' as const,
       payload: {
         pedidoId,
         tenantId: ctx.tenantId,
         estadoAnterior: pedido.estado,
-        estadoNuevo: 'cancelado',
+        estadoNuevo: 'cancelado' as const,
         zona: pedido.zona,
         updatedAt:
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
-    });
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, canceladoPayload);
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], canceladoPayload);
 
     void registrarEvento(ctx.tenantId, pedidoId, 'cancelado', ctx.userId);
     return ok(updated);
@@ -890,8 +915,16 @@ export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedi
 export async function getPedidosZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
   try {
     const ctx = await assertCan('orders:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    const zonaError = guardZona(ctx.role, parsed.data);
+    if (zonaError) return err(zonaError);
+
     const repo = createOrderRepository();
-    return ok(await repo.findActiveByZona(ctx.tenantId, zona));
+    return ok(await repo.findActiveByZona(ctx.tenantId, parsed.data));
   } catch (e) {
     return err(toAppError(e));
   }
@@ -900,11 +933,21 @@ export async function getPedidosZona(zona: ZonaServicio): Promise<Result<PedidoW
 export async function getPedidosTurnoZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
   try {
     const ctx = await assertCan('orders:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    const zonaError = guardZona(ctx.role, parsed.data);
+    if (zonaError) return err(zonaError);
+
+    // 1 turno activo por (tenant, usuario) — "Mi turno" es el turno del usuario actual
     const supabase = await createClient();
     const { data: turno } = await supabase
       .from('turnos')
       .select('id')
       .eq('tenant_id', ctx.tenantId)
+      .eq('responsable_id', ctx.userId)
       .eq('activo', true)
       .is('deleted_at', null)
       .maybeSingle();
@@ -912,7 +955,7 @@ export async function getPedidosTurnoZona(zona: ZonaServicio): Promise<Result<Pe
     if (!turno) return ok([]);
 
     const repo = createOrderRepository();
-    return ok(await repo.findByTurnoZona(ctx.tenantId, turno.id, zona));
+    return ok(await repo.findByTurnoZona(ctx.tenantId, turno.id, parsed.data));
   } catch (e) {
     return err(toAppError(e));
   }

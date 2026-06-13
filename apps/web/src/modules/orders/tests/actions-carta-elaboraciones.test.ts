@@ -76,8 +76,15 @@ describe('getCartaElaboraciones', () => {
 
   it('catálogo vacío devuelve lista vacía sin error', async () => {
     mocks.order.mockResolvedValue({ data: [], error: null });
-    const result = await getCartaElaboraciones('snack');
+    const result = await getCartaElaboraciones('buffet');
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value).toEqual([]);
+  });
+
+  it('rechaza la zona de otro rol de zona', async () => {
+    const result = await getCartaElaboraciones('snack');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });

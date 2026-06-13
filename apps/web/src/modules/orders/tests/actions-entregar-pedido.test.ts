@@ -28,7 +28,7 @@ vi.mock('@/modules/orders/infrastructure/order-repository', () => ({
   }),
 }));
 
-import { entregarPedido } from '@/modules/orders/actions';
+import { entregarPedido, cancelarPedido } from '@/modules/orders/actions';
 
 const CTX = { tenantId: 't1', userId: 'u1', role: 'mesero_amex' };
 
@@ -165,5 +165,66 @@ describe('entregarPedido (actions)', () => {
     expect(result.ok).toBe(true);
     expect(mocks.rpc).not.toHaveBeenCalled();
     expect(mocks.transition).toHaveBeenCalledWith('p1', 't1', 'entregado', 4);
+  });
+
+  it('personal_snack no puede entregar un pedido de otra zona', async () => {
+    mocks.assertCan.mockResolvedValue({ tenantId: 't1', userId: 'u1', role: 'personal_snack' });
+    mocks.findByIdForDelivery.mockResolvedValue(pedidoListo); // zona amex
+
+    const result = await entregarPedido('p1', 7);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.transition).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancelarPedido (actions)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.assertCan.mockResolvedValue(CTX);
+  });
+
+  const pedidoCreado = {
+    id: 'p2',
+    tenantId: 't1',
+    estado: 'creado',
+    zona: 'snack',
+    version: 1,
+    numeroMesa: null,
+    notas: null,
+    cocineroId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    items: [],
+  };
+
+  it('emite el evento de cancelación también al canal de la zona', async () => {
+    mocks.findByIdForDelivery.mockResolvedValue(pedidoCreado);
+    mocks.transition.mockResolvedValue({ id: 'p2', estado: 'cancelado', updatedAt: new Date() });
+
+    const result = await cancelarPedido('p2', 1);
+
+    expect(result.ok).toBe(true);
+    expect(mocks.emitEvent).toHaveBeenCalledWith(
+      't1',
+      'sala:snack',
+      expect.objectContaining({
+        type: 'PEDIDO_ESTADO',
+        payload: expect.objectContaining({ pedidoId: 'p2', estadoNuevo: 'cancelado' }),
+      }),
+    );
+  });
+
+  it('personal_buffet no puede cancelar un pedido de otra zona', async () => {
+    mocks.assertCan.mockResolvedValue({ tenantId: 't1', userId: 'u1', role: 'personal_buffet' });
+    mocks.findByIdForDelivery.mockResolvedValue(pedidoCreado); // zona snack
+
+    const result = await cancelarPedido('p2', 1);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+    expect(mocks.transition).not.toHaveBeenCalled();
   });
 });

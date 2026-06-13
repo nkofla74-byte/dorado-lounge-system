@@ -173,3 +173,15 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'alertas:write': ['admin'],
 };
+
+// Roles atados a una zona de origen — solo pueden operar pedidos de su zona.
+// Los demás roles (admin, mesero, chefs) no tienen zona fija.
+const ROLE_ZONA: Partial<Record<UserRole, string>> = {
+  personal_snack: 'snack',
+  personal_buffet: 'buffet',
+};
+
+export function zonaPermitidaParaRol(role: UserRole, zona: string): boolean {
+  const zonaFija = ROLE_ZONA[role];
+  return zonaFija === undefined || zonaFija === zona;
+}

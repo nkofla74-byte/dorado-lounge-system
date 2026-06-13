@@ -1,6 +1,7 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
+import { zonaPermitidaParaRol } from '@/lib/auth/permissions';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -9,7 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
 import { getTandasDisponibles } from './application/get-tandas-disponibles';
-import { createTandaSchema } from '@dorado/shared-validation';
+import { createTandaSchema, zonaServicioSchema } from '@dorado/shared-validation';
 import { TANDA_TRANSITIONS } from './domain/tanda';
 import type { Result } from '@/lib/result';
 import type { Tanda, ZonaServicio } from './domain/tanda';
@@ -230,8 +231,23 @@ export async function cancelarTanda(tandaId: string): Promise<Result<Tanda>> {
 export async function getTandasDisponiblesZona(zona: ZonaServicio): Promise<Result<Tanda[]>> {
   try {
     const ctx = await assertCan('production:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    if (!zonaPermitidaParaRol(ctx.role, parsed.data)) {
+      return err(
+        new AppError(
+          'FORBIDDEN',
+          403,
+          `El rol '${ctx.role}' no puede operar la zona '${parsed.data}'`,
+        ),
+      );
+    }
+
     const repo = createProductionRepository();
-    return ok(await getTandasDisponibles(repo, ctx.tenantId, zona));
+    return ok(await getTandasDisponibles(repo, ctx.tenantId, parsed.data));
   } catch (e) {
     return err(toAppError(e));
   }
