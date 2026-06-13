@@ -11,7 +11,6 @@
     "typecheck": "pnpm --recursive --if-present typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed:test-users": "node --env-file=apps/web/.env.local scripts/seed-test-users.mjs",
     "reset:test-users": "node --env-file=apps/web/.env.local scripts/reset-test-users.mjs",
     "prepare": "husky"
   },
