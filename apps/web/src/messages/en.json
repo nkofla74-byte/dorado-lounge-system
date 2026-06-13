@@ -1258,5 +1258,39 @@
       "guardando": "Sending…",
       "cancelar": "Cancel"
     }
+  },
+  "requisiciones": {
+    "pedir": {
+      "boton": "Request supplies",
+      "titulo": "Request supplies from warehouse",
+      "descripcion": "Request supplies for your area. Does not deduct inventory.",
+      "insumo": "Supply",
+      "seleccioneInsumo": "Select supply",
+      "cantidad": "Quantity",
+      "quitar": "Remove",
+      "agregarInsumo": "Add supply",
+      "cancelar": "Cancel",
+      "enviar": "Send request",
+      "errorSinItems": "Add at least one supply with a quantity."
+    },
+    "panel": {
+      "tituloAlmacen": "Kitchen requests",
+      "tituloCocina": "My warehouse requests",
+      "vacio": "No active requests.",
+      "estadoSolicitada": "Requested",
+      "estadoEnAlistamiento": "Preparing",
+      "estadoDespachada": "Dispatched",
+      "estadoRecibida": "Received",
+      "estadoCancelada": "Cancelled",
+      "accionAlistar": "Prepare",
+      "accionDespachar": "Dispatch",
+      "accionConfirmar": "Confirm received",
+      "area": {
+        "cocina_caliente": "Hot kitchen",
+        "cocina_fria": "Cold kitchen",
+        "amex": "AMEX kitchen",
+        "pasteleria": "Pastry"
+      }
+    }
   }
 }
