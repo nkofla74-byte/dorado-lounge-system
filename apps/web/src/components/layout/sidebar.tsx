@@ -18,7 +18,6 @@ import {
   MonitorCheck,
   QrCode,
   UserCog,
-  Settings2,
   Bell,
   Store,
   GitBranch,
@@ -154,7 +153,6 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
   },
   { href: '/admin/alertas', labelKey: 'alertas', icon: Bell, roles: ['admin'] },
   { href: '/admin/trazabilidad', labelKey: 'trazabilidad', icon: GitBranch, roles: ['admin'] },
-  { href: '/admin/feature-flags', labelKey: 'featureFlags', icon: Settings2, roles: ['admin'] },
 ];
 
 // Menú curado para superuser: gobierno de plataforma + visibilidad cross-tenant.
@@ -189,7 +187,6 @@ const ICON_COLORS: Record<string, string> = {
   '/admin/proveedores': 'text-sky-400',
   '/admin/alertas': 'text-amber-400',
   '/admin/trazabilidad': 'text-teal-400',
-  '/admin/feature-flags': 'text-zinc-400',
   '/admin/tenants': 'text-violet-400',
 };
 

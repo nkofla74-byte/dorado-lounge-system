@@ -95,20 +95,19 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 
 **Módulos existentes (post-refoco operacional):**
 
-| Estado | Módulo          | Responsabilidad                                                     |
-| ------ | --------------- | ------------------------------------------------------------------- |
-| ✅     | `inventory`     | Stock, lotes, merma en recepción, FEFO                              |
-| ✅     | `recipes`       | Recetas, ingredientes, secciones                                    |
-| ✅     | `production`    | Tandas producción, despachos cocina                                 |
-| ✅     | `orders`        | Pedidos multi-área, estado por ítem, optimistic locking             |
-| ✅     | `turnos`        | Apertura/cierre turno                                               |
-| ✅     | `analytics`     | KPIs, vistas materializadas (solo lectura)                          |
-| ✅     | `feature-flags` | Flags por tenant                                                    |
-| ✅     | `superuser`     | CRUD tenants y usuarios                                             |
-| ✅     | `cocina-amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
-| ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes          |
-| ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
-| ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual) |
+| Estado | Módulo        | Responsabilidad                                                     |
+| ------ | ------------- | ------------------------------------------------------------------- |
+| ✅     | `inventory`   | Stock, lotes, merma en recepción, FEFO                              |
+| ✅     | `recipes`     | Recetas, ingredientes, secciones                                    |
+| ✅     | `production`  | Tandas producción, despachos cocina                                 |
+| ✅     | `orders`      | Pedidos multi-área, estado por ítem, optimistic locking             |
+| ✅     | `turnos`      | Apertura/cierre turno                                               |
+| ✅     | `analytics`   | KPIs, vistas materializadas (solo lectura)                          |
+| ✅     | `superuser`   | CRUD tenants y usuarios                                             |
+| ✅     | `cocina-amex` | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
+| ✅     | `proveedores` | CRUD proveedores, historial compras, vinculación con lotes          |
+| ✅     | `alertas`     | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
+| ✅     | `costos`      | Costo en tiempo real por receta (ingredientes × precio lote actual) |
 
 `analytics` es solo-lectura — proyecta vistas materializadas, nunca escribe.
 
@@ -159,7 +158,7 @@ Idempotente por `idempotency_key`. Obligatoria en: Stock Out, despacho, tickets.
 
 **Tablas existentes:**
 
-`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `domain_events` · `audit_log` · `feature_flags` · `operaciones_idempotentes`
+`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `domain_events` · `audit_log` · `operaciones_idempotentes`
 
 > `costos` no es tabla — es la RPC `fn_costo_receta(p_tenant_id, p_receta_id)` que calcula en tiempo real desde `lotes` (FEFO-next por costo). Validación de tenant vía `auth.jwt() -> 'app_metadata' ->> 'tenant_id'` (migración 0004).
 

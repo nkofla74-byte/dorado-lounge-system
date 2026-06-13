@@ -143,9 +143,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'personal_pasteleria',
     'steward',
   ],
-  // Feature flags
-  'feature_flags:read': ['admin'],
-  'feature_flags:write': [], // solo superuser — manejado por el bypass
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],

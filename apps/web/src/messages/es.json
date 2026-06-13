@@ -498,37 +498,6 @@
       "subtitle": "Crea y administra los tenants de la plataforma",
       "errorCarga": "Error al cargar tenants: {message}"
     },
-    "featureFlags": {
-      "metaTitle": "Feature Flags — Dorado Lounge",
-      "pageTitle": "Feature Flags",
-      "pageSubtitle": "Activa o desactiva funcionalidades por tenant sin necesidad de redespliegue",
-      "errorCarga": "Error al cargar flags: {message}",
-      "count": "{n, plural, =1 {1 flag configurado} other {# flags configurados}}",
-      "soloLectura": "· Solo lectura",
-      "nuevoFlag": "Nuevo flag",
-      "tenantFlagsTitle": "Flags de tenant",
-      "tenantFlagsDesc": "Activos solo en este tenant",
-      "globalFlagsTitle": "Flags globales",
-      "globalFlagsDesc": "Aplican a todos los tenants",
-      "emptyTitle": "No hay feature flags configurados.",
-      "emptyHint": "Crea el primero con el botón de arriba.",
-      "flagGlobal": "Flag global",
-      "flagTenant": "Flag de tenant",
-      "toggleAria": "Cambiar {clave}",
-      "activadoToast": "Flag \"{clave}\" activado",
-      "desactivadoToast": "Flag \"{clave}\" desactivado",
-      "creadoToast": "Flag \"{clave}\" creado",
-      "create": {
-        "title": "Crear feature flag",
-        "clave": "Clave",
-        "clavePlaceholder": "ej: kds_v2_enabled",
-        "claveHint": "Solo minúsculas, números y guion bajo (snake_case)",
-        "descripcion": "Descripción",
-        "descripcionPlaceholder": "Descripción del flag (opcional)",
-        "creando": "Creando…",
-        "crear": "Crear flag"
-      }
-    },
     "permisos": {
       "metaTitle": "Permisos — Dorado Lounge",
       "pageTitle": "Matriz de permisos",

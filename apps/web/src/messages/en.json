@@ -439,37 +439,6 @@
       "subtitle": "Create and manage platform tenants",
       "errorCarga": "Failed to load tenants: {message}"
     },
-    "featureFlags": {
-      "metaTitle": "Feature Flags — Dorado Lounge",
-      "pageTitle": "Feature Flags",
-      "pageSubtitle": "Enable or disable features per tenant without redeploying",
-      "errorCarga": "Failed to load flags: {message}",
-      "count": "{n, plural, =1 {1 flag configured} other {# flags configured}}",
-      "soloLectura": "· Read only",
-      "nuevoFlag": "New flag",
-      "tenantFlagsTitle": "Tenant flags",
-      "tenantFlagsDesc": "Active only in this tenant",
-      "globalFlagsTitle": "Global flags",
-      "globalFlagsDesc": "Apply to all tenants",
-      "emptyTitle": "No feature flags configured.",
-      "emptyHint": "Create the first one with the button above.",
-      "flagGlobal": "Global flag",
-      "flagTenant": "Tenant flag",
-      "toggleAria": "Toggle {clave}",
-      "activadoToast": "Flag \"{clave}\" enabled",
-      "desactivadoToast": "Flag \"{clave}\" disabled",
-      "creadoToast": "Flag \"{clave}\" created",
-      "create": {
-        "title": "Create feature flag",
-        "clave": "Key",
-        "clavePlaceholder": "e.g. kds_v2_enabled",
-        "claveHint": "Lowercase, numbers and underscores only (snake_case)",
-        "descripcion": "Description",
-        "descripcionPlaceholder": "Flag description (optional)",
-        "creando": "Creating…",
-        "crear": "Create flag"
-      }
-    },
     "permisos": {
       "metaTitle": "Permissions — Dorado Lounge",
       "pageTitle": "Permissions matrix",
