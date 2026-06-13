@@ -13,7 +13,6 @@ import {
   crearTenantSchema,
   crearUsuarioSchema,
   createProveedorSchema,
-  registrarIngresoSchema,
 } from '../index';
 
 describe('uuidSchema', () => {
@@ -259,32 +258,6 @@ describe('createProveedorSchema', () => {
     expect(createProveedorSchema.safeParse({ nombre: 'X', email: 'not-email' }).success).toBe(
       false,
     );
-  });
-});
-
-describe('registrarIngresoSchema', () => {
-  it('acepta ingreso válido', () => {
-    const result = registrarIngresoSchema.safeParse({
-      turnoId: '550e8400-e29b-41d4-a716-446655440000',
-      cantidad: 5,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('rechaza cantidad decimal', () => {
-    const result = registrarIngresoSchema.safeParse({
-      turnoId: '550e8400-e29b-41d4-a716-446655440000',
-      cantidad: 2.5,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it('rechaza cantidad negativa', () => {
-    const result = registrarIngresoSchema.safeParse({
-      turnoId: '550e8400-e29b-41d4-a716-446655440000',
-      cantidad: -1,
-    });
-    expect(result.success).toBe(false);
   });
 });
 

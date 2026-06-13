@@ -265,16 +265,6 @@ export const createTurnoSchema = z.object({
   teamlider: z.string().min(1, 'El nombre del jefe de turno es obligatorio').max(255),
 });
 
-export const registrarIngresoSchema = z.object({
-  turnoId: uuidSchema,
-  cantidad: z
-    .number({ invalid_type_error: 'La cantidad debe ser un número' })
-    .int('La cantidad debe ser un entero')
-    .positive('La cantidad debe ser mayor a cero'),
-  zona: zonaServicioSchema.optional().nullable(),
-  vueloNumero: z.string().min(1).max(10).optional().nullable(),
-});
-
 // ── SuperUser: tenants y usuarios ────────────────────────────────────────────
 
 export const crearTenantSchema = z.object({
@@ -313,7 +303,6 @@ export type RegistrarTicketsTurnoInput = z.infer<typeof registrarTicketsTurnoSch
 export type EnviarStuartInput = z.infer<typeof enviarStuartSchema>;
 export type SolicitarPreparacionInput = z.infer<typeof solicitarPreparacionSchema>;
 export type CreateTurnoInput = z.infer<typeof createTurnoSchema>;
-export type RegistrarIngresoInput = z.infer<typeof registrarIngresoSchema>;
 export type CrearTenantInput = z.infer<typeof crearTenantSchema>;
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
 
