@@ -91,7 +91,15 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
     async findByIdForDelivery(id: string, tenantId: string): Promise<PedidoForDelivery | null> {
       const p = pedidos.find((p) => p.id === id && p.tenantId === tenantId);
       if (!p) return null;
-      return { ...p, items: p.items.map((i) => ({ ...i, recetaPorciones: 1, ingredientes: [] })) };
+      return {
+        ...p,
+        items: p.items.map((i) => ({
+          ...i,
+          recetaPorciones: 1,
+          recetaTipo: 'servicio' as const,
+          ingredientes: [],
+        })),
+      };
     },
     async transition(id: string, tenantId: string, estado: EstadoPedido, version: number) {
       const idx = pedidos.findIndex((p) => p.id === id && p.tenantId === tenantId);
@@ -109,6 +117,10 @@ function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } 
       if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
       pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1 };
       return pedidos[idx]!;
+    },
+    async findByTurnoZona(tenantId: string, turnoId: string, zona: string) {
+      void turnoId;
+      return await this.findActiveByZona(tenantId, zona);
     },
     async findItemForTransition() {
       return null;

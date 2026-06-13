@@ -10,6 +10,8 @@ export const ROLE_HOME: Record<UserRole, string> = {
   mesero_amex: '/pedidos',
   personal_almacen: '/almacen',
   personal_pasteleria: '/pasteleria',
+  personal_snack: '/snack',
+  personal_buffet: '/buffet',
   steward: '/produccion',
 };
 
@@ -25,6 +27,8 @@ export const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/produccion',
     '/pasteleria',
     '/pedidos',
+    '/snack',
+    '/buffet',
     '/cocina-fria',
     '/cocina-caliente',
     '/cocina-amex',
@@ -46,6 +50,8 @@ export const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
   mesero_amex: ['/pedidos'],
   personal_almacen: ['/almacen', '/inventario', '/admin/proveedores'],
   personal_pasteleria: ['/pasteleria', '/produccion', '/recetas', '/inventario'],
+  personal_snack: ['/snack'],
+  personal_buffet: ['/buffet'],
   steward: ['/produccion', '/inventario'],
 };
 

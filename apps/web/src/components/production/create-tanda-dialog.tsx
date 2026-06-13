@@ -114,7 +114,11 @@ export function CreateTandaDialog({
               </SelectTrigger>
               <SelectContent>
                 {(() => {
-                  const con = recetas.filter((r) => r.ingredientes.length > 0);
+                  // Solo recetas de producción: la action createTanda rechaza tipo servicio
+                  // (Principio Rector — el FEFO de servicio corre en la entrega del pedido).
+                  const con = recetas.filter(
+                    (r) => r.tipoReceta === 'produccion' && r.ingredientes.length > 0,
+                  );
                   return con.length === 0 ? (
                     <SelectItem value="_empty" disabled>
                       {t('sinRecetas')}
@@ -237,7 +241,9 @@ export function CreateTandaDialog({
             <Button
               type="submit"
               disabled={
-                isSubmitting || recetas.filter((r) => r.ingredientes.length > 0).length === 0
+                isSubmitting ||
+                recetas.filter((r) => r.tipoReceta === 'produccion' && r.ingredientes.length > 0)
+                  .length === 0
               }
             >
               {isSubmitting ? (

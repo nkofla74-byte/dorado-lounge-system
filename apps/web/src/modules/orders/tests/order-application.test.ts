@@ -125,6 +125,7 @@ function createInMemoryRepo(
         items: p.items.map((it) => ({
           ...it,
           recetaPorciones: 1,
+          recetaTipo: 'servicio' as const,
           ingredientes: [],
         })),
       };
@@ -150,6 +151,10 @@ function createInMemoryRepo(
       p.version++;
       p.updatedAt = new Date();
       return p;
+    },
+    async findByTurnoZona(tenantId: string, turnoId: string, zona: string) {
+      void turnoId;
+      return await this.findActiveByZona(tenantId, zona);
     },
     async findItemForTransition() {
       return null;

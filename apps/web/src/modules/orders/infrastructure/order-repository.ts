@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { AppError } from '@/lib/result';
 import type { OrderRepository } from '../application/ports/order-repository.port';
+import type { TipoReceta } from '@dorado/shared-types';
 import type {
   Pedido,
   PedidoItem,
@@ -65,6 +66,7 @@ type ItemWithIngsRow = {
   receta: {
     nombre: string;
     porciones: number;
+    tipo_receta: string;
     receta_ingredientes: Array<{
       insumo_id: string;
       cantidad: number;
@@ -163,6 +165,7 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
     iniciadoPor: i.iniciado_por ?? null,
     listoPor: i.listo_por ?? null,
     recetaPorciones: i.receta?.porciones ?? 1,
+    recetaTipo: (i.receta?.tipo_receta ?? 'servicio') as TipoReceta,
     ingredientes: (i.receta?.receta_ingredientes ?? []).map((ri) => ({
       insumoId: ri.insumo_id,
       insumoNombre: ri.insumo?.nombre ?? '',
@@ -199,6 +202,25 @@ export function createOrderRepository(): OrderRepository {
         .is('deleted_at', null)
         .in('estado', ['creado', 'recibido_cocina', 'en_preparacion', 'despachado'])
         .order('created_at', { ascending: true });
+
+      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
+    },
+
+    async findByTurnoZona(
+      tenantId: string,
+      turnoId: string,
+      zona: string,
+    ): Promise<PedidoWithItems[]> {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_SELECT)
+        .eq('tenant_id', tenantId)
+        .eq('turno_id', turnoId)
+        .eq('zona', zona)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
 
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       return (data as unknown as PedidoRow[]).map(toPedidoWithItems);
@@ -338,7 +360,7 @@ export function createOrderRepository(): OrderRepository {
             id, pedido_id, receta_id, cantidad, notas, area_produccion,
             estado, en_preparacion_at, listo_at, iniciado_por, listo_por,
             receta:recetas(
-              nombre, porciones,
+              nombre, porciones, tipo_receta,
               receta_ingredientes(insumo_id, cantidad, merma_coeficiente, insumo:insumos(nombre))
             )
           )
@@ -422,7 +444,11 @@ export function createOrderRepository(): OrderRepository {
         .maybeSingle();
       if (error) throw new AppError('DB_ERROR', 500, error.message);
       if (!data) return null;
-      const p = data.pedidos as unknown as { estado: EstadoPedido; version: number; zona: string };
+      const p = data.pedidos as unknown as {
+        estado: EstadoPedido;
+        version: number;
+        zona: ZonaServicio;
+      };
       return {
         itemId: data.id as string,
         pedidoId: data.pedido_id as string,

@@ -1,4 +1,10 @@
-import type { EstadoPedido, ZonaServicio, AreaProduccion, EstadoItem } from '@dorado/shared-types';
+import type {
+  EstadoPedido,
+  ZonaServicio,
+  AreaProduccion,
+  EstadoItem,
+  TipoReceta,
+} from '@dorado/shared-types';
 import { PEDIDO_TRANSITIONS } from '@dorado/shared-types';
 
 export type { EstadoPedido, ZonaServicio, AreaProduccion, EstadoItem };
@@ -59,6 +65,7 @@ export interface PedidoItemIngrediente {
 
 export interface PedidoItemConIngredientes extends PedidoItem {
   recetaPorciones: number;
+  recetaTipo: TipoReceta;
   ingredientes: PedidoItemIngrediente[];
 }
 

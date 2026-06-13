@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTanda } from '../application/create-tanda';
+import { getTandasDisponibles } from '../application/get-tandas-disponibles';
 import { TANDA_TRANSITIONS } from '../domain/tanda';
 import type { Tanda, TandaWithIngredientes, CreateTandaInput, EstadoTanda } from '../domain/tanda';
 import type { ProductionRepository } from '../application/ports/production-repository.port';
@@ -13,6 +14,7 @@ function makeTanda(overrides: Partial<Tanda> = {}): Tanda {
     cantidadTandas: 3,
     estado: 'planificada',
     zonaDestino: 'amex',
+    pedidoItemId: null,
     responsableId: null,
     responsableNombre: null,
     turnoId: null,
@@ -77,6 +79,11 @@ function createInMemoryRepo(): ProductionRepository & { tandas: Tanda[] } {
       };
       return tandas[idx]!;
     },
+    async findCompletadasByZona(tenantId: string, zona: string) {
+      return tandas.filter(
+        (t) => t.tenantId === tenantId && t.zonaDestino === zona && t.estado === 'completada',
+      );
+    },
   };
 }
 
@@ -105,6 +112,18 @@ describe('createTanda — application', () => {
     };
     await createTanda(repo, 'tenant-1', input);
     await expect(createTanda(repo, 'tenant-1', input)).rejects.toThrow('DUPLICATE_TANDA');
+  });
+});
+
+describe('getTandasDisponibles', () => {
+  it('delega en findCompletadasByZona con la zona pedida', async () => {
+    const tandas = [{ id: 't1' }] as never[];
+    const repo = {
+      findCompletadasByZona: vi.fn().mockResolvedValue(tandas),
+    };
+    const result = await getTandasDisponibles(repo as never, 'tenant1', 'snack');
+    expect(result).toBe(tandas);
+    expect(repo.findCompletadasByZona).toHaveBeenCalledWith('tenant1', 'snack', 24);
   });
 });
 

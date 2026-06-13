@@ -10,6 +10,7 @@ export interface Tanda {
   cantidadTandas: number;
   estado: EstadoTanda;
   zonaDestino: ZonaServicio | null;
+  pedidoItemId: string | null;
   responsableId: string | null;
   responsableNombre: string | null;
   turnoId: string | null;
@@ -36,6 +37,7 @@ export interface CreateTandaInput {
   recetaId: string;
   cantidadTandas: number;
   zonaDestino: ZonaServicio;
+  pedidoItemId?: string | null;
   notas?: string | null;
   responsableId?: string | null;
   turnoId?: string | null;

@@ -8,6 +8,8 @@ export const UserRole = {
   mesero_amex: 'mesero_amex',
   personal_almacen: 'personal_almacen',
   personal_pasteleria: 'personal_pasteleria',
+  personal_snack: 'personal_snack',
+  personal_buffet: 'personal_buffet',
   steward: 'steward',
 } as const;
 

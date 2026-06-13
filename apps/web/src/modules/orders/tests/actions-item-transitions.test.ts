@@ -28,7 +28,7 @@ vi.mock('@/modules/orders/infrastructure/order-repository', () => ({
   }),
 }));
 
-import { iniciarItem, recallItem } from '@/modules/orders/actions';
+import { iniciarItem, recallItem, marcarItemListo } from '@/modules/orders/actions';
 
 const CTX = { tenantId: 't1', userId: 'u1', role: 'chef_cocina_fria' };
 
@@ -96,6 +96,27 @@ describe('transiciones de ítem KDS (actions)', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('INVALID_TRANSITION');
     expect(mocks.transitionItem).not.toHaveBeenCalled();
+  });
+
+  it('pedido de zona snack despachado emite PEDIDO_ESTADO al canal sala:snack', async () => {
+    mocks.findItemForTransition.mockResolvedValue({
+      itemId: 'i9',
+      pedidoId: 'p9',
+      area: 'cocina_caliente',
+      estado: 'en_preparacion',
+      pedidoEstado: 'en_preparacion',
+      pedidoVersion: 2,
+      zona: 'snack',
+    });
+    mocks.transitionItem.mockResolvedValue({ pedidoEstado: 'despachado', pedidoVersion: 3 });
+    mocks.assertCan.mockResolvedValue({ ...CTX, role: 'chef_cocina_caliente' });
+
+    const result = await marcarItemListo('i9', 2);
+
+    expect(result.ok).toBe(true);
+    const canales = mocks.emitEvent.mock.calls.map((c) => (c as unknown[])[1]);
+    expect(canales).toContain('sala:snack');
+    expect(canales).not.toContain('sala:amex');
   });
 
   it('rechaza ítem sin área productiva asignada', async () => {

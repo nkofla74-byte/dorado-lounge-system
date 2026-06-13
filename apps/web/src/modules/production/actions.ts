@@ -1,6 +1,7 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
+import { zonaPermitidaParaRol } from '@/lib/auth/permissions';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -8,10 +9,11 @@ import { createProductionRepository } from './infrastructure/production-reposito
 import { createClient } from '@/lib/supabase/server';
 import { getTandas as getTandasUseCase } from './application/get-tandas';
 import { createTanda as createTandaUseCase } from './application/create-tanda';
-import { createTandaSchema } from '@dorado/shared-validation';
+import { getTandasDisponibles } from './application/get-tandas-disponibles';
+import { createTandaSchema, zonaServicioSchema } from '@dorado/shared-validation';
 import { TANDA_TRANSITIONS } from './domain/tanda';
 import type { Result } from '@/lib/result';
-import type { Tanda } from './domain/tanda';
+import type { Tanda, ZonaServicio } from './domain/tanda';
 
 export async function getTandas(): Promise<Result<Tanda[]>> {
   try {
@@ -32,11 +34,32 @@ export async function createTanda(input: unknown): Promise<Result<Tanda>> {
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const supabase = await createClient();
+    const { data: receta } = await supabase
+      .from('recetas')
+      .select('tipo_receta')
+      .eq('id', parsed.data.recetaId)
+      .eq('tenant_id', ctx.tenantId)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (!receta) {
+      return err(new AppError('NOT_FOUND', 404, 'Receta no encontrada'));
+    }
+    if (receta.tipo_receta !== 'produccion') {
+      // Principio Rector: una tanda solo produce recetas de producción. Una
+      // tanda de receta de servicio duplicaría el FEFO (tanda + entrega).
+      return err(
+        new AppError('VALIDATION', 422, 'Solo las recetas de producción se elaboran por tandas'),
+      );
+    }
+
     const repo = createProductionRepository();
     const tanda = await createTandaUseCase(repo, ctx.tenantId, {
       recetaId: parsed.data.recetaId,
       cantidadTandas: parsed.data.cantidadTandas,
       zonaDestino: parsed.data.zonaDestino,
+      pedidoItemId: parsed.data.pedidoItemId ?? null,
       idempotencyKey: parsed.data.idempotencyKey,
       responsableId: ctx.userId,
       turnoId: parsed.data.turnoId ?? null,
@@ -200,6 +223,31 @@ export async function cancelarTanda(tandaId: string): Promise<Result<Tanda>> {
     });
 
     return ok(updated);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getTandasDisponiblesZona(zona: ZonaServicio): Promise<Result<Tanda[]>> {
+  try {
+    const ctx = await assertCan('production:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    if (!zonaPermitidaParaRol(ctx.role, parsed.data)) {
+      return err(
+        new AppError(
+          'FORBIDDEN',
+          403,
+          `El rol '${ctx.role}' no puede operar la zona '${parsed.data}'`,
+        ),
+      );
+    }
+
+    const repo = createProductionRepository();
+    return ok(await getTandasDisponibles(repo, ctx.tenantId, parsed.data));
   } catch (e) {
     return err(toAppError(e));
   }

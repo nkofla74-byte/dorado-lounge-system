@@ -82,3 +82,24 @@ describe('getSafeNext', () => {
     expect(getSafeNext(undefined, 'chef')).toBe('/cocina');
   });
 });
+
+describe('roles de zona snack/buffet', () => {
+  it('personal_snack aterriza en /snack y solo accede a /snack', () => {
+    expect(ROLE_HOME.personal_snack).toBe('/snack');
+    expect(canAccess('personal_snack', '/snack')).toBe(true);
+    expect(canAccess('personal_snack', '/buffet')).toBe(false);
+    expect(canAccess('personal_snack', '/pedidos')).toBe(false);
+    expect(canAccess('personal_snack', '/inventario')).toBe(false);
+  });
+
+  it('personal_buffet aterriza en /buffet y solo accede a /buffet', () => {
+    expect(ROLE_HOME.personal_buffet).toBe('/buffet');
+    expect(canAccess('personal_buffet', '/buffet')).toBe(true);
+    expect(canAccess('personal_buffet', '/snack')).toBe(false);
+  });
+
+  it('admin puede auditar /snack y /buffet', () => {
+    expect(canAccess('admin', '/snack')).toBe(true);
+    expect(canAccess('admin', '/buffet')).toBe(true);
+  });
+});

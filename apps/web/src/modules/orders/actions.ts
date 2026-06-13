@@ -1,6 +1,7 @@
 'use server';
 
 import { assertCan } from '@/lib/auth/assertCan';
+import { zonaPermitidaParaRol } from '@/lib/auth/permissions';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { emitEvent } from '@/lib/socket/emit-event';
@@ -10,10 +11,16 @@ import { createOrderRepository } from './infrastructure/order-repository';
 import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
-import { createPedidoSchema } from '@dorado/shared-validation';
+import { createPedidoSchema, zonaServicioSchema } from '@dorado/shared-validation';
 import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
-import { CHANNELS, ITEM_TRANSITIONS } from '@dorado/shared-types';
+import {
+  CHANNELS,
+  ITEM_TRANSITIONS,
+  ZONA_CHANNEL,
+  ZONA_AREAS_PERMITIDAS,
+} from '@dorado/shared-types';
+import type { UserRole } from '@dorado/shared-types';
 import type { Result } from '@/lib/result';
 import type {
   Pedido,
@@ -80,7 +87,64 @@ export async function getCartaServicio(): Promise<Result<CartaReceta[]>> {
   }
 }
 
+// ── Catálogo de elaboraciones (snack/buffet) ─────────────────────────────────
+// Las zonas de origen piden ELABORACIONES (recetas tipo produccion con
+// cantidades estandarizadas por tanda), no platos de carta.
+
+export interface CartaElaboracion {
+  id: string;
+  nombre: string;
+  area: AreaProduccion;
+  porciones: number;
+}
+
+export async function getCartaElaboraciones(
+  zona: ZonaServicio,
+): Promise<Result<CartaElaboracion[]>> {
+  try {
+    const ctx = await assertCan('recipes:read');
+    const areasPermitidas = ZONA_AREAS_PERMITIDAS[zona];
+    if (!areasPermitidas) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${zona}`));
+    }
+    const zonaError = guardZona(ctx.role, zona);
+    if (zonaError) return err(zonaError);
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('recetas')
+      .select('id, nombre, area_produccion, porciones')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('tipo_receta', 'produccion')
+      .eq('activo', true)
+      .in('area_produccion', areasPermitidas)
+      .is('deleted_at', null)
+      .order('nombre');
+
+    if (error) throw new AppError('DB_ERROR', 500, error.message);
+
+    return ok(
+      (data ?? []).map((r: Record<string, unknown>) => ({
+        id: r['id'] as string,
+        nombre: r['nombre'] as string,
+        area: r['area_produccion'] as AreaProduccion,
+        porciones: (r['porciones'] as number) ?? 1,
+      })),
+    );
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
 // ── Trazabilidad — fire-and-forget ────────────────────────────────────────────
+// Roles de zona (personal_snack/personal_buffet) solo operan su propia zona.
+function guardZona(role: UserRole, zona: string): AppError | null {
+  if (!zonaPermitidaParaRol(role, zona)) {
+    return new AppError('FORBIDDEN', 403, `El rol '${role}' no puede operar la zona '${zona}'`);
+  }
+  return null;
+}
+
 async function registrarEvento(
   tenantId: string,
   pedidoId: string,
@@ -155,11 +219,16 @@ export async function createPedido(input: unknown): Promise<Result<PedidoWithIte
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
+    const zonaError = guardZona(ctx.role, parsed.data.zona);
+    if (zonaError) return err(zonaError);
+
+    // 1 turno activo por (tenant, usuario) — el pedido se vincula al turno del creador
     const supabase = await createClient();
     const { data: turnoData } = await supabase
       .from('turnos')
       .select('id')
       .eq('tenant_id', ctx.tenantId)
+      .eq('responsable_id', ctx.userId)
       .eq('activo', true)
       .is('deleted_at', null)
       .maybeSingle();
@@ -262,8 +331,10 @@ export async function recibirEnCocina(pedidoId: string, version: number): Promis
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     };
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
-    await emitEvent(ctx.tenantId, CHANNELS.AMEX, eventoPayload);
+    if (pedido.zona === 'amex') {
+      await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, eventoPayload);
+    }
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], eventoPayload);
 
     void registrarEvento(ctx.tenantId, pedidoId, 'recibido_cocina', ctx.userId);
     return ok(updated);
@@ -344,6 +415,9 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
 
+    const zonaError = guardZona(ctx.role, pedido.zona);
+    if (zonaError) return err(zonaError);
+
     if (!PEDIDO_TRANSITIONS[pedido.estado].includes('entregado')) {
       return err(
         new AppError(
@@ -402,6 +476,18 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
     });
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], {
+      type: 'PEDIDO_ESTADO',
+      payload: {
+        pedidoId,
+        tenantId: ctx.tenantId,
+        estadoAnterior: pedido.estado,
+        estadoNuevo: 'entregado',
+        zona: pedido.zona,
+        updatedAt:
+          updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
+      },
+    });
 
     void registrarEvento(ctx.tenantId, pedidoId, 'entregado', ctx.userId);
     return ok(updated);
@@ -417,6 +503,9 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
 
     const pedido = await repo.findByIdForDelivery(pedidoId, ctx.tenantId);
     if (!pedido) return err(new AppError('NOT_FOUND', 404, 'Pedido no encontrado'));
+
+    const zonaError = guardZona(ctx.role, pedido.zona);
+    if (zonaError) return err(zonaError);
 
     if (!PEDIDO_TRANSITIONS[pedido.estado].includes('cancelado')) {
       return err(
@@ -439,18 +528,20 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
       payload: {},
     });
 
-    await emitEvent(ctx.tenantId, CHANNELS.COCINA, {
-      type: 'PEDIDO_ESTADO',
+    const canceladoPayload = {
+      type: 'PEDIDO_ESTADO' as const,
       payload: {
         pedidoId,
         tenantId: ctx.tenantId,
         estadoAnterior: pedido.estado,
-        estadoNuevo: 'cancelado',
+        estadoNuevo: 'cancelado' as const,
         zona: pedido.zona,
         updatedAt:
           updated.updatedAt instanceof Date ? updated.updatedAt.toISOString() : updated.updatedAt,
       },
-    });
+    };
+    await emitEvent(ctx.tenantId, CHANNELS.COCINA, canceladoPayload);
+    await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], canceladoPayload);
 
     void registrarEvento(ctx.tenantId, pedidoId, 'cancelado', ctx.userId);
     return ok(updated);
@@ -579,14 +670,14 @@ async function ejecutarTransicionItem(
       await emitEvent(ctx.tenantId, CHANNELS.COCINA_PASTELERIA, itemEvento);
     }
     if (result.pedidoEstado === 'despachado') {
-      await emitEvent(ctx.tenantId, CHANNELS.AMEX, {
+      await emitEvent(ctx.tenantId, ZONA_CHANNEL[item.zona], {
         type: 'PEDIDO_ESTADO',
         payload: {
           pedidoId: item.pedidoId,
           tenantId: ctx.tenantId,
           estadoAnterior: item.pedidoEstado,
           estadoNuevo: result.pedidoEstado,
-          zona: item.zona as ZonaServicio,
+          zona: item.zona,
           updatedAt,
         },
       });
@@ -814,6 +905,57 @@ export async function getTrazaPedido(pedidoId: string): Promise<Result<TrazaPedi
       createdAt: pedidoRow.created_at,
       timeline,
     });
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// ── Vista de zona (snack/buffet) ──────────────────────────────────────────────
+
+export async function getPedidosZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    const zonaError = guardZona(ctx.role, parsed.data);
+    if (zonaError) return err(zonaError);
+
+    const repo = createOrderRepository();
+    return ok(await repo.findActiveByZona(ctx.tenantId, parsed.data));
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+export async function getPedidosTurnoZona(zona: ZonaServicio): Promise<Result<PedidoWithItems[]>> {
+  try {
+    const ctx = await assertCan('orders:read');
+
+    const parsed = zonaServicioSchema.safeParse(zona);
+    if (!parsed.success) {
+      return err(new AppError('VALIDATION', 400, `Zona desconocida: ${String(zona)}`));
+    }
+    const zonaError = guardZona(ctx.role, parsed.data);
+    if (zonaError) return err(zonaError);
+
+    // 1 turno activo por (tenant, usuario) — "Mi turno" es el turno del usuario actual
+    const supabase = await createClient();
+    const { data: turno } = await supabase
+      .from('turnos')
+      .select('id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('responsable_id', ctx.userId)
+      .eq('activo', true)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (!turno) return ok([]);
+
+    const repo = createOrderRepository();
+    return ok(await repo.findByTurnoZona(ctx.tenantId, turno.id, parsed.data));
   } catch (e) {
     return err(toAppError(e));
   }

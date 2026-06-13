@@ -187,6 +187,7 @@ export const createTandaSchema = z.object({
   turnoId: uuidSchema.optional(),
   cantidadTandas: z.number().int().positive('La cantidad de tandas debe ser mayor que 0'),
   zonaDestino: zonaServicioSchema,
+  pedidoItemId: uuidSchema.optional(),
   notas: z.string().max(500).optional(),
   idempotencyKey: idempotencyKeySchema,
 });

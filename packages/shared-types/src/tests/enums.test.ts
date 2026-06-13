@@ -18,8 +18,8 @@ import {
 } from '../enums';
 
 describe('UserRole', () => {
-  it('contiene los 10 roles del sistema', () => {
-    expect(Object.keys(UserRole)).toHaveLength(10);
+  it('contiene los 12 roles del sistema', () => {
+    expect(Object.keys(UserRole)).toHaveLength(12);
   });
 
   const REQUIRED_ROLES = [
@@ -32,6 +32,8 @@ describe('UserRole', () => {
     'mesero_amex',
     'personal_almacen',
     'personal_pasteleria',
+    'personal_snack',
+    'personal_buffet',
     'steward',
   ];
 
