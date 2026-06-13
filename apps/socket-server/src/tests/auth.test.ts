@@ -1,6 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import jwt from 'jsonwebtoken';
-import { authenticateHandshake, canJoinChannel } from '../lib/auth';
+
+// Mock de jose: la verificación asimétrica (ES256 vía JWKS) se prueba a nivel de
+// wiring del branch; la verificación criptográfica real se cubre end-to-end
+// contra el socket-server corriendo. El path HS256 usa jsonwebtoken (sin mock).
+vi.mock('jose', () => ({
+  createRemoteJWKSet: vi.fn(() => 'jwks-resolver'),
+  jwtVerify: vi.fn(),
+}));
+
+import { jwtVerify } from 'jose';
+import { authenticateHandshake, canJoinChannel, __resetJwksCache } from '../lib/auth';
 
 const TEST_SECRET = 'test-jwt-secret';
 
@@ -12,62 +22,115 @@ function makeSocket(token?: string) {
   };
 }
 
+// Construye un JWT no-firmado con header arbitrario (jwt.decode lee el header
+// sin verificar). Sirve para forzar el branch asimétrico.
+function fakeJwt(alg: string, payload: Record<string, unknown>): string {
+  const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  return `${b64({ alg, typ: 'JWT' })}.${b64(payload)}.sig`;
+}
+
 describe('authenticateHandshake', () => {
   beforeEach(() => {
     process.env['SUPABASE_JWT_SECRET'] = TEST_SECRET;
+    process.env['SUPABASE_URL'] = 'https://test.supabase.co';
+    __resetJwksCache();
+    (jwtVerify as Mock).mockReset();
   });
 
   afterEach(() => {
     delete process.env['SUPABASE_JWT_SECRET'];
+    delete process.env['SUPABASE_URL'];
   });
 
-  it('rechaza cuando no se provee token', () => {
+  it('rechaza cuando no se provee token', async () => {
     const socket = makeSocket();
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'UNAUTHENTICATED' }));
   });
 
-  it('rechaza token inválido', () => {
+  it('rechaza token inválido (no decodificable)', async () => {
     const socket = makeSocket('token-invalido');
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_TOKEN' }));
   });
 
-  it('rechaza JWT sin app_metadata', () => {
+  it('rechaza JWT HS256 sin app_metadata', async () => {
     const token = jwt.sign({ sub: 'user-1' }, TEST_SECRET);
     const socket = makeSocket(token);
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_CLAIMS' }));
   });
 
-  it('rechaza JWT sin tenant_id en app_metadata', () => {
+  it('rechaza JWT HS256 sin tenant_id en app_metadata', async () => {
     const token = jwt.sign({ sub: 'user-1', app_metadata: { role: 'chef' } }, TEST_SECRET);
     const socket = makeSocket(token);
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_CLAIMS' }));
   });
 
-  it('acepta JWT válido con claims correctos', () => {
+  it('acepta JWT HS256 (legacy) con claims correctos', async () => {
     const token = jwt.sign(
       { sub: 'user-123', app_metadata: { tenant_id: 'tenant-456', role: 'chef' } },
       TEST_SECRET,
     );
     const socket = makeSocket(token);
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(); // sin error
     expect(socket.data).toMatchObject({ userId: 'user-123', tenantId: 'tenant-456', role: 'chef' });
   });
 
-  it('falla si falta SUPABASE_JWT_SECRET', () => {
-    delete process.env['SUPABASE_JWT_SECRET'];
-    const socket = makeSocket('any-token');
+  it('acepta token asimétrico (ES256) verificado vía JWKS', async () => {
+    (jwtVerify as Mock).mockResolvedValue({
+      payload: { sub: 'user-es256', app_metadata: { tenant_id: 'tenant-9', role: 'admin' } },
+    });
+    const token = fakeJwt('ES256', { sub: 'user-es256' });
+    const socket = makeSocket(token);
     const next = vi.fn();
-    authenticateHandshake(socket as never, next);
+    await authenticateHandshake(socket as never, next);
+    expect(jwtVerify).toHaveBeenCalledWith(token, 'jwks-resolver', {
+      algorithms: ['ES256', 'RS256'],
+    });
+    expect(next).toHaveBeenCalledWith(); // sin error
+    expect(socket.data).toMatchObject({
+      userId: 'user-es256',
+      tenantId: 'tenant-9',
+      role: 'admin',
+    });
+  });
+
+  it('rechaza token asimétrico con firma inválida', async () => {
+    (jwtVerify as Mock).mockRejectedValue(new Error('signature verification failed'));
+    const token = fakeJwt('ES256', { sub: 'x' });
+    const socket = makeSocket(token);
+    const next = vi.fn();
+    await authenticateHandshake(socket as never, next);
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_TOKEN' }));
+  });
+
+  it('falla con HS256 si falta SUPABASE_JWT_SECRET', async () => {
+    delete process.env['SUPABASE_JWT_SECRET'];
+    const token = jwt.sign(
+      { sub: 'u', app_metadata: { tenant_id: 't', role: 'chef' } },
+      TEST_SECRET,
+    );
+    const socket = makeSocket(token);
+    const next = vi.fn();
+    await authenticateHandshake(socket as never, next);
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'SERVER_MISCONFIGURED' }));
+  });
+
+  it('falla con token asimétrico si falta SUPABASE_URL (sin JWKS)', async () => {
+    delete process.env['SUPABASE_URL'];
+    __resetJwksCache();
+    const token = fakeJwt('ES256', { sub: 'x' });
+    const socket = makeSocket(token);
+    const next = vi.fn();
+    await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'SERVER_MISCONFIGURED' }));
   });
 });

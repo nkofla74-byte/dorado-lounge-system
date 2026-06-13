@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Socket } from 'socket.io';
 import type { ExtendedError } from 'socket.io/dist/namespace';
 import { CHANNEL_ACL } from '@dorado/shared-types';
@@ -11,16 +12,52 @@ export interface SocketData {
   role: UserRole;
 }
 
-export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError) => void): void {
-  // Lectura on-demand: permite tests que setean el secret en beforeEach.
-  // En producción el env var no cambia tras el boot, así que no hay costo real.
-  const jwtSecret = process.env['SUPABASE_JWT_SECRET'];
+interface JwtClaims {
+  sub?: string;
+  app_metadata?: { tenant_id?: string; role?: string };
+}
 
-  if (!jwtSecret) {
-    logger.error({ event: 'auth_missing_jwt_secret' });
-    return next(new Error('SERVER_MISCONFIGURED'));
+// JWKS remoto cacheado: Supabase migró a llaves de firma asimétricas (ES256),
+// así que los access tokens actuales se verifican contra el endpoint público
+// /auth/v1/.well-known/jwks.json. createRemoteJWKSet cachea las llaves.
+let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+function getJwks(): ReturnType<typeof createRemoteJWKSet> | null {
+  if (jwks) return jwks;
+  const base = process.env['SUPABASE_URL'];
+  if (!base) return null;
+  jwks = createRemoteJWKSet(new URL(`${base.replace(/\/+$/, '')}/auth/v1/.well-known/jwks.json`));
+  return jwks;
+}
+
+// Solo para tests: resetea el JWKS cacheado.
+export function __resetJwksCache(): void {
+  jwks = null;
+}
+
+async function verifyToken(token: string): Promise<JwtClaims> {
+  const decoded = jwt.decode(token, { complete: true });
+  if (!decoded || typeof decoded === 'string') {
+    throw new Error('INVALID_TOKEN');
   }
 
+  // Tokens legacy HS256 firmados con el secret simétrico de Supabase.
+  if (decoded.header.alg === 'HS256') {
+    const secret = process.env['SUPABASE_JWT_SECRET'];
+    if (!secret) throw new Error('SERVER_MISCONFIGURED');
+    return jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtClaims;
+  }
+
+  // Tokens actuales de Supabase: asimétricos (ES256/RS256) vía JWKS.
+  const keySet = getJwks();
+  if (!keySet) throw new Error('SERVER_MISCONFIGURED');
+  const { payload } = await jwtVerify(token, keySet, { algorithms: ['ES256', 'RS256'] });
+  return payload as JwtClaims;
+}
+
+export async function authenticateHandshake(
+  socket: Socket,
+  next: (err?: ExtendedError) => void,
+): Promise<void> {
   const token = socket.handshake.auth?.token as string | undefined;
 
   if (!token) {
@@ -28,26 +65,32 @@ export function authenticateHandshake(socket: Socket, next: (err?: ExtendedError
     return next(new Error('UNAUTHENTICATED'));
   }
 
+  let claims: JwtClaims;
   try {
-    const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
-    const appMeta = decoded.app_metadata as { tenant_id?: string; role?: string } | undefined;
-
-    if (!appMeta?.tenant_id || !appMeta?.role) {
-      logger.warn({ event: 'auth_invalid_claims', socketId: socket.id });
-      return next(new Error('INVALID_CLAIMS'));
-    }
-
-    socket.data = {
-      userId: decoded.sub ?? '',
-      tenantId: appMeta.tenant_id,
-      role: appMeta.role as UserRole,
-    } satisfies SocketData;
-
-    next();
+    claims = await verifyToken(token);
   } catch (e) {
-    logger.warn({ event: 'auth_invalid_token', socketId: socket.id, error: (e as Error).message });
-    next(new Error('INVALID_TOKEN'));
+    const message = (e as Error).message;
+    if (message === 'SERVER_MISCONFIGURED') {
+      logger.error({ event: 'auth_server_misconfigured', socketId: socket.id });
+      return next(new Error('SERVER_MISCONFIGURED'));
+    }
+    logger.warn({ event: 'auth_invalid_token', socketId: socket.id, error: message });
+    return next(new Error('INVALID_TOKEN'));
   }
+
+  const appMeta = claims.app_metadata;
+  if (!appMeta?.tenant_id || !appMeta?.role) {
+    logger.warn({ event: 'auth_invalid_claims', socketId: socket.id });
+    return next(new Error('INVALID_CLAIMS'));
+  }
+
+  socket.data = {
+    userId: claims.sub ?? '',
+    tenantId: appMeta.tenant_id,
+    role: appMeta.role as UserRole,
+  } satisfies SocketData;
+
+  next();
 }
 
 // Verifica si el socket tiene permiso para unirse al canal.
