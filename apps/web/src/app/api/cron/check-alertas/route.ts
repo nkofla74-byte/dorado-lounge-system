@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { runCheckVencimientos, runCheckDemoraAmex } from '@/modules/alertas/infrastructure/checks';
+import {
+  runCheckVencimientos,
+  runCheckDemoraAmex,
+  runCheckRequisicionesSinDespachar,
+} from '@/modules/alertas/infrastructure/checks';
 import { createLogger } from '@/lib/logger';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
@@ -47,6 +51,7 @@ export async function GET(request: Request) {
 
   let totalVencimientos = 0;
   let totalDemoras = 0;
+  let totalRequisiciones = 0;
 
   const BATCH_SIZE = 5;
   for (let i = 0; i < tenants.length; i += BATCH_SIZE) {
@@ -54,9 +59,14 @@ export async function GET(request: Request) {
     await Promise.allSettled(
       batch.map(async (t) => {
         try {
-          const [v, d] = await Promise.all([runCheckVencimientos(t.id), runCheckDemoraAmex(t.id)]);
+          const [v, d, r] = await Promise.all([
+            runCheckVencimientos(t.id),
+            runCheckDemoraAmex(t.id),
+            runCheckRequisicionesSinDespachar(t.id),
+          ]);
           totalVencimientos += v;
           totalDemoras += d;
+          totalRequisiciones += r;
         } catch (err) {
           log.error('Error procesando tenant', { tenantId: t.id, error: String(err) });
         }
@@ -68,6 +78,7 @@ export async function GET(request: Request) {
     tenants: tenants.length,
     vencimientos: totalVencimientos,
     demoras: totalDemoras,
+    requisiciones: totalRequisiciones,
   });
 
   return NextResponse.json({
@@ -75,6 +86,7 @@ export async function GET(request: Request) {
     tenants: tenants.length,
     vencimientos: totalVencimientos,
     demoras: totalDemoras,
+    requisiciones: totalRequisiciones,
     timestamp: new Date().toISOString(),
   });
 }

@@ -470,7 +470,17 @@ erDiagram
   TURNOS ||--o{ PEDIDOS : "during"
   TURNOS ||--o{ DESPACHOS : "during"
   TURNOS ||--o{ AFLUENCIA_INGRESOS : "during"
+
+  TURNOS ||--o{ REQUISICIONES : "during"
+  REQUISICIONES ||--|{ REQUISICION_ITEMS : has
+  REQUISICION_ITEMS }o--|| INSUMOS : "requests"
+  REQUISICIONES ||--o{ REQUISICION_EVENTOS : "state log"
 ```
+
+> **Frente 2 (2026-06-12) — Requisiciones cocina→almacén.** Tablas `requisiciones`,
+> `requisicion_items`, `requisicion_eventos` (migración `20260612120000`). Coordinación
+> pura: **no generan `movimientos_inventario`** — el stock solo se mueve vía receta
+> (Principio Rector). `requisicion_eventos` es append-only (trigger `prevent_mutation`).
 
 ### 8.3 Tablas críticas — DDL ilustrativo
 

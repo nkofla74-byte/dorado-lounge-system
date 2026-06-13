@@ -338,3 +338,48 @@ export const updateProveedorSchema = z.object({
 
 export type CreateProveedorInput = z.infer<typeof createProveedorSchema>;
 export type UpdateProveedorInput = z.infer<typeof updateProveedorSchema>;
+
+// ── Requisiciones (Frente 2) ──────────────────────────────────────────────────
+
+export const areaSolicitanteSchema = z.enum([
+  'cocina_caliente',
+  'cocina_fria',
+  'amex',
+  'pasteleria',
+]);
+
+export const createRequisicionSchema = z.object({
+  areaSolicitante: areaSolicitanteSchema,
+  idempotencyKey: idempotencyKeySchema,
+  notas: z.string().max(500).optional(),
+  items: z
+    .array(
+      z.object({
+        insumoId: uuidSchema,
+        cantidadSolicitada: cantidadSchema,
+        unidad: unidadMedidaSchema,
+      }),
+    )
+    .min(1, 'Una requisición debe tener al menos un insumo'),
+});
+
+export const despacharRequisicionSchema = z.object({
+  requisicionId: uuidSchema,
+  version: z.number().int().positive(),
+  items: z
+    .array(
+      z.object({
+        itemId: uuidSchema,
+        cantidadDespachada: cantidadSchema,
+      }),
+    )
+    .min(1, 'Debe despachar al menos un insumo'),
+});
+
+export const transicionRequisicionSchema = z.object({
+  requisicionId: uuidSchema,
+  version: z.number().int().positive(),
+});
+
+export type CreateRequisicionInput = z.infer<typeof createRequisicionSchema>;
+export type DespacharRequisicionInput = z.infer<typeof despacharRequisicionSchema>;

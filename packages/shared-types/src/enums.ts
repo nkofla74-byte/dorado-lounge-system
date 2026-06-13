@@ -132,6 +132,36 @@ export const EstadoTanda = {
 
 export type EstadoTanda = (typeof EstadoTanda)[keyof typeof EstadoTanda];
 
+export const EstadoRequisicion = {
+  solicitada: 'solicitada',
+  en_alistamiento: 'en_alistamiento',
+  despachada: 'despachada',
+  recibida: 'recibida',
+  cancelada: 'cancelada',
+} as const;
+
+export type EstadoRequisicion = (typeof EstadoRequisicion)[keyof typeof EstadoRequisicion];
+
+// Máquina de transiciones de una requisición. Cancelable solo en `solicitada`.
+export const REQUISICION_TRANSITIONS: Record<EstadoRequisicion, EstadoRequisicion[]> = {
+  solicitada: ['en_alistamiento', 'cancelada'],
+  en_alistamiento: ['despachada'],
+  despachada: ['recibida'],
+  recibida: [],
+  cancelada: [],
+};
+
+// Áreas que pueden originar una requisición (subconjunto de AreaProduccion —
+// `cocina` legacy queda excluida).
+export type AreaSolicitante = 'cocina_caliente' | 'cocina_fria' | 'amex' | 'pasteleria';
+
+export const AREAS_SOLICITANTES: AreaSolicitante[] = [
+  'cocina_caliente',
+  'cocina_fria',
+  'amex',
+  'pasteleria',
+];
+
 export const EstadoPedido = {
   creado: 'creado',
   recibido_cocina: 'recibido_cocina',

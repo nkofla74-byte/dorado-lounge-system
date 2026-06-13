@@ -1,4 +1,10 @@
-import type { UserRole, ZonaServicio, EstadoPedido } from './enums';
+import type {
+  UserRole,
+  ZonaServicio,
+  EstadoPedido,
+  EstadoRequisicion,
+  AreaSolicitante,
+} from './enums';
 
 // ── Canales ───────────────────────────────────────────────────────────────────
 // Fuente de verdad del contrato de canales Socket.io.
@@ -13,6 +19,7 @@ export const CHANNELS = {
   AMEX: 'sala:amex',
   SNACK: 'sala:snack',
   BUFFET: 'sala:buffet',
+  ALMACEN: 'sala:almacen',
   ADMIN: 'sala:admin',
   STUART_AMEX: 'sala:stuart:amex',
   BROADCAST_COCINA: 'sala:broadcast:cocina',
@@ -39,6 +46,7 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:amex': ['mesero_amex', 'admin', 'superuser'],
   'sala:snack': ['personal_snack', 'admin', 'superuser'],
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
+  'sala:almacen': ['personal_almacen', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
   'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:broadcast:cocina': [
@@ -205,13 +213,25 @@ export interface AlertaEvent {
   payload: {
     alertaId: string;
     tenantId: string;
-    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
+    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex' | 'requisicion_demora';
     severidad: 'info' | 'warning' | 'critical';
     titulo: string;
     mensaje: string;
     resourceId?: string;
-    resourceTipo?: 'insumo' | 'lote' | 'pedido';
+    resourceTipo?: 'insumo' | 'lote' | 'pedido' | 'requisicion';
     createdAt: string;
+  };
+}
+
+export interface RequisicionEstadoEvent {
+  type: 'REQUISICION_ESTADO';
+  payload: {
+    requisicionId: string;
+    tenantId: string;
+    areaSolicitante: AreaSolicitante;
+    estadoAnterior: EstadoRequisicion;
+    estadoNuevo: EstadoRequisicion;
+    updatedAt: string;
   };
 }
 
@@ -227,6 +247,7 @@ export type SocketEvent =
   | StuartRequestEvent
   | SolicitudPreparacionEvent
   | TurnoEvent
-  | AlertaEvent;
+  | AlertaEvent
+  | RequisicionEstadoEvent;
 
 export type SocketEventType = SocketEvent['type'];

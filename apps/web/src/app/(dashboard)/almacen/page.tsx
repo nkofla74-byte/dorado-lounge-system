@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getInsumos, getLotesProximosVencer } from '@/modules/inventory/actions';
 import { getProveedores } from '@/modules/proveedores/actions';
+import { getColaAlmacen } from '@/modules/requisiciones/actions';
 import { AlmacenPanel } from '@/components/inventory/almacen-panel';
 import { NuevoIngresoDialog } from '@/components/inventory/nuevo-ingreso-dialog';
 import { ProveedoresPanel } from '@/components/proveedores/proveedores-panel';
+import { RequisicionesPanel } from '@/components/requisiciones/requisiciones-panel';
 import { createClient } from '@/lib/supabase/server';
 import type { UserRole } from '@dorado/shared-types';
 
@@ -15,11 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AlmacenPage() {
   const t = await getTranslations('inventory.almacenPage');
+  const tReq = await getTranslations('requisiciones.panel');
   const supabase = await createClient();
   const [
     result,
     vencimientosResult,
     proveedoresResult,
+    colaResult,
     {
       data: { user },
     },
@@ -27,8 +31,10 @@ export default async function AlmacenPage() {
     getInsumos(),
     getLotesProximosVencer(7),
     getProveedores(),
+    getColaAlmacen(),
     supabase.auth.getUser(),
   ]);
+  const requisiciones = colaResult.ok ? colaResult.value : [];
 
   const userRole = user?.app_metadata?.role as UserRole | undefined;
   const insumos = result.ok ? result.value : [];
@@ -145,6 +151,12 @@ export default async function AlmacenPage() {
           {result.error.message}
         </div>
       )}
+
+      {/* Requisiciones de cocina: cola en tiempo real (alistar → despachar) */}
+      <section className="space-y-3 pt-2">
+        <h2 className="text-lg font-semibold tracking-tight">{tReq('tituloAlmacen')}</h2>
+        <RequisicionesPanel mode="almacen" initialRequisiciones={requisiciones} />
+      </section>
 
       {/* Proveedores: gestión rápida desde la pantalla operativa */}
       <section className="space-y-3 pt-2">

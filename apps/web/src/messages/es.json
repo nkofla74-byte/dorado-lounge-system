@@ -1254,5 +1254,39 @@
       "guardando": "Enviando…",
       "cancelar": "Cancelar"
     }
+  },
+  "requisiciones": {
+    "pedir": {
+      "boton": "Pedir insumos",
+      "titulo": "Pedir insumos al almacén",
+      "descripcion": "Solicita insumos para tu área. No descuenta inventario.",
+      "insumo": "Insumo",
+      "seleccioneInsumo": "Seleccionar insumo",
+      "cantidad": "Cantidad",
+      "quitar": "Quitar",
+      "agregarInsumo": "Agregar insumo",
+      "cancelar": "Cancelar",
+      "enviar": "Enviar requisición",
+      "errorSinItems": "Agrega al menos un insumo con cantidad."
+    },
+    "panel": {
+      "tituloAlmacen": "Requisiciones de cocina",
+      "tituloCocina": "Mis requisiciones al almacén",
+      "vacio": "No hay requisiciones activas.",
+      "estadoSolicitada": "Solicitada",
+      "estadoEnAlistamiento": "En alistamiento",
+      "estadoDespachada": "Despachada",
+      "estadoRecibida": "Recibida",
+      "estadoCancelada": "Cancelada",
+      "accionAlistar": "Alistar",
+      "accionDespachar": "Despachar",
+      "accionConfirmar": "Confirmar recibido",
+      "area": {
+        "cocina_caliente": "Cocina caliente",
+        "cocina_fria": "Cocina fría",
+        "amex": "Cocina AMEX",
+        "pasteleria": "Pastelería"
+      }
+    }
   }
 }
