@@ -6,21 +6,13 @@ import { ok, err, toAppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createSuperuserRepository } from '@/modules/superuser/infrastructure/superuser-repository';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ASSIGNABLE_ROLES } from '@/lib/auth/assignable-roles';
 import type { Result } from '@/lib/result';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
 
-// superuser excludido — admins no pueden escalar privilegios
-const adminRoleSchema = z.enum([
-  'admin',
-  'chef',
-  'chef_cocina_fria',
-  'chef_cocina_caliente',
-  'sous_chef',
-  'mesero_amex',
-  'personal_almacen',
-  'personal_pasteleria',
-  'steward',
-]);
+// superuser excluido — admins no pueden escalar privilegios.
+// Fuente única en lib/auth/assignable-roles (alineada con el enum UserRole).
+const adminRoleSchema = z.enum(ASSIGNABLE_ROLES);
 
 const crearPersonalSchema = z.object({
   nombre: z.string().min(2, 'Nombre muy corto').max(100, 'Nombre muy largo'),
@@ -124,6 +116,35 @@ export async function cambiarRolPersonal(
       payload: { newRole: parsed.data },
     });
     return ok(user);
+  } catch (e) {
+    return err(toAppError(e));
+  }
+}
+
+// Elimina un usuario de la sala. Intenta borrado físico; si el usuario tiene
+// historial operativo (turnos, pedidos) o registros de auditoría inmutables que
+// lo referencian, cae a anonimizar + desactivar (tombstone) para preservar la
+// trazabilidad. Devuelve el modo aplicado para el feedback de la UI.
+export async function eliminarPersonal(
+  userId: string,
+): Promise<Result<{ mode: 'deleted' | 'anonymized' }>> {
+  try {
+    const ctx = await assertCan('users:write');
+    if (userId === ctx.userId) {
+      return err(toAppError(new Error('No puedes eliminar tu propia cuenta')));
+    }
+    await assertUserInTenant(userId, ctx.tenantId);
+    const repo = createSuperuserRepository();
+    const result = await repo.removeUser(userId);
+    await auditLog({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      action: result.mode === 'deleted' ? 'user.deleted' : 'user.anonymized',
+      resourceType: 'user',
+      resourceId: userId,
+      payload: { mode: result.mode },
+    });
+    return ok(result);
   } catch (e) {
     return err(toAppError(e));
   }

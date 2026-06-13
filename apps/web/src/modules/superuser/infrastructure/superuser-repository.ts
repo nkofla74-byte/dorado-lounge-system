@@ -166,6 +166,36 @@ class SupabaseSuperuserRepository implements SuperuserRepository {
 
     return mapUser(data, authData?.user?.email ?? '');
   }
+
+  // Elimina un usuario. Intenta borrado físico (auth + cascade a public.users);
+  // si falla porque el usuario está referenciado por historial operativo (FK
+  // NO ACTION en turnos/pedidos/etc.) o por audit_log/domain_events inmutables,
+  // cae a anonimizar + desactivar + banear, preservando la trazabilidad.
+  async removeUser(userId: string): Promise<{ mode: 'deleted' | 'anonymized' }> {
+    const admin = this.admin;
+
+    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+    if (!deleteError) {
+      return { mode: 'deleted' };
+    }
+
+    // No se pudo borrar (tiene historial). Anonimizar la identidad y desactivar.
+    const anonEmail = `deleted-${userId}@anon.doradolounge.invalid`;
+    const { error: authError } = await admin.auth.admin.updateUserById(userId, {
+      email: anonEmail,
+      ban_duration: '876000h', // ~100 años: impide el login
+      user_metadata: { full_name: 'Usuario eliminado', name: 'Usuario eliminado' },
+    });
+    if (authError) throw new Error(authError.message);
+
+    const { error: pubError } = await admin
+      .from('users')
+      .update({ activo: false, nombre: 'Usuario eliminado', updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    if (pubError) throw new Error(pubError.message);
+
+    return { mode: 'anonymized' };
+  }
 }
 
 export function createSuperuserRepository(): SuperuserRepository {

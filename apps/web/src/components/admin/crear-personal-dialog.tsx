@@ -32,30 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { crearPersonal } from '@/app/(dashboard)/admin/personal/actions';
+import { ASSIGNABLE_ROLES } from '@/lib/auth/assignable-roles';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
-
-type RoleKey =
-  | 'admin'
-  | 'chef'
-  | 'chef_cocina_fria'
-  | 'chef_cocina_caliente'
-  | 'sous_chef'
-  | 'mesero_amex'
-  | 'personal_almacen'
-  | 'personal_pasteleria'
-  | 'steward';
-
-const ASSIGNABLE_ROLES: RoleKey[] = [
-  'admin',
-  'chef',
-  'chef_cocina_fria',
-  'chef_cocina_caliente',
-  'sous_chef',
-  'mesero_amex',
-  'personal_almacen',
-  'personal_pasteleria',
-  'steward',
-];
 
 interface Props {
   onSuccess: (user: TenantUser) => void;
@@ -71,15 +49,7 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
   const formSchema = z.object({
     nombre: z.string().min(2).max(100),
     email: z.string().email(),
-    role: z.enum([
-      'admin',
-      'chef',
-      'sous_chef',
-      'mesero_amex',
-      'personal_almacen',
-      'personal_pasteleria',
-      'steward',
-    ]),
+    role: z.enum(ASSIGNABLE_ROLES),
     password: z.string().min(8).max(100),
   });
 

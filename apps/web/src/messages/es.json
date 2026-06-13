@@ -484,7 +484,16 @@
       "nuevo": "Nuevo usuario",
       "emptyTitle": "Sin usuarios registrados",
       "emptyHint": "Crea el primer usuario para comenzar",
-      "tu": "(tú)"
+      "tu": "(tú)",
+      "eliminar": {
+        "cta": "Eliminar",
+        "cancelar": "Cancelar",
+        "confirmTitle": "¿Eliminar usuario?",
+        "confirmDesc": "Se intentará borrar la cuenta de {nombre}. Si tiene historial operativo (turnos, pedidos, auditoría), se anonimizará y desactivará en su lugar para preservar la trazabilidad. Esta acción no se puede deshacer.",
+        "toastEliminado": "Usuario eliminado",
+        "toastAnonimizado": "Usuario anonimizado y desactivado (tenía historial; se conservó la auditoría)",
+        "tombstoneNombre": "Usuario eliminado"
+      }
     },
     "tenantDetail": {
       "errorCarga": "Error al cargar usuarios: {message}",
