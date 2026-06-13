@@ -172,6 +172,41 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'personal_almacen',
   ],
   'alertas:write': ['admin'],
+  // Requisiciones cocina → almacén (Frente 2)
+  'requisiciones:read': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+    'personal_almacen',
+  ],
+  'requisiciones:create': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+  ],
+  'requisiciones:despachar': ['admin', 'personal_almacen'],
+  'requisiciones:confirmar': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+  ],
+  'requisiciones:cancel': [
+    'admin',
+    'chef',
+    'chef_cocina_fria',
+    'chef_cocina_caliente',
+    'sous_chef',
+    'personal_pasteleria',
+  ],
 };
 
 // Roles atados a una zona de origen — solo pueden operar pedidos de su zona.
@@ -184,4 +219,19 @@ const ROLE_ZONA: Partial<Record<UserRole, string>> = {
 export function zonaPermitidaParaRol(role: UserRole, zona: string): boolean {
   const zonaFija = ROLE_ZONA[role];
   return zonaFija === undefined || zonaFija === zona;
+}
+
+// Mapea cada rol de cocina a su área productiva. Roles sin entrada (chef, admin)
+// no están atados — pueden operar requisiciones de cualquier área. Los turnos
+// rotan, por eso confirmar valida el ÁREA, no la identidad del solicitante.
+const ROLE_AREA: Partial<Record<UserRole, string>> = {
+  chef_cocina_caliente: 'cocina_caliente',
+  chef_cocina_fria: 'cocina_fria',
+  sous_chef: 'amex',
+  personal_pasteleria: 'pasteleria',
+};
+
+export function areaPermitidaParaRol(role: UserRole, area: string): boolean {
+  const areaFija = ROLE_AREA[role];
+  return areaFija === undefined || areaFija === area;
 }
