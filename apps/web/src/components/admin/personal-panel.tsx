@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
-import { Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,26 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { CrearPersonalDialog } from './crear-personal-dialog';
-import { togglePersonal, cambiarRolPersonal } from '@/app/(dashboard)/admin/personal/actions';
+import {
+  togglePersonal,
+  cambiarRolPersonal,
+  eliminarPersonal,
+} from '@/app/(dashboard)/admin/personal/actions';
+import { ASSIGNABLE_ROLES } from '@/lib/auth/assignable-roles';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
-
-type RoleKey =
-  | 'admin'
-  | 'chef'
-  | 'chef_cocina_fria'
-  | 'chef_cocina_caliente'
-  | 'sous_chef'
-  | 'mesero_amex';
-
-const ASSIGNABLE_ROLES: RoleKey[] = [
-  'admin',
-  'chef',
-  'chef_cocina_fria',
-  'chef_cocina_caliente',
-  'sous_chef',
-  'mesero_amex',
-];
 
 interface Props {
   initialUsers: TenantUser[];
@@ -54,6 +50,7 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
   const locale = useLocale();
   const [users, setUsers] = useState<TenantUser[]>(initialUsers);
   const [isPending, startTransition] = useTransition();
+  const [toDelete, setToDelete] = useState<TenantUser | null>(null);
 
   const handleToggle = (userId: string, activo: boolean) => {
     startTransition(async () => {
@@ -85,6 +82,34 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
 
   const handleCreated = (user: TenantUser) => {
     setUsers((prev) => [user, ...prev]);
+  };
+
+  const handleDelete = () => {
+    if (!toDelete) return;
+    const target = toDelete;
+    startTransition(async () => {
+      const result = await eliminarPersonal(target.id);
+      if (!result.ok) {
+        toast.error(result.error.message);
+        setToDelete(null);
+        return;
+      }
+      if (result.value.mode === 'deleted') {
+        setUsers((prev) => prev.filter((u) => u.id !== target.id));
+        toast.success(t('eliminar.toastEliminado'));
+      } else {
+        // Anonimizado: la fila persiste como tombstone inactivo.
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === target.id
+              ? { ...u, activo: false, nombre: t('eliminar.tombstoneNombre'), email: '—' }
+              : u,
+          ),
+        );
+        toast.success(t('eliminar.toastAnonimizado'));
+      }
+      setToDelete(null);
+    });
   };
 
   return (
@@ -165,20 +190,32 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || isSelf}
-                        onClick={() => handleToggle(user.id, !user.activo)}
-                      >
-                        {isPending ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        ) : user.activo ? (
-                          tC('desactivar')
-                        ) : (
-                          tC('activar')
-                        )}
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isPending || isSelf}
+                          onClick={() => handleToggle(user.id, !user.activo)}
+                        >
+                          {isPending ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : user.activo ? (
+                            tC('desactivar')
+                          ) : (
+                            tC('activar')
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={isPending || isSelf}
+                          onClick={() => setToDelete(user)}
+                          aria-label={t('eliminar.cta')}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -187,6 +224,25 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
           </Table>
         </div>
       )}
+
+      <Dialog open={toDelete !== null} onOpenChange={(o) => !o && setToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('eliminar.confirmTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('eliminar.confirmDesc', { nombre: toDelete?.nombre ?? '' })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={isPending} onClick={() => setToDelete(null)}>
+              {t('eliminar.cancelar')}
+            </Button>
+            <Button variant="destructive" disabled={isPending} onClick={handleDelete}>
+              {isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : t('eliminar.cta')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

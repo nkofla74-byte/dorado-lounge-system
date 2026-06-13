@@ -19,4 +19,5 @@ export interface SuperuserRepository {
   createUser(input: CreateUserInput): Promise<TenantUser>;
   toggleUser(userId: string, activo: boolean): Promise<TenantUser>;
   updateUserRole(userId: string, role: UserRole): Promise<TenantUser>;
+  removeUser(userId: string): Promise<{ mode: 'deleted' | 'anonymized' }>;
 }

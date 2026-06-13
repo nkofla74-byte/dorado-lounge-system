@@ -425,7 +425,16 @@
       "nuevo": "New user",
       "emptyTitle": "No users registered",
       "emptyHint": "Create the first user to get started",
-      "tu": "(you)"
+      "tu": "(you)",
+      "eliminar": {
+        "cta": "Delete",
+        "cancelar": "Cancel",
+        "confirmTitle": "Delete user?",
+        "confirmDesc": "The account for {nombre} will be deleted. If it has operational history (shifts, orders, audit), it will be anonymized and deactivated instead to preserve traceability. This action cannot be undone.",
+        "toastEliminado": "User deleted",
+        "toastAnonimizado": "User anonymized and deactivated (had history; audit preserved)",
+        "tombstoneNombre": "Deleted user"
+      }
     },
     "tenantDetail": {
       "errorCarga": "Failed to load users: {message}",

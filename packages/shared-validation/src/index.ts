@@ -27,6 +27,8 @@ export const userRoleSchema = z.enum([
   'mesero_amex',
   'personal_almacen',
   'personal_pasteleria',
+  'personal_snack',
+  'personal_buffet',
   'steward',
 ]);
 

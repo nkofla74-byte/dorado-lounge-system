@@ -44,6 +44,7 @@ function makeRepo(overrides: Partial<SuperuserRepository> = {}): SuperuserReposi
     createUser: vi.fn().mockResolvedValue(makeUser()),
     toggleUser: vi.fn().mockResolvedValue(makeUser()),
     updateUserRole: vi.fn().mockResolvedValue(makeUser()),
+    removeUser: vi.fn().mockResolvedValue({ mode: 'deleted' }),
     ...overrides,
   };
 }
