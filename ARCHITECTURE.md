@@ -1428,8 +1428,7 @@ Deploy a producción **solo desde `main`** y solo si todos los jobs pasan. Tags 
 
 ### 14.4 Feature flags
 
-- Implementación simple: tabla `feature_flags(tenant_id, flag, enabled)` consultada vía cache TTL 60 s.
-- Permite rollouts graduales y kill switches sin redeploy.
+> **ELIMINADO (remoción 2026-06-13):** el módulo `feature-flags` y la tabla `feature_flags` se eliminaron — scaffolding sin consumo (ningún feature leía los flags). Sección conservada como contexto histórico.
 
 ### 14.5 Disaster recovery
 
