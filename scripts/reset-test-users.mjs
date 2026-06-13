@@ -59,7 +59,7 @@ const PASSWORD = 'Admin123';
 
 const TENANT_OPERATIVO_SLUG = 'dorado-lounge';
 const LEGACY_TENANT_SLUGS = ['dorado-demo', 'plataforma']; // se borran si quedan vacíos
-const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com']; // se borran si reaparecen
+const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com', 'recepcion@dorado.test']; // se borran si reaparecen
 
 // Set de test: 12 usuarios, todos en el tenant operativo.
 const TEST_USERS = [
