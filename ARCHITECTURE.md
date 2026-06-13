@@ -102,6 +102,8 @@ El doc dice "Render.com gratis" para Socket.io, pero el plan free de Render hibe
 
 ### 2.11 Integración con API de vuelos sin proveedor definido
 
+> **ELIMINADO (remoción 2026-06-13):** vuelos / afluencia / COGS-por-pasajero quedaron fuera del alcance operativo. No hay integración con API de vuelos ni `FLIGHTS_API_KEY`. Sección conservada como contexto histórico. Ver `docs/superpowers/specs/2026-06-13-remocion-vuelos-afluencia-recepcion-design.md`.
+
 `FLIGHTS_API_KEY` aparece pero no hay vendor seleccionado. El Dorado opera sobre SITA y Opain tiene sus propias API. **Decisión:** documentar como "TBD — Sprint 6" con candidatos: AviationStack (más barato, datos genéricos), FlightAware AeroAPI (estándar de la industria, costoso), Opain directo (requiere convenio). Mientras tanto, abstraer detrás de un puerto `FlightsProvider` (hexagonal) para no acoplar el código.
 
 ### 2.12 Habeas data (Ley 1581) no abordada
@@ -972,6 +974,8 @@ elif diferencia < 0:
 ```
 
 ### 9.6 Métricas de costo — dos KPIs separados
+
+> **ELIMINADO (remoción 2026-06-13):** las métricas por pasajero (`v_cogs_per_passenger`, `v_pasajeros_turno`, cash outflow por pasajero) se eliminaron junto con afluencia/vuelos. El módulo `analytics` conserva solo consumo vs producción por turno. Bloque conservado como contexto histórico.
 
 ```sql
 -- COGS real por pasajero (eficiencia operativa)

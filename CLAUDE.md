@@ -60,7 +60,6 @@ DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **
 | `steward`              | `/produccion`       | Gestión utensilios                                                                                           |
 | `personal_snack`       | `/pedidos` (origen) | Rol de zona de origen — UI K2 pendiente                                                                      |
 | `personal_buffet`      | `/pedidos` (origen) | Rol de zona de origen — UI K2 pendiente                                                                      |
-| `recepcion`            | —                   | Rol operativo — UI pendiente (K2)                                                                            |
 | anónimo (QR)           | `/qr/[locale]`      | Menú digital self-service: fotos, ingredientes, pedir, sin login                                             |
 
 ---
