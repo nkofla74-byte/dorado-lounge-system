@@ -257,3 +257,52 @@ export async function runCheckDemoraAmex(tenantId: string, umbralMins = 15): Pro
 
   return generadas;
 }
+
+// Requisición cocina→almacén sin despachar por encima del umbral → notifica
+// Admin + Almacén. Coordinación pura (Frente 2): no mueve inventario.
+export async function runCheckRequisicionesSinDespachar(
+  tenantId: string,
+  umbralMins = 20,
+): Promise<number> {
+  const admin = createAdminClient();
+  const umbral = new Date(Date.now() - umbralMins * 60 * 1000).toISOString();
+
+  const { data: reqs } = await admin
+    .from('requisiciones')
+    .select('id, area_solicitante, solicitada_at')
+    .eq('tenant_id', tenantId)
+    .in('estado', ['solicitada', 'en_alistamiento'])
+    .is('deleted_at', null)
+    .lt('solicitada_at', umbral);
+
+  if (!reqs || reqs.length === 0) return 0;
+
+  const hace4h = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+  const { data: previas } = await admin
+    .from('alertas')
+    .select('resource_id')
+    .eq('tenant_id', tenantId)
+    .eq('tipo', 'requisicion_demora')
+    .eq('leida', false)
+    .gte('created_at', hace4h)
+    .in(
+      'resource_id',
+      reqs.map((r) => r.id),
+    );
+  const yaNotificadas = new Set(previas?.map((a) => a.resource_id) ?? []);
+
+  let generadas = 0;
+  for (const r of reqs) {
+    if (yaNotificadas.has(r.id)) continue;
+    await crearAlerta(tenantId, {
+      tipo: 'requisicion_demora',
+      severidad: 'warning',
+      titulo: `Requisición sin despachar: ${r.area_solicitante}`,
+      mensaje: `Una requisición de ${r.area_solicitante} lleva más de ${umbralMins} min sin despacharse.`,
+      resourceId: r.id,
+      resourceTipo: 'requisicion',
+    });
+    generadas++;
+  }
+  return generadas;
+}

@@ -1,6 +1,11 @@
-export type TipoAlerta = 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
+export type TipoAlerta =
+  | 'stock_minimo'
+  | 'vencimiento'
+  | 'cambio_precio'
+  | 'demora_amex'
+  | 'requisicion_demora';
 export type SeveridadAlerta = 'info' | 'warning' | 'critical';
-export type ResourceTipoAlerta = 'insumo' | 'lote' | 'pedido';
+export type ResourceTipoAlerta = 'insumo' | 'lote' | 'pedido' | 'requisicion';
 
 export interface Alerta {
   id: string;

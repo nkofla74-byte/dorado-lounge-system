@@ -213,12 +213,12 @@ export interface AlertaEvent {
   payload: {
     alertaId: string;
     tenantId: string;
-    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
+    tipo: 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex' | 'requisicion_demora';
     severidad: 'info' | 'warning' | 'critical';
     titulo: string;
     mensaje: string;
     resourceId?: string;
-    resourceTipo?: 'insumo' | 'lote' | 'pedido';
+    resourceTipo?: 'insumo' | 'lote' | 'pedido' | 'requisicion';
     createdAt: string;
   };
 }
