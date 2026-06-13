@@ -17,8 +17,10 @@ test.describe('Vistas de zona snack/buffet', () => {
 
     const nuevoBtn = page.getByRole('button', { name: /Nuevo pedido/i });
     if ((await nuevoBtn.count()) === 0) {
+      // Sin credenciales E2E la sesión admin no existe y la vista no renderiza — skip.
+      // Con credenciales presentes, la ausencia del botón es un fallo real.
       test.skip(!process.env['E2E_ADMIN_EMAIL'], 'requiere credenciales E2E');
-      return;
+      throw new Error('Botón "Nuevo pedido" no encontrado con credenciales E2E presentes');
     }
     await nuevoBtn.click();
     await expect(page.getByRole('dialog')).toBeVisible();
