@@ -97,6 +97,13 @@
     "metaTitle": "Inventario — Dorado Lounge",
     "pageTitle": "Inventario",
     "pageSubtitle": "Insumos y stock actual por capa",
+    "unifiedTitle": "Almacén e Inventario",
+    "unifiedSubtitle": "Catálogo de insumos y operación de bodega",
+    "tabs": {
+      "inventario": "Inventario",
+      "almacen": "Almacén",
+      "ariaLabel": "Vista de almacén e inventario"
+    },
     "count": "{n, plural, =1 {1 insumo} other {# insumos}}",
     "refresh": "Actualizar",
     "bulkImport": {

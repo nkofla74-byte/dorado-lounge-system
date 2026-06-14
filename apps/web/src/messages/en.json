@@ -97,6 +97,13 @@
     "metaTitle": "Inventory — Dorado Lounge",
     "pageTitle": "Inventory",
     "pageSubtitle": "Items and current stock by layer",
+    "unifiedTitle": "Warehouse & Inventory",
+    "unifiedSubtitle": "Item catalog and warehouse operations",
+    "tabs": {
+      "inventario": "Inventory",
+      "almacen": "Warehouse",
+      "ariaLabel": "Warehouse and inventory view"
+    },
     "count": "{n, plural, =1 {1 item} other {# items}}",
     "refresh": "Refresh",
     "bulkImport": {
