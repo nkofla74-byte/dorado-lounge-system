@@ -47,20 +47,20 @@ DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **
 
 ## UIs por Rol — Mapa Completo
 
-| Rol                    | Ruta principal      | UI / Funcionalidad                                                                                           |
-| ---------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `superuser`            | `/admin/tenants`    | God Mode: CRUD tenants, usuarios, auditoría                                                                  |
-| `admin`                | `/inventario`       | Panel completo: almacén, recetas, costos, KDS monitor, producción, pedidos, analíticos, proveedores, alertas |
-| `chef_cocina_caliente` | `/cocina-caliente`  | KDS Cocina Caliente: cola por área, despacho por ítem con FEFO                                               |
-| `chef_cocina_fria`     | `/cocina-fria`      | KDS Cocina Fría: cola por área, despacho por ítem con FEFO                                                   |
-| `sous_chef`            | `/cocina-amex`      | Cocina AMEX: cola exclusiva AMEX, trazabilidad completa por orden, timer visible, alertas de demora          |
-| `mesero_amex`          | `/pedidos`          | Tomar pedidos (carta QR + extras pastelería/jefe turno), confirmar entrega                                   |
-| `personal_almacen`     | `/almacen`          | Recepción lotes, alertas stock/vencimiento/precio, historial compras                                         |
-| `personal_pasteleria`  | `/pasteleria`       | Producción pastelería: lotes, costos por unidad, despacho a zonas                                            |
-| `steward`              | `/produccion`       | Gestión utensilios                                                                                           |
-| `personal_snack`       | `/pedidos` (origen) | Rol de zona de origen — UI K2 pendiente                                                                      |
-| `personal_buffet`      | `/pedidos` (origen) | Rol de zona de origen — UI K2 pendiente                                                                      |
-| anónimo (QR)           | `/qr/[locale]`      | Menú digital self-service: fotos, ingredientes, pedir, sin login                                             |
+| Rol                    | Ruta principal     | UI / Funcionalidad                                                                                                                 |
+| ---------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `superuser`            | `/admin/tenants`   | God Mode: CRUD tenants, usuarios, auditoría                                                                                        |
+| `admin`                | `/inventario`      | Panel completo: almacén, recetas, costos, KDS monitor, producción, pedidos, analíticos, proveedores, alertas, trazabilidad, turnos |
+| `chef_cocina_caliente` | `/cocina-caliente` | KDS Cocina Caliente: cola por área, despacho por ítem con FEFO                                                                     |
+| `chef_cocina_fria`     | `/cocina-fria`     | KDS Cocina Fría: cola por área, despacho por ítem con FEFO                                                                         |
+| `sous_chef`            | `/cocina-amex`     | Cocina AMEX: cola exclusiva AMEX, trazabilidad completa por orden, timer visible, alertas de demora                                |
+| `mesero_amex`          | `/pedidos`         | Tomar pedidos (carta QR + extras pastelería/jefe turno), confirmar entrega                                                         |
+| `personal_almacen`     | `/almacen`         | Recepción lotes, alertas stock/vencimiento/precio, historial compras                                                               |
+| `personal_pasteleria`  | `/pasteleria`      | Producción pastelería: lotes, costos por unidad, despacho a zonas                                                                  |
+| `steward`              | `/produccion`      | Gestión utensilios                                                                                                                 |
+| `personal_snack`       | `/snack`           | UI dedicada zona Snack: pedidos por elaboración, descuento al entregar                                                             |
+| `personal_buffet`      | `/buffet`          | UI dedicada zona Buffet: pedidos por elaboración, descuento al entregar                                                            |
+| anónimo (QR)           | `/qr/[locale]`     | Menú digital self-service: fotos, ingredientes, pedir, sin login                                                                   |
 
 ---
 
