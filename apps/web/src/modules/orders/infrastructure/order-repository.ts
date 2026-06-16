@@ -500,7 +500,8 @@ export function createOrderRepository(): OrderRepository {
       const { data: itemsRows, error: itErr } = await supabase
         .from('pedido_items')
         .select('estado')
-        .eq('pedido_id', pedidoId);
+        .eq('pedido_id', pedidoId)
+        .eq('tenant_id', tenantId);
       if (itErr) throw new AppError('DB_ERROR', 500, itErr.message);
 
       const { data: pedRow, error: pedErr } = await supabase
@@ -529,6 +530,15 @@ export function createOrderRepository(): OrderRepository {
           'VERSION_CONFLICT',
           409,
           'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
+        );
+      }
+      // El trigger validate_pedido_estado rechaza transiciones inválidas del pedido
+      // con check_violation (23514). Mapear a 400 limpio en vez de DB_ERROR 500.
+      if (pErr?.code === '23514') {
+        throw new AppError(
+          'INVALID_TRANSITION',
+          400,
+          `Transición de pedido inválida hacia '${nuevoEstadoPedido}'.`,
         );
       }
       if (pErr || !updated) throw new AppError('DB_ERROR', 500, pErr?.message ?? 'Update falló');
