@@ -175,10 +175,6 @@ describe('canJoinChannel', () => {
     expect(canJoinChannel({ data: undefined } as never, 'sala:cocina')).toBe(false);
   });
 
-  it('permite a chef emitir a sala:stuart:amex', () => {
-    expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:stuart:amex')).toBe(true);
-  });
-
   it('deniega a mesero_amex en sala:cocina', () => {
     expect(canJoinChannel(makeSocketWithRole('mesero_amex') as never, 'sala:cocina')).toBe(false);
   });

@@ -21,9 +21,7 @@ export const CHANNELS = {
   BUFFET: 'sala:buffet',
   ALMACEN: 'sala:almacen',
   ADMIN: 'sala:admin',
-  STUART_AMEX: 'sala:stuart:amex',
   BROADCAST_COCINA: 'sala:broadcast:cocina',
-  BROADCAST_ADMIN: 'sala:broadcast:admin',
 } as const;
 
 export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
@@ -48,7 +46,6 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
   'sala:almacen': ['personal_almacen', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
-  'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
   'sala:broadcast:cocina': [
     'chef',
     'chef_cocina_fria',
@@ -59,7 +56,6 @@ export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
     'admin',
     'superuser',
   ],
-  'sala:broadcast:admin': ['personal_almacen', 'admin', 'superuser'],
 };
 
 // Canal de notificación de cada zona de servicio. Las zonas no se hablan
@@ -148,42 +144,6 @@ export interface DespachoEvent {
   };
 }
 
-export interface MensajeChatEvent {
-  type: 'MENSAJE_CHAT';
-  payload: {
-    mensajeId: string;
-    tenantId: string;
-    canal: Channel;
-    remitenteId: string;
-    remitenteNombre: string;
-    contenido: string;
-    tipo: 'text' | 'image' | 'alert' | 'broadcast';
-    createdAt: string;
-  };
-}
-
-export interface BroadcastEvent {
-  type: 'BROADCAST';
-  payload: {
-    tenantId: string;
-    canal: 'sala:broadcast:cocina' | 'sala:broadcast:admin';
-    contenido: string;
-    emisorId: string;
-    createdAt: string;
-  };
-}
-
-export interface StuartRequestEvent {
-  type: 'STUART_REQUEST';
-  payload: {
-    tenantId: string;
-    zona: ZonaServicio;
-    solicitanteId: string;
-    descripcion: string;
-    createdAt: string;
-  };
-}
-
 export interface TurnoEvent {
   type: 'TURNO_EVENTO';
   payload: {
@@ -242,9 +202,6 @@ export type SocketEvent =
   | PedidoCocineroEvent
   | StockOutEvent
   | DespachoEvent
-  | MensajeChatEvent
-  | BroadcastEvent
-  | StuartRequestEvent
   | SolicitudPreparacionEvent
   | TurnoEvent
   | AlertaEvent
