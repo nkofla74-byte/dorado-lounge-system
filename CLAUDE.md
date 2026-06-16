@@ -53,6 +53,7 @@ DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **
 | `admin`                | `/inventario`      | Panel completo: almacén, recetas, costos, KDS monitor, producción, pedidos, analíticos, proveedores, alertas, trazabilidad, turnos |
 | `chef_cocina_caliente` | `/cocina-caliente` | KDS Cocina Caliente: cola por área, despacho por ítem con FEFO                                                                     |
 | `chef_cocina_fria`     | `/cocina-fria`     | KDS Cocina Fría: cola por área, despacho por ítem con FEFO                                                                         |
+| `chef`                 | `/cocina`          | KDS supervisor (jefe de cocina): vista combinada Cocina Caliente + Fría                                                            |
 | `sous_chef`            | `/cocina-amex`     | Cocina AMEX: cola exclusiva AMEX, trazabilidad completa por orden, timer visible, alertas de demora                                |
 | `mesero_amex`          | `/pedidos`         | Tomar pedidos (carta QR + extras pastelería/jefe turno), confirmar entrega                                                         |
 | `personal_almacen`     | `/almacen`         | Recepción lotes, alertas stock/vencimiento/precio, historial compras                                                               |
@@ -95,26 +96,27 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 
 **Módulos existentes (post-refoco operacional):**
 
-| Estado | Módulo        | Responsabilidad                                                     |
-| ------ | ------------- | ------------------------------------------------------------------- |
-| ✅     | `inventory`   | Stock, lotes, merma en recepción, FEFO                              |
-| ✅     | `recipes`     | Recetas, ingredientes, secciones                                    |
-| ✅     | `production`  | Tandas producción, despachos cocina                                 |
-| ✅     | `orders`      | Pedidos multi-área, estado por ítem, optimistic locking             |
-| ✅     | `turnos`      | Apertura/cierre turno                                               |
-| ✅     | `analytics`   | KPIs, vistas materializadas (solo lectura)                          |
-| ✅     | `superuser`   | CRUD tenants y usuarios                                             |
-| ✅     | `cocina-amex` | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
-| ✅     | `proveedores` | CRUD proveedores, historial compras, vinculación con lotes          |
-| ✅     | `alertas`     | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
-| ✅     | `costos`      | Costo en tiempo real por receta (ingredientes × precio lote actual) |
+| Estado | Módulo          | Responsabilidad                                                                                                                                                                                                                                       |
+| ------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅     | `inventory`     | Stock, lotes, merma en recepción, FEFO                                                                                                                                                                                                                |
+| ✅     | `recipes`       | Recetas, ingredientes, secciones                                                                                                                                                                                                                      |
+| ✅     | `production`    | Tandas producción, despachos cocina                                                                                                                                                                                                                   |
+| ✅     | `orders`        | Pedidos multi-área, estado por ítem, optimistic locking                                                                                                                                                                                               |
+| ✅     | `turnos`        | Apertura/cierre turno                                                                                                                                                                                                                                 |
+| ✅     | `analytics`     | KPIs, vistas materializadas (solo lectura)                                                                                                                                                                                                            |
+| ✅     | `superuser`     | CRUD tenants y usuarios                                                                                                                                                                                                                               |
+| ✅     | `cocina-amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora                                                                                                                                                                                     |
+| ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes                                                                                                                                                                                            |
+| ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora                                                                                                                                                                                    |
+| ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual)                                                                                                                                                                                   |
+| ✅     | `requisiciones` | Requisiciones de insumos cocina → almacén; estados con optimistic locking + idempotencia, vinculadas al turno activo. Surface embebida en `/almacen`, `/cocina-caliente`, `/cocina-fria`, `/inventario`. Canal `ALMACEN`, evento `REQUISICION_ESTADO` |
 
 `analytics` es solo-lectura — proyecta vistas materializadas, nunca escribe.
 
 > **No son módulos hexagonales** (pero existen como libs auxiliares):
 >
 > - `lib/auth/assertCan.ts` + `lib/auth/permissions.ts` — RBAC (matriz de permisos).
-> - `lib/socket/use-realtime.ts` — integración Socket.io client.
+> - `lib/socket/` (`client.ts`, `socket-provider.tsx`, `use-socket.ts`, `emit-event.ts`) — integración Socket.io client.
 > - `lib/audit.ts` — wrapper de inserción en `audit_log` (el hash chain vive en Postgres). **No es un módulo hexagonal.**
 > - `lib/rate-limit.ts` — buckets Upstash (login/cron/heartbeat/gdpr).
 
@@ -158,7 +160,7 @@ Idempotente por `idempotency_key`. Obligatoria en: Stock Out, despacho, tickets.
 
 **Tablas existentes:**
 
-`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `domain_events` · `audit_log` · `operaciones_idempotentes`
+`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `requisiciones` · `requisicion_items` · `requisicion_eventos` (log append-only) · `domain_events` · `audit_log` · `operaciones_idempotentes` · `tenant_codigo_counters` (contadores SKU/lote por tenant, solo RPC)
 
 > `costos` no es tabla — es la RPC `fn_costo_receta(p_tenant_id, p_receta_id)` que calcula en tiempo real desde `lotes` (FEFO-next por costo). Validación de tenant vía `auth.jwt() -> 'app_metadata' ->> 'tenant_id'` (migración 0004).
 
@@ -183,7 +185,7 @@ COCINA_FRIA COCINA_CALIENTE COCINA_AMEX PASTELERÍA  ← nodos de producción
 
 `CHANNELS` y `CHANNEL_ACL` en `packages/shared-types/src/socket-events.ts` son **autoritativos**. Canal nuevo → verificar topología y actualizar `CHANNEL_ACL`.
 
-Eventos clave: `PEDIDO_ESTADO`, `ITEM_ESTADO`, `ALERTA_NUEVA`, `PRODUCCION_UPDATE`.
+Eventos clave (literales `type` en `socket-events.ts`): `PEDIDO_CREADO`, `PEDIDO_ESTADO`, `PEDIDO_COCINERO`, `ITEM_ESTADO`, `ALERTA`, `REQUISICION_ESTADO`, `TURNO_EVENTO`.
 
 Canal sin permiso → desconexión inmediata + `audit_log` (evento de seguridad, no warning).
 
