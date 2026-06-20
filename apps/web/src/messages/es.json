@@ -3,7 +3,6 @@
     "almacen": "Almacén",
     "inventario": "Inventario",
     "recetas": "Recetas",
-    "cocina": "KDS Cocina",
     "cocinaFria": "KDS Cocina Fría",
     "cocinaCaliente": "KDS Cocina Caliente",
     "cocinaAmex": "KDS AMEX",
@@ -28,7 +27,6 @@
   "roles": {
     "superuser": "Super Usuario",
     "admin": "Administrador",
-    "chef": "Chef",
     "chef_cocina_fria": "Chef Cocina Fría",
     "chef_cocina_caliente": "Chef Cocina Caliente",
     "sous_chef": "Sous Chef",
@@ -58,7 +56,6 @@
     },
     "usuarioFallback": "Usuario",
     "chatTitulo": {
-      "chef": "Cocina",
       "chef_cocina_fria": "Cocina Fría",
       "chef_cocina_caliente": "Cocina Caliente",
       "sous_chef": "Cocina Amex",
@@ -845,8 +842,6 @@
     "subtituloCocinaCaliente": "Cola de solicitudes de preparación dirigidas a cocina caliente",
     "tituloPasteleria": "Pedidos en cola — KDS",
     "subtituloPasteleria": "Postres de la carta ruteados a pastelería",
-    "tituloCocinaGeneral": "Cocina — KDS general",
-    "subtituloCocinaGeneral": "Vista supervisora: colas de cocina caliente y fría",
     "sinSolicitudes": "Sin solicitudes de preparación pendientes",
     "tituloAmex": "Cocina Amex — KDS",
     "sinPedidosActivos": "Sin pedidos activos",

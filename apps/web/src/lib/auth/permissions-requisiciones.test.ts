@@ -23,8 +23,8 @@ describe('areaPermitidaParaRol', () => {
     expect(areaPermitidaParaRol('sous_chef', 'pasteleria')).toBe(false);
   });
 
-  it('chef y admin no están atados a un área', () => {
-    expect(areaPermitidaParaRol('chef', 'cocina_fria')).toBe(true);
+  it('admin no está atado a un área', () => {
+    expect(areaPermitidaParaRol('admin', 'cocina_fria')).toBe(true);
     expect(areaPermitidaParaRol('admin', 'pasteleria')).toBe(true);
   });
 });

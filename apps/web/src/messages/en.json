@@ -3,7 +3,6 @@
     "almacen": "Warehouse",
     "inventario": "Inventory",
     "recetas": "Recipes",
-    "cocina": "Kitchen KDS",
     "cocinaFria": "Cold Kitchen KDS",
     "cocinaCaliente": "Hot Kitchen KDS",
     "cocinaAmex": "AMEX KDS",
@@ -28,7 +27,6 @@
   "roles": {
     "superuser": "Super User",
     "admin": "Administrator",
-    "chef": "Chef",
     "chef_cocina_fria": "Cold Kitchen Chef",
     "chef_cocina_caliente": "Hot Kitchen Chef",
     "sous_chef": "Sous Chef",
@@ -58,7 +56,6 @@
     },
     "usuarioFallback": "User",
     "chatTitulo": {
-      "chef": "Kitchen",
       "chef_cocina_fria": "Cold Kitchen",
       "chef_cocina_caliente": "Hot Kitchen",
       "sous_chef": "Amex Kitchen",
@@ -845,8 +842,6 @@
     "subtituloCocinaCaliente": "Incoming preparation requests for the hot kitchen",
     "tituloPasteleria": "Order queue — KDS",
     "subtituloPasteleria": "Menu desserts routed to the pastry station",
-    "tituloCocinaGeneral": "Kitchen — General KDS",
-    "subtituloCocinaGeneral": "Supervisor view: hot and cold kitchen queues",
     "sinSolicitudes": "No pending preparation requests",
     "tituloAmex": "Amex Kitchen — KDS",
     "sinPedidosActivos": "No active orders",

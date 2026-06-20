@@ -65,7 +65,10 @@ describe('authenticateHandshake', () => {
   });
 
   it('rechaza JWT HS256 sin tenant_id en app_metadata', async () => {
-    const token = jwt.sign({ sub: 'user-1', app_metadata: { role: 'chef' } }, TEST_SECRET);
+    const token = jwt.sign(
+      { sub: 'user-1', app_metadata: { role: 'chef_cocina_fria' } },
+      TEST_SECRET,
+    );
     const socket = makeSocket(token);
     const next = vi.fn();
     await authenticateHandshake(socket as never, next);
@@ -74,14 +77,18 @@ describe('authenticateHandshake', () => {
 
   it('acepta JWT HS256 (legacy) con claims correctos', async () => {
     const token = jwt.sign(
-      { sub: 'user-123', app_metadata: { tenant_id: 'tenant-456', role: 'chef' } },
+      { sub: 'user-123', app_metadata: { tenant_id: 'tenant-456', role: 'chef_cocina_fria' } },
       TEST_SECRET,
     );
     const socket = makeSocket(token);
     const next = vi.fn();
     await authenticateHandshake(socket as never, next);
     expect(next).toHaveBeenCalledWith(); // sin error
-    expect(socket.data).toMatchObject({ userId: 'user-123', tenantId: 'tenant-456', role: 'chef' });
+    expect(socket.data).toMatchObject({
+      userId: 'user-123',
+      tenantId: 'tenant-456',
+      role: 'chef_cocina_fria',
+    });
   });
 
   it('acepta token asimétrico (ES256) verificado vía JWKS', async () => {
@@ -115,7 +122,7 @@ describe('authenticateHandshake', () => {
   it('falla con HS256 si falta SUPABASE_JWT_SECRET', async () => {
     delete process.env['SUPABASE_JWT_SECRET'];
     const token = jwt.sign(
-      { sub: 'u', app_metadata: { tenant_id: 't', role: 'chef' } },
+      { sub: 'u', app_metadata: { tenant_id: 't', role: 'chef_cocina_fria' } },
       TEST_SECRET,
     );
     const socket = makeSocket(token);
@@ -140,8 +147,10 @@ describe('canJoinChannel', () => {
     return { data: { role, tenantId: 'tenant-1', userId: 'user-1' } };
   }
 
-  it('permite a chef unirse a sala:cocina', () => {
-    expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:cocina')).toBe(true);
+  it('permite a chef_cocina_fria unirse a sala:cocina', () => {
+    expect(canJoinChannel(makeSocketWithRole('chef_cocina_fria') as never, 'sala:cocina')).toBe(
+      true,
+    );
   });
 
   it('permite a sous_chef unirse a sala:cocina', () => {
@@ -156,8 +165,10 @@ describe('canJoinChannel', () => {
     expect(canJoinChannel(makeSocketWithRole('mesero_amex') as never, 'sala:amex')).toBe(true);
   });
 
-  it('deniega a chef acceder a sala:amex', () => {
-    expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:amex')).toBe(false);
+  it('deniega a chef_cocina_fria acceder a sala:amex', () => {
+    expect(canJoinChannel(makeSocketWithRole('chef_cocina_fria') as never, 'sala:amex')).toBe(
+      false,
+    );
   });
 
   it('permite a admin unirse a cualquier canal', () => {
@@ -175,8 +186,8 @@ describe('canJoinChannel', () => {
     expect(canJoinChannel({ data: undefined } as never, 'sala:cocina')).toBe(false);
   });
 
-  it('permite a chef emitir a sala:stuart:amex', () => {
-    expect(canJoinChannel(makeSocketWithRole('chef') as never, 'sala:stuart:amex')).toBe(true);
+  it('permite a sous_chef emitir a sala:stuart:amex', () => {
+    expect(canJoinChannel(makeSocketWithRole('sous_chef') as never, 'sala:stuart:amex')).toBe(true);
   });
 
   it('deniega a mesero_amex en sala:cocina', () => {

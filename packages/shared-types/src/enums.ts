@@ -1,7 +1,10 @@
 export const UserRole = {
   superuser: 'superuser',
   admin: 'admin',
-  chef: 'chef',
+  // `chef` (jefe de cocina transversal) quedó deprecado en el refoco operacional:
+  // se reemplazó por las estaciones chef_cocina_fria/caliente y sous_chef. El valor
+  // sigue inerte en el ENUM SQL `user_role` (Postgres no permite DROP de un valor)
+  // por datos históricos, pero ya no es asignable ni navegable desde la app.
   chef_cocina_fria: 'chef_cocina_fria',
   chef_cocina_caliente: 'chef_cocina_caliente',
   sous_chef: 'sous_chef',

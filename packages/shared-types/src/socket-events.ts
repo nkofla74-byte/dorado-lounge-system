@@ -31,26 +31,18 @@ export type Channel = (typeof CHANNELS)[keyof typeof CHANNELS];
 // ── ACL de canales ────────────────────────────────────────────────────────────
 // Roles que pueden unirse a cada canal. Un rol ausente = desconexión + audit_log.
 export const CHANNEL_ACL: Record<Channel, UserRole[]> = {
-  'sala:cocina': [
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'admin',
-    'superuser',
-  ],
-  'sala:cocina:fria': ['chef_cocina_fria', 'chef', 'admin', 'superuser'],
-  'sala:cocina:caliente': ['chef_cocina_caliente', 'chef', 'admin', 'superuser'],
-  'sala:cocina:amex': ['sous_chef', 'chef', 'admin', 'superuser'],
-  'sala:cocina:pasteleria': ['personal_pasteleria', 'chef', 'admin', 'superuser'],
+  'sala:cocina': ['chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef', 'admin', 'superuser'],
+  'sala:cocina:fria': ['chef_cocina_fria', 'admin', 'superuser'],
+  'sala:cocina:caliente': ['chef_cocina_caliente', 'admin', 'superuser'],
+  'sala:cocina:amex': ['sous_chef', 'admin', 'superuser'],
+  'sala:cocina:pasteleria': ['personal_pasteleria', 'admin', 'superuser'],
   'sala:amex': ['mesero_amex', 'admin', 'superuser'],
   'sala:snack': ['personal_snack', 'admin', 'superuser'],
   'sala:buffet': ['personal_buffet', 'admin', 'superuser'],
   'sala:almacen': ['personal_almacen', 'admin', 'superuser'],
   'sala:admin': ['admin', 'superuser'],
-  'sala:stuart:amex': ['mesero_amex', 'chef', 'sous_chef', 'admin', 'superuser'],
+  'sala:stuart:amex': ['mesero_amex', 'sous_chef', 'admin', 'superuser'],
   'sala:broadcast:cocina': [
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',

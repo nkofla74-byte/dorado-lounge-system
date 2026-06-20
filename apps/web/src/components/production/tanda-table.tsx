@@ -98,7 +98,6 @@ function ZonaDestinoBadge({ zona }: { zona: ZonaServicio | null }) {
 const CREATE_ROLES = new Set<string>([
   'superuser',
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',

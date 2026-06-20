@@ -18,14 +18,13 @@ import {
 } from '../enums';
 
 describe('UserRole', () => {
-  it('contiene los 12 roles del sistema', () => {
-    expect(Object.keys(UserRole)).toHaveLength(12);
+  it('contiene los 11 roles del sistema', () => {
+    expect(Object.keys(UserRole)).toHaveLength(11);
   });
 
   const REQUIRED_ROLES = [
     'superuser',
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
