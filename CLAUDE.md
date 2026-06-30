@@ -95,21 +95,24 @@ Regla: `domain ← application ← infrastructure ← actions.ts`. ESLint la enf
 
 **Módulos existentes (post-refoco operacional):**
 
-| Estado | Módulo        | Responsabilidad                                                     |
-| ------ | ------------- | ------------------------------------------------------------------- |
-| ✅     | `inventory`   | Stock, lotes, merma en recepción, FEFO                              |
-| ✅     | `recipes`     | Recetas, ingredientes, secciones                                    |
-| ✅     | `production`  | Tandas producción, despachos cocina                                 |
-| ✅     | `orders`      | Pedidos multi-área, estado por ítem, optimistic locking             |
-| ✅     | `turnos`      | Apertura/cierre turno                                               |
-| ✅     | `analytics`   | KPIs, vistas materializadas (solo lectura)                          |
-| ✅     | `superuser`   | CRUD tenants y usuarios                                             |
-| ✅     | `cocina-amex` | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora   |
-| ✅     | `proveedores` | CRUD proveedores, historial compras, vinculación con lotes          |
-| ✅     | `alertas`     | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora  |
-| ✅     | `costos`      | Costo en tiempo real por receta (ingredientes × precio lote actual) |
+| Estado | Módulo          | Responsabilidad                                                                                     |
+| ------ | --------------- | --------------------------------------------------------------------------------------------------- |
+| ✅     | `inventory`     | Stock, lotes, merma en recepción, FEFO                                                              |
+| ✅     | `recipes`       | Recetas, ingredientes, secciones                                                                    |
+| ✅     | `production`    | Tandas producción, despachos cocina                                                                 |
+| ✅     | `orders`        | Pedidos multi-área, estado por ítem, optimistic locking                                             |
+| ✅     | `turnos`        | Apertura/cierre turno                                                                               |
+| ✅     | `analytics`     | KPIs, vistas materializadas (solo lectura)                                                          |
+| ✅     | `superuser`     | CRUD tenants y usuarios                                                                             |
+| ✅     | `cocina-amex`   | KDS exclusivo AMEX: trazabilidad completa, timers, alertas demora                                   |
+| ✅     | `proveedores`   | CRUD proveedores, historial compras, vinculación con lotes                                          |
+| ✅     | `alertas`       | Motor de alertas: stock mínimo, vencimiento, cambio precio, demora                                  |
+| ✅     | `costos`        | Costo en tiempo real por receta (ingredientes × precio lote actual)                                 |
+| ✅     | `requisiciones` | Solicitud de insumos cocina→almacén: máquina de estados, despacho/confirmación, eventos append-only |
 
 `analytics` es solo-lectura — proyecta vistas materializadas, nunca escribe.
+
+`requisiciones` (Frente 2, 2026-06-12) no tiene ruta dedicada: su UI se embebe en `/almacen` (despacho) y `/cocina-caliente` · `/cocina-fria` (solicitud). Detalle del ER en `ARCHITECTURE.md`.
 
 > **No son módulos hexagonales** (pero existen como libs auxiliares):
 >

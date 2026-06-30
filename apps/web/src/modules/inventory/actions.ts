@@ -12,6 +12,11 @@ import { updateInsumo as updateInsumoUseCase } from './application/update-insumo
 import { createLote as createLoteUseCase } from './application/create-lote';
 import { aplicarMermaRecepcion, costoUnitarioNeto } from './domain/merma';
 import {
+  mapLoteProximoVencer,
+  type LoteProximoVencer,
+  type LoteVencimientoRow,
+} from './domain/lote-vencimiento';
+import {
   createInsumoSchema,
   updateInsumoSchema,
   createLoteSchema,
@@ -372,13 +377,7 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
   }
 }
 
-export interface LoteProximoVencer {
-  loteId: string;
-  insumoNombre: string;
-  fechaVencimiento: string;
-  diasRestantes: number;
-  cantidadActual: number;
-}
+export type { LoteProximoVencer };
 
 export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProximoVencer[]>> {
   try {
@@ -404,24 +403,9 @@ export async function getLotesProximosVencer(dias = 7): Promise<Result<LoteProxi
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    type LoteVencRow = {
-      id: string;
-      cantidad_actual: number;
-      fecha_vencimiento: string;
-      insumos: { nombre: string }[] | null;
-    };
-    const rows = (data ?? []).map((row) => {
-      const r = row as unknown as LoteVencRow;
-      const fv = new Date(r.fecha_vencimiento);
-      const diff = Math.round((fv.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-      return {
-        loteId: r.id,
-        insumoNombre: r.insumos?.[0]?.nombre ?? '—',
-        fechaVencimiento: r.fecha_vencimiento,
-        diasRestantes: diff,
-        cantidadActual: Number(r.cantidad_actual),
-      };
-    });
+    const rows = (data ?? []).map((row) =>
+      mapLoteProximoVencer(row as unknown as LoteVencimientoRow, hoy),
+    );
 
     return ok(rows);
   } catch (e) {
