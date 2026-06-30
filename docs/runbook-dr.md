@@ -43,8 +43,15 @@ Todos los datos críticos residen en Supabase. Vercel y Render son stateless y s
 ### Verificar backup más reciente
 
 1. Ir a **GitHub → Actions → Database Backup** → último run exitoso
-2. Descargar artifact `db-backup-YYYYMMDDTHHMMSSZ`
-3. Verificar integridad: `pg_restore --list backup-*.pgdump | head -20`
+2. Descargar artifact `db-backup-YYYYMMDDTHHMMSSZ` (contiene `backup-YYYYMMDDTHHMMSSZ.sql.gz.gpg`)
+3. Verificar integridad (descifrar GPG → comprobar gzip → inspeccionar):
+
+   ```bash
+   gpg --batch --decrypt --passphrase "$BACKUP_GPG_PASSPHRASE" \
+     "backup-YYYYMMDDTHHMMSSZ.sql.gz.gpg" > backup.sql.gz
+   gunzip -t backup.sql.gz && echo "gzip OK"
+   zcat backup.sql.gz | head -20   # cabecera + primeros INSERT
+   ```
 
 ---
 
@@ -69,18 +76,18 @@ Todos los datos críticos residen en Supabase. Vercel y Render son stateless y s
 
 4. **Opción B — Restaurar desde backup externo:**
 
+   El backup es **lógico** (`scripts/ci-backup.py`): SQL plano con `INSERT ... ON CONFLICT DO NOTHING` envuelto en `SET session_replication_role = replica`. **No contiene el esquema** → la base destino debe tener las migraciones aplicadas primero (`supabase db push` vía CI). El `ON CONFLICT DO NOTHING` no sobrescribe filas existentes: para una restauración limpia, `TRUNCATE` las tablas afectadas antes (respetando el orden de FKs) o restaura sobre una base vacía con el esquema ya migrado.
+
    ```bash
-   # Descargar backup de GitHub Artifacts o S3
-   # Conectar a la instancia Supabase
-   pg_restore \
-     --host="<SUPABASE_DB_HOST>" \
-     --port=5432 \
-     --username=postgres \
-     --dbname=postgres \
-     --clean \
-     --if-exists \
-     --no-owner \
-     "backup-YYYYMMDDTHHMMSSZ.pgdump"
+   # Descargar backup de GitHub Artifacts o S3 → backup-YYYYMMDDTHHMMSSZ.sql.gz.gpg
+
+   # 1) Descifrar (GPG simétrico AES256, passphrase = secret BACKUP_GPG_PASSPHRASE)
+   gpg --batch --decrypt --passphrase "$BACKUP_GPG_PASSPHRASE" \
+     "backup-YYYYMMDDTHHMMSSZ.sql.gz.gpg" > "backup-YYYYMMDDTHHMMSSZ.sql.gz"
+
+   # 2) Descomprimir + cargar vía psql (NO pg_restore — es SQL plano, no -Fc)
+   gunzip -c "backup-YYYYMMDDTHHMMSSZ.sql.gz" \
+     | psql "postgresql://postgres:<PASSWORD>@<SUPABASE_DB_HOST>:5432/postgres"
    ```
 
 5. **Verificar integridad post-restauración:**
@@ -120,7 +127,7 @@ Todos los datos críticos residen en Supabase. Vercel y Render son stateless y s
 
 ### Escenario 3 — Caída de socket-server (Render.com)
 
-**Síntomas:** Chat y notificaciones en tiempo real no funcionan; pedidos y KDS siguen operando (degraded mode).
+**Síntomas:** Las notificaciones en tiempo real no funcionan; pedidos y KDS siguen operando (degraded mode).
 
 **Pasos:**
 
@@ -151,8 +158,7 @@ Todos los datos críticos residen en Supabase. Vercel y Render son stateless y s
 - [ ] Triggers de `audit_log` y `domain_events` activos
 - [ ] `fn_descontar_insumo_fefo` existe y es funcional
 - [ ] Auth funciona para al menos un usuario de cada rol
-- [ ] Socket.io conecta y el chat envía/recibe mensajes
-- [ ] Feature flags cargados correctamente
+- [ ] Socket.io conecta y emite/recibe eventos (PEDIDO_ESTADO, ITEM_ESTADO, ALERTA_NUEVA)
 - [ ] Heartbeat de Better Stack reporta verde
 - [ ] Sentry no reporta errores nuevos en los primeros 30 min
 
