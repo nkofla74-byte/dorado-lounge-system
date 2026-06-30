@@ -19,7 +19,6 @@
     "proveedores": "Suppliers",
     "alertas": "Alerts",
     "trazabilidad": "Traceability",
-    "featureFlags": "Feature Flags",
     "tenants": "Tenants",
     "plataforma": "Platform",
     "cerrarSesion": "Sign out"
@@ -33,7 +32,6 @@
     "mesero_amex": "AMEX Waiter",
     "personal_snack": "Snack Staff",
     "personal_buffet": "Buffet Staff",
-    "recepcion": "Reception",
     "personal_almacen": "Warehouse Staff",
     "personal_pasteleria": "Pastry Staff",
     "steward": "Steward"
@@ -54,21 +52,7 @@
       "reject": "Reject",
       "dialogLabel": "Privacy notice"
     },
-    "usuarioFallback": "User",
-    "chatTitulo": {
-      "chef_cocina_fria": "Cold Kitchen",
-      "chef_cocina_caliente": "Hot Kitchen",
-      "sous_chef": "Amex Kitchen",
-      "admin": "Admin",
-      "mesero_amex": "Amex Floor",
-      "recepcion": "Amex Floor",
-      "personal_snack": "Snack",
-      "personal_buffet": "Buffet",
-      "personal_pasteleria": "Production",
-      "steward": "Production",
-      "personal_almacen": "Warehouse",
-      "default": "Chat"
-    }
+    "usuarioFallback": "User"
   },
   "alertas": {
     "title": "Alerts",
@@ -94,6 +78,13 @@
     "metaTitle": "Inventory — Dorado Lounge",
     "pageTitle": "Inventory",
     "pageSubtitle": "Items and current stock by layer",
+    "unifiedTitle": "Warehouse & Inventory",
+    "unifiedSubtitle": "Item catalog and warehouse operations",
+    "tabs": {
+      "inventario": "Inventory",
+      "almacen": "Warehouse",
+      "ariaLabel": "Warehouse and inventory view"
+    },
     "count": "{n, plural, =1 {1 item} other {# items}}",
     "refresh": "Refresh",
     "bulkImport": {
@@ -444,57 +435,6 @@
       "title": "Tenants management",
       "subtitle": "Create and manage platform tenants",
       "errorCarga": "Failed to load tenants: {message}"
-    },
-    "permisos": {
-      "metaTitle": "Permissions — Dorado Lounge",
-      "pageTitle": "Permissions matrix",
-      "pageSubtitleA": "Permissions per role — read only. ",
-      "pageSubtitleB": " has full access (bypasses the matrix). Changes require editing ",
-      "superuser": "Superuser",
-      "permitido": "Allowed",
-      "sinAcceso": "No access",
-      "superuserAccesoTotal": "Superuser: full access (not listed)",
-      "colPermiso": "Permission",
-      "grupos": {
-        "Inventario": "Inventory",
-        "Recetas": "Recipes",
-        "Producción": "Production",
-        "Pedidos": "Orders",
-        "Buffet": "Buffet",
-        "Snack": "Snack",
-        "Analytics": "Analytics",
-        "Afluencia": "Footfall",
-        "Turnos": "Shifts",
-        "Usuarios y Tenants": "Users & Tenants",
-        "Chat": "Chat",
-        "Auditoría": "Audit",
-        "Feature Flags": "Feature Flags"
-      }
-    },
-    "audit": {
-      "metaTitle": "Audit — Dorado Lounge",
-      "pageTitle": "Audit log",
-      "pageSubtitle": "Immutable record of all operations with SHA-256 hash chain. Click a row to see the full payload.",
-      "filtroAccion": "Filter by action…",
-      "todosLosTipos": "All types",
-      "aplicar": "Apply",
-      "cadenaOk": "Integrity chain verified — {n} entries on screen",
-      "cadenaError": "Warning: a break was detected in the hash chain",
-      "registrosCount": "{n} records",
-      "registrosCountMore": "{n} of {total}+ records",
-      "colFecha": "Date",
-      "colTenant": "Lounge",
-      "colAccion": "Action",
-      "colTipo": "Type",
-      "colUsuario": "User",
-      "colHash": "Hash",
-      "sinRegistros": "No audit records",
-      "cargarMas": "Load more records",
-      "labelPayload": "Payload",
-      "labelIntegridad": "Integrity",
-      "labelIp": "IP",
-      "labelResourceId": "Resource ID",
-      "tenantGlobal": "global"
     }
   },
   "proveedores": {
@@ -1068,8 +1008,7 @@
     "errorOrder": "Could not submit order. Please try again.",
     "portions": "{n} portion | {n} portions",
     "qrInvalido": "Invalid QR",
-    "qrInvalidoHint": "Scan your table's QR code to continue.",
-    "cambiarIdiomaAria": "Change language"
+    "qrInvalidoHint": "Scan your table's QR code to continue."
   },
   "trazabilidad": {
     "metaTitle": "Traceability — Dorado Lounge",

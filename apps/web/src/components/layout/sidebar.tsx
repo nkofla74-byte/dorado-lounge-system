@@ -49,7 +49,9 @@ interface SidebarProps {
 // Al agregar/modificar roles, mantener sincronizado con ROLE_ALLOWED_PREFIXES.
 // `labelKey` referencia messages/<locale>.json → nav.<labelKey>
 const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: UserRole[] }[] = [
-  { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['admin', 'personal_almacen'] },
+  // /almacen es la pantalla dedicada del almacenero. Admin accede a la misma
+  // operación de bodega desde la tab "Almacén" del hub /inventario.
+  { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['personal_almacen'] },
   {
     href: '/inventario',
     labelKey: 'inventario',

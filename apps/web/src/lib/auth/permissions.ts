@@ -111,27 +111,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'users:write': ['admin'],
   'tenants:read': [], // solo superuser — manejado por el bypass en assertCan
   'tenants:write': [], // solo superuser — manejado por el bypass en assertCan
-  // Chat inter-zona
-  'chat:read': [
-    'admin',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'mesero_amex',
-    'personal_almacen',
-    'personal_pasteleria',
-    'steward',
-  ],
-  'chat:write': [
-    'admin',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'mesero_amex',
-    'personal_almacen',
-    'personal_pasteleria',
-    'steward',
-  ],
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],

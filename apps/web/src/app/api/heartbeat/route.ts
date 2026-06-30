@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Vercel Cron: corre cada 5 minutos (configurado en vercel.json).
@@ -17,9 +18,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'SERVER_MISCONFIGURED' }, { status: 500 });
   }
 
-  // Vercel Cron envía el header Authorization con el secret configurado
+  // Vercel Cron envía el header Authorization con el secret configurado.
+  // Comparación en tiempo constante (timing-safe) — igual que /api/cron/check-alertas.
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const expectedToken = `Bearer ${cronSecret}`;
+  if (
+    !authHeader ||
+    authHeader.length !== expectedToken.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedToken))
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

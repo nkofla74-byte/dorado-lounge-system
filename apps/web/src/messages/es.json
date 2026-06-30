@@ -19,7 +19,6 @@
     "proveedores": "Proveedores",
     "alertas": "Alertas",
     "trazabilidad": "Trazabilidad",
-    "featureFlags": "Feature Flags",
     "tenants": "Tenants",
     "plataforma": "Plataforma",
     "cerrarSesion": "Cerrar sesión"
@@ -33,7 +32,6 @@
     "mesero_amex": "Mesero Amex",
     "personal_snack": "Personal Snack",
     "personal_buffet": "Personal Buffet",
-    "recepcion": "Recepción",
     "personal_almacen": "Personal Almacén",
     "personal_pasteleria": "Personal Pastelería",
     "steward": "Steward"
@@ -54,21 +52,7 @@
       "reject": "Rechazar",
       "dialogLabel": "Aviso de privacidad"
     },
-    "usuarioFallback": "Usuario",
-    "chatTitulo": {
-      "chef_cocina_fria": "Cocina Fría",
-      "chef_cocina_caliente": "Cocina Caliente",
-      "sous_chef": "Cocina Amex",
-      "admin": "Admin",
-      "mesero_amex": "Sala Amex",
-      "recepcion": "Sala Amex",
-      "personal_snack": "Snack",
-      "personal_buffet": "Buffet",
-      "personal_pasteleria": "Producción",
-      "steward": "Producción",
-      "personal_almacen": "Almacén",
-      "default": "Chat"
-    }
+    "usuarioFallback": "Usuario"
   },
   "alertas": {
     "title": "Alertas",
@@ -94,6 +78,13 @@
     "metaTitle": "Inventario — Dorado Lounge",
     "pageTitle": "Inventario",
     "pageSubtitle": "Insumos y stock actual por capa",
+    "unifiedTitle": "Almacén e Inventario",
+    "unifiedSubtitle": "Catálogo de insumos y operación de bodega",
+    "tabs": {
+      "inventario": "Inventario",
+      "almacen": "Almacén",
+      "ariaLabel": "Vista de almacén e inventario"
+    },
     "count": "{n, plural, =1 {1 insumo} other {# insumos}}",
     "refresh": "Actualizar",
     "bulkImport": {
@@ -503,57 +494,6 @@
       "title": "Gestión de tenants",
       "subtitle": "Crea y administra los tenants de la plataforma",
       "errorCarga": "Error al cargar tenants: {message}"
-    },
-    "permisos": {
-      "metaTitle": "Permisos — Dorado Lounge",
-      "pageTitle": "Matriz de permisos",
-      "pageSubtitleA": "Permisos por rol — solo lectura. ",
-      "pageSubtitleB": " tiene acceso total (bypass de la matriz). Los cambios requieren modificar ",
-      "superuser": "Superuser",
-      "permitido": "Permitido",
-      "sinAcceso": "Sin acceso",
-      "superuserAccesoTotal": "Superuser: acceso total (no listado)",
-      "colPermiso": "Permiso",
-      "grupos": {
-        "Inventario": "Inventario",
-        "Recetas": "Recetas",
-        "Producción": "Producción",
-        "Pedidos": "Pedidos",
-        "Buffet": "Buffet",
-        "Snack": "Snack",
-        "Analytics": "Analytics",
-        "Afluencia": "Afluencia",
-        "Turnos": "Turnos",
-        "Usuarios y Tenants": "Usuarios y Tenants",
-        "Chat": "Chat",
-        "Auditoría": "Auditoría",
-        "Feature Flags": "Feature Flags"
-      }
-    },
-    "audit": {
-      "metaTitle": "Auditoría — Dorado Lounge",
-      "pageTitle": "Auditoría",
-      "pageSubtitle": "Registro inmutable de todas las operaciones con hash chain SHA-256. Haz clic en una fila para ver el payload completo.",
-      "filtroAccion": "Filtrar por acción…",
-      "todosLosTipos": "Todos los tipos",
-      "aplicar": "Aplicar",
-      "cadenaOk": "Cadena de integridad verificada — {n} entradas en pantalla",
-      "cadenaError": "Advertencia: se detectó una ruptura en la cadena de hashes",
-      "registrosCount": "{n} registros",
-      "registrosCountMore": "{n} de {total}+ registros",
-      "colFecha": "Fecha",
-      "colTenant": "Sala",
-      "colAccion": "Acción",
-      "colTipo": "Tipo",
-      "colUsuario": "Usuario",
-      "colHash": "Hash",
-      "sinRegistros": "Sin registros de auditoría",
-      "cargarMas": "Cargar más registros",
-      "labelPayload": "Payload",
-      "labelIntegridad": "Integridad",
-      "labelIp": "IP",
-      "labelResourceId": "Resource ID",
-      "tenantGlobal": "global"
     }
   },
   "proveedores": {
@@ -1068,8 +1008,7 @@
     "errorOrder": "No se pudo enviar el pedido. Inténtalo de nuevo.",
     "portions": "{n} porción | {n} porciones",
     "qrInvalido": "QR inválido",
-    "qrInvalidoHint": "Escanea el código QR de tu mesa para continuar.",
-    "cambiarIdiomaAria": "Cambiar idioma"
+    "qrInvalidoHint": "Escanea el código QR de tu mesa para continuar."
   },
   "trazabilidad": {
     "metaTitle": "Trazabilidad — Dorado Lounge",
