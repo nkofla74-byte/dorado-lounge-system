@@ -43,7 +43,7 @@ describe('canAccess', () => {
   });
 
   it('no confunde prefijos parciales (/co no da acceso a /cocina)', () => {
-    expect(canAccess('chef', '/cocinaX')).toBe(false);
+    expect(canAccess('chef_cocina_fria', '/cocina-friaX')).toBe(false);
     expect(canAccess('mesero_amex', '/pedidosX')).toBe(false);
   });
 });
@@ -52,7 +52,7 @@ describe('getRoleHome', () => {
   it('devuelve la ruta correcta para cada rol', () => {
     expect(getRoleHome('mesero_amex')).toBe('/pedidos');
     expect(getRoleHome('admin')).toBe('/inventario');
-    expect(getRoleHome('chef')).toBe('/cocina');
+    expect(getRoleHome('chef_cocina_fria')).toBe('/cocina-fria');
     expect(getRoleHome('sous_chef')).toBe('/cocina-amex');
   });
 
@@ -78,8 +78,8 @@ describe('getSafeNext', () => {
   });
 
   it('acepta null/undefined devolviendo el home del rol', () => {
-    expect(getSafeNext(null, 'chef')).toBe('/cocina');
-    expect(getSafeNext(undefined, 'chef')).toBe('/cocina');
+    expect(getSafeNext(null, 'chef_cocina_fria')).toBe('/cocina-fria');
+    expect(getSafeNext(undefined, 'chef_cocina_fria')).toBe('/cocina-fria');
   });
 });
 

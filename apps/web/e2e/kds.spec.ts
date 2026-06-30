@@ -1,29 +1,28 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
-// Usa la sesión de chef autenticada en auth.setup.ts
-test.use({ storageState: path.join(__dirname, '.auth/chef.json') });
+// Usa la sesión de cocina_caliente autenticada en auth.setup.ts
+test.use({ storageState: path.join(__dirname, '.auth/cocina-caliente.json') });
 
 test.describe('KDS — Kitchen Display System', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/cocina');
-    // Espera a que cargue la vista supervisora (KDS caliente + fría)
-    await expect(page.getByText('Cocina — KDS general')).toBeVisible();
+    await page.goto('/cocina-caliente');
+    // Espera a que cargue el tablero del área caliente
+    await expect(page.getByText('Cocina Caliente — KDS')).toBeVisible();
   });
 
-  test('muestra ambos tableros de área con sus tres columnas', async ({ page }) => {
+  test('muestra el tablero del área con sus tres columnas', async ({ page }) => {
     await expect(page.getByText('Cocina Caliente — KDS')).toBeVisible();
-    await expect(page.getByText('Cocina Fría — KDS')).toBeVisible();
-    // Dos boards → cada texto de columna aparece dos veces
-    await expect(page.getByText('Nuevos')).toHaveCount(2);
-    await expect(page.getByText('En preparación')).toHaveCount(2);
-    await expect(page.getByText('Despachados')).toHaveCount(2);
+    // Un solo board → cada texto de columna aparece una vez
+    await expect(page.getByText('Nuevos')).toHaveCount(1);
+    await expect(page.getByText('En preparación')).toHaveCount(1);
+    await expect(page.getByText('Despachados')).toHaveCount(1);
   });
 
   test('el botón Actualizar refresca el tablero sin error', async ({ page }) => {
     await page.getByRole('button', { name: 'Actualizar' }).first().click();
     // No debe aparecer error ni crash
-    await expect(page.getByText('Cocina — KDS general')).toBeVisible();
+    await expect(page.getByText('Cocina Caliente — KDS')).toBeVisible();
   });
 
   test('flujo completo de pedido: Nuevos → En preparación → Despachado', async ({ page }) => {
@@ -32,7 +31,7 @@ test.describe('KDS — Kitchen Display System', () => {
     await expect(page).toHaveURL(/\/pedidos/);
 
     // Vuelve al KDS y verifica que el pedido aparece en "Nuevos"
-    await page.goto('/cocina');
+    await page.goto('/cocina-caliente');
     await expect(page.getByText('Nuevos').first()).toBeVisible();
 
     // Si hay al menos un pedido en "Nuevos", lo mueve a en_preparacion

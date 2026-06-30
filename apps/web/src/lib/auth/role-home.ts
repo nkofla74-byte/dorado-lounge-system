@@ -3,7 +3,6 @@ import type { UserRole } from '@dorado/shared-types';
 export const ROLE_HOME: Record<UserRole, string> = {
   superuser: '/admin/tenants',
   admin: '/inventario',
-  chef: '/cocina',
   chef_cocina_fria: '/cocina-fria',
   chef_cocina_caliente: '/cocina-caliente',
   sous_chef: '/cocina-amex',
@@ -34,15 +33,6 @@ export const ROLE_ALLOWED_PREFIXES: Record<UserRole, string[]> = {
     '/cocina-amex',
     '/analytics',
     '/admin',
-  ],
-  chef: [
-    '/cocina',
-    '/cocina-fria',
-    '/cocina-caliente',
-    '/produccion',
-    '/pedidos',
-    '/inventario',
-    '/recetas',
   ],
   chef_cocina_fria: ['/cocina-fria', '/produccion', '/inventario', '/recetas'],
   chef_cocina_caliente: ['/cocina-caliente', '/produccion', '/inventario', '/recetas'],

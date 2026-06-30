@@ -1,5 +1,5 @@
 /**
- * READ-ONLY: valida el set canónico de 12 test users contra Supabase.
+ * READ-ONLY: valida el set canónico de 11 test users contra Supabase.
  * No muta nada (lista auth/public.users + prueba sign-in con anon key).
  *
  *   node --env-file=apps/web/.env.local scripts/validate-test-users.mjs
@@ -27,15 +27,14 @@ const TENANT_SLUG = 'dorado-lounge';
 const EXPECTED = [
   ['superuser@gisat.com', 'superuser'],
   ['admin@gisat.com', 'admin'],
-  ['chef@dorado.test', 'chef'],
-  ['cocinafria@dorado.test', 'chef_cocina_fria'],
-  ['cocinacaliente@dorado.test', 'chef_cocina_caliente'],
-  ['soushef@dorado.test', 'sous_chef'],
-  ['mesero@dorado.test', 'mesero_amex'],
+  ['cocina.fria@dorado.test', 'chef_cocina_fria'],
+  ['cocina.caliente@dorado.test', 'chef_cocina_caliente'],
+  ['cocina.amex@dorado.test', 'sous_chef'],
+  ['mesero.amex@dorado.test', 'mesero_amex'],
   ['almacen@dorado.test', 'personal_almacen'],
   ['pasteleria@dorado.test', 'personal_pasteleria'],
-  ['snack@dorado.test', 'personal_snack'],
-  ['buffet@dorado.test', 'personal_buffet'],
+  ['zona.snack@dorado.test', 'personal_snack'],
+  ['zona.buffet@dorado.test', 'personal_buffet'],
   ['steward@dorado.test', 'steward'],
 ];
 
@@ -111,7 +110,7 @@ async function main() {
   console.log(
     '\n' +
       (allOk
-        ? '✅ TODOS los 12 canónicos OK (auth+meta+public+login)'
+        ? `✅ TODOS los ${EXPECTED.length} canónicos OK (auth+meta+public+login)`
         : '❌ Hay discrepancias — revisar arriba'),
   );
   process.exit(allOk ? 0 : 2);

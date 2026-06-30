@@ -25,17 +25,10 @@ import { CrearUsuarioDialog } from './crear-usuario-dialog';
 import { toggleUser, cambiarRolUsuario } from '@/modules/superuser/actions';
 import type { TenantUser } from '@/modules/superuser/domain/superuser';
 
-type RoleKey =
-  | 'admin'
-  | 'chef'
-  | 'chef_cocina_fria'
-  | 'chef_cocina_caliente'
-  | 'sous_chef'
-  | 'mesero_amex';
+type RoleKey = 'admin' | 'chef_cocina_fria' | 'chef_cocina_caliente' | 'sous_chef' | 'mesero_amex';
 
 const ASSIGNABLE_ROLES: RoleKey[] = [
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',

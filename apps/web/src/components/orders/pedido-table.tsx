@@ -25,8 +25,8 @@ import type { PedidoWithItems, Pedido, EstadoPedido } from '@/modules/orders/dom
 import type { UserRole } from '@dorado/shared-types';
 
 const MESERO_ROLES = new Set<UserRole>(['superuser', 'admin', 'mesero_amex']);
-const RECIBIR_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
-const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'chef', 'sous_chef', 'mesero_amex']);
+const RECIBIR_ROLES = new Set<UserRole>(['superuser', 'admin', 'sous_chef', 'mesero_amex']);
+const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'sous_chef', 'mesero_amex']);
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   const t = useTranslations('pedidos');

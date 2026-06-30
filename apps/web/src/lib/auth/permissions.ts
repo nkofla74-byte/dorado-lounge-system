@@ -7,7 +7,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Inventario
   'inventory:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -15,13 +14,12 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
     'personal_pasteleria',
     'steward',
   ],
-  'inventory:write': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
-  'inventory:stock_out': ['admin', 'chef', 'sous_chef'],
-  'inventory:merma': ['admin', 'chef', 'sous_chef', 'personal_almacen'],
+  'inventory:write': ['admin', 'sous_chef', 'personal_almacen'],
+  'inventory:stock_out': ['admin', 'sous_chef'],
+  'inventory:merma': ['admin', 'sous_chef', 'personal_almacen'],
   // Recetas
   'recipes:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -34,7 +32,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Producción
   'production:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -45,7 +42,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'production:write': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -55,7 +51,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Pedidos
   'orders:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -67,18 +62,16 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'orders:create': ['admin', 'mesero_amex', 'personal_snack', 'personal_buffet'],
   'orders:receive': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
     'mesero_amex',
   ],
-  'orders:dispatch': ['admin', 'chef', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef'],
+  'orders:dispatch': ['admin', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef'],
   'orders:deliver': ['admin', 'mesero_amex', 'personal_snack', 'personal_buffet'],
   'orders:trace': ['admin'], // panel de trazabilidad — solo admin
   'orders:cancel': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -91,7 +84,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Turnos
   'turnos:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -104,7 +96,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'turnos:write': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -120,39 +111,15 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'users:write': ['admin'],
   'tenants:read': [], // solo superuser — manejado por el bypass en assertCan
   'tenants:write': [], // solo superuser — manejado por el bypass en assertCan
-  // Chat inter-zona
-  'chat:read': [
-    'admin',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'mesero_amex',
-    'personal_almacen',
-    'personal_pasteleria',
-    'steward',
-  ],
-  'chat:write': [
-    'admin',
-    'chef',
-    'chef_cocina_fria',
-    'chef_cocina_caliente',
-    'sous_chef',
-    'mesero_amex',
-    'personal_almacen',
-    'personal_pasteleria',
-    'steward',
-  ],
   // Cocina AMEX — KDS exclusivo del sous_chef
   'cocina_amex:read': ['admin', 'sous_chef'],
   'cocina_amex:write': ['admin', 'sous_chef'],
-  // Cocina Fría — KDS de área. `chef` (jefe de cocina) supervisa ambas áreas
-  // desde /cocina — coherente con CHANNEL_ACL (sala:cocina:fria incluye chef).
-  'cocina_fria:read': ['admin', 'chef', 'chef_cocina_fria'],
-  'cocina_fria:write': ['admin', 'chef', 'chef_cocina_fria'],
+  // Cocina Fría — KDS de área
+  'cocina_fria:read': ['admin', 'chef_cocina_fria'],
+  'cocina_fria:write': ['admin', 'chef_cocina_fria'],
   // Cocina Caliente — KDS de área
-  'cocina_caliente:read': ['admin', 'chef', 'chef_cocina_caliente'],
-  'cocina_caliente:write': ['admin', 'chef', 'chef_cocina_caliente'],
+  'cocina_caliente:read': ['admin', 'chef_cocina_caliente'],
+  'cocina_caliente:write': ['admin', 'chef_cocina_caliente'],
   // Pastelería — KDS de pedidos (postres ruteados al área)
   'pasteleria:read': ['admin', 'personal_pasteleria'],
   'pasteleria:write': ['admin', 'personal_pasteleria'],
@@ -162,7 +129,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Alertas — motor de alertas in-app
   'alertas:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -172,7 +138,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   // Requisiciones cocina → almacén (Frente 2)
   'requisiciones:read': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -181,7 +146,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'requisiciones:create': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -190,7 +154,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   'requisiciones:despachar': ['admin', 'personal_almacen'],
   'requisiciones:confirmar': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -198,7 +161,6 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   'requisiciones:cancel': [
     'admin',
-    'chef',
     'chef_cocina_fria',
     'chef_cocina_caliente',
     'sous_chef',
@@ -218,7 +180,7 @@ export function zonaPermitidaParaRol(role: UserRole, zona: string): boolean {
   return zonaFija === undefined || zonaFija === zona;
 }
 
-// Mapea cada rol de cocina a su área productiva. Roles sin entrada (chef, admin)
+// Mapea cada rol de cocina a su área productiva. Roles sin entrada (admin)
 // no están atados — pueden operar requisiciones de cualquier área. Los turnos
 // rotan, por eso confirmar valida el ÁREA, no la identidad del solicitante.
 const ROLE_AREA: Partial<Record<UserRole, string>> = {

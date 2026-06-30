@@ -57,7 +57,7 @@ export function CrearPersonalDialog({ onSuccess }: Props) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { nombre: '', email: '', role: 'chef', password: '' },
+    defaultValues: { nombre: '', email: '', role: 'chef_cocina_caliente', password: '' },
   });
 
   const onSubmit = async (values: FormValues) => {

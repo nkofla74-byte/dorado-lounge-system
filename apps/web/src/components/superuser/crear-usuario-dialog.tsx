@@ -36,7 +36,6 @@ import type { CrearUsuarioInput } from '@dorado/shared-validation';
 
 type RoleKey =
   | 'admin'
-  | 'chef'
   | 'chef_cocina_fria'
   | 'chef_cocina_caliente'
   | 'sous_chef'
@@ -47,7 +46,6 @@ type RoleKey =
 
 const ASSIGNABLE_ROLES: RoleKey[] = [
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',

@@ -1,7 +1,7 @@
 /**
  * Reconcilia el set canónico de usuarios de prueba contra el estado actual de Supabase.
  *
- * Garantiza que existan exactamente estos 12 usuarios, todos con password Admin123,
+ * Garantiza que existan exactamente estos 11 usuarios, todos con password Admin123,
  * todos en el tenant operativo "dorado-lounge":
  *   - superuser@gisat.com (rol superuser — bypass total, prepara apertura a más tenants)
  *   - admin@gisat.com + 9 roles operativos
@@ -59,9 +59,15 @@ const PASSWORD = 'Admin123';
 
 const TENANT_OPERATIVO_SLUG = 'dorado-lounge';
 const LEGACY_TENANT_SLUGS = ['dorado-demo', 'plataforma']; // se borran si quedan vacíos
-const LEGACY_EMAILS = ['admin@dorado.test', 'pipe@gisat.com', 'recepcion@dorado.test']; // se borran si reaparecen
+// chef@dorado.test: el rol `chef` quedó deprecado (refoco operacional) — se borra si reaparece.
+const LEGACY_EMAILS = [
+  'admin@dorado.test',
+  'pipe@gisat.com',
+  'recepcion@dorado.test',
+  'chef@dorado.test',
+]; // se borran si reaparecen
 
-// Set de test: 12 usuarios, todos en el tenant operativo.
+// Set de test: 11 usuarios, todos en el tenant operativo.
 const TEST_USERS = [
   {
     email: 'superuser@gisat.com',
@@ -76,62 +82,56 @@ const TEST_USERS = [
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'chef@dorado.test',
-    nombre: 'Chef Principal',
-    role: 'chef',
-    tenantSlug: TENANT_OPERATIVO_SLUG,
-  },
-  {
-    email: 'cocinafria@dorado.test',
-    nombre: 'Chef Cocina Fría',
+    email: 'cocina.fria@dorado.test',
+    nombre: 'Cocina Fría',
     role: 'chef_cocina_fria',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'cocinacaliente@dorado.test',
-    nombre: 'Chef Cocina Caliente',
+    email: 'cocina.caliente@dorado.test',
+    nombre: 'Cocina Caliente',
     role: 'chef_cocina_caliente',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'soushef@dorado.test',
-    nombre: 'Sous Chef',
+    email: 'cocina.amex@dorado.test',
+    nombre: 'Cocina AMEX (Sous Chef)',
     role: 'sous_chef',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'mesero@dorado.test',
-    nombre: 'Mesero Amex',
+    email: 'mesero.amex@dorado.test',
+    nombre: 'Mesero AMEX',
     role: 'mesero_amex',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
     email: 'almacen@dorado.test',
-    nombre: 'Personal Almacén',
+    nombre: 'Almacén',
     role: 'personal_almacen',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
     email: 'pasteleria@dorado.test',
-    nombre: 'Personal Pastelería',
+    nombre: 'Pastelería',
     role: 'personal_pasteleria',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'snack@dorado.test',
-    nombre: 'Personal Snack',
+    email: 'zona.snack@dorado.test',
+    nombre: 'Zona Snack',
     role: 'personal_snack',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
-    email: 'buffet@dorado.test',
-    nombre: 'Personal Buffet',
+    email: 'zona.buffet@dorado.test',
+    nombre: 'Zona Buffet',
     role: 'personal_buffet',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },
   {
     email: 'steward@dorado.test',
-    nombre: 'Steward',
+    nombre: 'Steward (Utensilios)',
     role: 'steward',
     tenantSlug: TENANT_OPERATIVO_SLUG,
   },

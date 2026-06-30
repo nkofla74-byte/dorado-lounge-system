@@ -9,7 +9,6 @@ import type { UserRole } from '@dorado/shared-types';
 // alineado con el enum `UserRole` de @dorado/shared-types.
 export const ASSIGNABLE_ROLES = [
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',

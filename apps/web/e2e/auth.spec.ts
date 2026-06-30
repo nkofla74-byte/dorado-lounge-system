@@ -43,13 +43,13 @@ test.describe('Login', () => {
     await expect(page).toHaveURL(/\/inventario/);
   });
 
-  test('login chef redirige a /cocina', async ({ page }) => {
+  test('login cocina_caliente redirige a /cocina-caliente', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel('Correo electrónico').fill(process.env.E2E_CHEF_EMAIL!);
-    await page.getByLabel('Contraseña').fill(process.env.E2E_CHEF_PASSWORD!);
+    await page.getByLabel('Correo electrónico').fill(process.env.E2E_COCINA_CALIENTE_EMAIL!);
+    await page.getByLabel('Contraseña').fill(process.env.E2E_COCINA_CALIENTE_PASSWORD!);
     await page.getByRole('button', { name: 'Ingresar' }).click();
 
-    await expect(page).toHaveURL(/\/cocina/);
+    await expect(page).toHaveURL(/\/cocina-caliente/);
   });
 
   test('login mesero_amex redirige a /pedidos sin loop', async ({ page }) => {

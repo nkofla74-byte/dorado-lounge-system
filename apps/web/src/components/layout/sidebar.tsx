@@ -49,14 +49,15 @@ interface SidebarProps {
 // Al agregar/modificar roles, mantener sincronizado con ROLE_ALLOWED_PREFIXES.
 // `labelKey` referencia messages/<locale>.json → nav.<labelKey>
 const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: UserRole[] }[] = [
-  { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['admin', 'personal_almacen'] },
+  // /almacen es la pantalla dedicada del almacenero. Admin accede a la misma
+  // operación de bodega desde la tab "Almacén" del hub /inventario.
+  { href: '/almacen', labelKey: 'almacen', icon: Package, roles: ['personal_almacen'] },
   {
     href: '/inventario',
     labelKey: 'inventario',
     icon: Package,
     roles: [
       'admin',
-      'chef',
       'chef_cocina_fria',
       'chef_cocina_caliente',
       'sous_chef',
@@ -71,14 +72,12 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     icon: BookOpen,
     roles: [
       'admin',
-      'chef',
       'chef_cocina_fria',
       'chef_cocina_caliente',
       'sous_chef',
       'personal_pasteleria',
     ],
   },
-  { href: '/cocina', labelKey: 'cocina', icon: MonitorCheck, roles: ['chef'] },
   {
     href: '/cocina-fria',
     labelKey: 'cocinaFria',
@@ -103,7 +102,6 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     icon: ChefHat,
     roles: [
       'admin',
-      'chef',
       'chef_cocina_fria',
       'chef_cocina_caliente',
       'sous_chef',
@@ -121,14 +119,7 @@ const NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon; roles: User
     href: '/pedidos',
     labelKey: 'pedidos',
     icon: ClipboardList,
-    roles: [
-      'admin',
-      'chef',
-      'chef_cocina_fria',
-      'chef_cocina_caliente',
-      'sous_chef',
-      'mesero_amex',
-    ],
+    roles: ['admin', 'chef_cocina_fria', 'chef_cocina_caliente', 'sous_chef', 'mesero_amex'],
   },
   {
     href: '/snack',
@@ -173,7 +164,6 @@ const ICON_COLORS: Record<string, string> = {
   '/almacen': 'text-sky-400',
   '/inventario': 'text-sky-400',
   '/recetas': 'text-amber-400',
-  '/cocina': 'text-rose-400',
   '/cocina-fria': 'text-blue-400',
   '/cocina-caliente': 'text-orange-400',
   '/cocina-amex': 'text-violet-400',

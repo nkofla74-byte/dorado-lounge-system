@@ -98,6 +98,24 @@ describe('transiciones de ítem KDS (actions)', () => {
     expect(mocks.transitionItem).not.toHaveBeenCalled();
   });
 
+  it('rechaza recall de un ítem cuyo pedido ya fue despachado (no llega al trigger 23514)', async () => {
+    mocks.findItemForTransition.mockResolvedValue({
+      itemId: 'i1',
+      pedidoId: 'p1',
+      area: 'cocina_fria',
+      estado: 'listo',
+      pedidoEstado: 'despachado',
+      pedidoVersion: 5,
+      zona: 'snack',
+    });
+
+    const result = await recallItem('i1', 5);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('INVALID_TRANSITION');
+    expect(mocks.transitionItem).not.toHaveBeenCalled();
+  });
+
   it('pedido de zona snack despachado emite PEDIDO_ESTADO al canal sala:snack', async () => {
     mocks.findItemForTransition.mockResolvedValue({
       itemId: 'i9',

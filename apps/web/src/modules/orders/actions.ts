@@ -624,9 +624,15 @@ async function ejecutarTransicionItem(
       );
     }
     if (nuevoEstado === 'en_preparacion' && item.estado === 'listo') {
-      if (['entregado', 'cancelado'].includes(item.pedidoEstado)) {
+      // 'despachado' incluido: el recall empujaría el pedido despachado→en_preparacion,
+      // que el trigger SQL rechaza (23514). Bloquear aquí con un 400 limpio.
+      if (['despachado', 'entregado', 'cancelado'].includes(item.pedidoEstado)) {
         return err(
-          new AppError('INVALID_TRANSITION', 400, 'No se puede hacer recall de un pedido cerrado'),
+          new AppError(
+            'INVALID_TRANSITION',
+            400,
+            'No se puede hacer recall de un pedido ya despachado o cerrado',
+          ),
         );
       }
     }

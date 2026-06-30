@@ -20,7 +20,6 @@ export const paginationSchema = z.object({
 export const userRoleSchema = z.enum([
   'superuser',
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',

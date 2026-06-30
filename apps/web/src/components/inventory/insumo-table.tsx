@@ -41,11 +41,10 @@ import { MermaDialog } from './merma-dialog';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
 import type { UserRole } from '@dorado/shared-types';
 
-const WRITE_ROLES = new Set<UserRole | string>(['superuser', 'admin', 'chef', 'sous_chef']);
+const WRITE_ROLES = new Set<UserRole | string>(['superuser', 'admin', 'sous_chef']);
 const STOCK_OUT_ROLES = new Set<UserRole | string>([
   'superuser',
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',
@@ -53,7 +52,6 @@ const STOCK_OUT_ROLES = new Set<UserRole | string>([
 const MERMA_ROLES = new Set<UserRole | string>([
   'superuser',
   'admin',
-  'chef',
   'chef_cocina_fria',
   'chef_cocina_caliente',
   'sous_chef',
