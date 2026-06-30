@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,6 +10,7 @@ const CONSENT_KEY = 'dl_privacy_consent';
 
 export function HabeasDataBanner() {
   const t = useTranslations('layout.privacy');
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -32,6 +34,9 @@ export function HabeasDataBanner() {
     setVisible(false);
   };
 
+  // El aviso de habeas data es para el personal (tratamiento de datos laborales).
+  // Las rutas QR son self-service de pasajeros → no aplica.
+  if (pathname?.startsWith('/qr')) return null;
   if (!visible) return null;
 
   return (
