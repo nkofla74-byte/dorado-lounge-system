@@ -305,6 +305,22 @@ Métricas de consumo por turno, nodo y responsable. Solo lectura via `fn_costo_r
 
 ---
 
+## Diseño — stack Apple HIG
+
+`.claude/skills/` incorpora 10 skills de diseño. **`dorado-design-system` es la
+autoridad**: fija la precedencia entre las demás y traduce sus reglas nativas
+(SwiftUI, SF Symbols, UIKit) a este stack. Léela antes de tocar cualquier UI.
+
+Dos reglas que se rompen a menudo: **SF Symbols no puede embeberse en una web**
+—es una fuente con licencia de Apple; aquí se usa `lucide-react`— y en KDS y
+almacén el objetivo táctil mínimo es **56 px**, no los 44 pt del HIG, porque se
+opera con guantes.
+
+Precedencia: `CLAUDE.md` > `dorado-design-system` > skills `apple-*`. Detalle e
+instalación en `docs/skills/`.
+
+---
+
 ## Auditoría y remediación
 
 `docs/remediacion/` — informe de la auditoría forense 2026-08-22 y su remediación:
