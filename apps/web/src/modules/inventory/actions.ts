@@ -4,6 +4,7 @@ import { assertCan } from '@/lib/auth/assertCan';
 import { ok, err, toAppError, AppError } from '@/lib/result';
 import { auditLog } from '@/lib/audit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { checkStockMinimo, checkCambioPrecio } from '@/modules/alertas/infrastructure/checks';
 import { createInsumoRepository } from './infrastructure/insumo-repository';
 import { getInsumos as getInsumosUseCase } from './application/get-insumos';
@@ -25,6 +26,22 @@ import {
 } from '@dorado/shared-validation';
 import type { Result } from '@/lib/result';
 import type { InsumoWithStock, Insumo, Lote } from './domain/insumo';
+
+// Turno activo del usuario. Todo movimiento de inventario debe quedar vinculado
+// a él (CLAUDE.md §Turnos); antes no se propagaba y la analítica por turno
+// quedaba vacía (F-004).
+async function turnoActivoId(tenantId: string, userId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('turnos')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('responsable_id', userId)
+    .eq('activo', true)
+    .is('deleted_at', null)
+    .maybeSingle();
+  return (data?.id as string | undefined) ?? null;
+}
 
 export async function getInsumos(): Promise<Result<InsumoWithStock[]>> {
   try {
@@ -198,6 +215,7 @@ export async function stockOut(input: unknown): Promise<Result<void>> {
       p_referencia_id: null,
       p_referencia_tipo: 'stock_out',
       p_usuario_id: ctx.userId,
+      p_turno_id: await turnoActivoId(ctx.tenantId, ctx.userId),
     });
 
     if (rpcError) {
@@ -236,18 +254,19 @@ export async function registrarMerma(input: unknown): Promise<Result<void>> {
       return err(toAppError(new Error(parsed.error.errors[0]?.message ?? 'Datos inválidos')));
     }
 
-    const admin = createAdminClient();
-
-    // Deducir stock vía FEFO antes de registrar la merma
-    const { error: rpcError } = await admin.rpc('fn_descontar_insumo_fefo', {
-      p_tenant_id: ctx.tenantId,
+    // Descuento FEFO y registro de merma en UNA transacción (fn_registrar_merma).
+    // Antes eran dos pasos independientes: si el segundo fallaba, el stock
+    // quedaba descontado sin registro de merma y descuadraba la analítica
+    // (F-022). La RPC deriva tenant y usuario del JWT, así que se llama con el
+    // cliente de sesión, no con service_role.
+    const supabase = await createClient();
+    const { error: rpcError } = await supabase.rpc('fn_registrar_merma', {
       p_insumo_id: parsed.data.insumoId,
       p_cantidad: parsed.data.cantidad,
+      p_categoria: parsed.data.categoria,
+      p_descripcion: parsed.data.descripcion ?? null,
       p_idempotency_key: parsed.data.idempotencyKey,
-      p_tipo: 'merma',
-      p_referencia_id: null,
-      p_referencia_tipo: 'merma',
-      p_usuario_id: ctx.userId,
+      p_turno_id: await turnoActivoId(ctx.tenantId, ctx.userId),
     });
 
     if (rpcError) {
@@ -256,29 +275,11 @@ export async function registrarMerma(input: unknown): Promise<Result<void>> {
           new AppError('STOCK_INSUFICIENTE', 409, 'Stock insuficiente para registrar la merma'),
         );
       }
-      return err(new AppError('FEFO_ERROR', 500, 'Error al descontar stock. Intenta de nuevo.'));
-    }
-
-    const { error: mermaError } = await admin.from('mermas').upsert(
-      {
-        tenant_id: ctx.tenantId,
-        insumo_id: parsed.data.insumoId,
-        cantidad: parsed.data.cantidad,
-        categoria: parsed.data.categoria,
-        descripcion: parsed.data.descripcion ?? null,
-        registrado_por: ctx.userId,
-        idempotency_key: parsed.data.idempotencyKey,
-      },
-      { onConflict: 'idempotency_key', ignoreDuplicates: true },
-    );
-
-    if (mermaError) {
+      if (rpcError.code === '42501') {
+        return err(new AppError('FORBIDDEN', 403, 'No tienes permiso para registrar mermas'));
+      }
       return err(
-        new AppError(
-          'DB_ERROR',
-          500,
-          'Stock deducido pero el registro de merma falló. Contacta administración.',
-        ),
+        new AppError('MERMA_ERROR', 500, 'Error al registrar la merma. Intenta de nuevo.'),
       );
     }
 
@@ -351,6 +352,7 @@ export async function createLote(input: unknown): Promise<Result<Lote>> {
       tipo: 'entrada',
       cantidad: cantidadNeta,
       usuario_id: ctx.userId,
+      turno_id: await turnoActivoId(ctx.tenantId, ctx.userId),
     });
 
     await auditLog({
