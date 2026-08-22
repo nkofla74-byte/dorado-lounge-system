@@ -162,11 +162,20 @@ propiedad fija de la receta.
 
 ## Acciones de configuración pendientes (fuera del repositorio)
 
-Siguen sin hacerse. Las dos primeras son urgentes. Detalle en
-`SECURITY_CHANGES.md` §Pendiente de configuración.
+Detalle en `SECURITY_CHANGES.md` §Pendiente de configuración.
 
-1. Rotar `SUPABASE_SERVICE_ROLE_KEY`.
-2. Activar el CAPTCHA nativo de Supabase Auth.
-3. Deshabilitar el registro público en Supabase Auth.
-4. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
-5. Monitor HTTP contra `/health` en Better Stack.
+Pendientes:
+
+1. Rotar `SUPABASE_SERVICE_ROLE_KEY` (urgente).
+2. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
+3. Monitor HTTP contra `/health` en Better Stack.
+
+Hechas el 2026-08-22 por el dueño:
+
+- ✅ CAPTCHA nativo de Supabase Auth activado. Obligó a cambiar el login: el
+  token de Turnstile es de un solo uso, así que `iniciarSesion` dejó de
+  validarlo contra Cloudflare y lo reenvía a Supabase en
+  `options.captchaToken`. Sin ese cambio el login quedaba roto.
+  **Verificar en el dashboard que el proveedor sea Cloudflare Turnstile y que
+  el secreto sea el mismo `TURNSTILE_SECRET_KEY` del proyecto.**
+- ✅ Registro público deshabilitado.
