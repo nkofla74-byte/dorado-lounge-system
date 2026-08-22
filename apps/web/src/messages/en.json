@@ -826,7 +826,11 @@
     "iniciarItem": "Start",
     "marcarListo": "Ready",
     "recall": "Reopen",
-    "progresoArea": "{n}/{total} ready"
+    "progresoArea": "{n}/{total} ready",
+    "tiempoTranscurrido": "Elapsed time: {tiempo}",
+    "urgenciaCritica": "Delayed",
+    "urgenciaAviso": "Attention",
+    "otrasAreas": "Other areas"
   },
   "pedidos": {
     "estadoCreado": "Created",
