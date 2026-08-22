@@ -1123,5 +1123,14 @@
         "pasteleria": "Pastry"
       }
     }
+  },
+  "higValidacion": {
+    "mesa": "Table {numero}",
+    "tiempoTranscurrido": "{minutos} minutes elapsed",
+    "demora": "Delayed: over {umbral} minutes",
+    "avanzarItem": "Advance {nombre}, current state {estado}",
+    "pendiente": "pending",
+    "en_preparacion": "in preparation",
+    "listo": "ready"
   }
 }

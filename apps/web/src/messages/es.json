@@ -1123,5 +1123,14 @@
         "pasteleria": "Pastelería"
       }
     }
+  },
+  "higValidacion": {
+    "mesa": "Mesa {numero}",
+    "tiempoTranscurrido": "{minutos} minutos transcurridos",
+    "demora": "Demora: supera los {umbral} minutos",
+    "avanzarItem": "Avanzar {nombre}, estado actual {estado}",
+    "pendiente": "pendiente",
+    "en_preparacion": "en preparación",
+    "listo": "listo"
   }
 }
