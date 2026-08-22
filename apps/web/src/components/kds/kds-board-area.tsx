@@ -23,22 +23,22 @@ const COLUMNS: ColumnDef[] = [
     key: 'creado',
     labelKey: 'colNuevos',
     emptyKey: 'emptyNuevos',
-    headerClass: 'border-amber-500/40 bg-amber-500/5',
-    countClass: 'bg-amber-500 text-white',
+    headerClass: 'border-estado-pendiente/40 bg-estado-pendiente/5',
+    countClass: 'bg-estado-pendiente text-background',
   },
   {
     key: 'en_preparacion',
     labelKey: 'colEnPreparacion',
     emptyKey: 'emptyPreparacion',
-    headerClass: 'border-blue-500/40 bg-blue-500/5',
-    countClass: 'bg-blue-500 text-white',
+    headerClass: 'border-estado-preparacion/40 bg-estado-preparacion/5',
+    countClass: 'bg-estado-preparacion text-background',
   },
   {
     key: 'despachado',
     labelKey: 'colDespachados',
     emptyKey: 'emptyDespachados',
-    headerClass: 'border-emerald-500/40 bg-emerald-500/5',
-    countClass: 'bg-emerald-500 text-white',
+    headerClass: 'border-estado-listo/40 bg-estado-listo/5',
+    countClass: 'bg-estado-listo text-background',
   },
 ];
 
@@ -133,17 +133,17 @@ export function KdsBoardArea({
       <div className="flex items-center justify-between">
         <div>
           {embedded ? (
-            <h2 className="text-base font-semibold">{titulo}</h2>
+            <h2 className="text-title font-semibold">{titulo}</h2>
           ) : (
-            <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+            <h1 className="text-display font-semibold tracking-tight">{titulo}</h1>
           )}
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-body text-muted-foreground mt-1">
             {pedidos.length === 0 ? subtitulo : t('pedidosActivos', { n: pedidos.length })}
           </p>
         </div>
         <button
           onClick={refresh}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="min-h-14 rounded-lg px-4 text-body text-muted-foreground transition-colors duration-200 ease-smooth hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t('actualizar')}
         </button>
@@ -158,15 +158,17 @@ export function KdsBoardArea({
               <div
                 className={`flex items-center justify-between px-3 py-2 rounded-lg border ${col.headerClass}`}
               >
-                <span className="font-medium text-sm">{t(col.labelKey)}</span>
-                <span className={`text-xs font-bold rounded-full px-2 py-0.5 ${col.countClass}`}>
+                <span className="label-seccion">{t(col.labelKey)}</span>
+                <span
+                  className={`text-caption font-semibold rounded-full px-2.5 py-0.5 tabular-nums ${col.countClass}`}
+                >
                   {items.length}
                 </span>
               </div>
 
               <div className="space-y-3 min-h-[120px]">
                 {items.length === 0 ? (
-                  <div className="flex items-center justify-center h-24 rounded-lg border border-dashed text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center h-24 rounded-lg border border-dashed text-body text-muted-foreground">
                     {t(col.emptyKey)}
                   </div>
                 ) : (
