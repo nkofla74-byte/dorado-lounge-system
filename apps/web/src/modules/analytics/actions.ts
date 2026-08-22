@@ -24,7 +24,7 @@ export async function fetchConsumoVsProduccion(
 
 export async function refreshAnalytics(): Promise<Result<void>> {
   try {
-    await assertCan('analytics:read');
+    await assertCan('analytics:refresh');
     const admin = createAdminClient();
     const { error } = await admin.rpc('refresh_analytics_views');
     if (error) {

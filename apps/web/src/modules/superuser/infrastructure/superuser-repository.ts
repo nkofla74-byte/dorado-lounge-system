@@ -144,6 +144,14 @@ class SupabaseSuperuserRepository implements SuperuserRepository {
       .single();
     if (error) throw new Error(error.message);
 
+    // Desactivar solo la fila de perfil no revocaba nada: el usuario conservaba
+    // su sesión y su refresh token seguía renovando indefinidamente (F-003).
+    // El baneo en auth corta la renovación; assertCan corta la sesión en curso.
+    const { error: banError } = await admin.auth.admin.updateUserById(userId, {
+      ban_duration: activo ? 'none' : '876000h', // ~100 años
+    });
+    if (banError) throw new Error(banError.message);
+
     const { data: authData } = await admin.auth.admin.getUserById(userId);
     return mapUser(data, authData?.user?.email ?? '');
   }

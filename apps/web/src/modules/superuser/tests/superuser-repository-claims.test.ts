@@ -100,3 +100,32 @@ describe('superuser-repository.updateUserRole — propagación de claims', () =>
     });
   });
 });
+
+describe('superuser-repository.toggleUser — revocación de acceso (F-003)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.updateSingle.mockResolvedValue({ data: USER_ROW, error: null });
+    mocks.updateUserById.mockResolvedValue({ data: null, error: null });
+    mocks.getUserById.mockResolvedValue({ data: { user: { email: 'chef@dorado.test' } } });
+  });
+
+  it('banea en auth al desactivar, para cortar la renovación del refresh token', async () => {
+    await createSuperuserRepository().toggleUser('u-1', false);
+
+    expect(mocks.updateUserById).toHaveBeenCalledWith('u-1', { ban_duration: '876000h' });
+  });
+
+  it('levanta el baneo al reactivar', async () => {
+    await createSuperuserRepository().toggleUser('u-1', true);
+
+    expect(mocks.updateUserById).toHaveBeenCalledWith('u-1', { ban_duration: 'none' });
+  });
+
+  it('falla si el baneo no se pudo aplicar, en lugar de dar por buena la baja', async () => {
+    mocks.updateUserById.mockResolvedValue({ data: null, error: { message: 'auth caído' } });
+
+    await expect(createSuperuserRepository().toggleUser('u-1', false)).rejects.toThrow(
+      'auth caído',
+    );
+  });
+});

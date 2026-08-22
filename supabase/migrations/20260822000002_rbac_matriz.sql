@@ -117,6 +117,7 @@ INSERT INTO public.rbac_permisos (permiso, role) VALUES
   ('alertas:read', 'sous_chef'),
   ('alertas:write', 'admin'),
   ('analytics:read', 'admin'),
+  ('analytics:refresh', 'admin'),
   ('cocina_amex:read', 'admin'),
   ('cocina_amex:read', 'sous_chef'),
   ('cocina_amex:write', 'admin'),
