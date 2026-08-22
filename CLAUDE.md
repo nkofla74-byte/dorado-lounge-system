@@ -12,8 +12,10 @@ Referencia técnica: `ARCHITECTURE.md` (ADRs, ER, algoritmos) · `docs/analisis-
 
 ```bash
 pnpm dev                              # web + socket-server en paralelo
-pnpm lint && pnpm typecheck           # obligatorio antes de commit
+pnpm lint && pnpm typecheck           # obligatorio antes de commit (lo aplica el hook)
 pnpm test                             # vitest (todos los paquetes)
+pnpm rbac:generate                    # regenera la matriz RBAC en SQL desde permissions.ts
+./scripts/sql-harness/run-tests.sh    # pruebas de RLS/RPC contra un Postgres efímero
 pnpm --filter apps/web test:e2e       # playwright
 pnpm --filter apps/web tsc --noEmit   # type-check sin build
 pnpm run reset:test-users             # reconcilia el set canónico de test users (idempotente)
@@ -168,7 +170,22 @@ Antes de crear una tabla: verificar la lista y el ER en `ARCHITECTURE.md §8`.
 
 `domain_events` y `audit_log` tienen triggers que bloquean UPDATE/DELETE. `audit_log` tiene hash chain SHA-256 — no mutarlas desde código.
 
-**Pedidos — optimistic locking:** siempre `.eq('version', pedido.version)`. Transición AMEX completa: `creado → recibido_cocina → en_preparacion → despachado → entregado`. Estado por ítem: `pendiente → en_preparacion → listo` (con recall posible).
+**Pedidos — escritura SOLO por RPC.** Desde la remediación 2026-08-22, `authenticated` no tiene INSERT ni UPDATE sobre `pedidos`, `pedido_items`, `pedido_eventos` ni `pedido_item_eventos`. Toda mutación pasa por RPCs `SECURITY DEFINER` que derivan tenant, rol y usuario de `auth.jwt()` —nunca de parámetros—, autorizan contra `rbac_permisos` y trabajan en una transacción con `FOR UPDATE`:
+
+| RPC                          | Uso                                                |
+| ---------------------------- | -------------------------------------------------- |
+| `fn_crear_pedido`            | Alta interna (exige `orders:create`)               |
+| `fn_crear_pedido_qr`         | Alta desde el QR de pasajero (solo `service_role`) |
+| `fn_pedido_transicion`       | Transiciones que no mueven inventario              |
+| `fn_entregar_pedido`         | Entrega: descuento FEFO + transición, atómico      |
+| `fn_pedido_asignar_cocinero` | Asignación de responsable                          |
+| `fn_transicionar_item`       | Estado por ítem + estado agregado del pedido       |
+
+Transición AMEX completa: `creado → recibido_cocina → en_preparacion → despachado → entregado`. Estado por ítem: `pendiente → en_preparacion → listo` (con recall posible). El optimistic locking por `version` lo aplica la RPC, no el cliente.
+
+**Autorización en dos capas.** `assertCan()` en la Server Action y `fn_puede()` en Postgres. La tabla `rbac_permisos` se **genera** desde `lib/auth/permissions.ts` con `pnpm rbac:generate`; una prueba de vitest falla si alguien cambia una sin regenerar la otra. Nunca escribir listas de roles a mano dentro de una política RLS.
+
+**Sin borrado físico.** `DELETE` está revocado para `anon`/`authenticated` en las 20 tablas operativas: el modelo usa `deleted_at`.
 
 ---
 
@@ -280,9 +297,21 @@ Métricas de consumo por turno, nodo y responsable. Solo lectura via `fn_costo_r
 6. **Idempotencia offline:** Stock Out, despacho y tickets requieren `idempotency_key` siempre.
 7. **UI strings:** nunca hardcoded — siempre vía next-intl.
 8. **Teamlider:** campo obligatorio al abrir turno; vinculado a todos los registros del turno.
-9. **Precedencia:** `CLAUDE.md` > `ARCHITECTURE.md` > `docs/analisis-v6.docx`. Contradicción → preguntar.
-10. **Stack y decisiones congeladas:** no sugerir cambios sin pedido explícito.
+9. **Permiso nuevo o cambio de rol:** editar `lib/auth/permissions.ts` y ejecutar `pnpm rbac:generate`. Nunca tocar el bloque generado de `20260822000002_rbac_matriz.sql` a mano.
+10. **Escritura de pedidos:** siempre vía RPC. Añadir un `UPDATE` directo sobre `pedidos` desde la app fallará por privilegios.
+11. **Migración que cambia la firma de una función:** `CREATE OR REPLACE` con parámetros distintos crea un _overload_ y deja el viejo huérfano. Hacer `DROP FUNCTION` explícito de la firma anterior y recrear los llamadores.
+12. **Precedencia:** `CLAUDE.md` > `ARCHITECTURE.md` > `docs/analisis-v6.docx`. Contradicción → preguntar.
+13. **Stack y decisiones congeladas:** no sugerir cambios sin pedido explícito.
 
 ---
 
-_v6.0 — Junio 2026 · Refoco operacional: 4 KDS por área, despacho por ítem, merma en recepción, unidades g/ml/unidad_
+## Auditoría y remediación
+
+`docs/remediacion/` — informe de la auditoría forense 2026-08-22 y su remediación:
+roadmap, tracker por hallazgo, cambios de seguridad (incluye **acciones de
+configuración pendientes fuera del repositorio**), planes de migración, pruebas y
+rollback, y los ADR. Empezar por `REMEDIATION_TRACKER.md`.
+
+---
+
+_v6.1 — Agosto 2026 · Remediación forense: autorización en base, escritura de pedidos por RPC, matriz RBAC generada_
