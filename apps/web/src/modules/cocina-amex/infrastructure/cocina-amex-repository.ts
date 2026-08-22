@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AppError } from '@/lib/result';
+import { errorDeRpcPedido } from '@/modules/orders/infrastructure/order-repository';
 import type { CocinaAmexRepository } from '../application/ports';
 import type { Pedido, PedidoWithItems, PedidoEvento, EstadoPedido } from '../domain/pedido-amex';
 import type { AreaProduccion, EstadoItem } from '@dorado/shared-types';
@@ -118,32 +119,28 @@ export function createCocinaAmexRepository(): CocinaAmexRepository {
     },
 
     async transition(
-      tenantId: string,
+      _tenantId: string,
       pedidoId: string,
       estado: EstadoPedido,
       version: number,
     ): Promise<Pedido> {
       const supabase = await createClient();
-      const { data, error } = await supabase
-        .from('pedidos')
-        .update({ estado, version: version + 1 })
-        .eq('id', pedidoId)
-        .eq('tenant_id', tenantId)
-        .eq('version', version)
-        .select(PEDIDO_FLAT_SELECT)
-        .single();
+      // Misma RPC que el resto del sistema: la escritura directa sobre `pedidos`
+      // está revocada para authenticated (F-002). La autorización, la guarda de
+      // zona y el control de versión los aplica Postgres.
+      const { error } = await supabase.rpc('fn_pedido_transicion', {
+        p_pedido_id: pedidoId,
+        p_estado: estado,
+        p_version: version,
+      });
+      if (error) throw errorDeRpcPedido(error);
 
-      if (error?.code === 'PGRST116') {
-        throw new AppError(
-          'VERSION_CONFLICT',
-          409,
-          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
-        );
-      }
-      if (error?.code === '23514') {
-        throw new AppError('INVALID_TRANSITION', 400, 'Transición de estado no permitida');
-      }
-      if (error) throw new AppError('DB_ERROR', 500, error.message);
+      const { data, error: readErr } = await supabase
+        .from('pedidos')
+        .select(PEDIDO_FLAT_SELECT)
+        .eq('id', pedidoId)
+        .single();
+      if (readErr) throw new AppError('DB_ERROR', 500, readErr.message);
       return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
     },
 

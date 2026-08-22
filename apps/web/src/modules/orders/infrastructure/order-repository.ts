@@ -14,7 +14,6 @@ import type {
   ZonaServicio,
   AreaProduccion,
 } from '../domain/pedido';
-import { estadoPedidoDesdeItems } from '../domain/item-estado';
 
 type ItemRow = {
   id: string;
@@ -174,6 +173,53 @@ function toPedidoForDelivery(row: PedidoWithIngsRow): PedidoForDelivery {
     })),
   }));
   return { ...toPedido(row), items };
+}
+
+/**
+ * Traduce el SQLSTATE de una RPC de pedidos a un AppError del dominio.
+ *
+ * Toda la escritura de pedidos pasa por RPCs SECURITY DEFINER que autorizan y
+ * validan dentro de la propia transacción (migración 20260822000005), así que
+ * los errores de negocio llegan como códigos de PostgreSQL en vez de como
+ * comprobaciones previas en TypeScript.
+ */
+function errorDeRpcPedido(error: { code?: string; message?: string }): AppError {
+  switch (error.code) {
+    case '40001': // serialization_failure
+      return new AppError(
+        'VERSION_CONFLICT',
+        409,
+        'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
+      );
+    case 'P0001': // stock insuficiente (fn_descontar_insumo_fefo)
+      return new AppError('STOCK_INSUFICIENTE', 409, error.message ?? 'Stock insuficiente');
+    case '42501': // insufficient_privilege
+      return new AppError('FORBIDDEN', 403, error.message ?? 'Operación no permitida');
+    case '23514': // check_violation
+    case 'P0002': // raise ... no_data_found no siempre mapea, se cubre abajo
+      return new AppError('INVALID_TRANSITION', 400, error.message ?? 'Operación inválida');
+    case '02000': // no_data_found
+      return new AppError('NOT_FOUND', 404, 'Pedido no encontrado');
+    default:
+      return new AppError('DB_ERROR', 500, error.message ?? 'Error de base de datos');
+  }
+}
+
+export { errorDeRpcPedido };
+
+/** Relee el pedido tras una RPC que ya lo persistió. */
+async function releerPedido(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+): Promise<Pedido> {
+  const { data, error } = await supabase
+    .from('pedidos')
+    .select(PEDIDO_FLAT_SELECT)
+    .eq('id', id)
+    .single();
+
+  if (error) throw new AppError('DB_ERROR', 500, error.message);
+  return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
 }
 
 export function createOrderRepository(): OrderRepository {
@@ -377,59 +423,51 @@ export function createOrderRepository(): OrderRepository {
 
     async transition(
       id: string,
-      tenantId: string,
+      _tenantId: string,
       estado: EstadoPedido,
       version: number,
     ): Promise<Pedido> {
       const supabase = await createClient();
-      const { data, error } = await supabase
-        .from('pedidos')
-        .update({ estado, version: version + 1 })
-        .eq('id', id)
-        .eq('tenant_id', tenantId)
-        .eq('version', version)
-        .select(PEDIDO_FLAT_SELECT)
-        .single();
+      const { error } = await supabase.rpc('fn_pedido_transicion', {
+        p_pedido_id: id,
+        p_estado: estado,
+        p_version: version,
+      });
+      if (error) throw errorDeRpcPedido(error);
 
-      if (error?.code === 'PGRST116') {
-        throw new AppError(
-          'VERSION_CONFLICT',
-          409,
-          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
-        );
-      }
-      if (error?.code === '23514') {
-        throw new AppError('INVALID_TRANSITION', 400, 'Transición de estado no permitida');
-      }
-      if (error) throw new AppError('DB_ERROR', 500, error.message);
-      return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
+      return releerPedido(supabase, id);
+    },
+
+    async entregar(id: string, _tenantId: string, version: number): Promise<Pedido> {
+      const supabase = await createClient();
+      // Descuento FEFO de todos los ingredientes + transición, en una sola
+      // transacción de Postgres. Antes eran N llamadas independientes seguidas
+      // de un update con locking optimista: un fallo intermedio dejaba stock
+      // descontado sin pedido entregado (F-008).
+      const { error } = await supabase.rpc('fn_entregar_pedido', {
+        p_pedido_id: id,
+        p_version: version,
+      });
+      if (error) throw errorDeRpcPedido(error);
+
+      return releerPedido(supabase, id);
     },
 
     async asignarCocinero(
       id: string,
-      tenantId: string,
+      _tenantId: string,
       cocineroId: string,
       version: number,
     ): Promise<Pedido> {
       const supabase = await createClient();
-      const { data, error } = await supabase
-        .from('pedidos')
-        .update({ cocinero_id: cocineroId, version: version + 1 })
-        .eq('id', id)
-        .eq('tenant_id', tenantId)
-        .eq('version', version)
-        .select(PEDIDO_FLAT_SELECT)
-        .single();
+      const { error } = await supabase.rpc('fn_pedido_asignar_cocinero', {
+        p_pedido_id: id,
+        p_cocinero_id: cocineroId,
+        p_version: version,
+      });
+      if (error) throw errorDeRpcPedido(error);
 
-      if (error?.code === 'PGRST116') {
-        throw new AppError(
-          'VERSION_CONFLICT',
-          409,
-          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
-        );
-      }
-      if (error) throw new AppError('DB_ERROR', 500, error.message);
-      return toPedido(data as unknown as Omit<PedidoRow, 'pedido_items'>);
+      return releerPedido(supabase, id);
     },
 
     async findItemForTransition(itemId: string, tenantId: string) {
@@ -462,90 +500,26 @@ export function createOrderRepository(): OrderRepository {
 
     async transitionItem(args: {
       itemId: string;
-      pedidoId: string;
-      tenantId: string;
       nuevoEstado: EstadoItem;
-      actorId: string;
       pedidoVersion: number;
     }): Promise<{ pedidoEstado: EstadoPedido; pedidoVersion: number }> {
-      const { itemId, pedidoId, tenantId, nuevoEstado, actorId, pedidoVersion } = args;
       const supabase = await createClient();
-      const now = new Date().toISOString();
-      const itemPatch: Record<string, unknown> = { estado: nuevoEstado };
-      if (nuevoEstado === 'en_preparacion') {
-        itemPatch['en_preparacion_at'] = now;
-        itemPatch['iniciado_por'] = actorId;
-      } else if (nuevoEstado === 'listo') {
-        itemPatch['listo_at'] = now;
-        itemPatch['listo_por'] = actorId;
-      }
 
-      const { error: upErr } = await supabase
-        .from('pedido_items')
-        .update(itemPatch)
-        .eq('id', itemId)
-        .eq('pedido_id', pedidoId)
-        .eq('tenant_id', tenantId);
-      if (upErr) throw new AppError('DB_ERROR', 500, upErr.message);
-
-      const { error: evErr } = await supabase.from('pedido_item_eventos').insert({
-        tenant_id: tenantId,
-        pedido_id: pedidoId,
-        item_id: itemId,
-        estado: nuevoEstado,
-        actor_id: actorId,
+      // Ítem, evento y estado agregado del pedido en una sola transacción, con
+      // el pedido bloqueado desde el inicio. Antes eran cuatro round-trips y el
+      // control de versión llegaba el último: un 409 dejaba el ítem ya cambiado
+      // en base (F-009).
+      const { data, error } = await supabase.rpc('fn_transicionar_item', {
+        p_item_id: args.itemId,
+        p_estado: args.nuevoEstado,
+        p_version: args.pedidoVersion,
       });
-      if (evErr) throw new AppError('DB_ERROR', 500, evErr.message);
+      if (error) throw errorDeRpcPedido(error);
 
-      const { data: itemsRows, error: itErr } = await supabase
-        .from('pedido_items')
-        .select('estado')
-        .eq('pedido_id', pedidoId)
-        .eq('tenant_id', tenantId);
-      if (itErr) throw new AppError('DB_ERROR', 500, itErr.message);
-
-      const { data: pedRow, error: pedErr } = await supabase
-        .from('pedidos')
-        .select('estado')
-        .eq('id', pedidoId)
-        .eq('tenant_id', tenantId)
-        .single();
-      if (pedErr) throw new AppError('DB_ERROR', 500, pedErr.message);
-
-      const nuevoEstadoPedido = estadoPedidoDesdeItems(
-        (itemsRows ?? []) as { estado: EstadoItem }[],
-        (pedRow?.estado ?? 'recibido_cocina') as EstadoPedido,
-      );
-
-      const { data: updated, error: pErr } = await supabase
-        .from('pedidos')
-        .update({ estado: nuevoEstadoPedido, version: pedidoVersion + 1, updated_at: now })
-        .eq('id', pedidoId)
-        .eq('tenant_id', tenantId)
-        .eq('version', pedidoVersion)
-        .select('estado, version')
-        .single();
-      if (pErr?.code === 'PGRST116') {
-        throw new AppError(
-          'VERSION_CONFLICT',
-          409,
-          'El pedido fue modificado por otro usuario. Recarga e intenta de nuevo.',
-        );
-      }
-      // El trigger validate_pedido_estado rechaza transiciones inválidas del pedido
-      // con check_violation (23514). Mapear a 400 limpio en vez de DB_ERROR 500.
-      if (pErr?.code === '23514') {
-        throw new AppError(
-          'INVALID_TRANSITION',
-          400,
-          `Transición de pedido inválida hacia '${nuevoEstadoPedido}'.`,
-        );
-      }
-      if (pErr || !updated) throw new AppError('DB_ERROR', 500, pErr?.message ?? 'Update falló');
-
+      const resultado = data as { pedido_estado: EstadoPedido; pedido_version: number };
       return {
-        pedidoEstado: updated.estado as EstadoPedido,
-        pedidoVersion: updated.version as number,
+        pedidoEstado: resultado.pedido_estado,
+        pedidoVersion: resultado.pedido_version,
       };
     },
   };

@@ -31,6 +31,13 @@ export interface OrderRepository {
   ): Promise<PedidoWithItems>;
   findByIdForDelivery(id: string, tenantId: string): Promise<PedidoForDelivery | null>;
   transition(id: string, tenantId: string, estado: EstadoPedido, version: number): Promise<Pedido>;
+  /**
+   * Entrega el pedido: descuento FEFO de todos los ingredientes y transición a
+   * `entregado` en una única transacción de base de datos. El cálculo de
+   * cantidades vive en Postgres (fn_entregar_pedido) para que no exista una
+   * segunda definición del Principio Rector fuera de la transacción.
+   */
+  entregar(id: string, tenantId: string, version: number): Promise<Pedido>;
   /** Asigna (o reasigna) el cocinero a cargo. Optimistic locking por `version`. */
   asignarCocinero(
     id: string,
@@ -51,13 +58,14 @@ export interface OrderRepository {
     pedidoVersion: number;
     zona: ZonaServicio;
   } | null>;
-  /** Aplica una transición de estado a un ítem y recomputa el estado del pedido. */
+  /**
+   * Aplica una transición de estado a un ítem y recomputa el estado del pedido,
+   * de forma atómica. `pedidoVersion` es el control de concurrencia optimista.
+   * El tenant y el actor los deriva la base del JWT, no el llamador.
+   */
   transitionItem(args: {
     itemId: string;
-    pedidoId: string;
-    tenantId: string;
     nuevoEstado: EstadoItem;
-    actorId: string;
     pedidoVersion: number;
   }): Promise<{ pedidoEstado: EstadoPedido; pedidoVersion: number }>;
 }

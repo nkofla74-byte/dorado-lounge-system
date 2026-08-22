@@ -79,7 +79,6 @@ export async function recibirPedidoAmex(
     await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, payload);
     await emitEvent(ctx.tenantId, CHANNELS.AMEX, payload);
 
-    void repo.registrarEvento(ctx.tenantId, pedidoId, 'recibido_cocina', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -133,7 +132,6 @@ export async function iniciarPreparacionAmex(
     await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, payload);
     await emitEvent(ctx.tenantId, CHANNELS.AMEX, payload);
 
-    void repo.registrarEvento(ctx.tenantId, pedidoId, 'en_preparacion', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -187,7 +185,6 @@ export async function despacharPedidoAmex(
     await emitEvent(ctx.tenantId, CHANNELS.COCINA_AMEX, payload);
     await emitEvent(ctx.tenantId, CHANNELS.AMEX, payload);
 
-    void repo.registrarEvento(ctx.tenantId, pedidoId, 'despachado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
