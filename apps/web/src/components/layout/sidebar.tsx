@@ -240,11 +240,11 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
     <div className="flex flex-col h-full bg-sidebar">
       {/* Branding */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border/50">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-amber-600 text-primary-foreground text-sm font-bold shrink-0 shadow-md shadow-primary/20">
+        <div className="marca flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-headline font-semibold shrink-0 shadow-md shadow-primary/20">
           DL
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate text-foreground tracking-tight">
+          <p className="marca text-headline font-semibold truncate text-foreground">
             Dorado Lounge
           </p>
           <p className="text-xs text-muted-foreground truncate">El Dorado · Bogotá</p>
@@ -330,12 +330,10 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
 
       {/* Centro: marca (texto se oculta en pantallas <sm para dar aire) */}
       <div className="flex items-center gap-2 min-w-0 flex-1 pl-1">
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-primary to-amber-600 text-primary-foreground text-xs font-bold shrink-0 shadow-md shadow-primary/20">
+        <div className="marca flex items-center justify-center w-8 h-8 rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-body font-semibold shrink-0 shadow-md shadow-primary/20">
           DL
         </div>
-        <p className="hidden xs:block text-sm font-semibold truncate tracking-tight">
-          Dorado Lounge
-        </p>
+        <p className="marca hidden xs:block text-body font-semibold truncate">Dorado Lounge</p>
       </div>
 
       {/* Derecha: idioma · tema · alertas, con padding para que el badge no toque la marca */}

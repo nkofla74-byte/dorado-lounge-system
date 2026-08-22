@@ -87,6 +87,25 @@
   body {
     @apply bg-background text-foreground antialiased;
     overscroll-behavior-y: none;
+    /* Onest es variable: se deja que el navegador use el eje de peso real en
+       lugar de sintetizar negritas, que es lo que emborrona el texto pequeño. */
+    font-synthesis-weight: none;
+    font-optical-sizing: auto;
+  }
+
+  /* Los títulos se equilibran solos: sin viudas de una palabra en pantallas
+     estrechas, que es donde más se nota la falta de oficio tipográfico. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Fraunces tiene eje óptico. En display se le pide contraste alto y astas
+     apretadas; el propio tipo engorda las finas cuando el tamaño baja. */
+  .font-serif {
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
   }
   /* Touch-friendly defaults para botones e inputs sin perder densidad en desktop */
   button,
@@ -115,6 +134,25 @@
   .safe-min-h {
     min-height: 100dvh;
   }
+  /* Etiqueta de sección: versal con prosa abierta. En versalitas apretadas el
+     texto se convierte en una mancha, sobre todo en español, que tiene palabras
+     más largas que el inglés. */
+  .label-seccion {
+    font-size: theme('fontSize.caption[0]');
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Momento de marca: el nombre de la sala. Se reserva para eso — un serif
+     repartido por toda la interfaz operativa la vuelve lenta de leer. */
+  .marca {
+    font-family: theme('fontFamily.serif');
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+
   /* Materiales translúcidos. Siempre con fallback opaco: si el navegador no
      soporta backdrop-filter, queda el color sólido de debajo. */
   .material-thin {

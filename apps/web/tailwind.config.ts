@@ -63,9 +63,11 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
-        serif: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        sans: ['var(--font-onest)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Geist Mono se queda: sus cifras tabulares son las que impiden que el
+        // cronómetro del KDS baile cada segundo.
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
       },
       // Escala tipográfica fluida (Dynamic Type). Todo en rem + clamp: sobrevive
       // al zoom del navegador al 200 % y a la preferencia de tamaño del sistema.
