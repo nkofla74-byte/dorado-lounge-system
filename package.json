@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "reset:test-users": "node --env-file=apps/web/.env.local scripts/reset-test-users.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "rbac:generate": "UPDATE_RBAC=1 pnpm --filter @dorado/web exec vitest run src/lib/auth/tests/rbac-sql.test.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs}": [
