@@ -2,11 +2,16 @@
 # Aplica el shim + todas las migraciones en orden sobre una base efímera.
 # Uso: scripts/sql-harness/apply.sh [nombre_db]
 set -euo pipefail
-PGROOT=${PGROOT:-/var/tmp/pgv}
 DB=${1:-dorado}
 HARNESS="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HARNESS/../.." && pwd)"
-export PGHOST="$PGROOT/sock" PGUSER=postgres
+
+# Con PGROOT se usa el socket de un cluster local efímero (desarrollo); sin él,
+# se respetan las PG* del entorno (servicio postgres de CI).
+if [ -n "${PGROOT:-}" ]; then
+  export PGHOST="$PGROOT/sock"
+fi
+export PGUSER="${PGUSER:-postgres}"
 
 dropdb --if-exists "$DB"
 createdb "$DB"

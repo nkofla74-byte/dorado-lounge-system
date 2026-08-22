@@ -146,6 +146,40 @@ jobs:
       - name: Coverage (dominio web — thresholds 75%/90%)
         run: pnpm --filter @dorado/web exec vitest run --coverage
 
+  rls:
+    name: RLS / RPC (Postgres)
+    runs-on: ubuntu-latest
+    # Aplica las migraciones sobre un Postgres limpio y ejecuta las pruebas de
+    # autorización en base. Sin este job, las políticas RLS y las RPC
+    # SECURITY DEFINER serían el único código del repositorio sin cobertura
+    # automática — que es exactamente cómo pasaron inadvertidos F-002 y F-036.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Run RLS/RPC suite
+        run: ./scripts/sql-harness/run-tests.sh
+
   audit:
     name: Security Audit
     runs-on: ubuntu-latest

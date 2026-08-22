@@ -17,7 +17,9 @@ import type { SocketData } from './lib/auth';
 
 // Validar variables de entorno críticas antes de levantar el servidor.
 // Falla rápido en lugar de fallar silenciosamente en la primera petición.
-const REQUIRED_ENV_VARS = ['SUPABASE_JWT_SECRET', 'SOCKET_EMIT_SECRET'] as const;
+// SUPABASE_JWT_SECRET ya no es obligatorio: solo hace falta si se habilita
+// explícitamente la verificación HS256 legacy (ALLOW_LEGACY_HS256, F-030).
+const REQUIRED_ENV_VARS = ['SOCKET_EMIT_SECRET'] as const;
 const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 if (missingVars.length > 0) {
   logger.error({ event: 'startup_missing_env', missing: missingVars });

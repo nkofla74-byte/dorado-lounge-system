@@ -38,6 +38,8 @@ describe('authenticateHandshake', () => {
   beforeEach(() => {
     process.env['SUPABASE_JWT_SECRET'] = TEST_SECRET;
     process.env['SUPABASE_URL'] = 'https://test.supabase.co';
+    // La verificación HS256 legacy es opt-in desde F-030.
+    process.env['ALLOW_LEGACY_HS256'] = 'true';
     __resetJwksCache();
     (jwtVerify as Mock).mockReset();
   });
@@ -45,6 +47,19 @@ describe('authenticateHandshake', () => {
   afterEach(() => {
     delete process.env['SUPABASE_JWT_SECRET'];
     delete process.env['SUPABASE_URL'];
+    delete process.env['ALLOW_LEGACY_HS256'];
+  });
+
+  it('rechaza HS256 si la verificación legacy no está habilitada', async () => {
+    delete process.env['ALLOW_LEGACY_HS256'];
+    const token = jwt.sign(
+      { sub: 'u', app_metadata: { tenant_id: 't', role: 'admin' } },
+      TEST_SECRET,
+    );
+    const socket = makeSocket(token);
+    const next = vi.fn();
+    await authenticateHandshake(socket as never, next);
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_TOKEN' }));
   });
 
   it('rechaza cuando no se provee token', async () => {
@@ -80,7 +95,7 @@ describe('authenticateHandshake', () => {
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_CLAIMS' }));
   });
 
-  it('acepta JWT HS256 (legacy) con claims correctos', async () => {
+  it('acepta JWT HS256 (legacy) con claims correctos cuando está habilitado', async () => {
     const token = jwt.sign(
       { sub: 'user-123', app_metadata: { tenant_id: 'tenant-456', role: 'chef_cocina_fria' } },
       TEST_SECRET,
@@ -221,6 +236,7 @@ describe('msHastaExpiracion', () => {
 describe('authenticateHandshake — vencimiento', () => {
   it('guarda exp del token en socket.data para poder cerrar la conexión', async () => {
     process.env['SUPABASE_JWT_SECRET'] = TEST_SECRET;
+    process.env['ALLOW_LEGACY_HS256'] = 'true';
     const token = jwt.sign(
       { sub: 'u', app_metadata: { tenant_id: 't', role: 'admin' } },
       TEST_SECRET,

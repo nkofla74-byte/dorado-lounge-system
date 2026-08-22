@@ -3,10 +3,13 @@
 # Reconstruye el esquema desde cero (migraciones + fixture) y corre cada prueba
 # en su propia transacción, que se revierte al terminar.
 set -uo pipefail
-PGROOT=${PGROOT:-/var/tmp/pgv}
 DB=${DB:-dorado_test}
 HARNESS="$(cd "$(dirname "$0")" && pwd)"
-export PGHOST="$PGROOT/sock" PGUSER=postgres
+
+if [ -n "${PGROOT:-}" ]; then
+  export PGHOST="$PGROOT/sock"
+fi
+export PGUSER="${PGUSER:-postgres}"
 
 "$HARNESS/apply.sh" "$DB" > /dev/null || { echo "FALLO aplicando migraciones"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -d "$DB" -f "$HARNESS/20_test_helpers.sql"

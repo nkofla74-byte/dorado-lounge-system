@@ -3,15 +3,13 @@
 import { Suspense, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
-import { getSafeNext } from '@/lib/auth/role-home';
+import { iniciarSesion } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TurnstileWidget } from '@/components/ui/turnstile-widget';
-import { verifyTurnstile } from '@/lib/turnstile/verify';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 function LoginForm() {
@@ -24,6 +22,24 @@ function LoginForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const mensajeDeError = useCallback(
+    (code: string): string => {
+      switch (code) {
+        case 'RATE_LIMITED':
+          return t('errors.tooManyAttempts');
+        case 'TURNSTILE_REQUERIDO':
+          return t('errors.turnstileRequired');
+        case 'TURNSTILE_INVALIDO':
+          return t('errors.turnstileFailed');
+        case 'SESION_SIN_CLAIMS':
+          return t('errors.missingRoleOrTenant');
+        default:
+          return t('errors.invalidCredentials');
+      }
+    },
+    [t],
+  );
 
   const handleTurnstileVerify = useCallback((token: string) => {
     setTurnstileToken(token);
@@ -39,54 +55,31 @@ function LoginForm() {
     setError('');
 
     const siteKeyConfigured = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
     if (siteKeyConfigured && !turnstileToken) {
       setError(t('errors.turnstileRequired'));
       setLoading(false);
       return;
     }
 
-    if (turnstileToken) {
-      const result = await verifyTurnstile(turnstileToken);
-      if (!result.ok) {
-        setError(
-          result.reason === 'rate_limited'
-            ? t('errors.tooManyAttempts')
-            : t('errors.turnstileFailed'),
-        );
-        setLoading(false);
-        return;
-      }
-    }
-
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password.trim(),
+    // El login entero ocurre en el servidor: verificación anti-bot, rate limit y
+    // autenticación en el mismo paso. Antes eran dos llamadas desacopladas desde
+    // el navegador, así que la segunda se podía invocar sin la primera (F-012).
+    const result = await iniciarSesion({
+      email,
+      password,
+      turnstileToken: turnstileToken ?? undefined,
+      next: searchParams.get('next'),
     });
 
-    if (authError) {
-      setError(t('errors.invalidCredentials'));
+    if (!result.ok) {
+      setError(mensajeDeError(result.error.code));
+      setTurnstileToken(null);
       setLoading(false);
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const role = user?.app_metadata?.role as string | undefined;
-    const tenantId = user?.app_metadata?.tenant_id as string | undefined;
-
-    if (!role || !tenantId) {
-      await supabase.auth.signOut();
-      setError(t('errors.missingRoleOrTenant'));
-      setLoading(false);
-      return;
-    }
-
-    const next = getSafeNext(searchParams.get('next'), role);
     router.refresh();
-    router.push(next);
+    router.push(result.value.destino);
   };
 
   return (

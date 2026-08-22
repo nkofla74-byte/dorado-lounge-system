@@ -3,10 +3,9 @@
 // Los errores se silencian intencionalmente para no bloquear la operación principal.
 
 import { emitEventoMulticanal } from '@/lib/socket/emit-event';
+import { canalesDeAlerta } from '../domain/canales';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createAlertaRepository } from './alerta-repository';
-import { CHANNELS } from '@dorado/shared-types';
-import type { Channel } from '@dorado/shared-types';
 import type { Alerta, CreateAlertaInput } from '../domain/alerta';
 import {
   severidadStockMinimo,
@@ -14,28 +13,6 @@ import {
   severidadVencimiento,
   severidadDemoraAmex,
 } from '../domain/alerta';
-
-// Destinatarios de cada tipo de alerta (CLAUDE.md §Alertas). Antes TODA alerta
-// se difundía solo a CHANNELS.ADMIN, así que Almacén no recibía los avisos de
-// vencimiento ni de stock mínimo —los que protegen el inventario perecedero— y
-// el chef AMEX no recibía las demoras (F-016).
-const CANALES_POR_TIPO: Record<CreateAlertaInput['tipo'], Channel[]> = {
-  stock_minimo: [
-    CHANNELS.ADMIN,
-    CHANNELS.ALMACEN,
-    CHANNELS.COCINA_FRIA,
-    CHANNELS.COCINA_CALIENTE,
-    CHANNELS.COCINA_AMEX,
-  ],
-  vencimiento: [CHANNELS.ADMIN, CHANNELS.ALMACEN],
-  cambio_precio: [CHANNELS.ADMIN, CHANNELS.ALMACEN],
-  demora_amex: [CHANNELS.ADMIN, CHANNELS.COCINA_AMEX, CHANNELS.AMEX],
-  requisicion_demora: [CHANNELS.ADMIN, CHANNELS.ALMACEN],
-};
-
-export function canalesDeAlerta(tipo: CreateAlertaInput['tipo']): Channel[] {
-  return CANALES_POR_TIPO[tipo] ?? [CHANNELS.ADMIN];
-}
 
 export async function crearAlerta(
   tenantId: string,
@@ -45,7 +22,7 @@ export async function crearAlerta(
     const repo = createAlertaRepository();
     const alerta = await repo.create(tenantId, input);
 
-    await emitEventoMulticanal(tenantId, canalesDeAlerta(alerta.tipo), {
+    await emitEventoMulticanal(tenantId, [...canalesDeAlerta(alerta.tipo)], {
       type: 'ALERTA',
       payload: {
         alertaId: alerta.id,

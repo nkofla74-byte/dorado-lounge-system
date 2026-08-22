@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CHANNELS } from '@dorado/shared-types';
-import { canalesDeAlerta } from '../infrastructure/checks';
+import { canalesDeAlerta } from '../domain/canales';
 
 // Regresión de F-016: toda alerta se difundía únicamente a CHANNELS.ADMIN, así
 // que Almacén no recibía vencimientos ni stock mínimo —los avisos que protegen

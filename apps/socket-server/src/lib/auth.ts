@@ -44,7 +44,18 @@ async function verifyToken(token: string): Promise<JwtClaims> {
   }
 
   // Tokens legacy HS256 firmados con el secret simétrico de Supabase.
+  //
+  // El verificador se elige por la cabecera `alg`, que la controla quien emite
+  // el token. Aquí no es explotable —HS256 exige el secreto real y la rama
+  // asimétrica está restringida por lista de algoritmos— pero mientras el
+  // secreto simétrico siga aceptándose, su filtración permite falsificar
+  // cualquier claim. Por eso la rama legacy es opt-in explícito (F-030): una vez
+  // migrado el proyecto a llaves asimétricas, se apaga y se rota el secreto.
   if (decoded.header.alg === 'HS256') {
+    if (process.env['ALLOW_LEGACY_HS256'] !== 'true') {
+      logger.warn({ event: 'auth_hs256_deshabilitado' });
+      throw new Error('INVALID_TOKEN');
+    }
     const secret = process.env['SUPABASE_JWT_SECRET'];
     if (!secret) throw new Error('SERVER_MISCONFIGURED');
     return jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtClaims;
