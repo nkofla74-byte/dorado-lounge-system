@@ -10,10 +10,13 @@ export interface SocketData {
   userId: string;
   tenantId: string;
   role: UserRole;
+  /** Vencimiento del token (epoch en segundos), si el JWT lo declara. */
+  expiraEn: number | null;
 }
 
 interface JwtClaims {
   sub?: string;
+  exp?: number;
   app_metadata?: { tenant_id?: string; role?: string };
 }
 
@@ -88,6 +91,7 @@ export async function authenticateHandshake(
     userId: claims.sub ?? '',
     tenantId: appMeta.tenant_id,
     role: appMeta.role as UserRole,
+    expiraEn: typeof claims.exp === 'number' ? claims.exp : null,
   } satisfies SocketData;
 
   next();
@@ -107,4 +111,19 @@ export function canJoinChannel(socket: Socket, channel: string): boolean {
   }
 
   return allowed.includes(data.role);
+}
+
+/**
+ * Milisegundos que le quedan de vida al token del socket, o null si el JWT no
+ * declara `exp`.
+ *
+ * La autorización de canales se resolvía con `socket.data`, una foto del
+ * handshake que nunca caducaba: en una sala 24/7 con tabletas siempre
+ * encendidas, un socket conservaba indefinidamente el rol y el tenant del
+ * momento de conectarse, incluso tras degradar o desactivar al usuario (F-014).
+ */
+export function msHastaExpiracion(socket: Socket, ahora = Date.now()): number | null {
+  const data = socket.data as SocketData | undefined;
+  if (!data || data.expiraEn === null) return null;
+  return data.expiraEn * 1000 - ahora;
 }

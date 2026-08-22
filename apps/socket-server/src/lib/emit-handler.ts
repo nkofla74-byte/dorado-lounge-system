@@ -9,10 +9,18 @@ const VALID_CHANNELS = new Set<string>(Object.values(CHANNELS));
 const MAX_BODY_BYTES = 64 * 1024;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Sliding-window rate limiter: máximo 120 peticiones por IP en 60 segundos.
-// Protege el endpoint /emit de abuso (DoS, spam de eventos).
+// Sliding-window rate limiter del endpoint /emit.
+//
+// Antes se indexaba por `req.socket.remoteAddress`, que detrás del balanceador
+// de Render es siempre la IP del proxy: todo el tráfico legítimo de Vercel caía
+// en un único bucket de 120/min y, al superarlo, los eventos en tiempo real se
+// perdían en silencio mientras los KDS dejaban de refrescarse (F-025).
+//
+// El endpoint ya está autenticado con un secreto compartido comparado en tiempo
+// constante, así que el límite solo actúa como red de contención: se indexa por
+// la IP reenviada cuando existe y el techo es acorde a una sala en hora punta.
 const WINDOW_MS = 60_000;
-const MAX_REQUESTS = 120;
+const MAX_REQUESTS = 1200;
 const buckets = new Map<string, number[]>();
 
 function isRateLimited(ip: string): boolean {
@@ -34,6 +42,14 @@ setInterval(() => {
     if (timestamps.every((t) => now - t >= WINDOW_MS)) buckets.delete(ip);
   }
 }, 5 * 60_000);
+
+/** IP real del cliente detrás del proxy de Render; cae al socket si no hay cabecera. */
+function clientIp(req: IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  const first = raw?.split(',')[0]?.trim();
+  return first || req.socket.remoteAddress || 'unknown';
+}
 
 function isAuthorized(auth: string | string[] | undefined): boolean {
   if (!EMIT_SECRET || typeof auth !== 'string') return false;
@@ -57,7 +73,7 @@ export function createEmitHandler(io: Server) {
       return;
     }
 
-    const ip = req.socket.remoteAddress ?? 'unknown';
+    const ip = clientIp(req);
     if (isRateLimited(ip)) {
       logger.warn({ event: 'emit_rate_limited', ip });
       res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });

@@ -11,8 +11,11 @@ import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const log = createLogger('cron:check-alertas');
 
-// Vercel Cron: ejecuta cada 5 minutos (configurado en vercel.json).
 // Para cada tenant activo ejecuta los checks de vencimiento y demora AMEX.
+//
+// La cadencia de 5 minutos la aporta pg_cron (20260516000003); el Vercel Cron de
+// vercel.json es un disparo diario de respaldo. Los comentarios anteriores
+// afirmaban 5 minutos también aquí, que nunca fue el caso (F-024).
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {

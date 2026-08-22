@@ -29,6 +29,22 @@ interface QRResult {
   dataUrl: string;
 }
 
+const ESTILOS_IMPRESION = `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #fff; }
+  .card {
+    width: 240px; margin: 20px auto; padding: 20px;
+    border: 2px solid #000; border-radius: 12px;
+    text-align: center;
+  }
+  .lounge { font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #555; margin-bottom: 6px; }
+  .mesa { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .zona { font-size: 12px; color: #666; margin-bottom: 12px; }
+  img { width: 180px; height: 180px; }
+  .instruccion { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.4; }
+`;
+
 export function QRGeneratorClient() {
   const t = useTranslations('qrAdmin');
   const [mesaNumero, setMesaNumero] = useState('');
@@ -75,35 +91,21 @@ export function QRGeneratorClient() {
 
   const handlePrint = () => {
     if (!printRef.current) return;
-    const html = printRef.current.innerHTML;
     const win = window.open('', '_blank', 'width=400,height=500');
     if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8"/>
-          <title>QR ${result?.zonaLabel} — ${result?.mesaNumero}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: system-ui, sans-serif; background: #fff; }
-            .card {
-              width: 240px; margin: 20px auto; padding: 20px;
-              border: 2px solid #000; border-radius: 12px;
-              text-align: center;
-            }
-            .lounge { font-size: 11px; font-weight: 700; letter-spacing: 0.15em;
-              text-transform: uppercase; color: #555; margin-bottom: 6px; }
-            .mesa { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
-            .zona { font-size: 12px; color: #666; margin-bottom: 12px; }
-            img { width: 180px; height: 180px; }
-            .instruccion { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.4; }
-          </style>
-        </head>
-        <body>${html}</body>
-      </html>
-    `);
-    win.document.close();
+
+    // Se construye el documento con la API del DOM en lugar de document.write con
+    // plantillas interpoladas: el número de mesa viene de un campo de formulario
+    // y la ventana comparte origen con la aplicación (F-031).
+    const doc = win.document;
+    doc.title = `QR ${result?.zonaLabel ?? ''} — ${result?.mesaNumero ?? ''}`;
+
+    const estilos = doc.createElement('style');
+    estilos.textContent = ESTILOS_IMPRESION;
+    doc.head.appendChild(estilos);
+
+    doc.body.appendChild(printRef.current.cloneNode(true));
+
     win.focus();
     win.print();
     win.close();

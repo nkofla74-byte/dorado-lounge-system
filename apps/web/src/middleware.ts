@@ -2,8 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@dorado/shared-types';
 import { ROLE_HOME, canAccess } from '@/lib/auth/role-home';
-
-const PUBLIC_PATHS = ['/login', '/qr', '/api/cron', '/api/heartbeat', '/health'];
+import { esRutaPublica } from '@/lib/auth/rutas-publicas';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -32,7 +31,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublicPath = esRutaPublica(pathname);
   const isLoginPath = pathname.startsWith('/login');
 
   // Sin sesión → redirigir a login (excepto rutas públicas).

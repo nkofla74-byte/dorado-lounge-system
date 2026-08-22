@@ -22,7 +22,13 @@ export async function verifyTurnstile(token: string): Promise<TurnstileResult> {
   }
 
   const secret = process.env['TURNSTILE_SECRET_KEY'];
-  if (!secret) return { ok: true }; // Not configured — skip in local dev
+  if (!secret) {
+    // En producción, un secreto ausente es un fallo de configuración, no una
+    // invitación a saltarse la verificación (F-013). Mismo criterio que los
+    // buckets fail-closed de lib/rate-limit.
+    if (process.env['NODE_ENV'] === 'production') return { ok: false, reason: 'verify_failed' };
+    return { ok: true }; // sin configurar en desarrollo local
+  }
 
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
