@@ -97,11 +97,14 @@ class SupabaseSuperuserRepository implements SuperuserRepository {
   async createUser(input: CreateUserInput): Promise<TenantUser> {
     const admin = this.admin;
 
+    // Los claims de autorización van en app_metadata y se fijan aquí, desde el
+    // servidor. Nunca en user_metadata: ese campo lo puede escribir el propio
+    // usuario, y derivar claims de él fue la escalada de privilegios F-001.
     const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email: input.email,
       password: input.password,
       email_confirm: true,
-      user_metadata: {
+      app_metadata: {
         tenant_id: input.tenantId,
         role: input.role,
       },
