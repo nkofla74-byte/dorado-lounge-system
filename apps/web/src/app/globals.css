@@ -28,6 +28,18 @@
     --ring: 42 80% 58%;
     --sidebar: 40 30% 94%;
     --radius: 0.625rem;
+
+    /* Estados operativos — semánticos. Sustituyen a la paleta cruda de Tailwind
+       (bg-blue-500, ring-red-500…), que no responde al tema ni al contraste. */
+    --state-pendiente: 35 92% 38%;
+    --state-preparacion: 217 85% 42%;
+    --state-listo: 160 70% 30%;
+    --state-demora: 347 89% 44%;
+
+    /* Materiales — profundidad de desenfoque. Ver dorado-design-system §3. */
+    --material-thin: 12px;
+    --material-regular: 20px;
+    --material-thick: 32px;
   }
 
   .dark {
@@ -55,6 +67,12 @@
     --ring: 42 80% 58%;
     --sidebar: 218 60% 7%;
     --radius: 0.625rem;
+
+    /* En oscuro los estados suben en luminosidad para mantener AA sobre #0d1117 */
+    --state-pendiente: 43 96% 62%;
+    --state-preparacion: 213 92% 68%;
+    --state-listo: 158 64% 52%;
+    --state-demora: 347 95% 70%;
   }
 }
 
@@ -97,6 +115,32 @@
   .safe-min-h {
     min-height: 100dvh;
   }
+  /* Materiales translúcidos. Siempre con fallback opaco: si el navegador no
+     soporta backdrop-filter, queda el color sólido de debajo. */
+  .material-thin {
+    background-color: hsl(var(--card) / 0.85);
+  }
+  .material-regular {
+    background-color: hsl(var(--card) / 0.75);
+  }
+  .material-thick {
+    background-color: hsl(var(--card) / 0.65);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .material-thin {
+      backdrop-filter: blur(var(--material-thin)) saturate(180%);
+      background-color: hsl(var(--card) / 0.7);
+    }
+    .material-regular {
+      backdrop-filter: blur(var(--material-regular)) saturate(180%);
+      background-color: hsl(var(--card) / 0.6);
+    }
+    .material-thick {
+      backdrop-filter: blur(var(--material-thick)) saturate(180%);
+      background-color: hsl(var(--card) / 0.5);
+    }
+  }
+
   /* Tipografía fluida — solo aplicar opt-in con .text-fluid-* */
   .text-fluid-h1 {
     font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
@@ -123,8 +167,48 @@
   }
 }
 
+/* Curvas de Apple. `smooth` es la de las transiciones de UIKit; `snappy` la de
+   los controles que responden al dedo. Expuestas en tailwind.config.ts. */
+:root {
+  --ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulso de atención por opacidad. `animate-pulse` de Tailwind reconstruye capas
+   en cada fotograma; en una cola de KDS que se repinta por Socket.io eso cuesta
+   fotogramas. Esto solo compone opacidad. */
+@keyframes atencion {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* INTERRUPTOR GLOBAL de Reduce Motion.
+   Antes solo cubría .dish-card, así que el `animate-pulse` de las tarjetas de
+   KDS seguía parpadeando para quien pidió menos movimiento. Ahora es del
+   sistema: ninguna pantalla puede olvidarlo. */
 @media (prefers-reduced-motion: reduce) {
-  .dish-card {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduce Transparency: el cristal se cae a color sólido. El material es un
+   adorno; la legibilidad no es negociable (dorado-design-system §3). */
+@media (prefers-reduced-transparency: reduce) {
+  .material-thin,
+  .material-regular,
+  .material-thick {
+    backdrop-filter: none !important;
+    background-color: hsl(var(--card)) !important;
   }
 }

@@ -50,6 +50,14 @@ const config: Config = {
         success: 'hsl(var(--success))',
         warning: 'hsl(var(--warning))',
         sidebar: 'hsl(var(--sidebar))',
+        // Estados operativos. Con <alpha-value> para poder escribir
+        // `bg-estado-listo/10` sin recurrir a la paleta cruda de Tailwind.
+        estado: {
+          pendiente: 'hsl(var(--state-pendiente) / <alpha-value>)',
+          preparacion: 'hsl(var(--state-preparacion) / <alpha-value>)',
+          listo: 'hsl(var(--state-listo) / <alpha-value>)',
+          demora: 'hsl(var(--state-demora) / <alpha-value>)',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -58,6 +66,25 @@ const config: Config = {
         sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'monospace'],
         serif: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+      },
+      // Escala tipográfica fluida (Dynamic Type). Todo en rem + clamp: sobrevive
+      // al zoom del navegador al 200 % y a la preferencia de tamaño del sistema.
+      // El mínimo de `body` es 1rem porque el KDS se lee a un brazo de distancia.
+      fontSize: {
+        caption: ['clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem)', { lineHeight: '1.35' }],
+        body: ['clamp(1rem, 0.97rem + 0.15vw, 1.0625rem)', { lineHeight: '1.5' }],
+        headline: ['clamp(1.0625rem, 1rem + 0.3vw, 1.25rem)', { lineHeight: '1.35' }],
+        title: ['clamp(1.25rem, 1.12rem + 0.6vw, 1.625rem)', { lineHeight: '1.25' }],
+        display: ['clamp(1.75rem, 1.45rem + 1.4vw, 2.75rem)', { lineHeight: '1.1' }],
+        // El cronómetro es el dato que se lee desde lejos y de reojo.
+        timer: [
+          'clamp(2rem, 1.5rem + 2.4vw, 3.5rem)',
+          { lineHeight: '1', letterSpacing: '-0.02em' },
+        ],
+      },
+      transitionTimingFunction: {
+        smooth: 'var(--ease-smooth)',
+        snappy: 'var(--ease-snappy)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -77,6 +104,8 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        // Solo compone opacidad; ver la nota en globals.css.
+        atencion: 'atencion 1.8s var(--ease-smooth) infinite',
       },
     },
   },
