@@ -156,7 +156,7 @@ function DishCard({
 
       {/* Detalle expandible */}
       <div
-        className="grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="grid transition-[grid-template-rows] duration-400 ease-expresivo"
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">

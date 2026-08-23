@@ -396,7 +396,7 @@ function DishCard({
             ? 'border-[#016FD0]/40 shadow-[0_2px_16px_-4px_rgba(1,111,208,0.15)]'
             : 'border-[#D6DEE8] hover:border-[#016FD0]/30 shadow-sm'
       }`}
-      style={{ animation: `dishFadeIn 0.45s cubic-bezier(0.22,1,0.36,1) ${animDelay}ms both` }}
+      style={{ animation: `dishFadeIn 0.45s var(--ease-expresivo) ${animDelay}ms both` }}
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Compact header — siempre visible */}
@@ -454,7 +454,7 @@ function DishCard({
 
       {/* Detalle expandible */}
       <div
-        className="grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="grid transition-[grid-template-rows] duration-400 ease-expresivo"
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
@@ -673,7 +673,7 @@ function MenuScreen({
       {showReview && !sent && (
         <div
           className="fixed inset-0 z-50 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] text-[#00175A] flex flex-col"
-          style={{ animation: 'reviewSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) both' }}
+          style={{ animation: 'reviewSlideUp 0.4s var(--ease-expresivo) both' }}
         >
           <div className="px-4 py-3 border-b border-[#D6DEE8] flex items-center gap-3 bg-white/80 backdrop-blur-sm">
             <button
@@ -778,7 +778,7 @@ function MenuScreen({
           className="fixed inset-0 z-50 bg-gradient-to-b from-white via-[#F0F5FB] to-[#E3EDF8] flex flex-col items-center justify-center text-center px-6"
           style={{ animation: 'reviewSlideUp 0.3s ease-out both' }}
         >
-          <div style={{ animation: 'sentPulse 0.6s cubic-bezier(0.22,1,0.36,1) both' }}>
+          <div style={{ animation: 'sentPulse 0.6s var(--ease-expresivo) both' }}>
             <div className="w-20 h-20 mx-auto rounded-full bg-[#016FD0]/10 border-2 border-[#016FD0]/30 flex items-center justify-center mb-4">
               <CheckCircle2
                 className="h-10 w-10 text-[#016FD0]"
@@ -970,7 +970,7 @@ export function QRPassengerApp({
           {/* Logo top */}
           <div
             className="relative"
-            style={{ animation: 'langFadeDown 0.8s cubic-bezier(0.22,1,0.36,1) both' }}
+            style={{ animation: 'langFadeDown 0.8s var(--ease-expresivo) both' }}
           >
             <DoradoLogo size="lg" variant="light" />
           </div>
@@ -978,7 +978,7 @@ export function QRPassengerApp({
           <div className="relative w-full space-y-7 text-center">
             <div
               className="space-y-2"
-              style={{ animation: 'langFadeDown 0.7s cubic-bezier(0.22,1,0.36,1) 0.15s both' }}
+              style={{ animation: 'langFadeDown 0.7s var(--ease-expresivo) 0.15s both' }}
             >
               <h1 className="font-serif text-xl tracking-[0.18em] uppercase text-[#00175A]/90">
                 {t['tagline']}
@@ -992,7 +992,7 @@ export function QRPassengerApp({
                   onClick={() => handleLocaleSelect(l.code)}
                   className="group relative flex flex-col items-center gap-2.5 py-5 px-3 rounded-3xl border bg-white border-[#D6DEE8] text-[#00175A] shadow-[0_2px_12px_-4px_rgba(0,23,90,0.08)] transition-all duration-300 hover:border-[#016FD0]/60 hover:shadow-[0_4px_24px_-6px_rgba(1,111,208,0.25)] active:scale-[0.95]"
                   style={{
-                    animation: `langCardIn 0.6s cubic-bezier(0.22,1,0.36,1) ${300 + i * 100}ms both`,
+                    animation: `langCardIn 0.6s var(--ease-expresivo) ${300 + i * 100}ms both`,
                   }}
                 >
                   <span
@@ -1019,7 +1019,7 @@ export function QRPassengerApp({
           {/* Línea legal */}
           <p
             className="relative text-[10px] text-[#00175A]/35 tracking-[0.15em] uppercase text-center max-w-xs"
-            style={{ animation: 'langFadeDown 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both' }}
+            style={{ animation: 'langFadeDown 0.6s var(--ease-expresivo) 0.8s both' }}
           >
             {t['cardholderLegal']}
           </p>
