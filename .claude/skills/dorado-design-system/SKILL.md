@@ -27,19 +27,20 @@ son analogías, nunca código a copiar.
 
 ## 2. Traducción obligatoria
 
-| La skill dice                     | Aquí se implementa como                                                                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| SF Symbols                        | **`lucide-react`** (ya instalado). SF Symbols es una fuente con licencia Apple: **no se puede embeber en una web**. Prohibido descargarla   |
-| San Francisco / SF Pro            | Stack del sistema: `-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`. En iPad se resuelve a SF de forma nativa y legal |
-| SwiftUI / UIKit                   | React + Tailwind + `components/ui/*` (shadcn). Extender el componente existente antes que crear uno nuevo                                   |
-| `Color.label`, `systemBackground` | Variables HSL ya definidas en `globals.css`: `--foreground`, `--background`, `--primary`… **Nunca un hex suelto**                           |
-| Dynamic Type                      | `rem` + `clamp()`. Nada de `px` en tipografía. Debe sobrevivir al zoom del navegador al 200 %                                               |
-| `.ultraThinMaterial`, glassEffect | `backdrop-blur-* bg-background/70` + borde `border-white/10`. Ver §3                                                                        |
-| Touch target 44 pt                | `min-h-11 min-w-11` (44 px). En KDS, §4 sube el mínimo                                                                                      |
-| VoiceOver                         | ARIA + HTML semántico: `aria-label`, `role`, `aria-live` para colas que cambian solas                                                       |
-| Reduce Motion                     | `motion-safe:` / `motion-reduce:` de Tailwind, o `@media (prefers-reduced-motion: reduce)`                                                  |
-| Espaciado 8 pt                    | Escala de Tailwind (`gap-2` = 8 px, `gap-4` = 16 px). No inventar valores sueltos                                                           |
-| Strings de UI                     | **Siempre `next-intl`**. Ninguna cadena visible se escribe en el JSX (regla 7 de CLAUDE.md)                                                 |
+| La skill dice                              | Aquí se implementa como                                                                                                                                                                                                                                                           |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SF Symbols                                 | **`lucide-react`** (ya instalado). SF Symbols es una fuente con licencia Apple: **no se puede embeber en una web**. Prohibido descargarla                                                                                                                                         |
+| San Francisco / SF Pro                     | Stack del sistema: `-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`. En iPad se resuelve a SF de forma nativa y legal                                                                                                                                       |
+| SwiftUI / UIKit                            | React + Tailwind + `components/ui/*` (shadcn). Extender el componente existente antes que crear uno nuevo                                                                                                                                                                         |
+| `Color.label`, `systemBackground`          | Variables HSL ya definidas en `globals.css`: `--foreground`, `--background`, `--primary`… **Nunca un hex suelto**                                                                                                                                                                 |
+| Colores de severidad (aviso, error, éxito) | `senal-aviso`, `senal-curso`, `senal-ok`, `senal-critico`. Son para **texto, bordes y tintes**: van oscurecidos en tema claro para cumplir AA. Sobre un relleno sólido de señal el texto va en `text-background`, que se invierte con el tema — `text-white` desaparece en oscuro |
+| Dynamic Type                               | `rem` + `clamp()`. Nada de `px` en tipografía. Debe sobrevivir al zoom del navegador al 200 %                                                                                                                                                                                     |
+| `.ultraThinMaterial`, glassEffect          | `backdrop-blur-* bg-background/70` + borde `border-white/10`. Ver §3                                                                                                                                                                                                              |
+| Touch target 44 pt                         | `min-h-11 min-w-11` (44 px). En KDS, §4 sube el mínimo                                                                                                                                                                                                                            |
+| VoiceOver                                  | ARIA + HTML semántico: `aria-label`, `role`, `aria-live` para colas que cambian solas                                                                                                                                                                                             |
+| Reduce Motion                              | `motion-safe:` / `motion-reduce:` de Tailwind, o `@media (prefers-reduced-motion: reduce)`                                                                                                                                                                                        |
+| Espaciado 8 pt                             | Escala de Tailwind (`gap-2` = 8 px, `gap-4` = 16 px). No inventar valores sueltos                                                                                                                                                                                                 |
+| Strings de UI                              | **Siempre `next-intl`**. Ninguna cadena visible se escribe en el JSX (regla 7 de CLAUDE.md)                                                                                                                                                                                       |
 
 ## 3. Liquid Glass en este proyecto
 
@@ -66,8 +67,16 @@ Reglas duras:
 
 Este software se usa en la cocina de una sala VIP, 24/7:
 
-- **Guantes, prisa y vapor.** El objetivo mínimo en KDS y almacén es **56 px**
-  (`min-h-14`), no 44. El 44 pt de Apple asume un dedo desnudo y sin urgencia.
+- **Guantes, prisa y vapor.** El 44 pt de Apple asume un dedo desnudo y sin
+  urgencia. Aquí la regla tiene tres escalones:
+
+  | Superficie                              | Acción principal       | Icono o control secundario |
+  | --------------------------------------- | ---------------------- | -------------------------- |
+  | KDS y almacén (con guantes)             | **56 px** (`min-h-14`) | 44 px (`size-11`)          |
+  | Pedidos, admin, analítica (sin guantes) | 44 px (`min-h-11`)     | 44 px                      |
+
+  Por debajo de 44 px no baja nada, en ninguna pantalla.
+
 - **Reflejos y brillo alto.** El contraste mínimo es **WCAG AA 4.5:1**, y en
   estados críticos (demora AMEX/Prefer, stock bajo, vencimiento) se apunta a AAA.
 - **El color nunca es el único canal.** Un estado se comunica además con icono y
