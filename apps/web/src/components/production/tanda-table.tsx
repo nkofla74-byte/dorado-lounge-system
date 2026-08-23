@@ -83,10 +83,10 @@ function ZonaDestinoBadge({ zona }: { zona: ZonaServicio | null }) {
   if (!zona) return <span className="text-muted-foreground italic">—</span>;
   const base = 'text-caption font-medium';
   const styles: Record<ZonaServicio, string> = {
-    amex: 'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/20',
-    buffet: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
-    snack:
-      'bg-senal-aviso/15 text-senal-aviso border border-senal-aviso/30 hover:bg-senal-aviso/20',
+    amex: 'bg-zona-amex/15 text-zona-amex border border-zona-amex/30 hover:bg-zona-amex/20',
+    buffet:
+      'bg-zona-buffet/15 text-zona-buffet border border-zona-buffet/30 hover:bg-zona-buffet/20',
+    snack: 'bg-zona-snack/15 text-zona-snack border border-zona-snack/30 hover:bg-zona-snack/20',
   };
   const labels: Record<ZonaServicio, string> = {
     amex: t('zonaAmex'),

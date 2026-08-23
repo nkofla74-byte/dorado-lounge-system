@@ -174,7 +174,7 @@ export function IngredientsSheet({
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="space-y-1 pb-4">
           <SheetTitle className="text-base">{receta.nombre}</SheetTitle>
-          <SheetDescription className="text-xs">
+          <SheetDescription className="text-caption">
             {t('ingredienteCount', { count: receta.ingredientes.length })}
             {' · '}
             {t('porcionCount', { count: receta.porciones ?? 0 })}
@@ -184,7 +184,7 @@ export function IngredientsSheet({
                 <span
                   className={cn(
                     'font-medium',
-                    costo.tieneCostoCompleto ? 'text-foreground' : 'text-amber-500',
+                    costo.tieneCostoCompleto ? 'text-foreground' : 'text-senal-aviso',
                   )}
                 >
                   {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'}{' '}
@@ -221,11 +221,11 @@ export function IngredientsSheet({
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{ing.insumoNombre}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-caption text-muted-foreground">
                       {cantidadDisplay.toLocaleString('es-CO', { maximumFractionDigits: 4 })}{' '}
                       {UNIDAD_LABEL[display] ?? display}
                       {ing.mermaCoeficiente > 0 && (
-                        <span className="ml-2 text-amber-500/80">
+                        <span className="ml-2 text-senal-aviso/80">
                           {t('merma', { pct: (ing.mermaCoeficiente * 100).toFixed(1) })}
                         </span>
                       )}
@@ -234,11 +234,11 @@ export function IngredientsSheet({
                   {costoIng && (
                     <div className="text-right shrink-0 ml-3">
                       {costoIng.costoIngrediente != null ? (
-                        <p className="text-xs font-medium tabular-nums">
+                        <p className="text-caption font-medium tabular-nums">
                           {formatCOP(costoIng.costoIngrediente)}
                         </p>
                       ) : (
-                        <p className="text-xs text-amber-500/70">{t('sinPrecio')}</p>
+                        <p className="text-caption text-senal-aviso/70">{t('sinPrecio')}</p>
                       )}
                       {costoIng.precioUnitario != null && (
                         <p className="text-[10px] text-muted-foreground tabular-nums">
@@ -292,7 +292,7 @@ export function IngredientsSheet({
                   </SelectContent>
                 </Select>
                 {errors.insumoId && (
-                  <p className="text-xs text-destructive">{errors.insumoId.message}</p>
+                  <p className="text-caption text-destructive">{errors.insumoId.message}</p>
                 )}
               </div>
 
@@ -308,7 +308,7 @@ export function IngredientsSheet({
                     {...register('cantidad', { valueAsNumber: true })}
                   />
                   {errors.cantidad && (
-                    <p className="text-xs text-destructive">{errors.cantidad.message}</p>
+                    <p className="text-caption text-destructive">{errors.cantidad.message}</p>
                   )}
                 </div>
 
@@ -324,7 +324,9 @@ export function IngredientsSheet({
                     {...register('mermaCoeficiente', { valueAsNumber: true })}
                   />
                   {errors.mermaCoeficiente && (
-                    <p className="text-xs text-destructive">{errors.mermaCoeficiente.message}</p>
+                    <p className="text-caption text-destructive">
+                      {errors.mermaCoeficiente.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -378,7 +380,7 @@ export function IngredientsSheet({
               <div className="flex items-center gap-2">
                 <QrCode className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm font-medium">{t('menuQr')}</p>
-                <span className="text-xs text-muted-foreground">{t('menuQrVisible')}</span>
+                <span className="text-caption text-muted-foreground">{t('menuQrVisible')}</span>
               </div>
 
               {/* Categoría */}
@@ -391,7 +393,7 @@ export function IngredientsSheet({
                       type="button"
                       onClick={() => setMenuCategoria(cat === currentCategoria ? null : cat)}
                       className={cn(
-                        'flex-1 py-1.5 text-xs rounded-lg border transition-colors',
+                        'flex-1 py-1.5 text-caption rounded-lg border transition-colors',
                         currentCategoria === cat
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'border-border hover:bg-accent',
@@ -401,7 +403,7 @@ export function IngredientsSheet({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">{t('sinCategoria')}</p>
+                <p className="text-caption text-muted-foreground">{t('sinCategoria')}</p>
               </div>
 
               {/* Descripción */}
@@ -429,7 +431,7 @@ export function IngredientsSheet({
                   onChange={(e) => setMenuImagenUrl(e.target.value)}
                   className="text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   {t('urlFotoHint', { bucket: 'recetas' })}
                 </p>
               </div>

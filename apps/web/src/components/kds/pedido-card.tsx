@@ -23,9 +23,9 @@ type Urgencia = 'normal' | 'aviso' | 'critico';
 // Tokens de estado en lugar de la paleta cruda de Tailwind: responden al tema
 // y mantienen el contraste en claro y oscuro (dorado-design-system §4).
 const ZONA_COLOR: Record<string, string> = {
-  amex: 'bg-senal-curso/10 border-senal-curso/30 text-senal-curso',
-  snack: 'bg-senal-aviso/10 border-senal-aviso/30 text-senal-aviso',
-  buffet: 'bg-senal-ok/10 border-senal-ok/30 text-senal-ok',
+  amex: 'bg-zona-amex/10 border-zona-amex/30 text-zona-amex',
+  snack: 'bg-zona-snack/10 border-zona-snack/30 text-zona-snack',
+  buffet: 'bg-zona-buffet/10 border-zona-buffet/30 text-zona-buffet',
 };
 
 const ITEM_ESTADO_COLORS: Record<string, string> = {

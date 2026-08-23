@@ -82,7 +82,7 @@ export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <span
-                    className={`text-sm tabular-nums ${isLow ? 'text-amber-500 font-medium' : ''}`}
+                    className={`text-sm tabular-nums ${isLow ? 'text-senal-aviso font-medium' : ''}`}
                   >
                     {isLow && <TrendingDown className="inline h-3.5 w-3.5 mr-0.5" />}
                     {lote.cantidadActual.toFixed(2)}
@@ -95,12 +95,12 @@ export function HistorialCompras({ proveedorId }: HistorialComprasProps) {
                   {lote.activo ? (
                     <Badge
                       variant="outline"
-                      className="text-xs text-emerald-500 border-emerald-500/30"
+                      className="text-caption text-senal-ok border-senal-ok/30"
                     >
                       {t('activo')}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                    <Badge variant="outline" className="text-caption text-muted-foreground">
                       {t('agotado')}
                     </Badge>
                   )}

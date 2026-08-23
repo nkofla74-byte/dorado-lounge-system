@@ -29,7 +29,7 @@ const ICONO_ESTADO = {
 const ESTILO_ESTADO: Record<EstadoItem, string> = {
   pendiente: 'text-muted-foreground',
   en_preparacion: 'text-primary',
-  listo: 'text-emerald-600 dark:text-emerald-400',
+  listo: 'text-senal-ok',
 };
 
 export function KdsOrderCard({

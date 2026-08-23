@@ -153,18 +153,20 @@ export function QRGeneratorClient() {
               ref={printRef}
               className="w-56 border-2 border-foreground rounded-xl p-5 text-center bg-white text-black"
             >
-              <p className="text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-1">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-1">
                 Dorado Lounge
               </p>
               <p className="text-xl font-extrabold mb-0.5">{result.mesaNumero}</p>
-              <p className="text-xs text-gray-500 mb-3">{result.zonaLabel}</p>
+              <p className="text-caption text-muted-foreground mb-3">{result.zonaLabel}</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={result.dataUrl}
                 alt={`QR ${result.mesaNumero}`}
                 className="w-44 h-44 mx-auto"
               />
-              <p className="text-[9px] text-gray-400 mt-3 leading-snug">{t('scanInstrucciones')}</p>
+              <p className="text-[9px] text-muted-foreground mt-3 leading-snug">
+                {t('scanInstrucciones')}
+              </p>
             </div>
           </div>
 
@@ -206,7 +208,7 @@ export function QRGeneratorClient() {
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">{t('tokenInfo')}</p>
+          <p className="text-caption text-muted-foreground text-center">{t('tokenInfo')}</p>
         </div>
       )}
     </div>

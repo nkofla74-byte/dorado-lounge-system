@@ -82,7 +82,7 @@ export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
 
         <div className="flex-1" />
 
-        <div className="text-xs text-muted-foreground">
+        <div className="text-caption text-muted-foreground">
           {t('activosCount', { count: activos.length })}
         </div>
       </div>
@@ -99,7 +99,7 @@ export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">{t('historialTitle')}</h2>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-caption">
             {turnos.length}
           </Badge>
         </div>
@@ -113,22 +113,22 @@ export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="text-xs font-medium text-muted-foreground">
+                  <TableHead className="text-caption font-medium text-muted-foreground">
                     {t('colBloque')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">
+                  <TableHead className="text-caption font-medium text-muted-foreground">
                     {t('colEmpleado')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">
+                  <TableHead className="text-caption font-medium text-muted-foreground">
                     {t('colInicio')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">
+                  <TableHead className="text-caption font-medium text-muted-foreground">
                     {t('colCierre')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground text-right">
+                  <TableHead className="text-caption font-medium text-muted-foreground text-right">
                     {t('colDuracion')}
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground">
+                  <TableHead className="text-caption font-medium text-muted-foreground">
                     {t('colEstado')}
                   </TableHead>
                 </TableRow>
@@ -151,16 +151,16 @@ export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
                     </TableCell>
                     <TableCell>
                       {tu.activo ? (
-                        <Badge className="text-xs">{t('activo')}</Badge>
+                        <Badge className="text-caption">{t('activo')}</Badge>
                       ) : tu.cierreMotivo === 'auto_expiracion' ? (
                         <Badge
                           variant="outline"
-                          className="text-xs text-amber-600 border-amber-500/40"
+                          className="text-caption text-senal-aviso border-senal-aviso/40"
                         >
                           {t('cerradoAuto')}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-caption text-muted-foreground">
                           {t('cerrado')}
                         </Badge>
                       )}

@@ -102,19 +102,19 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t('totalRecetas')}</p>
+          <p className="text-caption text-muted-foreground">{t('totalRecetas')}</p>
           <p className="text-2xl font-bold mt-1">{stats.total}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t('conCostoCompleto')}</p>
-          <p className="text-2xl font-bold mt-1 text-green-500">{stats.completos}</p>
+          <p className="text-caption text-muted-foreground">{t('conCostoCompleto')}</p>
+          <p className="text-2xl font-bold mt-1 text-senal-ok">{stats.completos}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t('costoIncompleto')}</p>
-          <p className="text-2xl font-bold mt-1 text-amber-500">{stats.incompletos}</p>
+          <p className="text-caption text-muted-foreground">{t('costoIncompleto')}</p>
+          <p className="text-2xl font-bold mt-1 text-senal-aviso">{stats.incompletos}</p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-xs text-muted-foreground">{t('promedioPorcion')}</p>
+          <p className="text-caption text-muted-foreground">{t('promedioPorcion')}</p>
           <p className="text-2xl font-bold mt-1">{formatCOP(stats.promedio)}</p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
         <Button
           variant={filterIncompleto ? 'default' : 'outline'}
           size="sm"
-          className="h-8 text-xs gap-1.5"
+          className="h-8 text-caption gap-1.5"
           onClick={() => setFilterIncompleto((v) => !v)}
         >
           <AlertTriangle className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
                   <TableRow key={receta.id}>
                     <TableCell className="font-medium">{receta.nombre}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs capitalize">
+                      <Badge variant="outline" className="text-caption capitalize">
                         {receta.tipoReceta === 'produccion'
                           ? t('tipoProduccion')
                           : t('tipoServicio')}
@@ -190,22 +190,22 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
                     <TableCell
                       className={cn(
                         'text-right tabular-nums font-mono text-sm font-medium',
-                        costo && !costo.tieneCostoCompleto && 'text-amber-500',
+                        costo && !costo.tieneCostoCompleto && 'text-senal-aviso',
                       )}
                     >
                       {formatCOP(costo?.costoPorPorcion ?? null)}
                     </TableCell>
                     <TableCell className="text-center">
                       {!costo ? (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-caption">
                           {t('sinLotes')}
                         </Badge>
                       ) : costo.tieneCostoCompleto ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 text-senal-ok mx-auto" />
                       ) : (
-                        <div className="flex items-center justify-center gap-1 text-amber-500">
+                        <div className="flex items-center justify-center gap-1 text-senal-aviso">
                           <AlertTriangle className="h-3.5 w-3.5" />
-                          <span className="text-xs">{t('parcial')}</span>
+                          <span className="text-caption">{t('parcial')}</span>
                         </div>
                       )}
                     </TableCell>
@@ -218,7 +218,7 @@ export function CostosPanel({ recetas, costos }: CostosPanelProps) {
       </div>
 
       {stats.incompletos > 0 && (
-        <p className="text-xs text-amber-500 flex items-center gap-1.5">
+        <p className="text-caption text-senal-aviso flex items-center gap-1.5">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           {t('advertenciaIncompletos', {
             count: stats.incompletos,

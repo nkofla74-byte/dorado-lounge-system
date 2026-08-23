@@ -43,6 +43,14 @@
     --area-almacen: 190 85% 27%;
     --area-sala: 265 60% 45%;
 
+    /* Zonas de servicio. Tercer eje, distinto de `senal` y de `area`: dice a
+       QUÉ zona pertenece algo. Amex comparte tono con `area-sala` porque es la
+       sala; buffet y snack necesitan tono propio para distinguirse de un
+       vistazo en una tabla. */
+    --zona-amex: 265 60% 45%;
+    --zona-buffet: 172 75% 26%;
+    --zona-snack: 330 68% 42%;
+
     /* Materiales — profundidad de desenfoque. Ver dorado-design-system §3. */
     --material-thin: 12px;
     --material-regular: 20px;
@@ -77,6 +85,9 @@
 
     --area-almacen: 187 85% 60%;
     --area-sala: 265 85% 76%;
+    --zona-amex: 265 85% 76%;
+    --zona-buffet: 170 70% 52%;
+    --zona-snack: 332 88% 70%;
 
     /* En oscuro los estados suben en luminosidad para mantener AA sobre #0d1117 */
     --senal-aviso: 43 96% 62%;

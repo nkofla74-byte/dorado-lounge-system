@@ -319,7 +319,7 @@ function DoradoLogo({
   const sizes = {
     sm: { title: 'text-xl', sub: 'text-[8px]', gap: 'gap-1.5', rule: 'w-8' },
     md: { title: 'text-3xl', sub: 'text-[10px]', gap: 'gap-2', rule: 'w-10' },
-    lg: { title: 'text-5xl', sub: 'text-xs', gap: 'gap-3', rule: 'w-14' },
+    lg: { title: 'text-5xl', sub: 'text-caption', gap: 'gap-3', rule: 'w-14' },
   } as const;
   const s = sizes[size];
   const titleColor = variant === 'light' ? 'text-[#00175A]' : 'text-[#FAF7F0]';
@@ -592,7 +592,7 @@ function MenuScreen({
             </p>
           </div>
           {totalItems > 0 && (
-            <span className="text-xs bg-[#016FD0] text-white rounded-full px-3 py-1 font-bold tabular-nums shadow-[0_2px_8px_-2px_rgba(1,111,208,0.4)]">
+            <span className="text-caption bg-[#016FD0] text-white rounded-full px-3 py-1 font-bold tabular-nums shadow-[0_2px_8px_-2px_rgba(1,111,208,0.4)]">
               {totalItems} {totalItems === 1 ? t['dishSingular'] : t['dishPlural']}
             </span>
           )}
@@ -606,7 +606,7 @@ function MenuScreen({
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95 ${
+                  className={`shrink-0 text-caption font-semibold px-4 py-2 rounded-full border transition-all active:scale-95 ${
                     active
                       ? 'bg-[#016FD0] text-white border-[#016FD0] shadow-[0_2px_12px_-4px_rgba(1,111,208,0.4)]'
                       : 'border-[#D6DEE8] text-[#00175A]/55 hover:text-[#016FD0] hover:border-[#016FD0]/40'
@@ -641,12 +641,14 @@ function MenuScreen({
         )}
       </main>
 
-      {error && <p className="px-4 pb-2 text-sm text-red-500 text-center">{error}</p>}
+      {error && <p className="px-4 pb-2 text-sm text-red-600 text-center">{error}</p>}
 
       {/* CTA fijo — abre review */}
       <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#D6DEE8] px-4 py-3 safe-pb space-y-2">
         {emptyWarning && (
-          <p className="text-xs text-[#016FD0] text-center font-medium">{t['selectAtLeastOne']}</p>
+          <p className="text-caption text-[#016FD0] text-center font-medium">
+            {t['selectAtLeastOne']}
+          </p>
         )}
         <button
           className="w-full h-12 rounded-full font-bold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all disabled:opacity-50"
@@ -683,7 +685,7 @@ function MenuScreen({
               <ChevronLeft className="h-5 w-5" />
             </button>
             <h2 className="font-bold text-base flex-1">{t['yourOrder']}</h2>
-            <span className="text-xs text-[#016FD0] font-semibold">
+            <span className="text-caption text-[#016FD0] font-semibold">
               {t['guestLabel']} {currentComensal}/{totalComensales}
             </span>
           </div>
@@ -750,7 +752,7 @@ function MenuScreen({
                 {t['min']}
               </span>
             </div>
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            {error && <p className="text-sm text-red-600 text-center">{error}</p>}
             <button
               className="w-full h-12 rounded-full font-bold text-white bg-[#016FD0] hover:bg-[#0157A6] hover:shadow-[0_4px_20px_-4px_rgba(1,111,208,0.45)] active:scale-[0.98] transition-all disabled:opacity-50"
               onClick={() => onConfirm(cart)}
@@ -787,7 +789,7 @@ function MenuScreen({
             </div>
             <h2 className="font-serif text-2xl text-[#00175A] mb-2">{t['orderSentTitle']}</h2>
             <p className="text-sm text-[#00175A]/55 mb-1">{t['preparingMsg']}</p>
-            <p className="text-xs text-[#016FD0] font-semibold flex items-center justify-center gap-1">
+            <p className="text-caption text-[#016FD0] font-semibold flex items-center justify-center gap-1">
               <Clock className="h-3 w-3" />~
               {Math.max(
                 ...cart.map(
@@ -800,7 +802,7 @@ function MenuScreen({
               {t['min']}
             </p>
             {currentComensal < totalComensales && (
-              <p className="mt-4 text-xs text-[#00175A]/40">{t['nextGuestMsg']}</p>
+              <p className="mt-4 text-caption text-[#00175A]/40">{t['nextGuestMsg']}</p>
             )}
           </div>
         </div>

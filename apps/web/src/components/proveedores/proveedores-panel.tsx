@@ -142,12 +142,12 @@ export function ProveedoresPanel({
                         </Badge>
                       )}
                       {!p.activo && (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-caption text-muted-foreground">
                           {t('inactivo')}
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-3 mt-1 text-caption text-muted-foreground flex-wrap">
                       {p.contacto && (
                         <span className="flex items-center gap-1">
                           <User className="h-3 w-3" />
@@ -183,7 +183,7 @@ export function ProveedoresPanel({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 text-xs text-muted-foreground"
+                        className="h-7 text-caption text-muted-foreground"
                         onClick={() => toggleActivo(p)}
                       >
                         {p.activo ? t('desactivar') : t('reactivar')}
@@ -209,8 +209,10 @@ export function ProveedoresPanel({
                 {/* Historial expandido */}
                 {isExpanded && (
                   <div className="border-t border-border px-4 pb-4 pt-3 space-y-2">
-                    {p.notas && <p className="text-xs text-muted-foreground italic">{p.notas}</p>}
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {p.notas && (
+                      <p className="text-caption text-muted-foreground italic">{p.notas}</p>
+                    )}
+                    <p className="text-caption font-medium text-muted-foreground uppercase tracking-wide">
                       {t('historialTitle')}
                     </p>
                     <HistorialCompras proveedorId={p.id} />

@@ -41,12 +41,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   };
   if (estado === 'creado')
     return (
-      <Badge
-        className={cn(
-          base,
-          'bg-senal-curso/15 text-senal-curso border border-senal-curso/30 hover:bg-senal-curso/20',
-        )}
-      >
+      <Badge className={cn(base, 'border border-border text-muted-foreground hover:bg-muted')}>
         {ESTADO_LABEL[estado]}
       </Badge>
     );
@@ -55,7 +50,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
       <Badge
         className={cn(
           base,
-          'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
+          'bg-senal-curso/15 text-senal-curso border border-senal-curso/30 hover:bg-senal-curso/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -77,7 +72,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
       <Badge
         className={cn(
           base,
-          'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/20',
+          'bg-area-sala/15 text-area-sala border border-area-sala/30 hover:bg-area-sala/20',
         )}
       >
         {ESTADO_LABEL[estado]}

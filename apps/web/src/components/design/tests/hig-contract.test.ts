@@ -42,6 +42,16 @@ describe('contrato HIG — implementación de referencia del KDS', () => {
     expect(FUENTE).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
+  it('no usa la paleta cruda de Tailwind, que ignora el tema', () => {
+    // Esta aserción faltaba y por eso este mismo fichero se fue con
+    // `text-emerald-600 dark:text-emerald-400`: dos colores fijos y una
+    // variante manual de tema donde bastaba un token que ya se invierte solo.
+    const crudos = FUENTE.match(
+      /\b(?:bg|text|border|ring|from|to|divide)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}\b/g,
+    );
+    expect(crudos).toBeNull();
+  });
+
   it('anula la animación bajo prefers-reduced-motion', () => {
     const animaciones = FUENTE.match(/motion-safe:animate-\w+/g) ?? [];
     expect(animaciones.length).toBeGreaterThan(0);

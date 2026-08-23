@@ -64,6 +64,12 @@ const config: Config = {
           almacen: 'hsl(var(--area-almacen) / <alpha-value>)',
           sala: 'hsl(var(--area-sala) / <alpha-value>)',
         },
+        // Zonas de servicio: a qué zona pertenece algo. Ni severidad ni área.
+        zona: {
+          amex: 'hsl(var(--zona-amex) / <alpha-value>)',
+          buffet: 'hsl(var(--zona-buffet) / <alpha-value>)',
+          snack: 'hsl(var(--zona-snack) / <alpha-value>)',
+        },
         senal: {
           aviso: 'hsl(var(--senal-aviso) / <alpha-value>)',
           curso: 'hsl(var(--senal-curso) / <alpha-value>)',
