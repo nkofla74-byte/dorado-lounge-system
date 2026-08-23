@@ -117,9 +117,9 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
   }
 
   const cardBorder = isCrit
-    ? 'ring-2 ring-estado-demora motion-safe:animate-atencion'
+    ? 'ring-2 ring-senal-critico motion-safe:animate-atencion'
     : isWarn
-      ? 'ring-2 ring-estado-pendiente'
+      ? 'ring-2 ring-senal-aviso'
       : '';
 
   return (
@@ -134,7 +134,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
           </p>
           <Badge
             variant="outline"
-            className={`text-caption ${isCrit ? 'border-estado-demora text-estado-demora' : isWarn ? 'border-estado-pendiente text-estado-pendiente' : ''}`}
+            className={`text-caption ${isCrit ? 'border-senal-critico text-senal-critico' : isWarn ? 'border-senal-aviso text-senal-aviso' : ''}`}
           >
             {pedido.estado === 'creado' && t('estadoNuevo')}
             {pedido.estado === 'recibido_cocina' && t('estadoRecibido')}
@@ -143,7 +143,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
           </Badge>
         </div>
         <div
-          className={`flex items-center gap-1.5 shrink-0 ${isCrit ? 'text-estado-demora' : isWarn ? 'text-estado-pendiente' : 'text-muted-foreground'}`}
+          className={`flex items-center gap-1.5 shrink-0 ${isCrit ? 'text-senal-critico' : isWarn ? 'text-senal-aviso' : 'text-muted-foreground'}`}
         >
           {isCrit ? (
             <AlertTriangle className="size-5" aria-hidden="true" />
@@ -379,7 +379,7 @@ export function KdsBoardAmex({ initialPedidos, readOnly }: KdsBoardAmexProps) {
           <p className="text-sm text-muted-foreground mt-0.5">
             {total === 0 ? t('sinPedidosActivos') : t('pedidosActivos', { n: total })}
             {urgentes > 0 && (
-              <span className="ml-2 font-medium text-estado-demora">
+              <span className="ml-2 font-medium text-senal-critico">
                 · {t('urgentes', { n: urgentes })}
               </span>
             )}

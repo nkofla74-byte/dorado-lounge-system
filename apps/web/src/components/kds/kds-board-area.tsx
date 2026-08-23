@@ -23,22 +23,22 @@ const COLUMNS: ColumnDef[] = [
     key: 'creado',
     labelKey: 'colNuevos',
     emptyKey: 'emptyNuevos',
-    headerClass: 'border-estado-pendiente/40 bg-estado-pendiente/5',
-    countClass: 'bg-estado-pendiente text-background',
+    headerClass: 'border-senal-aviso/40 bg-senal-aviso/5',
+    countClass: 'bg-senal-aviso text-background',
   },
   {
     key: 'en_preparacion',
     labelKey: 'colEnPreparacion',
     emptyKey: 'emptyPreparacion',
-    headerClass: 'border-estado-preparacion/40 bg-estado-preparacion/5',
-    countClass: 'bg-estado-preparacion text-background',
+    headerClass: 'border-senal-curso/40 bg-senal-curso/5',
+    countClass: 'bg-senal-curso text-background',
   },
   {
     key: 'despachado',
     labelKey: 'colDespachados',
     emptyKey: 'emptyDespachados',
-    headerClass: 'border-estado-listo/40 bg-estado-listo/5',
-    countClass: 'bg-estado-listo text-background',
+    headerClass: 'border-senal-ok/40 bg-senal-ok/5',
+    countClass: 'bg-senal-ok text-background',
   },
 ];
 

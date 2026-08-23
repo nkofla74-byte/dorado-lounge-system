@@ -50,13 +50,19 @@ const config: Config = {
         success: 'hsl(var(--success))',
         warning: 'hsl(var(--warning))',
         sidebar: 'hsl(var(--sidebar))',
-        // Estados operativos. Con <alpha-value> para poder escribir
-        // `bg-estado-listo/10` sin recurrir a la paleta cruda de Tailwind.
-        estado: {
-          pendiente: 'hsl(var(--state-pendiente) / <alpha-value>)',
-          preparacion: 'hsl(var(--state-preparacion) / <alpha-value>)',
-          listo: 'hsl(var(--state-listo) / <alpha-value>)',
-          demora: 'hsl(var(--state-demora) / <alpha-value>)',
+        // Escala de SEVERIDAD, no de estados de pedido: sirve igual para
+        // «en preparación» en el KDS que para «lote por vencer» en almacén.
+        // Con <alpha-value> para poder escribir `bg-senal-ok/10` sin recurrir
+        // a la paleta cruda de Tailwind.
+        //
+        // Son para TEXTO, BORDES y TINTES: sus valores están oscurecidos en
+        // tema claro para cumplir AA. Para rellenos sólidos con texto blanco
+        // encima siguen estando --success, --warning y --destructive.
+        senal: {
+          aviso: 'hsl(var(--senal-aviso) / <alpha-value>)',
+          curso: 'hsl(var(--senal-curso) / <alpha-value>)',
+          ok: 'hsl(var(--senal-ok) / <alpha-value>)',
+          critico: 'hsl(var(--senal-critico) / <alpha-value>)',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

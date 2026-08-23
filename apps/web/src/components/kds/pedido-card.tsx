@@ -23,15 +23,15 @@ type Urgencia = 'normal' | 'aviso' | 'critico';
 // Tokens de estado en lugar de la paleta cruda de Tailwind: responden al tema
 // y mantienen el contraste en claro y oscuro (dorado-design-system §4).
 const ZONA_COLOR: Record<string, string> = {
-  amex: 'bg-estado-preparacion/10 border-estado-preparacion/30 text-estado-preparacion',
-  snack: 'bg-estado-pendiente/10 border-estado-pendiente/30 text-estado-pendiente',
-  buffet: 'bg-estado-listo/10 border-estado-listo/30 text-estado-listo',
+  amex: 'bg-senal-curso/10 border-senal-curso/30 text-senal-curso',
+  snack: 'bg-senal-aviso/10 border-senal-aviso/30 text-senal-aviso',
+  buffet: 'bg-senal-ok/10 border-senal-ok/30 text-senal-ok',
 };
 
 const ITEM_ESTADO_COLORS: Record<string, string> = {
-  pendiente: 'bg-estado-pendiente/10 text-estado-pendiente border-estado-pendiente/30',
-  en_preparacion: 'bg-estado-preparacion/10 text-estado-preparacion border-estado-preparacion/30',
-  listo: 'bg-estado-listo/10 text-estado-listo border-estado-listo/30',
+  pendiente: 'bg-senal-aviso/10 text-senal-aviso border-senal-aviso/30',
+  en_preparacion: 'bg-senal-curso/10 text-senal-curso border-senal-curso/30',
+  listo: 'bg-senal-ok/10 text-senal-ok border-senal-ok/30',
 };
 
 function useElapsed(since: Date): string {
@@ -122,8 +122,8 @@ export function PedidoCard({ pedido, area, pedidoVersion, onRefresh, readOnly }:
       data-testid={`pedido-card-${pedido.id}`}
       className={cn(
         'rounded-xl border bg-card shadow-sm transition-colors duration-200 ease-smooth',
-        urgencia === 'aviso' && 'border-estado-pendiente/60 ring-1 ring-estado-pendiente/40',
-        urgencia === 'critico' && 'border-estado-demora ring-2 ring-estado-demora/60',
+        urgencia === 'aviso' && 'border-senal-aviso/60 ring-1 ring-senal-aviso/40',
+        urgencia === 'critico' && 'border-senal-critico ring-2 ring-senal-critico/60',
       )}
       aria-labelledby={`pedido-${pedido.id}-mesa`}
     >
@@ -149,7 +149,7 @@ export function PedidoCard({ pedido, area, pedidoVersion, onRefresh, readOnly }:
         <div
           className={cn(
             'flex shrink-0 flex-col items-end',
-            urgencia === 'critico' ? 'text-estado-demora' : 'text-muted-foreground',
+            urgencia === 'critico' ? 'text-senal-critico' : 'text-muted-foreground',
           )}
         >
           <span
@@ -176,8 +176,8 @@ export function PedidoCard({ pedido, area, pedidoVersion, onRefresh, readOnly }:
             'mx-4 mb-3 flex items-center gap-2 rounded-lg px-3 py-2',
             'text-caption font-semibold uppercase tracking-wide',
             urgencia === 'critico'
-              ? 'bg-estado-demora/12 text-estado-demora motion-safe:animate-atencion'
-              : 'bg-estado-pendiente/12 text-estado-pendiente',
+              ? 'bg-senal-critico/12 text-senal-critico motion-safe:animate-atencion'
+              : 'bg-senal-aviso/12 text-senal-aviso',
           )}
         >
           <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
@@ -247,7 +247,7 @@ export function PedidoCard({ pedido, area, pedidoVersion, onRefresh, readOnly }:
                   {item.estado === 'listo' && (
                     <Button
                       variant="ghost"
-                      className="min-h-14 w-full text-body text-estado-listo"
+                      className="min-h-14 w-full text-body text-senal-ok"
                       disabled={isLoading}
                       onClick={() => handleItemAction(item.id, (id, v) => recallItem(id, v))}
                     >

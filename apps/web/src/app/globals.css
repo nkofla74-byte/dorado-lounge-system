@@ -31,10 +31,10 @@
 
     /* Estados operativos — semánticos. Sustituyen a la paleta cruda de Tailwind
        (bg-blue-500, ring-red-500…), que no responde al tema ni al contraste. */
-    --state-pendiente: 35 92% 38%;
-    --state-preparacion: 217 85% 42%;
-    --state-listo: 160 70% 30%;
-    --state-demora: 347 89% 44%;
+    --senal-aviso: 35 92% 38%;
+    --senal-curso: 217 85% 42%;
+    --senal-ok: 160 70% 30%;
+    --senal-critico: 347 89% 44%;
 
     /* Materiales — profundidad de desenfoque. Ver dorado-design-system §3. */
     --material-thin: 12px;
@@ -69,10 +69,10 @@
     --radius: 0.625rem;
 
     /* En oscuro los estados suben en luminosidad para mantener AA sobre #0d1117 */
-    --state-pendiente: 43 96% 62%;
-    --state-preparacion: 213 92% 68%;
-    --state-listo: 158 64% 52%;
-    --state-demora: 347 95% 70%;
+    --senal-aviso: 43 96% 62%;
+    --senal-curso: 213 92% 68%;
+    --senal-ok: 158 64% 52%;
+    --senal-critico: 347 95% 70%;
   }
 }
 
