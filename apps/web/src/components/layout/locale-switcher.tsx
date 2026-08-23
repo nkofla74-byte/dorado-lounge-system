@@ -38,7 +38,7 @@ export function LocaleSwitcher({ current, compact = false }: LocaleSwitcherProps
       <Button
         variant="ghost"
         size="sm"
-        className="h-9 px-2 text-xs font-semibold tabular-nums"
+        className="min-h-11 px-3 text-caption font-semibold tabular-nums"
         onClick={() => handleSwitch(next.code)}
         disabled={isPending}
         aria-label={`Cambiar a ${next.label}`}
@@ -55,7 +55,7 @@ export function LocaleSwitcher({ current, compact = false }: LocaleSwitcherProps
           key={code}
           variant={current === code ? 'secondary' : 'ghost'}
           size="sm"
-          className="h-7 px-2 text-xs"
+          className="min-h-11 px-3 text-caption"
           onClick={() => handleSwitch(code)}
           disabled={current === code || isPending}
         >

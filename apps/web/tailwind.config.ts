@@ -58,6 +58,12 @@ const config: Config = {
         // Son para TEXTO, BORDES y TINTES: sus valores están oscurecidos en
         // tema claro para cumplir AA. Para rellenos sólidos con texto blanco
         // encima siguen estando --success, --warning y --destructive.
+        // Orientación en la navegación. Distinto eje que `senal`: dice DÓNDE
+        // estás, no cómo de grave es algo.
+        area: {
+          almacen: 'hsl(var(--area-almacen) / <alpha-value>)',
+          sala: 'hsl(var(--area-sala) / <alpha-value>)',
+        },
         senal: {
           aviso: 'hsl(var(--senal-aviso) / <alpha-value>)',
           curso: 'hsl(var(--senal-curso) / <alpha-value>)',
@@ -93,6 +99,7 @@ const config: Config = {
       transitionTimingFunction: {
         smooth: 'var(--ease-smooth)',
         snappy: 'var(--ease-snappy)',
+        expresivo: 'var(--ease-expresivo)',
       },
       borderRadius: {
         lg: 'var(--radius)',

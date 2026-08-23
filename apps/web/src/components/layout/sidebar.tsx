@@ -158,29 +158,53 @@ const SUPERUSER_NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon }[
   { href: '/admin/alertas', labelKey: 'alertas', icon: Bell },
 ];
 
-// Color de marca por categoría operativa. Se aplica al ícono cuando el item
-// NO está activo (el activo usa primary dorado para reforzar la selección).
+// Color de orientación del ícono cuando el item NO está activo (el activo usa
+// el dorado de marca para reforzar la selección).
+//
+// Antes había trece tonos distintos, uno casi por ruta, y todos en la escala
+// `-400`: calibrada para fondo oscuro, ilegible sobre la barra en tema claro.
+// Además el arcoíris competía con el dorado en lugar de ayudar a orientarse.
+//
+// Ahora son cuatro familias que corresponden a cómo está organizada la
+// operación de verdad. El color deja de decorar y pasa a decir en qué parte
+// de la sala estás:
+//
+//   Cocina         → dorado de marca. Es el centro del negocio.
+//   Almacén        → cian. Todo lo que entra y se guarda.
+//   Sala           → violeta. Lo que llega al pasajero.
+//   Administración → neutro. Se consulta sentado, no en servicio.
+//
+// Alertas es la excepción y va en `senal-aviso`: ahí el color sí es severidad.
+const AREA_COCINA = 'text-primary';
+const AREA_ALMACEN = 'text-area-almacen';
+const AREA_SALA = 'text-area-sala';
+const AREA_ADMIN = 'text-muted-foreground';
+
 const ICON_COLORS: Record<string, string> = {
-  '/almacen': 'text-sky-400',
-  '/inventario': 'text-sky-400',
-  '/recetas': 'text-amber-400',
-  '/cocina-fria': 'text-blue-400',
-  '/cocina-caliente': 'text-orange-400',
-  '/cocina-amex': 'text-violet-400',
-  '/produccion': 'text-orange-400',
-  '/pasteleria': 'text-pink-400',
-  '/pedidos': 'text-emerald-400',
-  '/snack': 'text-lime-400',
-  '/buffet': 'text-teal-400',
-  '/admin/qr': 'text-indigo-400',
-  '/analytics': 'text-fuchsia-400',
-  '/admin/costos': 'text-primary',
-  '/admin/personal': 'text-slate-400',
-  '/admin/proveedores': 'text-sky-400',
-  '/admin/alertas': 'text-amber-400',
-  '/admin/trazabilidad': 'text-teal-400',
-  '/admin/turnos': 'text-cyan-400',
-  '/admin/tenants': 'text-violet-400',
+  '/almacen': AREA_ALMACEN,
+  '/inventario': AREA_ALMACEN,
+  '/recetas': AREA_ALMACEN,
+  '/admin/proveedores': AREA_ALMACEN,
+
+  '/cocina-fria': AREA_COCINA,
+  '/cocina-caliente': AREA_COCINA,
+  '/cocina-amex': AREA_COCINA,
+  '/produccion': AREA_COCINA,
+  '/pasteleria': AREA_COCINA,
+
+  '/pedidos': AREA_SALA,
+  '/snack': AREA_SALA,
+  '/buffet': AREA_SALA,
+  '/admin/qr': AREA_SALA,
+
+  '/analytics': AREA_ADMIN,
+  '/admin/costos': AREA_ADMIN,
+  '/admin/personal': AREA_ADMIN,
+  '/admin/trazabilidad': AREA_ADMIN,
+  '/admin/turnos': AREA_ADMIN,
+  '/admin/tenants': AREA_ADMIN,
+
+  '/admin/alertas': 'text-senal-aviso',
 };
 
 interface SidebarContentProps extends SidebarProps {
@@ -247,7 +271,7 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
           <p className="marca text-headline font-semibold truncate text-foreground">
             Dorado Lounge
           </p>
-          <p className="text-xs text-muted-foreground truncate">El Dorado · Bogotá</p>
+          <p className="text-caption text-muted-foreground truncate">El Dorado · Bogotá</p>
         </div>
       </div>
 
@@ -275,8 +299,8 @@ function SidebarContent({ user, onNavigate, locale }: SidebarContentProps) {
       <div className="px-2 py-3 border-t border-border/50 space-y-1 safe-pb">
         <div className="px-3 py-2">
           <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-          <p className="text-xs text-primary truncate">{tRoles(user.role)}</p>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
+          <p className="text-caption text-primary truncate">{tRoles(user.role)}</p>
+          <p className="text-caption text-muted-foreground truncate mt-0.5">{user.email}</p>
         </div>
         <LocaleSwitcher current={locale} />
         <div className="flex items-center gap-1 px-1">
@@ -316,7 +340,7 @@ export function MobileTopBar({ user, locale }: SidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 shrink-0"
+            className="size-11 shrink-0"
             aria-label="Abrir menú de navegación"
           >
             <Menu className="h-5 w-5" />
