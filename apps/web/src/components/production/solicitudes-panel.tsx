@@ -85,7 +85,7 @@ export function SolicitudesPanel({ initialSolicitudes, fetchSolicitudes }: Props
       <div className="flex items-center gap-2">
         <ChefHat className="h-4 w-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold text-foreground">{t('solicitudesTitle')}</h2>
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className="text-caption">
           {solicitudes.length}
         </Badge>
         <Button
@@ -103,13 +103,13 @@ export function SolicitudesPanel({ initialSolicitudes, fetchSolicitudes }: Props
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="text-xs font-medium text-muted-foreground">
+              <TableHead className="text-caption font-medium text-muted-foreground">
                 {t('colZona')}
               </TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground">
+              <TableHead className="text-caption font-medium text-muted-foreground">
                 {t('colDescripcion')}
               </TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground">
+              <TableHead className="text-caption font-medium text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t('colEnviado')}
@@ -121,7 +121,7 @@ export function SolicitudesPanel({ initialSolicitudes, fetchSolicitudes }: Props
             {solicitudes.map((s) => (
               <TableRow key={s.id} className="hover:bg-muted/30">
                 <TableCell>
-                  <Badge variant="secondary" className="text-xs uppercase">
+                  <Badge variant="secondary" className="text-caption uppercase">
                     {s.zona}
                   </Badge>
                 </TableCell>

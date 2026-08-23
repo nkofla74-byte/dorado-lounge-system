@@ -127,7 +127,7 @@ export function CreateTandaDialog({
                     con.map((r) => (
                       <SelectItem key={r.id} value={r.id}>
                         {r.nombre}
-                        <span className="ml-2 text-xs text-muted-foreground">
+                        <span className="ml-2 text-caption text-muted-foreground">
                           ({r.ingredientes.length} {t('ingShort')})
                         </span>
                       </SelectItem>
@@ -137,7 +137,7 @@ export function CreateTandaDialog({
               </SelectContent>
             </Select>
             {formErrors.recetaId && (
-              <p className="text-xs text-destructive">{formErrors.recetaId.message}</p>
+              <p className="text-caption text-destructive">{formErrors.recetaId.message}</p>
             )}
           </div>
 
@@ -152,7 +152,7 @@ export function CreateTandaDialog({
               {...register('cantidadTandas', { valueAsNumber: true })}
             />
             {formErrors.cantidadTandas && (
-              <p className="text-xs text-destructive">{formErrors.cantidadTandas.message}</p>
+              <p className="text-caption text-destructive">{formErrors.cantidadTandas.message}</p>
             )}
           </div>
 
@@ -176,7 +176,7 @@ export function CreateTandaDialog({
               </SelectContent>
             </Select>
             {formErrors.zonaDestino && (
-              <p className="text-xs text-destructive">{t('zonaDestinoRequerida')}</p>
+              <p className="text-caption text-destructive">{t('zonaDestinoRequerida')}</p>
             )}
           </div>
 
@@ -186,7 +186,7 @@ export function CreateTandaDialog({
             <div className="flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm text-muted-foreground">
               {responsableNombre}
             </div>
-            <p className="text-xs text-muted-foreground">{t('responsableHint')}</p>
+            <p className="text-caption text-muted-foreground">{t('responsableHint')}</p>
           </div>
 
           {/* Turno activo */}
@@ -199,10 +199,10 @@ export function CreateTandaDialog({
                     ? `${turnoActivo.bloque} · ${formatBloqueHorario(turnoActivo.bloque)}`
                     : turnoActivo.nombre}
                 </span>
-                <span className="text-xs text-muted-foreground">{t('turnoActivo')}</span>
+                <span className="text-caption text-muted-foreground">{t('turnoActivo')}</span>
               </div>
             ) : (
-              <div className="flex items-center px-3 py-2 rounded-md border border-amber-500/40 bg-amber-500/5 text-sm text-amber-700 dark:text-amber-300">
+              <div className="flex items-center px-3 py-2 rounded-md border border-senal-aviso/40 bg-senal-aviso/5 text-sm text-senal-aviso dark:text-senal-aviso">
                 {t('sinTurno')}
               </div>
             )}
