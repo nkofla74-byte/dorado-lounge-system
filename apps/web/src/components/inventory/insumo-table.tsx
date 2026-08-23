@@ -109,7 +109,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="size-11"
             onClick={refresh}
             disabled={loading}
             title={t('refresh')}
@@ -184,7 +184,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                     <TableCell>
                       <Badge
                         variant={insumo.capa === 'capa_1' ? 'secondary' : 'outline'}
-                        className="text-xs"
+                        className="text-caption"
                       >
                         {t(`capa.${insumo.capa}` as 'capa.capa_1' | 'capa.capa_2')}
                       </Badge>
@@ -216,8 +216,8 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="sm" className="size-11 p-0">
+                            <MoreHorizontal className="size-5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -243,7 +243,7 @@ export function InsumoTable({ initialData, error: initialError, userRole }: Insu
                           {canMerma && (
                             <DropdownMenuItem
                               onClick={() => setMermaInsumo(insumo)}
-                              className="text-amber-500 focus:text-amber-500"
+                              className="text-senal-aviso focus:text-senal-aviso"
                             >
                               <Trash2 className="h-3.5 w-3.5 mr-2" />
                               {t('actions.merma')}

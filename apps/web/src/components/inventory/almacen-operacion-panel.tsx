@@ -57,7 +57,7 @@ export function AlmacenOperacionPanel({
       {/* Stats rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border border-border bg-card px-5 py-4 space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+          <p className="text-caption text-muted-foreground uppercase tracking-wide font-medium">
             {t('statsInsumosBodega')}
           </p>
           <p className="text-2xl font-bold tabular-nums">{capa1.length}</p>
@@ -67,7 +67,7 @@ export function AlmacenOperacionPanel({
             lowStock.length > 0 ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'
           }`}
         >
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+          <p className="text-caption text-muted-foreground uppercase tracking-wide font-medium">
             {t('statsStockBajo')}
           </p>
           <p
@@ -81,11 +81,11 @@ export function AlmacenOperacionPanel({
             vencenHoy.length > 0
               ? 'border-destructive/40 bg-destructive/5'
               : vencimientos.length > 0
-                ? 'border-amber-500/40 bg-amber-500/5'
+                ? 'border-senal-aviso/40 bg-senal-aviso/5'
                 : 'border-border bg-card'
           }`}
         >
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+          <p className="text-caption text-muted-foreground uppercase tracking-wide font-medium">
             {t('statsVencen7')}
           </p>
           <p
@@ -93,7 +93,7 @@ export function AlmacenOperacionPanel({
               vencenHoy.length > 0
                 ? 'text-destructive'
                 : vencimientos.length > 0
-                  ? 'text-amber-600 dark:text-amber-400'
+                  ? 'text-senal-aviso dark:text-senal-aviso'
                   : ''
             }`}
           >
@@ -101,10 +101,10 @@ export function AlmacenOperacionPanel({
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card px-5 py-4 space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+          <p className="text-caption text-muted-foreground uppercase tracking-wide font-medium">
             {t('statsOk')}
           </p>
-          <p className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+          <p className="text-2xl font-bold tabular-nums text-senal-ok dark:text-senal-ok">
             {capa1.length - lowStock.length}
           </p>
         </div>
@@ -112,20 +112,20 @@ export function AlmacenOperacionPanel({
 
       {/* Alerta de vencimientos próximos */}
       {vencimientos.length > 0 && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 space-y-2">
-          <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-senal-aviso/30 bg-senal-aviso/5 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-senal-aviso dark:text-senal-aviso">
             {t('lotesPorVencer')}
           </p>
           <div className="flex flex-wrap gap-2">
             {vencimientos.map((v) => (
               <span
                 key={v.loteId}
-                className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium border ${
+                className={`inline-flex items-center gap-1.5 text-caption px-2.5 py-1 rounded-full font-medium border ${
                   v.diasRestantes <= 0
                     ? 'bg-destructive/10 border-destructive/30 text-destructive'
                     : v.diasRestantes <= 2
-                      ? 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-400'
-                      : 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                      ? 'bg-senal-aviso/10 border-senal-aviso/30 text-senal-aviso dark:text-senal-aviso'
+                      : 'bg-senal-aviso/10 border-senal-aviso/30 text-senal-aviso dark:text-senal-aviso'
                 }`}
               >
                 {v.insumoNombre}
@@ -160,7 +160,7 @@ export function AlmacenOperacionPanel({
       <section className="space-y-3 pt-2">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">{t('proveedoresTitle')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('proveedoresSubtitle')}</p>
+          <p className="text-caption text-muted-foreground mt-0.5">{t('proveedoresSubtitle')}</p>
         </div>
         <ProveedoresPanel initialData={proveedores} canWrite={canIngresar} />
       </section>

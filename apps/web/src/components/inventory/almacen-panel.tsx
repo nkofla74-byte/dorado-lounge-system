@@ -47,7 +47,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="size-11"
           onClick={refresh}
           disabled={loading}
           title={t('refresh')}
@@ -131,7 +131,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 text-xs gap-1.5"
+                            className="min-h-14 text-caption gap-1.5"
                             onClick={() => setLotesInsumo(insumo)}
                           >
                             <PackagePlus className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-xs gap-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700"
+                            className="min-h-14 text-caption gap-1.5 text-senal-aviso dark:text-senal-aviso hover:text-senal-aviso"
                             onClick={() => setMermaInsumo(insumo)}
                           >
                             <AlertTriangle className="h-3.5 w-3.5" />
@@ -149,7 +149,7 @@ export function AlmacenPanel({ initialData, userRole: _userRole }: AlmacenPanelP
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-xs gap-1.5 text-muted-foreground"
+                            className="min-h-14 text-caption gap-1.5 text-muted-foreground"
                             onClick={() => setLotesInsumo(insumo)}
                           >
                             <Layers className="h-3.5 w-3.5" />

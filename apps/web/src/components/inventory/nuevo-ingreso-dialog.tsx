@@ -215,7 +215,7 @@ export function NuevoIngresoDialog({ insumos }: Props) {
             </div>
           ) : (
             <div className="space-y-3 border border-border rounded-md p-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="text-caption font-medium text-muted-foreground uppercase tracking-wide">
                 {t('seccionNuevoInsumo')}
               </p>
               <div className="space-y-1.5">
@@ -273,7 +273,7 @@ export function NuevoIngresoDialog({ insumos }: Props) {
                   onChange={(e) => setNuevoStockMinimo(e.target.value)}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">{t('codigoAutoHint')}</p>
+              <p className="text-caption text-muted-foreground">{t('codigoAutoHint')}</p>
             </div>
           )}
 

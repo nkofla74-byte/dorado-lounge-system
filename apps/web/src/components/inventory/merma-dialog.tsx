@@ -97,7 +97,7 @@ export function MermaDialog({ insumo, onOpenChange, onSuccess }: MermaDialogProp
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-amber-500" />
+            <Trash2 className="h-5 w-5 text-senal-aviso" />
             {tM('title')}
           </DialogTitle>
           <DialogDescription>
@@ -129,7 +129,7 @@ export function MermaDialog({ insumo, onOpenChange, onSuccess }: MermaDialogProp
                 {...register('cantidad', { valueAsNumber: true })}
               />
               {errors.cantidad && (
-                <p className="text-xs text-destructive">{errors.cantidad.message}</p>
+                <p className="text-caption text-destructive">{errors.cantidad.message}</p>
               )}
             </div>
 
@@ -152,7 +152,7 @@ export function MermaDialog({ insumo, onOpenChange, onSuccess }: MermaDialogProp
                 </SelectContent>
               </Select>
               {errors.categoria && (
-                <p className="text-xs text-destructive">{errors.categoria.message}</p>
+                <p className="text-caption text-destructive">{errors.categoria.message}</p>
               )}
             </div>
           </div>
@@ -188,7 +188,7 @@ export function MermaDialog({ insumo, onOpenChange, onSuccess }: MermaDialogProp
             <Button
               type="submit"
               size="sm"
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="min-h-11 bg-senal-aviso text-background hover:bg-senal-aviso/90"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

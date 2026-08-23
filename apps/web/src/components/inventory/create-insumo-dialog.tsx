@@ -106,7 +106,9 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
               placeholder={t('nombrePlaceholder')}
               autoFocus
             />
-            {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
+            {errors.nombre && (
+              <p className="text-caption text-destructive">{errors.nombre.message}</p>
+            )}
           </div>
 
           {/* Código */}
@@ -138,7 +140,9 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
                   ))}
                 </SelectContent>
               </Select>
-              {errors.capa && <p className="text-xs text-destructive">{errors.capa.message}</p>}
+              {errors.capa && (
+                <p className="text-caption text-destructive">{errors.capa.message}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -162,7 +166,7 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
                 </SelectContent>
               </Select>
               {errors.unidadMedida && (
-                <p className="text-xs text-destructive">{errors.unidadMedida.message}</p>
+                <p className="text-caption text-destructive">{errors.unidadMedida.message}</p>
               )}
             </div>
           </div>
@@ -179,7 +183,7 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
                 {...register('stockMinimo', { valueAsNumber: true })}
               />
               {errors.stockMinimo && (
-                <p className="text-xs text-destructive">{errors.stockMinimo.message}</p>
+                <p className="text-caption text-destructive">{errors.stockMinimo.message}</p>
               )}
             </div>
 
@@ -201,9 +205,9 @@ export function CreateInsumoDialog({ open, onOpenChange, onCreated }: CreateInsu
                 </span>
               </div>
               {errors.mermaDefault && (
-                <p className="text-xs text-destructive">{errors.mermaDefault.message}</p>
+                <p className="text-caption text-destructive">{errors.mermaDefault.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">{t('mermaDefaultHint')}</p>
+              <p className="text-caption text-muted-foreground">{t('mermaDefaultHint')}</p>
             </div>
           </div>
 

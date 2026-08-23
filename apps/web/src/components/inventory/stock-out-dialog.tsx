@@ -124,7 +124,7 @@ export function StockOutDialog({ insumo, onOpenChange, onSuccess }: StockOutDial
               {...register('cantidad', { valueAsNumber: true })}
             />
             {errors.cantidad && (
-              <p className="text-xs text-destructive">{errors.cantidad.message}</p>
+              <p className="text-caption text-destructive">{errors.cantidad.message}</p>
             )}
           </div>
 

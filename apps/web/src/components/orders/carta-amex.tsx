@@ -97,7 +97,7 @@ function DishCard({
         )}
         {disabled && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-xs font-bold text-red-400 uppercase tracking-wide bg-black/60 px-3 py-1 rounded-full">
+            <span className="text-caption font-bold text-senal-critico uppercase tracking-wide bg-black/60 px-3 py-1 rounded-full">
               {t('inhabilitar')}
             </span>
           </div>
@@ -208,8 +208,8 @@ function DishCard({
                 className={cn(
                   'w-full h-8 rounded-full font-semibold text-[12px] transition-all active:scale-[0.97] border',
                   disabled
-                    ? 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'
-                    : 'border-red-500/40 text-red-400 hover:bg-red-500/10',
+                    ? 'border-senal-ok/40 text-senal-ok hover:bg-senal-ok/10'
+                    : 'border-senal-critico/40 text-senal-critico hover:bg-senal-critico/10',
                 )}
               >
                 {disabled ? t('habilitar') : t('inhabilitar')}
@@ -354,7 +354,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             <div className="space-y-1.5">
               <label
                 htmlFor="setup-mesa"
-                className="text-xs text-[#D4AF37] uppercase tracking-wide font-semibold"
+                className="text-caption text-[#D4AF37] uppercase tracking-wide font-semibold"
               >
                 {t('mesa')}
               </label>
@@ -371,7 +371,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             <div className="space-y-1.5">
               <label
                 htmlFor="setup-comensales"
-                className="text-xs text-[#D4AF37] uppercase tracking-wide font-semibold"
+                className="text-caption text-[#D4AF37] uppercase tracking-wide font-semibold"
               >
                 {t('comensales')}
               </label>
@@ -446,7 +446,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             </div>
           </div>
           {totalItems > 0 && (
-            <span className="text-xs bg-[#D4AF37] text-[#0B0B0F] rounded-full px-3 py-1 font-bold tabular-nums">
+            <span className="text-caption bg-[#D4AF37] text-[#0B0B0F] rounded-full px-3 py-1 font-bold tabular-nums">
               {t('pedidoTitle', { count: totalItems })}
             </span>
           )}
@@ -458,7 +458,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
               type="button"
               onClick={() => setActiveCategory(cat)}
               className={cn(
-                'shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
+                'shrink-0 text-caption font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
                 activeCategory === cat
                   ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37] shadow-[0_0_16px_-4px_rgba(212,175,55,0.5)]'
                   : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40',
@@ -472,7 +472,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
               type="button"
               onClick={() => setActiveCategory('otros')}
               className={cn(
-                'shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
+                'shrink-0 text-caption font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
                 activeCategory === 'otros'
                   ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37]'
                   : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40',
@@ -515,7 +515,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             <button
               type="button"
               onClick={() => setCart([])}
-              className="text-xs text-[#FAF7F0]/50 hover:text-[#FAF7F0] transition-colors"
+              className="text-caption text-[#FAF7F0]/50 hover:text-[#FAF7F0] transition-colors"
             >
               {t('limpiar')}
             </button>
@@ -532,7 +532,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
                     onClick={() => updateQty(item.recetaId, -1)}
                   >
                     {item.cantidad === 1 ? (
-                      <Trash2 className="h-3 w-3 text-red-400" />
+                      <Trash2 className="h-3 w-3 text-senal-critico" />
                     ) : (
                       <Minus className="h-3 w-3" />
                     )}
