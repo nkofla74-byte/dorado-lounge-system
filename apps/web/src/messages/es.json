@@ -255,7 +255,9 @@
       "manana": "mañana",
       "diasShort": "{n}d",
       "proveedoresTitle": "Proveedores",
-      "proveedoresSubtitle": "Catálogo de proveedores · Crear, editar y eliminar desde acá"
+      "proveedoresSubtitle": "Catálogo de proveedores · Crear, editar y eliminar desde acá",
+      "requiereAtencion": "Requiere atención",
+      "insumosEnBodega": "{n} insumos"
     },
     "nuevoIngreso": {
       "trigger": "Nuevo ingreso",

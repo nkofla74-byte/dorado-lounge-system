@@ -71,7 +71,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={locale}
-      className={`dark ${onest.variable} ${GeistMono.variable} ${fraunces.variable}`}
+      // Sin `dark` escrito a mano: lo pone next-themes desde su script previo
+      // al pintado, según lo guardado o `defaultTheme`. Tenerlo aquí solo
+      // duplicaba la decisión y obligaba a corregir la clase en la hidratación.
+      className={`${onest.variable} ${GeistMono.variable} ${fraunces.variable}`}
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">

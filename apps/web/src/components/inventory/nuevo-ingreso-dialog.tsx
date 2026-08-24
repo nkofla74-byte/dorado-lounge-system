@@ -166,8 +166,11 @@ export function NuevoIngresoDialog({ insumos }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <PackagePlus className="h-4 w-4 mr-1.5" />
+        {/* Acción principal de la bodega: 56 px porque se recibe mercancía con
+            las manos ocupadas, y a ancho completo en móvil, donde el pulgar no
+            llega cómodo a una esquina. */}
+        <Button size="lg" className="w-full text-body sm:w-auto">
+          <PackagePlus className="mr-2 size-5" aria-hidden="true" />
           {t('trigger')}
         </Button>
       </DialogTrigger>

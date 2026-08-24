@@ -255,7 +255,9 @@
       "manana": "tomorrow",
       "diasShort": "{n}d",
       "proveedoresTitle": "Suppliers",
-      "proveedoresSubtitle": "Supplier catalog · Create, edit and delete from here"
+      "proveedoresSubtitle": "Supplier catalog · Create, edit and delete from here",
+      "requiereAtencion": "Needs attention",
+      "insumosEnBodega": "{n} items"
     },
     "nuevoIngreso": {
       "trigger": "New intake",
