@@ -175,7 +175,9 @@ const SUPERUSER_NAV_ITEMS: { href: string; labelKey: string; icon: LucideIcon }[
 //   Administración → neutro. Se consulta sentado, no en servicio.
 //
 // Alertas es la excepción y va en `senal-aviso`: ahí el color sí es severidad.
-const AREA_COCINA = 'text-primary';
+// `primary` es un color de RELLENO: sobre la barra en tema claro daba 1,87 de
+// contraste, casi invisible. Token propio, oscuro en claro y claro en oscuro.
+const AREA_COCINA = 'text-area-cocina';
 const AREA_ALMACEN = 'text-area-almacen';
 const AREA_SALA = 'text-area-sala';
 const AREA_ADMIN = 'text-muted-foreground';

@@ -62,6 +62,7 @@ const config: Config = {
         // estás, no cómo de grave es algo.
         area: {
           almacen: 'hsl(var(--area-almacen) / <alpha-value>)',
+          cocina: 'hsl(var(--area-cocina) / <alpha-value>)',
           sala: 'hsl(var(--area-sala) / <alpha-value>)',
         },
         // Dorado Prefer: marca de la carta del pasajero. Fija, no reacciona al
