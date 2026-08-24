@@ -84,7 +84,7 @@ export function SolicitudesPanel({ initialSolicitudes, fetchSolicitudes }: Props
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         <ChefHat className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold text-foreground">{t('solicitudesTitle')}</h2>
+        <h2 className="text-headline font-semibold text-foreground">{t('solicitudesTitle')}</h2>
         <Badge variant="outline" className="text-caption">
           {solicitudes.length}
         </Badge>

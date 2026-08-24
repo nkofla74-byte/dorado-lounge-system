@@ -168,7 +168,7 @@ function LoginForm() {
         </CardContent>
       </Card>
 
-      <p className="text-center text-xs text-muted-foreground">{t('footer')}</p>
+      <p className="text-center text-caption text-muted-foreground">{t('footer')}</p>
     </div>
   );
 }

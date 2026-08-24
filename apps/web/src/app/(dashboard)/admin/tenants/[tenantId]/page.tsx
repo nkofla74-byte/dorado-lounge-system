@@ -39,9 +39,9 @@ export default async function TenantDetailPage({ params }: Props) {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{tenant.nombre}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{tenant.nombre}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{tenant.slug}</code>
+            <code className="text-caption bg-muted px-1.5 py-0.5 rounded">{tenant.slug}</code>
             <span className="ml-2">{tenant.activo ? t('estadoActivo') : t('estadoInactivo')}</span>
           </p>
         </div>
@@ -54,7 +54,7 @@ export default async function TenantDetailPage({ params }: Props) {
       )}
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">{t('usuariosTitle')}</h2>
+        <h2 className="text-title font-semibold">{t('usuariosTitle')}</h2>
         <UsersPanel tenantId={tenant.id} initialUsers={users} />
       </div>
     </div>

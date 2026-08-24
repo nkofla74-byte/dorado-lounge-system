@@ -418,9 +418,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-card px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold tracking-wide uppercase text-primary">
-              {t('cartaTitle')}
-            </h2>
+            <h2 className="label-seccion text-primary">{t('cartaTitle')}</h2>
             <div className="flex items-center gap-2 text-[11px] text-foreground/60">
               {mesa && (
                 <span className="bg-card border border-border rounded px-1.5 py-0.5">

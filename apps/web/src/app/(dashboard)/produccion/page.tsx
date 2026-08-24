@@ -37,7 +37,7 @@ export default async function ProduccionPage() {
     return (
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('dashboardTitle')}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{t('dashboardTitle')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('dashboardSubtitle')}</p>
         </div>
         <ProduccionDashboard tandas={tandasResult.ok ? tandasResult.value : []} />
@@ -48,7 +48,7 @@ export default async function ProduccionPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-display font-semibold tracking-tight">
           {isSteward ? t('pageTitleSteward') : t('pageTitleProd')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">

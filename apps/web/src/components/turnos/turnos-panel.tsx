@@ -98,7 +98,7 @@ export function TurnosPanel({ initialTurnos, error }: TurnosPanelProps) {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">{t('historialTitle')}</h2>
+          <h2 className="text-headline font-semibold text-foreground">{t('historialTitle')}</h2>
           <Badge variant="outline" className="text-caption">
             {turnos.length}
           </Badge>

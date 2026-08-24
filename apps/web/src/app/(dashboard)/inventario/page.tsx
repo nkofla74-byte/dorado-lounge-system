@@ -35,7 +35,7 @@ export default async function InventarioPage() {
     return (
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('unifiedTitle')}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{t('unifiedTitle')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('unifiedSubtitle')}</p>
         </div>
         <InventarioView
@@ -56,7 +56,7 @@ export default async function InventarioPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
+        <h1 className="text-display font-semibold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
       <InsumoTable

@@ -82,7 +82,7 @@ export function AnalyticsPanel({
       <div className="flex items-end gap-3 flex-wrap">
         {turnos.length > 0 && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t('turno')}</Label>
+            <Label className="text-caption text-muted-foreground">{t('turno')}</Label>
             <Select value={turnoId || 'all'} onValueChange={handleTurnoChange}>
               <SelectTrigger className="w-52">
                 <SelectValue placeholder={t('turnoPlaceholder')} />
@@ -100,7 +100,7 @@ export function AnalyticsPanel({
         )}
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">{t('desde')}</Label>
+          <Label className="text-caption text-muted-foreground">{t('desde')}</Label>
           <Input
             type="date"
             className="w-40"
@@ -110,7 +110,7 @@ export function AnalyticsPanel({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">{t('hasta')}</Label>
+          <Label className="text-caption text-muted-foreground">{t('hasta')}</Label>
           <Input
             type="date"
             className="w-40"
@@ -155,9 +155,9 @@ export function AnalyticsPanel({
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">{t('consumoTitle')}</h2>
+          <h2 className="text-headline font-semibold text-foreground">{t('consumoTitle')}</h2>
           {turnoId && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-caption text-muted-foreground">
               — {turnos.find((tu) => tu.id === turnoId)?.nombre ?? ''}
             </span>
           )}

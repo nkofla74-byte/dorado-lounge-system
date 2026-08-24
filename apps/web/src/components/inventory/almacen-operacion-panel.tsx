@@ -152,14 +152,14 @@ export function AlmacenOperacionPanel({
 
       {/* Requisiciones de cocina: cola en tiempo real (alistar → despachar) */}
       <section className="space-y-3 pt-2">
-        <h2 className="text-lg font-semibold tracking-tight">{tReq('tituloAlmacen')}</h2>
+        <h2 className="text-title font-semibold tracking-tight">{tReq('tituloAlmacen')}</h2>
         <RequisicionesPanel mode="almacen" initialRequisiciones={requisiciones} />
       </section>
 
       {/* Proveedores: gestión rápida desde la pantalla operativa */}
       <section className="space-y-3 pt-2">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">{t('proveedoresTitle')}</h2>
+          <h2 className="text-title font-semibold tracking-tight">{t('proveedoresTitle')}</h2>
           <p className="text-caption text-muted-foreground mt-0.5">{t('proveedoresSubtitle')}</p>
         </div>
         <ProveedoresPanel initialData={proveedores} canWrite={canIngresar} />

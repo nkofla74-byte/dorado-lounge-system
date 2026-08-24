@@ -36,7 +36,7 @@ export default function GlobalError({
       <body className="flex items-center justify-center min-h-screen bg-background text-foreground font-sans">
         <div className="flex flex-col items-center gap-4 text-center p-6">
           <p className="text-5xl font-bold text-muted-foreground/30">500</p>
-          <h2 className="text-lg font-semibold">{t.title}</h2>
+          <h2 className="text-title font-semibold">{t.title}</h2>
           <p className="text-sm text-muted-foreground">{t.body}</p>
           <button
             onClick={reset}

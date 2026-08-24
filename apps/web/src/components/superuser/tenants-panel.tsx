@@ -57,7 +57,7 @@ export function TenantsPanel({ initialTenants }: Props) {
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20">
           <Building2 className="h-10 w-10 text-muted-foreground mb-3" />
           <p className="text-sm font-medium text-muted-foreground">{t('emptyTitle')}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t('emptyHint')}</p>
+          <p className="text-caption text-muted-foreground mt-1">{t('emptyHint')}</p>
         </div>
       ) : (
         <div className="rounded-md border">
@@ -83,7 +83,9 @@ export function TenantsPanel({ initialTenants }: Props) {
                     </a>
                   </TableCell>
                   <TableCell>
-                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{tenant.slug}</code>
+                    <code className="text-caption bg-muted px-1.5 py-0.5 rounded">
+                      {tenant.slug}
+                    </code>
                   </TableCell>
                   <TableCell>
                     {tenant.activo ? (

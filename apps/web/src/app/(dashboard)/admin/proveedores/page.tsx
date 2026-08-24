@@ -33,7 +33,7 @@ export default async function ProveedoresPage() {
   return (
     <div className="p-6 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('pageTitle')}</h1>
+        <h1 className="text-display font-semibold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{t('pageSubtitle')}</p>
       </div>
       <ProveedoresPanel initialData={proveedores} canWrite={canWrite} showTenant={isSuperuser} />

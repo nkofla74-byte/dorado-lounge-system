@@ -144,7 +144,7 @@ export function CreatePedidoZonaDialog({
                     </SelectContent>
                   </Select>
                   {itemErrors[index]?.recetaId && (
-                    <p className="text-xs text-destructive">
+                    <p className="text-caption text-destructive">
                       {itemErrors[index]?.recetaId?.message}
                     </p>
                   )}
@@ -160,7 +160,7 @@ export function CreatePedidoZonaDialog({
                     {...register(`items.${index}.cantidad`, { valueAsNumber: true })}
                   />
                   {itemErrors[index]?.cantidad && (
-                    <p className="text-xs text-destructive">
+                    <p className="text-caption text-destructive">
                       {itemErrors[index]?.cantidad?.message}
                     </p>
                   )}
@@ -192,7 +192,7 @@ export function CreatePedidoZonaDialog({
             </Button>
 
             {formErrors.items && typeof formErrors.items.message === 'string' && (
-              <p className="text-xs text-destructive">{formErrors.items.message}</p>
+              <p className="text-caption text-destructive">{formErrors.items.message}</p>
             )}
           </div>
 

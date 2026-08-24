@@ -69,10 +69,13 @@ interface TimelineRowProps {
 function TimelineRow({ entry, t }: TimelineRowProps) {
   return (
     <div className="flex items-start gap-3 text-sm">
-      <span className="mt-0.5 shrink-0 text-xs text-muted-foreground w-28">
+      <span className="mt-0.5 shrink-0 text-caption text-muted-foreground w-28">
         {formatDateTime(entry.at)}
       </span>
-      <Badge variant={entry.tipo === 'item' ? 'outline' : 'secondary'} className="shrink-0 text-xs">
+      <Badge
+        variant={entry.tipo === 'item' ? 'outline' : 'secondary'}
+        className="shrink-0 text-caption"
+      >
         {t(`tipo.${entry.tipo}`)}
       </Badge>
       <span className="flex-1">
@@ -80,7 +83,7 @@ function TimelineRow({ entry, t }: TimelineRowProps) {
         <span>{t(`estadoLabel.${entry.estado}`)}</span>
       </span>
       {entry.actorNombre && (
-        <span className="text-xs text-muted-foreground shrink-0">{entry.actorNombre}</span>
+        <span className="text-caption text-muted-foreground shrink-0">{entry.actorNombre}</span>
       )}
     </div>
   );
@@ -121,7 +124,7 @@ function ExpandedRow({ pedidoId }: ExpandedRowProps) {
 
   return (
     <div className="px-4 py-3 space-y-2 bg-muted/30 border-t">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <p className="text-caption font-medium text-muted-foreground uppercase tracking-wider">
         {t('timeline')}
       </p>
       <div className="space-y-2">
@@ -178,7 +181,7 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-end">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">{t('filtros.desde')}</label>
+          <label className="text-caption text-muted-foreground">{t('filtros.desde')}</label>
           <Input
             type="datetime-local"
             value={desde}
@@ -187,7 +190,7 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">{t('filtros.hasta')}</label>
+          <label className="text-caption text-muted-foreground">{t('filtros.hasta')}</label>
           <Input
             type="datetime-local"
             value={hasta}
@@ -196,7 +199,7 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">{t('filtros.zona')}</label>
+          <label className="text-caption text-muted-foreground">{t('filtros.zona')}</label>
           <Select value={zona || ALL} onValueChange={(v) => setZona(v === ALL ? '' : v)}>
             <SelectTrigger className="h-8 text-sm w-36">
               <SelectValue placeholder={t('filtros.todas')} />
@@ -212,7 +215,7 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
           </Select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">{t('filtros.estado')}</label>
+          <label className="text-caption text-muted-foreground">{t('filtros.estado')}</label>
           <Select value={estado || ALL} onValueChange={(v) => setEstado(v === ALL ? '' : v)}>
             <SelectTrigger className="h-8 text-sm w-44">
               <SelectValue placeholder={t('filtros.todos')} />
@@ -228,7 +231,7 @@ export function TrazabilidadPanel({ initial }: TrazabilidadPanelProps) {
           </Select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">{t('filtros.mesa')}</label>
+          <label className="text-caption text-muted-foreground">{t('filtros.mesa')}</label>
           <Input
             value={mesa}
             onChange={(e) => setMesa(e.target.value)}

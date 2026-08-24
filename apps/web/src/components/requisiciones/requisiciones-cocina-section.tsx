@@ -29,7 +29,7 @@ export function RequisicionesCocinaSection({
   return (
     <section className="space-y-3 p-4 border-t border-border">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-tight">{t('panel.tituloCocina')}</h2>
+        <h2 className="text-headline font-semibold tracking-tight">{t('panel.tituloCocina')}</h2>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
           {t('pedir.boton')}
         </Button>

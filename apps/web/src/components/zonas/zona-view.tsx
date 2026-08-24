@@ -149,7 +149,7 @@ export function ZonaView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{titulo}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitulo')}</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
@@ -198,7 +198,7 @@ export function ZonaView({
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5 min-w-0">
                     <p className="text-sm font-medium truncate">{formatItems(p)}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-caption text-muted-foreground">
                       {estadoLabels[p.estado] ?? p.estado}
                       {' · '}
                       {t('haceMinutos', { n: minutosDesde(p.createdAt) })}
@@ -238,7 +238,7 @@ export function ZonaView({
               >
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">{tanda.recetaNombre}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     {t('colTandas')}: {tanda.cantidadTandas}
                     {tanda.completedAt && (
                       <>
@@ -261,15 +261,19 @@ export function ZonaView({
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border border-border p-4 text-center">
               <p className="text-2xl font-bold">{turnoMetrics.total}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaPedidosTurno')}</p>
+              <p className="text-caption text-muted-foreground mt-0.5">
+                {t('metricaPedidosTurno')}
+              </p>
             </div>
             <div className="rounded-lg border border-border p-4 text-center">
               <p className="text-2xl font-bold">{turnoMetrics.entregados}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaEntregados')}</p>
+              <p className="text-caption text-muted-foreground mt-0.5">{t('metricaEntregados')}</p>
             </div>
             <div className="rounded-lg border border-border p-4 text-center">
               <p className="text-2xl font-bold">{t('minutos', { n: turnoMetrics.promedio })}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaTiempoPromedio')}</p>
+              <p className="text-caption text-muted-foreground mt-0.5">
+                {t('metricaTiempoPromedio')}
+              </p>
             </div>
           </div>
 
@@ -286,7 +290,7 @@ export function ZonaView({
                   className="rounded-lg border border-border p-3 flex items-center justify-between gap-2"
                 >
                   <p className="text-sm truncate min-w-0">{formatItems(p)}</p>
-                  <span className="text-xs text-muted-foreground shrink-0">
+                  <span className="text-caption text-muted-foreground shrink-0">
                     {estadoLabels[p.estado] ?? p.estado}
                   </span>
                 </div>

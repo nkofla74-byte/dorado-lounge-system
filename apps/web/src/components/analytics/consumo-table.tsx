@@ -42,26 +42,26 @@ export function ConsumoTable({ data, showTenant = false }: ConsumoTableProps) {
         <TableHeader>
           <TableRow className="bg-muted/50">
             {showTenant && (
-              <TableHead className="text-xs font-medium text-muted-foreground">
+              <TableHead className="text-caption font-medium text-muted-foreground">
                 {t('colTenant')}
               </TableHead>
             )}
-            <TableHead className="text-xs font-medium text-muted-foreground">
+            <TableHead className="text-caption font-medium text-muted-foreground">
               {t('colInsumo')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">
+            <TableHead className="text-caption font-medium text-muted-foreground">
               {t('colCapa')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+            <TableHead className="text-caption font-medium text-muted-foreground text-right">
               {t('colEntradas')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+            <TableHead className="text-caption font-medium text-muted-foreground text-right">
               {t('colConsumo')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+            <TableHead className="text-caption font-medium text-muted-foreground text-right">
               {t('colMerma')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground text-right">
+            <TableHead className="text-caption font-medium text-muted-foreground text-right">
               {t('colAjustes')}
             </TableHead>
           </TableRow>
@@ -79,13 +79,13 @@ export function ConsumoTable({ data, showTenant = false }: ConsumoTableProps) {
                       {row.tenantNombre}
                     </Badge>
                   ) : (
-                    <span className="text-muted-foreground/40 text-xs">—</span>
+                    <span className="text-muted-foreground/40 text-caption">—</span>
                   )}
                 </TableCell>
               )}
               <TableCell className="font-medium text-sm">{row.insumoNombre}</TableCell>
               <TableCell>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-caption">
                   {row.capa === 'capa_1' ? t('capa1') : t('capa2')}
                 </Badge>
               </TableCell>
