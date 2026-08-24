@@ -916,7 +916,8 @@
     },
     "historial": "History",
     "historialTitle": "{count, plural, one {# recent order} other {# recent orders}}",
-    "sinHistorial": "No orders in recent history."
+    "sinHistorial": "No orders in recent history.",
+    "tabsAriaLabel": "Order views"
   },
   "ingredientes": {
     "categoriaEntrada": "Starter",

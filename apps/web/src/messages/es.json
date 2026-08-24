@@ -916,7 +916,8 @@
     },
     "historial": "Historial",
     "historialTitle": "{count, plural, one {# pedido reciente} other {# pedidos recientes}}",
-    "sinHistorial": "No hay pedidos en el historial reciente."
+    "sinHistorial": "No hay pedidos en el historial reciente.",
+    "tabsAriaLabel": "Vistas de pedidos"
   },
   "ingredientes": {
     "categoriaEntrada": "Entrada",
