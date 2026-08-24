@@ -68,6 +68,9 @@ export function QRGeneratorClient() {
     const dataUrl = await QRCode.toDataURL(res.value.url, {
       width: 400,
       margin: 2,
+      // Negro y blanco literales, a propósito: el contraste de un código QR
+      // determina si el lector del móvil lo reconoce. No es un color de marca
+      // y no debe seguir al tema.
       color: { dark: '#000000', light: '#ffffff' },
       errorCorrectionLevel: 'M',
     });
@@ -129,7 +132,7 @@ export function QRGeneratorClient() {
         <div className="space-y-1.5">
           <Label>{t('zonaLabel')}</Label>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-sm text-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             {zonaLabel}
           </div>
         </div>

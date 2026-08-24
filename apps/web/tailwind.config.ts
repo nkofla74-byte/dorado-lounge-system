@@ -64,6 +64,18 @@ const config: Config = {
           almacen: 'hsl(var(--area-almacen) / <alpha-value>)',
           sala: 'hsl(var(--area-sala) / <alpha-value>)',
         },
+        // Dorado Prefer: marca de la carta del pasajero. Fija, no reacciona al
+        // tema, porque esa superficie fuerza fondo claro.
+        prefer: {
+          tinta: 'hsl(var(--prefer-tinta) / <alpha-value>)',
+          acento: 'hsl(var(--prefer-acento) / <alpha-value>)',
+          'acento-fuerte': 'hsl(var(--prefer-acento-fuerte) / <alpha-value>)',
+          oro: 'hsl(var(--prefer-oro) / <alpha-value>)',
+          linea: 'hsl(var(--prefer-linea) / <alpha-value>)',
+          superficie: 'hsl(var(--prefer-superficie) / <alpha-value>)',
+          'superficie-2': 'hsl(var(--prefer-superficie-2) / <alpha-value>)',
+          papel: 'hsl(var(--prefer-papel) / <alpha-value>)',
+        },
         // Zonas de servicio: a qué zona pertenece algo. Ni severidad ni área.
         zona: {
           amex: 'hsl(var(--zona-amex) / <alpha-value>)',

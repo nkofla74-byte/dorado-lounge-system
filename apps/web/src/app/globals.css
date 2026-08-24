@@ -57,6 +57,28 @@
     --material-thick: 32px;
   }
 
+  /* ── Dorado Prefer ────────────────────────────────────────────────────────
+     Paleta de la carta del pasajero. Sustituye al azul de American Express
+     (#00175A, #016FD0) que estaba escrito a mano 157 veces.
+
+     Se definen SOLO aquí, nunca bajo `.dark`: esa superficie fuerza fondo
+     claro pase lo que pase, así que un color que se invierta con el tema se
+     vuelve ilegible sobre él.
+
+     El acento es oro viejo, no oro brillante, por contraste: el azul Amex
+     daba 5,4:1 sobre blanco y el oro de marca daría 2:1. Sobre relleno de oro
+     el texto va en `prefer-tinta`. */
+  :root {
+    --prefer-tinta: 224 36% 12%;
+    --prefer-acento: 43 79% 28%;
+    --prefer-acento-fuerte: 43 79% 21%;
+    --prefer-oro: 42 73% 46%;
+    --prefer-linea: 41 33% 83%;
+    --prefer-superficie: 40 48% 94%;
+    --prefer-superficie-2: 39 42% 89%;
+    --prefer-papel: 42 50% 96%;
+  }
+
   .dark {
     /* Dark mode — Dorado Vivo (default) */
     --background: 220 33% 7%;
