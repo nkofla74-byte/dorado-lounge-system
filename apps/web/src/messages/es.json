@@ -1095,7 +1095,8 @@
       "guardar": "Enviar pedido",
       "guardando": "Enviando…",
       "cancelar": "Cancelar"
-    }
+    },
+    "tabsAriaLabel": "Vistas de la zona"
   },
   "requisiciones": {
     "pedir": {
