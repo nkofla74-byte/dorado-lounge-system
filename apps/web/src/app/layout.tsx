@@ -57,6 +57,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
+  // Hex literales por obligación: una etiqueta <meta> no lee variables CSS.
+  // Son el color del cromo del navegador y deben seguir a --background.
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f7f4eb' },
     { media: '(prefers-color-scheme: dark)', color: '#0b0f17' },

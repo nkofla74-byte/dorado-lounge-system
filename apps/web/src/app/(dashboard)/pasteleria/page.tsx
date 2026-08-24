@@ -70,10 +70,8 @@ export default async function PasteleriaPage() {
       </div>
 
       {!turnoActivo && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3">
-          <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
-            {t('sinTurnoActivo')}
-          </p>
+        <div className="rounded-lg border border-senal-aviso/30 bg-senal-aviso/10 dark:bg-senal-aviso/150/20 dark:border-amber-800 px-4 py-3">
+          <p className="text-body font-medium text-senal-aviso">{t('sinTurnoActivo')}</p>
         </div>
       )}
 

@@ -641,6 +641,9 @@ function MenuScreen({
         )}
       </main>
 
+      {/* Rojo fijo a propósito: esta pantalla fuerza fondo claro pase lo que
+          pase, así que un token que se invierta con el tema quedaría rojo
+          claro sobre blanco. No sustituir por `senal-critico`. */}
       {error && <p className="px-4 pb-2 text-sm text-red-600 text-center">{error}</p>}
 
       {/* CTA fijo — abre review */}

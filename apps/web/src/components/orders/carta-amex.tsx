@@ -346,7 +346,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
         <div className="px-6 py-10 flex flex-col items-center gap-8">
           <div className="text-center space-y-2">
             <UtensilsCrossed className="h-10 w-10 mx-auto text-primary/60" />
-            <h2 className="text-lg font-bold text-foreground">{t('setupTitle')}</h2>
+            <h2 className="text-title font-semibold text-foreground">{t('setupTitle')}</h2>
             <p className="text-sm text-foreground/50">{t('setupDescription')}</p>
           </div>
 
