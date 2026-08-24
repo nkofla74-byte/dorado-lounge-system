@@ -30,6 +30,7 @@ type RecetaRow = {
   insumo_destino_id: string | null;
   area_produccion: string | null;
   porciones: number;
+  rendimiento_cantidad: number | null;
   categoria_menu: string | null;
   descripcion: string | null;
   imagen_url: string | null;
@@ -51,6 +52,8 @@ function toRecetaWithIngredientes(row: RecetaRow): RecetaWithIngredientes {
     insumoDestinoNombre: row.insumo_destino?.nombre ?? null,
     areaProduccion: row.area_produccion as RecetaWithIngredientes['areaProduccion'],
     porciones: row.porciones,
+    rendimientoCantidad:
+      row.rendimiento_cantidad === null ? null : Number(row.rendimiento_cantidad),
     categoriaMenu: (row.categoria_menu as RecetaWithIngredientes['categoriaMenu']) ?? null,
     descripcion: row.descripcion ?? null,
     imagenUrl: row.imagen_url ?? null,
@@ -80,6 +83,8 @@ function toReceta(row: Omit<RecetaRow, 'receta_ingredientes' | 'insumo_destino'>
     insumoDestinoId: row.insumo_destino_id,
     areaProduccion: row.area_produccion as Receta['areaProduccion'],
     porciones: row.porciones,
+    rendimientoCantidad:
+      row.rendimiento_cantidad === null ? null : Number(row.rendimiento_cantidad),
     categoriaMenu: (row.categoria_menu as Receta['categoriaMenu']) ?? null,
     descripcion: row.descripcion ?? null,
     imagenUrl: row.imagen_url ?? null,
@@ -98,7 +103,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .select(
           `
-          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at,
+          id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, rendimiento_cantidad, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at,
           insumo_destino:insumos!recetas_insumo_destino_id_fkey(nombre),
           receta_ingredientes(
             id, receta_id, insumo_id, cantidad, unidad_display, merma_coeficiente,
@@ -133,6 +138,9 @@ export function createRecipeRepository(): RecipeRepository {
               ...base,
               tipo_receta: 'produccion' as const,
               insumo_destino_id: input.insumoDestinoId,
+              // Obligatorio en base desde F-037: sin rendimiento no se puede
+              // materializar el elaborado al completar la tanda.
+              rendimiento_cantidad: input.rendimientoCantidad,
             }
           : {
               ...base,
@@ -145,7 +153,7 @@ export function createRecipeRepository(): RecipeRepository {
         .from('recetas')
         .insert(insert)
         .select(
-          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at',
+          'id, tenant_id, nombre, tipo_receta, zona, insumo_destino_id, area_produccion, porciones, rendimiento_cantidad, categoria_menu, descripcion, imagen_url, activo, created_at, updated_at',
         )
         .single();
 

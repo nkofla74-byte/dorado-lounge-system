@@ -139,7 +139,7 @@ Plan acordado:
    snack/buffet.
 4. El KDS AMEX filtra `tipo_pedido = 'mesa'`.
 
-### F-037 · La capa 2 nunca se materializa — NUEVO
+### F-037 · La capa 2 nunca se materializa — RESUELTO (2026-08-24)
 
 `recetas.insumo_destino_id` existe, es obligatorio para recetas de producción y
 un trigger valida que apunte a un insumo de `capa_2`. Pero `fn_completar_tanda`
@@ -159,6 +159,57 @@ Es prerrequisito del **flujo C · conteo de barra al cierre de turno**, que el
 dueño definió así: lo que sobra se conserva si está fresco y se descarta como
 merma si no — decisión por producto **en el momento del conteo**, no una
 propiedad fija de la receta.
+
+#### Causa raíz y arreglo
+
+La causa no era la función: **el modelo no sabía expresar cuánto produce una
+receta**. `recetas` tenía `insumo_destino_id` (qué se produce) pero ningún campo
+de rendimiento (cuánto). Sin cantidad no hay lote posible, así que
+`fn_completar_tanda` no podía materializar la salida aunque se le añadiera el
+INSERT.
+
+Tres migraciones:
+
+| Migración        | Qué hace                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260824000001` | Añade `'produccion'` a `tipo_movimiento`. Va sola porque PostgreSQL no deja usar un valor de enum en la misma transacción que lo crea. |
+| `20260824000002` | **Causa raíz**: `recetas.rendimiento_cantidad`, backfill desde `porciones` y CHECK que lo exige en toda receta de producción.          |
+| `20260824000003` | `fn_completar_tanda` crea el lote del elaborado, calcula su costo desde el ledger de la propia transacción y registra el movimiento.   |
+
+Decisiones que quedaron documentadas en el propio SQL:
+
+- **La unidad no se declara**: es la del insumo destino. Un segundo campo de
+  unidad sería una segunda fuente de verdad.
+- **El costo es real, no estimado**: se reconstruye de los movimientos que la
+  FEFO acaba de escribir, donde consta de qué lote salió cada gramo y a qué
+  precio. Si los insumos no tenían costo, el elaborado queda sin costo en vez de
+  inventarse un cero.
+- **Sin fecha de vencimiento**: lo que sobra se decide en el conteo de cierre,
+  no por una caducidad fija. Ponerle fecha habría inventado una regla que el
+  dueño no definió así.
+- **`merma_default` no se aplica** a la salida: esa merma es la de recepción de
+  compra (Principio Rector) y aplicarla aquí la contaría dos veces. El
+  rendimiento que declara el chef ya es neto.
+- **Falla en cerrado**: una receta de producción sin rendimiento hace que
+  completar la tanda devuelva `RECETA_SIN_RENDIMIENTO` **antes** de tocar el
+  stock, en lugar de consumir capa 1 sin producir capa 2.
+
+Verificado con `scripts/sql-harness/run-tests.sh`: primero en rojo reproduciendo
+el fallo (0 lotes de capa 2), después en verde. 12/12 suites.
+
+#### ⚠ Acción pendiente del dueño: revisar los rendimientos
+
+El backfill copió `porciones` porque es el único dato existente que se aproxima.
+**Es una suposición, no un dato.** Toda receta de producción anterior debe
+revisarse con el chef; las que quedaron en el valor por defecto darán 1 unidad
+por tanda y un costo unitario desorbitado:
+
+```sql
+SELECT id, nombre, porciones, rendimiento_cantidad
+FROM public.recetas
+WHERE tipo_receta = 'produccion' AND deleted_at IS NULL
+ORDER BY rendimiento_cantidad;
+```
 
 ## Acciones de configuración pendientes (fuera del repositorio)
 

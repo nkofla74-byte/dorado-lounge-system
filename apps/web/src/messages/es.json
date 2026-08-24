@@ -669,7 +669,10 @@
       "guardar": "Guardar receta",
       "guardando": "Guardando…",
       "cancelar": "Cancelar"
-    }
+    },
+    "rendimiento": "Rendimiento por tanda",
+    "rendimientoPlaceholder": "Ej. 40",
+    "rendimientoAyuda": "Cuánto producto terminado sale de UNA tanda. Es rendimiento neto: descuenta ya lo que se pierde al elaborar."
   },
   "production": {
     "pageTitleProd": "Producción",

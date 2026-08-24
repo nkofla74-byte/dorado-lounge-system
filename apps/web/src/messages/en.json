@@ -660,7 +660,10 @@
       "guardar": "Save recipe",
       "guardando": "Saving…",
       "cancelar": "Cancel"
-    }
+    },
+    "rendimiento": "Yield per batch",
+    "rendimientoPlaceholder": "e.g. 40",
+    "rendimientoAyuda": "How much finished product comes out of ONE batch. Net yield: production loss is already deducted."
   },
   "production": {
     "pageTitleProd": "Production",

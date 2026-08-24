@@ -268,8 +268,35 @@ describe('createRecetaSchema', () => {
       nombre: 'Pan de bono',
       insumoDestinoId: '550e8400-e29b-41d4-a716-446655440000',
       porciones: 12,
+      rendimientoCantidad: 40,
     });
     expect(result.success).toBe(true);
+  });
+
+  // Regresión de F-037: una receta de producción sin rendimiento hacía que
+  // completar la tanda descontara los ingredientes sin crear el producto
+  // elaborado. La base lo rechaza con un CHECK; el schema lo rechaza antes.
+  it('rechaza una receta de producción sin rendimiento por tanda', () => {
+    const result = createRecetaSchema.safeParse({
+      tipoReceta: 'produccion',
+      nombre: 'Pan de bono',
+      insumoDestinoId: '550e8400-e29b-41d4-a716-446655440000',
+      porciones: 12,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rechaza un rendimiento de cero o negativo', () => {
+    for (const rendimientoCantidad of [0, -5]) {
+      const result = createRecetaSchema.safeParse({
+        tipoReceta: 'produccion',
+        nombre: 'Pan de bono',
+        insumoDestinoId: '550e8400-e29b-41d4-a716-446655440000',
+        porciones: 12,
+        rendimientoCantidad,
+      });
+      expect(result.success).toBe(false);
+    }
   });
 
   it('acepta receta de servicio', () => {

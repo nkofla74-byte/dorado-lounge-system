@@ -64,9 +64,17 @@ INSERT INTO public.recetas (id, tenant_id, nombre, tipo_receta, porciones, area_
   ('eeeeeeee-0000-0000-0000-000000000002','11111111-1111-1111-1111-111111111111','Sopa','servicio',1,'cocina_caliente','plato_fuerte','amex')
 ON CONFLICT (id) DO NOTHING;
 
+-- Receta de PRODUCCIÓN: capa_1 (harina) → capa_2 (base fría). Es la flecha que
+-- CLAUDE.md documenta y que hasta F-037 nunca se ejecutó: no había ninguna
+-- receta de este tipo en la semilla, así que nadie la ejercitaba.
+INSERT INTO public.recetas (id, tenant_id, nombre, tipo_receta, porciones, insumo_destino_id, rendimiento_cantidad) VALUES
+  ('eeeeeeee-0000-0000-0000-000000000009','11111111-1111-1111-1111-111111111111','Base fría (producción)','produccion',20,'cccccccc-0000-0000-0000-000000000002',20)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO public.receta_ingredientes (tenant_id, receta_id, insumo_id, cantidad) VALUES
   ('11111111-1111-1111-1111-111111111111','eeeeeeee-0000-0000-0000-000000000001','cccccccc-0000-0000-0000-000000000001',50),
-  ('11111111-1111-1111-1111-111111111111','eeeeeeee-0000-0000-0000-000000000002','cccccccc-0000-0000-0000-000000000001',80)
+  ('11111111-1111-1111-1111-111111111111','eeeeeeee-0000-0000-0000-000000000002','cccccccc-0000-0000-0000-000000000001',80),
+  ('11111111-1111-1111-1111-111111111111','eeeeeeee-0000-0000-0000-000000000009','cccccccc-0000-0000-0000-000000000001',100)
 ON CONFLICT (receta_id, insumo_id) DO NOTHING;
 
 -- Turno activo del mesero

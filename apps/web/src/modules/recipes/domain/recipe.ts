@@ -15,6 +15,12 @@ export interface Receta {
   insumoDestinoId: string | null;
   areaProduccion: AreaProduccion | null;
   porciones: number;
+  /**
+   * Cuánto produce UNA tanda, en la unidad del insumo destino. Solo tiene valor
+   * en recetas de producción, donde la base de datos lo exige: sin él no se
+   * puede crear el lote del elaborado, que era el agujero de F-037.
+   */
+  rendimientoCantidad: number | null;
   categoriaMenu: CategoriaMenu | null;
   descripcion: string | null;
   imagenUrl: string | null;
@@ -52,6 +58,8 @@ export type CreateRecetaInput =
       nombre: string;
       insumoDestinoId: string;
       porciones: number;
+      /** Rendimiento NETO por tanda, en la unidad del insumo destino. */
+      rendimientoCantidad: number;
       descripcion?: string | null | undefined;
       ingredientes?: RecipeIngredientInput[] | undefined;
     }

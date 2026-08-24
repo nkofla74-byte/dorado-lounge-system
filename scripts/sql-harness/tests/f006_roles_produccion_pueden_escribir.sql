@@ -3,10 +3,11 @@
 -- roles del modelo anterior ('chef', deprecado) y los deja fuera.
 
 -- Receta de producción sobre la que se elaboran las tandas.
-INSERT INTO public.recetas (id, tenant_id, nombre, tipo_receta, porciones, area_produccion, insumo_destino_id)
+-- rendimiento_cantidad es obligatorio en recetas de producción desde F-037.
+INSERT INTO public.recetas (id, tenant_id, nombre, tipo_receta, porciones, area_produccion, insumo_destino_id, rendimiento_cantidad)
 VALUES ('eeeeeeee-0000-0000-0000-000000000003',
         '11111111-1111-1111-1111-111111111111', 'Base fría', 'produccion', 10, 'cocina_fria',
-        'cccccccc-0000-0000-0000-000000000002');
+        'cccccccc-0000-0000-0000-000000000002', 10);
 
 DO $$
 DECLARE

@@ -64,6 +64,7 @@ export function CreateRecipeDialog({
     register,
     handleSubmit,
     setValue,
+    watch,
     control,
     reset,
     formState: { errors, isSubmitting },
@@ -95,6 +96,10 @@ export function CreateRecipeDialog({
   // capa_2 también si la receta es de servicio (puede usar productos intermedios).
   const insumosParaIngredientes =
     tipoReceta === 'servicio' ? insumos : insumos.filter((i) => i.capa === 'capa_1');
+
+  // La unidad del rendimiento la manda el insumo destino, no un campo aparte.
+  const destinoId = watch('insumoDestinoId' as keyof FormInput) as string | undefined;
+  const unidadDestino = insumosCapa2.find((i) => i.id === destinoId)?.unidadMedida;
 
   const onSubmit = async (values: FormOutput) => {
     setServerError('');
@@ -221,6 +226,40 @@ export function CreateRecipeDialog({
                   {formErrors.insumoDestinoId && (
                     <p className="text-caption text-destructive">
                       {formErrors.insumoDestinoId.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Rendimiento por tanda (F-037).
+                  Sin este dato, completar la tanda descontaba los ingredientes y
+                  no creaba el producto elaborado: los amasijos y postres no
+                  existían como stock. La unidad la manda el insumo destino, así
+                  que se muestra en vez de pedirla: dos fuentes de verdad para la
+                  misma unidad acabarían contradiciéndose. */}
+              {tipoReceta === 'produccion' && (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="rendimientoCantidad">
+                    {t('rendimiento')} *
+                    {unidadDestino && (
+                      <span className="ml-1 font-normal text-muted-foreground">
+                        ({unidadDestino})
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="rendimientoCantidad"
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min={0}
+                    placeholder={t('rendimientoPlaceholder')}
+                    {...register('rendimientoCantidad' as keyof FormInput, { valueAsNumber: true })}
+                  />
+                  <p className="text-caption text-muted-foreground">{t('rendimientoAyuda')}</p>
+                  {formErrors.rendimientoCantidad && (
+                    <p className="text-caption text-destructive">
+                      {formErrors.rendimientoCantidad.message}
                     </p>
                   )}
                 </div>
