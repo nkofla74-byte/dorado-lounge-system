@@ -21,7 +21,7 @@ pnpm --filter apps/web tsc --noEmit   # type-check sin build
 pnpm run reset:test-users             # reconcilia el set canónico de test users (idempotente)
 ```
 
-DB: migraciones en `supabase/migrations/*.sql`, vía CI (`supabase db push`). **Nunca `supabase start` ni Docker local.**
+DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nativa de Supabase con GitHub** al fusionar en `main`, en orden de nombre (ADR-007; el job `migrate` de `deploy.yml` se retiró el 2026-08-25 porque llevaba desde junio sin aplicar nada). El gate es la protección de rama sobre `main`: lo que gatea el merge gatea la base. **Nunca `supabase start` ni Docker local.**
 
 ---
 

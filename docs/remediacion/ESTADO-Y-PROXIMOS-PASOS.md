@@ -75,7 +75,9 @@ SKUs. Solo se borraron las filas `lote_*`.
 
 ## Hallazgos abiertos del despliegue
 
-### H-1 · Dos caminos de migración hacia producción
+### H-1 · Dos caminos de migración hacia producción — RESUELTO en repositorio (2026-08-25)
+
+⚠ **Queda una acción del dueño**: proteger `main`. Ver más abajo.
 
 `ci-migrate.py` registró `Remote: 79 migration(s) already applied` y
 `0 migration(s) applied`. Los logs de Postgres sitúan las 11 migraciones a las
@@ -83,12 +85,37 @@ SKUs. Solo se borraron las filas `lote_*`.
 `CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations`, preámbulo
 de la **integración nativa de Supabase con GitHub**, no del script.
 
-Es decir: la integración las aplicó al fusionar y el workflow llegó a no hacer
-nada. Hoy es inocuo (ambos son idempotentes y comparten la tabla de versiones),
-pero son dos mecanismos escribiendo el esquema sin saber el uno del otro. Si
-alguna vez difieren en orden o en qué consideran pendiente, gana quien llegue
-primero. **Dejar uno solo** — preferiblemente el workflow, que respeta el gate
-de CI y deja rastro en el log.
+**El alcance real era mayor que esto.** `schema_migrations` fecha el relevo:
+
+| Aplicador                              | Migraciones | Rango                   | `statements` |
+| -------------------------------------- | ----------: | ----------------------- | ------------ |
+| `nkofla74@gmail.com` (manual)          |           9 | 2026-05-03              | poblado      |
+| `ci-pipeline` (el workflow)            |          53 | 2026-05-04 → 2026-06-11 | **vacío**    |
+| integración nativa (`created_by` nulo) |          17 | 2026-06-12 → 2026-08-24 | poblado      |
+
+No era un solapamiento de PR #28: **el workflow no aplicaba una migración desde
+el 2026-06-11**. Las últimas 16 las aplicó la integración. El gate de CI llevaba
+dos meses y medio sin gatear nada, porque la integración aplica al fusionar,
+antes de que `deploy.yml` arranque.
+
+Y había un segundo agujero, no registrado entonces: **`main` no tenía protección
+de rama ni rulesets** (`gh api .../branches/main/protection` → 404,
+`.../rulesets` → `[]`). Nada exigía CI en verde para fusionar.
+
+**Decisión (ADR-007): se conserva la integración nativa.** Contradice la
+preferencia apuntada arriba —«preferiblemente el workflow, que respeta el gate
+de CI»— porque la premisa era falsa: no lo respetaba. Y `ci-migrate.py` insertaba
+`statements = ARRAY[]::text[]`, así que sus 53 filas no guardan qué SQL se
+ejecutó; las de la integración sí.
+
+Hecho en el repositorio: retirado el job `migrate` de `deploy.yml` y borrado
+`scripts/ci-migrate.py` (recuperable con
+`git log --diff-filter=D -- scripts/ci-migrate.py`).
+
+**El gate se mueve al merge, que es la capa correcta**: si nada rojo puede
+fusionarse, la integración no puede aplicar nada rojo. Eso exige la protección
+de rama, que es la acción pendiente del dueño y **sin la cual esta decisión deja
+la base sin ningún gate**.
 
 ### H-2 · `TRUNCATE` sigue concedido a `anon` y `authenticated`
 
@@ -104,10 +131,31 @@ por sus triggers de inmutabilidad), más `operaciones_idempotentes`,
 `tenant_codigo_counters` es justo el contador de SKU/lote que CLAUDE.md marca
 como «solo RPC».
 
-Arreglo propuesto, no aplicado: migración `REVOKE TRUNCATE ON ALL TABLES IN
-SCHEMA public FROM anon, authenticated`, el `DELETE` de los tres objetos
-sueltos, y `ALTER DEFAULT PRIVILEGES` para que las tablas futuras nazcan sin
-ese permiso. Puramente restrictiva, rollback trivial.
+**Arreglo escrito (2026-08-25), pendiente de desplegar.** Migración
+`20260825015658_cerrar_truncate_y_delete_sueltos.sql`: `REVOKE TRUNCATE ON ALL
+TABLES IN SCHEMA public FROM anon, authenticated`, el `DELETE` de los tres
+objetos sueltos, y `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` para que las
+tablas futuras nazcan sin ese permiso. Puramente restrictiva, rollback trivial.
+
+Un detalle que se verificó antes de escribirla: `TRUNCATE` no solo ignora la
+RLS, tampoco dispara los triggers `prevent_mutation()` —son `FOR EACH ROW`, y
+`TRUNCATE` nunca los ejecuta—, así que `audit_log` y `domain_events` estaban
+expuestas pese a su inmutabilidad. El `ALTER DEFAULT PRIVILEGES` se limita a
+`FOR ROLE postgres`: es el rol que crea las tablas, y `postgres` no es miembro
+de `supabase_admin` (comprobado en `pg_auth_members`), así que declararlo para
+ese segundo rol habría fallado por permisos.
+
+Verificar tras el despliegue:
+
+```sql
+-- Debe devolver 0 filas
+SELECT table_name, grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public' AND grantee IN ('anon','authenticated')
+  AND (privilege_type = 'TRUNCATE'
+       OR (privilege_type = 'DELETE'
+           AND table_name NOT IN ('audit_log','domain_events')));
+```
 
 ### H-3 · La app en vivo no se verificó
 
@@ -346,7 +394,26 @@ Pendientes, en orden de urgencia:
 
 1. **Rotar `SUPABASE_SERVICE_ROLE_KEY`** (urgente). La usa `createAdminClient()`
    en el camino de entrega de pedidos.
-2. **Poner `BACKUP_GPG_PASSPHRASE`** en los secretos de GitHub. El workflow de
+2. **Proteger la rama `main`** exigiendo CI en verde para fusionar. Hoy no tiene
+   protección ni rulesets, y desde ADR-007 es **el único gate que queda** entre
+   una migración rota y producción: la integración de Supabase aplica el esquema
+   al fusionar, así que lo que gatea el merge gatea la base.
+
+   ```bash
+   gh api -X PUT repos/:owner/:repo/branches/main/protection \
+     -H "Accept: application/vnd.github+json" \
+     -f 'required_status_checks[strict]=true' \
+     -f 'required_status_checks[contexts][]=CI' \
+     -f 'enforce_admins=false' \
+     -f 'required_pull_request_reviews=null' \
+     -f 'restrictions=null'
+   ```
+
+   Ajustar el nombre del check (`CI`) al que aparezca en la pestaña Actions.
+   Con `enforce_admins=false` el dueño conserva la vía de escape para un
+   hotfix; ponerlo en `true` si se quiere cerrar del todo.
+
+3. **Poner `BACKUP_GPG_PASSPHRASE`** en los secretos de GitHub. El workflow de
    respaldo lleva **30 días consecutivos fallando** con
    `gpg: error creating passphrase: Invalid passphrase` porque el secreto está
    vacío. La exportación desde Supabase sí funciona; lo que falla es el cifrado,
@@ -367,10 +434,10 @@ Pendientes, en orden de urgencia:
    ⚠ Si se pierde la passphrase, **todos los respaldos cifrados con ella quedan
    ilegibles**. No hay recuperación.
 
-3. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
-4. Monitor HTTP contra `/health` en Better Stack, y un heartbeat del respaldo
+4. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
+5. Monitor HTTP contra `/health` en Better Stack, y un heartbeat del respaldo
    (que avise cuando el workflow lleve más de 24 h sin éxito — es justo lo que
-   habría destapado el punto 2 hace un mes).
+   habría destapado el punto 3 hace un mes).
 
 Hechas el 2026-08-22 por el dueño:
 
@@ -390,9 +457,11 @@ Ordenado por lo que desbloquea, no por dificultad.
    Es dato de negocio que ahora mismo es una suposición, y de él dependen el
    stock de elaborados y todos los costos unitarios. Bloquea cualquier análisis
    de costos que se haga encima.
-2. **Cerrar H-2** (`REVOKE TRUNCATE` + los tres `DELETE` sueltos). Media hora,
-   puramente restrictiva, y cierra la incoherencia que dejó la remediación.
-3. **Cerrar H-1**: decidir un solo camino de migración y desconectar el otro.
+2. ~~**Cerrar H-2**~~ — migración escrita el 2026-08-25, pendiente de
+   desplegar y de verificar en producción con la consulta de §H-2.
+3. ~~**Cerrar H-1**~~ — resuelto en el repositorio (ADR-007: se conserva la
+   integración nativa). **Falta proteger `main`**, sin lo cual la decisión deja
+   la base sin ningún gate. Es el punto 2 de las acciones de configuración.
 4. **Flujos A y B** (separar pedido de mesa de reposición de barra). Es lo que
    de verdad resuelve F-026, el único hallazgo de la auditoría que sigue
    abierto, y ahora es posible porque F-037 ya materializa el stock de barra.
@@ -400,3 +469,14 @@ Ordenado por lo que desbloquea, no por dificultad.
 
 Los pendientes de configuración de la sección anterior van en paralelo y no los
 puede hacer una sesión de Claude: requieren acceso a los dashboards.
+
+## Pendiente de verificar tras el próximo despliegue
+
+Lo escrito el 2026-08-25 (H-1 y H-2) **no está en producción todavía**. Cuando
+la rama se fusione:
+
+- La consulta de §H-2 debe devolver 0 filas.
+- `schema_migrations` debe tener 80 migraciones, la última `20260825015658`,
+  con `created_by` nulo (la aplicó la integración, no el workflow retirado).
+- El workflow `Deploy` ya no tiene job `Supabase Migrations`: la cadena es
+  `CI Gate → Deploy Web → Sentry Release`.
