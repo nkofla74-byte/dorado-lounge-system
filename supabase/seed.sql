@@ -322,14 +322,19 @@ BEGIN
   -- ──────────────────────────────────────────────────────────────────────────
   -- 7. RECETAS DE PRODUCCIÓN (capa_1 → capa_2)
   -- ──────────────────────────────────────────────────────────────────────────
+  -- rendimiento_cantidad es obligatorio en las recetas de producción desde
+  -- F-037 (20260824000002): la restricción recetas_produccion_tiene_rendimiento
+  -- las rechaza sin él. Se usa el mismo valor que `porciones`, que es la regla
+  -- que aplica el backfill de esa migración a las recetas ya existentes.
   INSERT INTO public.recetas (
-    id, tenant_id, nombre, tipo_receta, insumo_destino_id, porciones, area_produccion
+    id, tenant_id, nombre, tipo_receta, insumo_destino_id, porciones, area_produccion,
+    rendimiento_cantidad
   )
   VALUES
     (r_prod_pande, v_tenant,
-     'Producción Pandebono', 'produccion', i_pandebono, 12, 'pasteleria'),
+     'Producción Pandebono', 'produccion', i_pandebono, 12, 'pasteleria', 12),
     (r_prod_ensa, v_tenant,
-     'Producción Ensalada Mixta', 'produccion', i_ensalada, 4, 'cocina_fria')
+     'Producción Ensalada Mixta', 'produccion', i_ensalada, 4, 'cocina_fria', 4)
   ON CONFLICT (id) DO NOTHING;
 
   -- ──────────────────────────────────────────────────────────────────────────
