@@ -122,6 +122,14 @@ describe('iniciarSesion', () => {
     expect(mocks.signInWithPassword).not.toHaveBeenCalled();
   });
 
+  it('acota el bucket a la cuenta que intenta entrar', async () => {
+    // Sin el email el bucket vuelve a ser por IP a secas, y toda la sala
+    // comparte un cupo de 5 intentos cada 15 min (ver login-throttle.ts).
+    await iniciarSesion(CREDENCIALES);
+
+    expect(mocks.consumirIntentoDeLogin).toHaveBeenCalledWith(CREDENCIALES.email);
+  });
+
   it('exige el token cuando la site key está configurada', async () => {
     const res = await iniciarSesion({ ...CREDENCIALES, turnstileToken: undefined });
 

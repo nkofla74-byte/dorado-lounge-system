@@ -64,9 +64,11 @@ export async function iniciarSesion(input: CredencialesLogin): Promise<Result<Se
       return err(new AppError('TURNSTILE_REQUERIDO', 400, 'Verificación anti-bot requerida'));
     }
 
-    // Se consume el bucket aunque el token falte o sea inválido: es lo que hace
-    // costoso el intento por fuerza bruta.
-    if (!(await consumirIntentoDeLogin())) {
+    // Se consume el bucket en todo intento que llegue hasta aquí, acierte o
+    // falle: es lo que hace costoso el intento por fuerza bruta. El bucket es
+    // por IP + cuenta, así que dos operarios distintos de la misma sala no se
+    // agotan el cupo el uno al otro (ver login-throttle.ts).
+    if (!(await consumirIntentoDeLogin(email))) {
       return err(new AppError('RATE_LIMITED', 429, 'Demasiados intentos. Espera unos minutos.'));
     }
 

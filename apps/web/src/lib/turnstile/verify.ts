@@ -1,7 +1,5 @@
 'use server';
 
-import { consumirIntentoDeLogin } from '@/lib/auth/login-throttle';
-
 interface TurnstileResponse {
   success: boolean;
   'error-codes'?: string[];
@@ -9,19 +7,26 @@ interface TurnstileResponse {
 
 export type TurnstileResult =
   | { ok: true }
-  | { ok: false; reason: 'rate_limited' | 'invalid_token' | 'verify_failed' };
+  | { ok: false; reason: 'invalid_token' | 'verify_failed' };
 
 // ATENCIÓN: un token de Turnstile es de un solo uso — Cloudflare devuelve
 // `timeout-or-duplicate` en la segunda validación. Por eso el login NO usa esta
 // función: con la protección CAPTCHA nativa de Supabase Auth activada, quien
 // valida el token es el propio endpoint de Supabase. Esta función queda para el
 // camino QR de pasajeros, donde Supabase Auth no interviene.
+//
+// ESTA FUNCIÓN NO LIMITA POR SÍ MISMA. Hasta el 2026-08-25 consumía el bucket
+// `login`, y eso acoplaba dos caminos que no tienen nada que ver: los pasajeros
+// escaneando el QR gastaban el cupo de acceso del personal, porque en una sala
+// ambos salen por la misma IP. Un bucket propio tampoco procedía: el único
+// llamador —`createPedidoFromQR`— ya limita justo antes con una clave mejor y
+// más estricta (`qrOrder`, `${tenant}:${mesa}:${ip}`, 6/10 min), así que
+// cualquier bucket añadido aquí no llegaría nunca a ser el límite que corta.
+// Maquinaria de seguridad que no puede actuar es peor que ninguna: aparenta
+// proteger.
+//
+// Quien añada un llamador nuevo debe limitarlo él, como hace createPedidoFromQR.
 export async function verifyTurnstile(token: string): Promise<TurnstileResult> {
-  // Rate limit por IP (5/15min) — defense-in-depth contra abuso del endpoint.
-  if (!(await consumirIntentoDeLogin())) {
-    return { ok: false, reason: 'rate_limited' };
-  }
-
   const secret = process.env['TURNSTILE_SECRET_KEY'];
   if (!secret) {
     // En producción, un secreto ausente es un fallo de configuración, no una
