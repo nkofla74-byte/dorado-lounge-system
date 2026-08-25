@@ -1,6 +1,9 @@
 # Estado y próximos pasos
 
-Punto de retomada. Última actualización: **2026-08-25**.
+Punto de retomada. Última actualización: **2026-08-25**, después de fusionar
+PR #29. Ese día tuvo dos mitades: la madrugada (despliegue de PR #28) y la
+mañana (caída del login y su cierre). Si lees esto buscando el estado actual,
+salta a §Estado tras PR #29.
 
 Este archivo existe porque la conversación donde se tomaron estas decisiones no
 viaja con el repositorio. Si retomas desde otra máquina o con otra sesión, esto
@@ -28,7 +31,7 @@ Para comprobar por ti mismo que producción está donde dice este documento, sin
 depender de lo que diga nadie:
 
 ```sql
--- Migraciones aplicadas: deben ser 79, la última 20260824000003
+-- Migraciones aplicadas: deben ser 80, la última 20260825015658
 SELECT count(*), max(version) FROM supabase_migrations.schema_migrations;
 
 -- Matriz RBAC: 144 filas
@@ -73,11 +76,89 @@ Los contadores de `tenant_codigo_counters` de tipo `insumo` **no se tocaron** a
 propósito: los 236 insumos conservan su código y reiniciarlos habría duplicado
 SKUs. Solo se borraron las filas `lote_*`.
 
+## Estado tras PR #29 (2026-08-25, mañana)
+
+**La sala estuvo sin poder entrar al sistema.** Todo intento de login devolvía
+«Demasiados intentos. Espera unos minutos» — y esperar no servía de nada, porque
+no había ninguna ventana corriendo.
+
+Causa: `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN` nunca estuvieron en
+Vercel. Sin ellas el limitador es `null`, y `login` está en `failClosedBuckets`
+(`rate-limit.ts:53`), así que en producción se **negaba el 100 % de los logins**.
+El código no distingue «el contador dice que te pasaste» de «no hay contador», y
+el mensaje al usuario decía lo primero cuando pasaba lo segundo.
+
+Por qué apareció justo entonces y no antes: hasta PR #28 el bucket solo se
+consumía dentro de `verifyTurnstile`, y solo si había token. Como
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` tampoco está configurada, el widget nunca se
+pintaba, nunca había token y el bucket nunca se tocaba. F-012 movió el login al
+servidor y lo puso en el camino de **todo** intento. Una pieza que llevaba meses
+ausente sin consecuencias se convirtió en un candado de un despliegue al otro.
+
+Resuelto: base Upstash creada (`relevant-guinea-152636.upstash.io`, AWS
+us-east-1, free tier), las dos variables puestas en Vercel como Sensitive y solo
+en Production, y redespliegue. Login verificado funcionando y el bucket
+verificado escribiendo.
+
+Cómo comprobar que el limitador está vivo de verdad y no en fail-open silencioso
+—que es el desenlace malo disfrazado de bueno—: tras un login, la clave debe
+existir y debe llevar la cuenta dentro.
+
+```bash
+curl -s "$UPSTASH_REDIS_REST_URL/keys/rl:login*" \
+  -H "Authorization: Bearer $UPSTASH_REDIS_REST_TOKEN"
+# rl:login:<ip>:<email>:<ventana>   ← correcto
+# rl:login:<ip>:<ventana>           ← código anterior a PR #29
+# []                                ← no se está consultando: fail-open
+```
+
+**PR #29 fusionado** (`c2d24f2`, 8/8 checks). Cierra H-1, H-2 y el bucket por
+IP. Verificado contra producción: **80 migraciones**, la última `20260825015658`,
+y la consulta de §H-2 devuelve **0 filas** (antes 56).
+
+### Hallazgos nuevos de esta mañana
+
+**El seed no conocía `rendimiento_cantidad`** y ningún entorno nuevo levantaba.
+`Supabase Preview` fallaba con `recetas_produccion_tiene_rendimiento`. La
+restricción llegó con F-037 el 24-ago; `seed.sql` no se tocaba desde el 12-jun.
+Producción nunca estuvo en riesgo —la integración solo aplica migraciones, no el
+seed—, pero **restaurar sobre un esquema limpio estaba roto**, y de eso depende
+el plan de recuperación. Arreglado en PR #29.
+
+**Los ficheros de `public/` pasaban por el guardia de sesión.** El matcher del
+middleware excluía las imágenes pero no el resto: `/staff-manifest.webmanifest`,
+`/manifest.webmanifest` y `/sw.js` respondían `302 → /login`. El navegador pide
+manifest y service worker **sin cookies**, así que se veían como anónimos. El
+modo offline del QR de pasajeros (Sprint 6) llevaba muerto desde que existe ese
+matcher, sin que nada fallara en voz alta.
+
+**El script de tema de next-themes no llevaba nonce** y la CSP de F-019 lo
+bloqueaba. Es el que fija el tema antes del primer pintado: sin él la página
+aparece con el tema equivocado hasta que React hidrata. De 27 scripts, 26 tenían
+nonce y ese no. Se le pasa desde el layout con `x-nonce`.
+
+### Aviso operativo
+
+`vercel ls --prod` devuelve las URLs **sin ordenar y sin fechas**. Tomar la
+primera por «la más reciente» es un error: el 2026-08-25 eso publicó en
+producción un build de hacía 72 días. Pedir siempre la lista con la columna
+`Age` y confirmar la fecha **antes** de redesplegar, no después.
+
+Y después de cualquier despliegue, el personal debe recargar con `Ctrl+Shift+R`:
+Next.js regenera los IDs de Server Action en cada build, y un navegador con la
+app anterior en caché falla con `UnrecognizedActionError`.
+
 ## Hallazgos abiertos del despliegue
 
-### H-1 · Dos caminos de migración hacia producción — RESUELTO en repositorio (2026-08-25)
+### H-1 · Dos caminos de migración hacia producción — CERRADO Y DESPLEGADO (PR #29)
 
 ⚠ **Queda una acción del dueño**: proteger `main`. Ver más abajo.
+
+**Validado en el merge de PR #29** (2026-08-25, `c2d24f2f`): fue el primer merge
+sin el job `migrate`, y la integración nativa aplicó la migración 80 ella sola.
+ADR-007 funciona. Lo que sigue sin existir es la red debajo: `main` no tiene
+protección de rama, así que hoy nada exige CI en verde para fusionar. Salió bien
+por el contenido del PR, no porque algo lo garantizara.
 
 `ci-migrate.py` registró `Remote: 79 migration(s) already applied` y
 `0 migration(s) applied`. Los logs de Postgres sitúan las 11 migraciones a las
@@ -131,7 +212,9 @@ por sus triggers de inmutabilidad), más `operaciones_idempotentes`,
 `tenant_codigo_counters` es justo el contador de SKU/lote que CLAUDE.md marca
 como «solo RPC».
 
-**Arreglo escrito (2026-08-25), pendiente de desplegar.** Migración
+**CERRADO Y VERIFICADO EN PRODUCCIÓN (PR #29, 2026-08-25).** La consulta de
+verificación de abajo devuelve **0 filas**; antes del merge devolvía 56.
+Migración
 `20260825015658_cerrar_truncate_y_delete_sueltos.sql`: `REVOKE TRUNCATE ON ALL
 TABLES IN SCHEMA public FROM anon, authenticated`, el `DELETE` de los tres
 objetos sueltos, y `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` para que las
@@ -157,9 +240,11 @@ WHERE table_schema = 'public' AND grantee IN ('anon','authenticated')
            AND table_name NOT IN ('audit_log','domain_events')));
 ```
 
-### H-3 · La app en vivo no se verificó
+### H-3 · La app en vivo no se verificó — CERRADO (2026-08-25)
 
-El entorno remoto donde se hizo el despliegue tiene bloqueado `vercel.app` por
+`curl` desde la máquina del dueño: **`/health` responde 200**. La app está viva.
+
+Contexto original: el entorno remoto donde se hizo el despliegue tiene bloqueado `vercel.app` por
 política de red (403 al CONNECT del proxy). Consta que el deploy terminó bien,
 **no** que `/health` responda. Comprobación pendiente del dueño:
 
@@ -392,8 +477,14 @@ Detalle en `SECURITY_CHANGES.md` §Pendiente de configuración.
 
 Pendientes, en orden de urgencia:
 
+0. **Poner `BACKUP_GPG_PASSPHRASE`** — es lo más grave que queda abierto; ver
+   punto 3, que sigue vigente palabra por palabra. Y con el seed ya arreglado
+   (PR #29), **probar una restauración de verdad**: que el workflow termine en
+   verde no prueba que el respaldo sirva.
+
 1. **Rotar `SUPABASE_SERVICE_ROLE_KEY`** (urgente). La usa `createAdminClient()`
-   en el camino de entrega de pedidos.
+   en el camino de entrega de pedidos. Rotar también el **token de Upstash**,
+   que pasó por una conversación el 2026-08-25.
 2. **Proteger la rama `main`** exigiendo CI en verde para fusionar. Hoy no tiene
    protección ni rulesets, y desde ADR-007 es **el único gate que queda** entre
    una migración rota y producción: la integración de Supabase aplica el esquema
@@ -441,7 +532,18 @@ Pendientes, en orden de urgencia:
 
 Hechas el 2026-08-22 por el dueño:
 
-- ✅ CAPTCHA nativo de Supabase Auth activado. Obligó a cambiar el login: el
+- ❌ **CAPTCHA nativo de Supabase Auth — SE DIO POR HECHO Y NO LO ESTÁ.**
+  Comprobado el 2026-08-25 contra el endpoint real con una cuenta inexistente:
+  responde `invalid_credentials`, no `captcha_failed`. Y `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+  tampoco está en Vercel, así que **hoy no hay CAPTCHA en ninguna capa del login**.
+  Esto importa dos veces: es la mitigación que el commit del bucket IP+cuenta
+  daba por existente frente al password spraying, y es la razón por la que el
+  login no se rompió al arreglar el rate limit (si el CAPTCHA hubiera estado
+  activo, Supabase habría rechazado todo por falta de token).
+  **Orden obligatorio al activarlo**: primero `NEXT_PUBLIC_TURNSTILE_SITE_KEY` y
+  `TURNSTILE_SECRET_KEY` en Vercel + redeploy, y solo después el interruptor en
+  Supabase. Al revés se vuelve a romper el login entero.
+  Lo que sí se hizo el 2026-08-22 fue preparar el código para ello: el
   token de Turnstile es de un solo uso, así que `iniciarSesion` dejó de
   validarlo contra Cloudflare y lo reenvía a Supabase en
   `options.captchaToken`. Sin ese cambio el login quedaba roto.
@@ -457,11 +559,12 @@ Ordenado por lo que desbloquea, no por dificultad.
    Es dato de negocio que ahora mismo es una suposición, y de él dependen el
    stock de elaborados y todos los costos unitarios. Bloquea cualquier análisis
    de costos que se haga encima.
-2. ~~**Cerrar H-2**~~ — migración escrita el 2026-08-25, pendiente de
-   desplegar y de verificar en producción con la consulta de §H-2.
-3. ~~**Cerrar H-1**~~ — resuelto en el repositorio (ADR-007: se conserva la
-   integración nativa). **Falta proteger `main`**, sin lo cual la decisión deja
-   la base sin ningún gate. Es el punto 2 de las acciones de configuración.
+2. ~~**Cerrar H-2**~~ — ✅ desplegado y verificado en producción (PR #29): la
+   consulta de §H-2 devuelve 0 filas.
+3. ~~**Cerrar H-1**~~ — ✅ desplegado y validado: el merge de PR #29 fue el
+   primero sin el job `migrate` y la integración nativa aplicó sola.
+   **Sigue faltando proteger `main`**, sin lo cual la base no tiene ningún gate.
+   Es el punto 2 de las acciones de configuración.
 4. **Flujos A y B** (separar pedido de mesa de reposición de barra). Es lo que
    de verdad resuelve F-026, el único hallazgo de la auditoría que sigue
    abierto, y ahora es posible porque F-037 ya materializa el stock de barra.
@@ -470,13 +573,12 @@ Ordenado por lo que desbloquea, no por dificultad.
 Los pendientes de configuración de la sección anterior van en paralelo y no los
 puede hacer una sesión de Claude: requieren acceso a los dashboards.
 
-## Pendiente de verificar tras el próximo despliegue
+## Verificado tras el despliegue de PR #29 (2026-08-25)
 
-Lo escrito el 2026-08-25 (H-1 y H-2) **no está en producción todavía**. Cuando
-la rama se fusione:
+Ya no queda nada pendiente de este lote. Medido contra producción después del
+merge `c2d24f2f`:
 
-- La consulta de §H-2 debe devolver 0 filas.
-- `schema_migrations` debe tener 80 migraciones, la última `20260825015658`,
-  con `created_by` nulo (la aplicó la integración, no el workflow retirado).
+- La consulta de §H-2 devuelve **0 filas** (antes 56).
+- `schema_migrations` tiene **80** migraciones, la última `20260825015658`.
 - El workflow `Deploy` ya no tiene job `Supabase Migrations`: la cadena es
   `CI Gate → Deploy Web → Sentry Release`.
