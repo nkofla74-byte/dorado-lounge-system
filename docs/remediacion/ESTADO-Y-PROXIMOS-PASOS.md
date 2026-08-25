@@ -1,27 +1,187 @@
 # Estado y próximos pasos
 
-Punto de retomada. Última actualización: 2026-08-22.
+Punto de retomada. Última actualización: **2026-08-25**.
 
 Este archivo existe porque la conversación donde se tomaron estas decisiones no
 viaja con el repositorio. Si retomas desde otra máquina o con otra sesión, esto
-es lo que necesitas saber.
+es lo que necesitas saber. **Es la primera lectura**, antes que
+`REMEDIATION_TRACKER.md`.
 
-## Dónde está el trabajo
+## Cómo retomar desde tu terminal
 
-Rama `claude/forensic-repository-audit-bzupi6`, 10 commits sobre `4ff9b70`.
-Sin PR abierto todavía.
+Las sesiones de Claude Code en la web corren en un contenedor remoto y no se
+pueden abrir en local: un `claude` de terminal arranca en frío. Lo que viaja es
+el repositorio. Para ponerte al día:
 
 ```bash
 git fetch origin
-git checkout claude/forensic-repository-audit-bzupi6
+git checkout main && git pull origin main     # 90d56b0 o posterior
 pnpm install
+claude                                        # lee CLAUDE.md + este archivo
 ```
+
+Y dentro de la sesión, para que cargue el contexto de golpe:
+
+> Lee `docs/remediacion/ESTADO-Y-PROXIMOS-PASOS.md` y dime en qué estamos.
+
+Para comprobar por ti mismo que producción está donde dice este documento, sin
+depender de lo que diga nadie:
+
+```sql
+-- Migraciones aplicadas: deben ser 79, la última 20260824000003
+SELECT count(*), max(version) FROM supabase_migrations.schema_migrations;
+
+-- Matriz RBAC: 144 filas
+SELECT count(*) FROM public.rbac_permisos;
+
+-- authenticated NO debe poder escribir pedidos: solo SELECT
+SELECT privilege_type FROM information_schema.role_table_grants
+WHERE table_schema='public' AND table_name='pedidos' AND grantee='authenticated';
+
+-- Políticas FOR ALL: deben ser 0
+SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='ALL';
+```
+
+## Estado al 2026-08-25
+
+**PR #28 fusionado en `main` (`90d56b0`) y desplegado.** Deploy #90 en verde:
+CI Gate, migraciones, Vercel y Sentry Release.
+
+Verificado contra la base de producción después del despliegue:
+
+| Comprobación                    | Antes                | Ahora                             |
+| ------------------------------- | -------------------- | --------------------------------- |
+| Migraciones registradas         | 68                   | **79** (`20260824000003`)         |
+| `rbac_permisos`                 | no existía           | **144 filas**                     |
+| RPCs de pedidos + `fn_puede`    | 6 (faltaba entregar) | **7 de 7**                        |
+| Políticas `FOR ALL`             | 13                   | **0**                             |
+| `authenticated` sobre `pedidos` | INSERT+UPDATE+SELECT | **solo SELECT**                   |
+| `recetas.rendimiento_cantidad`  | no existía           | existe · 41 recetas · **0 nulas** |
+| `fn_descontar_insumo_fefo`      | 8 argumentos         | **9, con `p_turno_id`** · 1 firma |
+| Overloads huérfanos (regla 11)  | —                    | **0** en las 79 migraciones       |
+
+**Base de datos reiniciada** el 2026-08-25 a petición del dueño: la historia
+operativa quedó en cero (pedidos, movimientos, lotes, tandas, requisiciones,
+turnos, alertas y mermas) y se conservaron catálogo y auditoría — 201 insumos,
+58 recetas, 335 ingredientes de receta, 9 proveedores, 14 usuarios, 2 tenants y
+las 223 filas de `audit_log`. Los 6 triggers `prevent_mutation` se verificaron
+activos después. Respaldo previo: 992 filas en 16 tablas, entregado al dueño
+como `respaldo-dorado-20260825.tar.gz` (**fuera del repositorio** — si lo
+necesitas, pídeselo).
+
+Los contadores de `tenant_codigo_counters` de tipo `insumo` **no se tocaron** a
+propósito: los 236 insumos conservan su código y reiniciarlos habría duplicado
+SKUs. Solo se borraron las filas `lote_*`.
+
+## Hallazgos abiertos del despliegue
+
+### H-1 · Dos caminos de migración hacia producción — RESUELTO en repositorio (2026-08-25)
+
+⚠ **Queda una acción del dueño**: proteger `main`. Ver más abajo.
+
+`ci-migrate.py` registró `Remote: 79 migration(s) already applied` y
+`0 migration(s) applied`. Los logs de Postgres sitúan las 11 migraciones a las
+01:10:06 — 46 segundos antes de que corriera el workflow — precedidas de
+`CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations`, preámbulo
+de la **integración nativa de Supabase con GitHub**, no del script.
+
+**El alcance real era mayor que esto.** `schema_migrations` fecha el relevo:
+
+| Aplicador                              | Migraciones | Rango                   | `statements` |
+| -------------------------------------- | ----------: | ----------------------- | ------------ |
+| `nkofla74@gmail.com` (manual)          |           9 | 2026-05-03              | poblado      |
+| `ci-pipeline` (el workflow)            |          53 | 2026-05-04 → 2026-06-11 | **vacío**    |
+| integración nativa (`created_by` nulo) |          17 | 2026-06-12 → 2026-08-24 | poblado      |
+
+No era un solapamiento de PR #28: **el workflow no aplicaba una migración desde
+el 2026-06-11**. Las últimas 16 las aplicó la integración. El gate de CI llevaba
+dos meses y medio sin gatear nada, porque la integración aplica al fusionar,
+antes de que `deploy.yml` arranque.
+
+Y había un segundo agujero, no registrado entonces: **`main` no tenía protección
+de rama ni rulesets** (`gh api .../branches/main/protection` → 404,
+`.../rulesets` → `[]`). Nada exigía CI en verde para fusionar.
+
+**Decisión (ADR-007): se conserva la integración nativa.** Contradice la
+preferencia apuntada arriba —«preferiblemente el workflow, que respeta el gate
+de CI»— porque la premisa era falsa: no lo respetaba. Y `ci-migrate.py` insertaba
+`statements = ARRAY[]::text[]`, así que sus 53 filas no guardan qué SQL se
+ejecutó; las de la integración sí.
+
+Hecho en el repositorio: retirado el job `migrate` de `deploy.yml` y borrado
+`scripts/ci-migrate.py` (recuperable con
+`git log --diff-filter=D -- scripts/ci-migrate.py`).
+
+**El gate se mueve al merge, que es la capa correcta**: si nada rojo puede
+fusionarse, la integración no puede aplicar nada rojo. Eso exige la protección
+de rama, que es la acción pendiente del dueño y **sin la cual esta decisión deja
+la base sin ningún gate**.
+
+### H-2 · `TRUNCATE` sigue concedido a `anon` y `authenticated`
+
+En las 25 tablas de `public`. `TRUNCATE` **ignora la RLS por completo**.
+
+No es explotable por la vía pública: PostgREST no expone ese verbo, haría falta
+conexión directa a Postgres con la contraseña de la base. Pero es incoherente
+con la revocación de `DELETE` que se desplegó en esta misma remediación.
+
+`DELETE` además sigue vivo en 5 objetos: `audit_log` y `domain_events` (cubiertos
+por sus triggers de inmutabilidad), más `operaciones_idempotentes`,
+`tenant_codigo_counters` y una vista — estos sin protección de trigger, y
+`tenant_codigo_counters` es justo el contador de SKU/lote que CLAUDE.md marca
+como «solo RPC».
+
+**Arreglo escrito (2026-08-25), pendiente de desplegar.** Migración
+`20260825015658_cerrar_truncate_y_delete_sueltos.sql`: `REVOKE TRUNCATE ON ALL
+TABLES IN SCHEMA public FROM anon, authenticated`, el `DELETE` de los tres
+objetos sueltos, y `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` para que las
+tablas futuras nazcan sin ese permiso. Puramente restrictiva, rollback trivial.
+
+Un detalle que se verificó antes de escribirla: `TRUNCATE` no solo ignora la
+RLS, tampoco dispara los triggers `prevent_mutation()` —son `FOR EACH ROW`, y
+`TRUNCATE` nunca los ejecuta—, así que `audit_log` y `domain_events` estaban
+expuestas pese a su inmutabilidad. El `ALTER DEFAULT PRIVILEGES` se limita a
+`FOR ROLE postgres`: es el rol que crea las tablas, y `postgres` no es miembro
+de `supabase_admin` (comprobado en `pg_auth_members`), así que declararlo para
+ese segundo rol habría fallado por permisos.
+
+Verificar tras el despliegue:
+
+```sql
+-- Debe devolver 0 filas
+SELECT table_name, grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public' AND grantee IN ('anon','authenticated')
+  AND (privilege_type = 'TRUNCATE'
+       OR (privilege_type = 'DELETE'
+           AND table_name NOT IN ('audit_log','domain_events')));
+```
+
+### H-3 · La app en vivo no se verificó
+
+El entorno remoto donde se hizo el despliegue tiene bloqueado `vercel.app` por
+política de red (403 al CONNECT del proxy). Consta que el deploy terminó bien,
+**no** que `/health` responda. Comprobación pendiente del dueño:
+
+```bash
+curl -i https://dorado-lounge-system-web.vercel.app/health
+```
+
+## Dónde está el trabajo
+
+Todo fusionado en `main`. La rama `claude/forensic-repository-audit-bzupi6`
+quedó reiniciada desde `main` para el trabajo siguiente.
 
 ## Qué se hizo
 
 Remediación completa de la auditoría forense 2026-08-22: **35 de 36 hallazgos
 cerrados**, cada uno con prueba de regresión. Ver `REMEDIATION_TRACKER.md` para
 el detalle y `CHANGELOG_REMEDIATION.md` para el commit a commit.
+
+Además, en la misma tanda: rediseño visual completo (sistema de tokens en
+`globals.css`, escala tipográfica fluida, `TabBar` accesible compartida, objetivos
+táctiles de 56 px en KDS y almacén) y el cierre de F-037. Las 10 skills de diseño
+viven en `.claude/skills/`; `dorado-design-system` es la autoridad.
 
 Lo que cambió estructuralmente y conviene tener presente antes de tocar código:
 
@@ -38,9 +198,11 @@ Lo que cambió estructuralmente y conviene tener presente antes de tocar código
   aplica las migraciones sobre un Postgres limpio y prueba las políticas RLS y
   las RPC de verdad. Ver `scripts/sql-harness/README.md` para levantarlo local.
 
-## Decisiones tomadas en conversación (aún no implementadas)
+## Decisiones tomadas en conversación
 
-### D-1 · No se divide el software
+Estado indicado en cada una.
+
+### D-1 · No se divide el software — vigente
 
 Se evaluó separar AMEX del Dorado Lounge en dos sistemas y **se descartó**.
 Razón: cocina fría y pastelería sirven a las tres zonas, y hay un solo almacén
@@ -51,7 +213,7 @@ Si en el futuro la operación sí se separa (almacén propio, personal propio), 
 respuesta correcta son **dos tenants en el mismo sistema**, no dos repositorios:
 la multi-tenencia ya existe y desde esta remediación está aplicada en la base.
 
-### D-2 · AMEX pasa a llamarse Dorado Prefer
+### D-2 · AMEX pasa a llamarse Dorado Prefer — pendiente
 
 Rebranding: cambia el nombre y el diseño visual, **la lógica se conserva
 idéntica**. No se toca el ruteo por área, ni el KDS, ni el inventario.
@@ -77,14 +239,27 @@ Dos detalles que **hay que planificar** antes de renombrar:
 En SQL el renombrado es barato: `ALTER TYPE ... RENAME VALUE` es una operación de
 catálogo, instantánea, sin reescritura de tablas.
 
-### D-3 · Prioridad actual: rediseño visual
+### D-3 · Rediseño visual — HECHO (desplegado 2026-08-25)
 
-El trabajo funcional queda en pausa. La prioridad pasa a ser el rediseño visual
-del software. Pendiente de recibir prototipo/referencias del dueño.
+Se ejecutó y está en producción. Base en `apps/web/src/app/globals.css`: tres
+ejes de color (`senal-*` para estado, `area-*` para nodo, `zona-*` para origen)
+más la paleta Prefer, escala tipográfica fluida en `tailwind.config.ts`, `TabBar`
+compartida con contrato ARIA completo, y objetivos táctiles de 56 px en KDS y
+almacén (no los 44 pt del HIG: se opera con guantes).
 
-Restricciones que condicionan el diseño más que cualquier preferencia estética:
-los KDS son pantallas de cocina (táctiles, a distancia, con las manos ocupadas) y
-el QR es un móvil de pasajero.
+El contraste WCAG AA está **medido, no supuesto** —29 pares de tokens en ambos
+temas— y hay una prueba permanente que lee el `globals.css` real:
+`apps/web/src/components/design/tests/contraste.test.ts`. Si alguien cambia un
+token y rompe el 4.5:1, la prueba falla.
+
+Antes de tocar cualquier UI, leer la skill `dorado-design-system`: fija la
+precedencia sobre las `apple-*` y traduce sus reglas nativas a este stack. Dos
+que se rompen a menudo: **SF Symbols no puede embeberse en una web** (fuente con
+licencia de Apple — aquí se usa `lucide-react`) y el mínimo táctil de 56 px.
+
+Queda pendiente de diseño, sin bloquear nada: fotografía de platos, validación en
+dispositivo real de cocina, y el rediseño de composición de las pantallas que aún
+no se tocaron.
 
 ## Pendiente funcional (en pausa, no perdido)
 
@@ -139,7 +314,7 @@ Plan acordado:
    snack/buffet.
 4. El KDS AMEX filtra `tipo_pedido = 'mesa'`.
 
-### F-037 · La capa 2 nunca se materializa — RESUELTO (2026-08-24)
+### F-037 · La capa 2 nunca se materializa — RESUELTO y DESPLEGADO (2026-08-25)
 
 `recetas.insumo_destino_id` existe, es obligatorio para recetas de producción y
 un trigger valida que apunte a un insumo de `capa_2`. Pero `fn_completar_tanda`
@@ -215,11 +390,54 @@ ORDER BY rendimiento_cantidad;
 
 Detalle en `SECURITY_CHANGES.md` §Pendiente de configuración.
 
-Pendientes:
+Pendientes, en orden de urgencia:
 
-1. Rotar `SUPABASE_SERVICE_ROLE_KEY` (urgente).
-2. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
-3. Monitor HTTP contra `/health` en Better Stack.
+1. **Rotar `SUPABASE_SERVICE_ROLE_KEY`** (urgente). La usa `createAdminClient()`
+   en el camino de entrega de pedidos.
+2. **Proteger la rama `main`** exigiendo CI en verde para fusionar. Hoy no tiene
+   protección ni rulesets, y desde ADR-007 es **el único gate que queda** entre
+   una migración rota y producción: la integración de Supabase aplica el esquema
+   al fusionar, así que lo que gatea el merge gatea la base.
+
+   ```bash
+   gh api -X PUT repos/:owner/:repo/branches/main/protection \
+     -H "Accept: application/vnd.github+json" \
+     -f 'required_status_checks[strict]=true' \
+     -f 'required_status_checks[contexts][]=CI' \
+     -f 'enforce_admins=false' \
+     -f 'required_pull_request_reviews=null' \
+     -f 'restrictions=null'
+   ```
+
+   Ajustar el nombre del check (`CI`) al que aparezca en la pestaña Actions.
+   Con `enforce_admins=false` el dueño conserva la vía de escape para un
+   hotfix; ponerlo en `true` si se quiere cerrar del todo.
+
+3. **Poner `BACKUP_GPG_PASSPHRASE`** en los secretos de GitHub. El workflow de
+   respaldo lleva **30 días consecutivos fallando** con
+   `gpg: error creating passphrase: Invalid passphrase` porque el secreto está
+   vacío. La exportación desde Supabase sí funciona; lo que falla es el cifrado,
+   así que **hace un mes que no hay copia utilizable**.
+
+   ```bash
+   openssl rand -base64 32     # generar; guardarla en un gestor de contraseñas
+   ```
+
+   Añadirla como secreto `BACKUP_GPG_PASSPHRASE` y relanzar el workflow a mano.
+   Para descifrar después:
+
+   ```bash
+   gpg --batch --passphrase "$BACKUP_GPG_PASSPHRASE" -d respaldo.sql.gz.gpg \
+     | gunzip | psql "$DATABASE_URL"
+   ```
+
+   ⚠ Si se pierde la passphrase, **todos los respaldos cifrados con ella quedan
+   ilegibles**. No hay recuperación.
+
+4. Rotar `SUPABASE_JWT_SECRET` cuando `ALLOW_LEGACY_HS256` quede apagado.
+5. Monitor HTTP contra `/health` en Better Stack, y un heartbeat del respaldo
+   (que avise cuando el workflow lleve más de 24 h sin éxito — es justo lo que
+   habría destapado el punto 3 hace un mes).
 
 Hechas el 2026-08-22 por el dueño:
 
@@ -230,3 +448,35 @@ Hechas el 2026-08-22 por el dueño:
   **Verificar en el dashboard que el proveedor sea Cloudflare Turnstile y que
   el secreto sea el mismo `TURNSTILE_SECRET_KEY` del proyecto.**
 - ✅ Registro público deshabilitado.
+
+## En qué trabajar ahora — orden propuesto
+
+Ordenado por lo que desbloquea, no por dificultad.
+
+1. **Revisar los 19 rendimientos con el chef** (consulta SQL en F-037 arriba).
+   Es dato de negocio que ahora mismo es una suposición, y de él dependen el
+   stock de elaborados y todos los costos unitarios. Bloquea cualquier análisis
+   de costos que se haga encima.
+2. ~~**Cerrar H-2**~~ — migración escrita el 2026-08-25, pendiente de
+   desplegar y de verificar en producción con la consulta de §H-2.
+3. ~~**Cerrar H-1**~~ — resuelto en el repositorio (ADR-007: se conserva la
+   integración nativa). **Falta proteger `main`**, sin lo cual la decisión deja
+   la base sin ningún gate. Es el punto 2 de las acciones de configuración.
+4. **Flujos A y B** (separar pedido de mesa de reposición de barra). Es lo que
+   de verdad resuelve F-026, el único hallazgo de la auditoría que sigue
+   abierto, y ahora es posible porque F-037 ya materializa el stock de barra.
+5. **Flujo C · conteo de barra al cierre de turno**. Depende de 1 y 4.
+
+Los pendientes de configuración de la sección anterior van en paralelo y no los
+puede hacer una sesión de Claude: requieren acceso a los dashboards.
+
+## Pendiente de verificar tras el próximo despliegue
+
+Lo escrito el 2026-08-25 (H-1 y H-2) **no está en producción todavía**. Cuando
+la rama se fusione:
+
+- La consulta de §H-2 debe devolver 0 filas.
+- `schema_migrations` debe tener 80 migraciones, la última `20260825015658`,
+  con `created_by` nulo (la aplicó la integración, no el workflow retirado).
+- El workflow `Deploy` ya no tiene job `Supabase Migrations`: la cadena es
+  `CI Gate → Deploy Web → Sentry Release`.

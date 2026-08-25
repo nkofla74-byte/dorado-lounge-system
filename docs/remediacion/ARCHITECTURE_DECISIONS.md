@@ -101,3 +101,54 @@ validar SQL. En CI es el servicio `postgres:15` del job `rls`.
 **Limitación conocida.** El arnés corre PostgreSQL 16 en local y 15 en CI; el
 proyecto usa 15. Las diferencias no afectan a lo que se prueba (RLS, plpgsql,
 grants), pero conviene que CI sea la referencia.
+
+## ADR-007: Un solo camino de migración — la integración nativa de Supabase
+
+**Contexto.** Dos mecanismos aplicaban el esquema sin conocerse: el job
+`migrate` de `deploy.yml` (`scripts/ci-migrate.py`, vía Management API) y la
+integración nativa de Supabase con GitHub, que aplica al fusionar en `main`.
+
+`supabase_migrations.schema_migrations` fecha el relevo con precisión:
+
+| Aplicador                              | Migraciones | Rango                   | `statements` |
+| -------------------------------------- | ----------: | ----------------------- | ------------ |
+| `nkofla74@gmail.com` (manual)          |           9 | 2026-05-03              | poblado      |
+| `ci-pipeline` (el workflow)            |          53 | 2026-05-04 → 2026-06-11 | **vacío**    |
+| integración nativa (`created_by` nulo) |          17 | 2026-06-12 → 2026-08-24 | poblado      |
+
+Es decir: **el workflow no aplicaba una migración desde el 2026-06-11**. Las
+últimas 16 —toda la remediación forense incluida— las aplicó la integración. El
+hallazgo H-1 original atribuía el solapamiento solo a PR #28; en realidad
+llevaba dos meses y medio.
+
+**Decisión.** Se conserva la integración nativa y se retira el job `migrate`
+junto con `scripts/ci-migrate.py`.
+
+**Por qué, en contra de la preferencia registrada al detectar H-1.** El
+argumento a favor del workflow era que «respeta el gate de CI». No lo respeta:
+la integración aplica al fusionar, antes de que `deploy.yml` arranque, así que
+el gate nunca tuvo ocasión de detener nada. Y `main` no tenía protección de
+rama ni rulesets, de modo que tampoco el merge estaba gateado.
+
+A eso se suma un defecto propio del script que el hallazgo no registraba:
+`ci-migrate.py` insertaba `statements = ARRAY[]::text[]`, así que sus 53 filas
+**no guardan qué SQL se ejecutó**. Las de la integración sí. Para una base cuya
+auditoría es un requisito del proyecto, esa asimetría decide.
+
+**El gate se mueve a la capa correcta.** No se gatea el despliegue: se gatea el
+merge. La protección de rama sobre `main` exige CI en verde para fusionar, y si
+nada rojo se fusiona, la integración no puede aplicar nada rojo.
+
+**Requisito operativo.** Esta decisión **solo es segura con la protección de
+rama activa**. Sin ella se pierde el único gate que queda. Ver
+`ESTADO-Y-PROXIMOS-PASOS.md` §Acciones de configuración pendientes.
+
+**Orden preservado.** La integración aplica el esquema al fusionar; el deploy de
+la app ocurre minutos después, tras CI. Base primero, aplicación después — que
+es el orden que exige una migración aditiva.
+
+**Se pierde.** El workaround de IPv6 de `ci-migrate.py` (el host directo de
+Supabase es IPv6-only y los runners de GitHub no lo alcanzan). Deja de hacer
+falta: la integración corre del lado de Supabase. Si algún día hubiera que
+reintroducir un aplicador propio, el script está en el historial de git —
+`git log --diff-filter=D -- scripts/ci-migrate.py`.

@@ -1,7 +1,9 @@
 # Plan de migración — remediación 2026-08-22
 
 Ocho migraciones nuevas. Todas idempotentes y con bloque de rollback documentado
-en su encabezado. Se aplican por CI (`scripts/ci-migrate.py`) en orden de nombre.
+en su encabezado. Se aplican en orden de nombre por la integración nativa de
+Supabase con GitHub, al fusionar en `main` (ADR-007; hasta el 2026-08-25 el
+encabezado decía `scripts/ci-migrate.py`, que ya no aplicaba nada desde junio).
 
 ## Orden y dependencias
 
