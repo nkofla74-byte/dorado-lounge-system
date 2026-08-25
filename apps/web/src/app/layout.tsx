@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import { GeistMono } from 'geist/font/mono';
 import { Fraunces, Onest } from 'next/font/google';
 
@@ -66,7 +67,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [messages, locale] = await Promise.all([getMessages(), getLocale()]);
+  const [messages, locale, headerList] = await Promise.all([getMessages(), getLocale(), headers()]);
+  // Lo pone el middleware por respuesta; sin él, la CSP bloquea el script de
+  // tema previo al pintado de next-themes.
+  const nonce = headerList.get('x-nonce') ?? undefined;
 
   return (
     <html
@@ -79,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="font-sans antialiased">
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <ThemeProvider defaultTheme="dark">
+          <ThemeProvider defaultTheme="dark" nonce={nonce}>
             {children}
             <HabeasDataBanner />
           </ThemeProvider>

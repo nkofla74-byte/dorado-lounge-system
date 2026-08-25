@@ -104,6 +104,14 @@ export async function middleware(request: NextRequest) {
   return conCsp(supabaseResponse, nonce);
 }
 
+// Los ficheros de `public/` se excluyen por extensión. El navegador pide el
+// manifest y el service worker SIN cookies —es su comportamiento por defecto—,
+// así que al pasar por aquí se veían como anónimos y acababan en /login: el
+// navegador recibía HTML donde esperaba JSON o JavaScript. Rompía el manifest
+// de los dos PWA y el registro de /sw.js, o sea el modo offline del QR de
+// pasajeros. Las imágenes ya estaban excluidas; faltaba todo lo demás.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js|txt|xml|webmanifest)$).*)',
+  ],
 };
