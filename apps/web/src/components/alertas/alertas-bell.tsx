@@ -19,10 +19,10 @@ import type { SocketEvent } from '@dorado/shared-types';
 
 function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
   if (severidad === 'critical')
-    return <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-senal-critico shrink-0 mt-0.5" />;
   if (severidad === 'warning')
-    return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />;
-  return <Info className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-senal-aviso shrink-0 mt-0.5" />;
+  return <Info className="h-3.5 w-3.5 text-senal-curso shrink-0 mt-0.5" />;
 }
 
 function useFormatRelativo() {
@@ -110,7 +110,7 @@ export function AlertasBell() {
           aria-label={t('bellLabel')}
         >
           {hasCritical ? (
-            <BellRing className="h-4 w-4 text-red-500 animate-bounce" />
+            <BellRing className="h-4 w-4 text-senal-critico animate-bounce" />
           ) : (
             <Bell className="h-4 w-4" />
           )}
@@ -118,7 +118,7 @@ export function AlertasBell() {
             <span
               className={cn(
                 'absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full px-0.5 text-[10px] font-bold flex items-center justify-center text-white',
-                hasCritical ? 'bg-red-500' : 'bg-amber-500',
+                hasCritical ? 'bg-senal-critico' : 'bg-senal-aviso',
               )}
             >
               {unread > 99 ? '99+' : unread}
@@ -133,7 +133,7 @@ export function AlertasBell() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 text-xs text-muted-foreground gap-1 px-2"
+              className="h-6 text-caption text-muted-foreground gap-1 px-2"
               onClick={handleMarcarTodas}
             >
               <CheckCheck className="h-3.5 w-3.5" />
@@ -160,7 +160,7 @@ export function AlertasBell() {
                   <div className="flex items-center justify-between gap-2">
                     <p
                       className={cn(
-                        'text-xs font-medium truncate',
+                        'text-caption font-medium truncate',
                         !alerta.leida ? 'text-foreground' : 'text-muted-foreground',
                       )}
                     >
@@ -170,7 +170,7 @@ export function AlertasBell() {
                       {formatRelativo(alerta.createdAt)}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 text-left">
+                  <p className="text-caption text-muted-foreground line-clamp-2 text-left">
                     {alerta.mensaje}
                   </p>
                   {!alerta.leida && (

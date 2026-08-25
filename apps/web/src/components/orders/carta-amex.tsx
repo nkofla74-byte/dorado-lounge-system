@@ -63,19 +63,19 @@ function DishCard({
     <article
       className={cn(
         'rounded-2xl overflow-hidden border cursor-pointer select-none transition-all duration-300 active:scale-[0.99]',
-        'bg-[#1C1C24]',
+        'bg-card',
         disabled
-          ? 'border-[#2a2a33] opacity-50 grayscale'
+          ? 'border-border opacity-50 grayscale'
           : selected
-            ? 'border-[#D4AF37] shadow-[0_0_24px_-6px_rgba(212,175,55,0.45)]'
+            ? 'border-primary shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)]'
             : expanded
-              ? 'border-[#D4AF37]/60 shadow-[0_0_24px_-6px_rgba(212,175,55,0.35)]'
-              : 'border-[#2a2a33] hover:border-[#D4AF37]/30 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.5)]',
+              ? 'border-primary/60 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.35)]'
+              : 'border-border hover:border-primary/30 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.5)]',
       )}
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Imagen */}
-      <div className="relative w-full aspect-[16/5] overflow-hidden bg-[#0B0B0F]">
+      <div className="relative w-full aspect-[16/5] overflow-hidden bg-background">
         {receta.imagenUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -88,16 +88,16 @@ function DishCard({
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1C1C24] via-[#2a2418] to-[#3a2f15]">
-            <UtensilsCrossed className="h-6 w-6 text-[#D4AF37]/40" />
-            <span className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/60 font-medium">
+          <div className="w-full h-full flex items-center justify-center gap-2 bg-gradient-to-r from-card via-accent to-accent">
+            <UtensilsCrossed className="h-6 w-6 text-primary/40" />
+            <span className="text-[9px] tracking-[0.3em] uppercase text-primary/60 font-medium">
               Dorado Lounge
             </span>
           </div>
         )}
         {disabled && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-xs font-bold text-red-400 uppercase tracking-wide bg-black/60 px-3 py-1 rounded-full">
+            <span className="text-caption font-bold text-senal-critico uppercase tracking-wide bg-black/60 px-3 py-1 rounded-full">
               {t('inhabilitar')}
             </span>
           </div>
@@ -105,7 +105,7 @@ function DishCard({
         {selected && !disabled && (
           <>
             <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-            <div className="absolute top-2 right-2 bg-[#D4AF37] text-[#0B0B0F] text-[11px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
+            <div className="absolute top-2 right-2 bg-primary text-background text-[11px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />x{cartQty}
             </div>
           </>
@@ -115,11 +115,11 @@ function DishCard({
       {/* Nombre + botón agregar */}
       <div className="px-3.5 pt-2.5 pb-3 flex items-start gap-2.5">
         <div className="min-w-0 flex-1">
-          <h3 className="text-[#FAF7F0] text-[14px] font-bold leading-tight">{receta.nombre}</h3>
+          <h3 className="text-foreground text-[14px] font-bold leading-tight">{receta.nombre}</h3>
           {receta.descripcion && (
             <p
               className={cn(
-                'text-[#FAF7F0]/55 text-[11.5px] mt-0.5 leading-snug',
+                'text-foreground/55 text-[11.5px] mt-0.5 leading-snug',
                 !expanded && 'line-clamp-1',
               )}
             >
@@ -133,8 +133,8 @@ function DishCard({
             className={cn(
               'shrink-0 h-7 px-3 rounded-full font-semibold text-[11px] transition-all active:scale-90',
               selected
-                ? 'bg-[#0B0B0F] border border-[#D4AF37]/60 text-[#D4AF37]'
-                : 'text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_14px_-3px_rgba(212,175,55,0.7)]',
+                ? 'bg-background border border-primary/60 text-primary'
+                : 'text-background bg-gradient-to-r from-primary to-primary hover:shadow-[0_0_14px_-3px_hsl(var(--primary)/0.7)]',
             )}
           >
             {selected ? (
@@ -148,7 +148,7 @@ function DishCard({
         )}
         <ChevronDown
           className={cn(
-            'h-4 w-4 mt-0.5 text-[#D4AF37]/60 transition-transform duration-300',
+            'h-4 w-4 mt-0.5 text-primary/60 transition-transform duration-300',
             expanded && 'rotate-180',
           )}
         />
@@ -156,21 +156,21 @@ function DishCard({
 
       {/* Detalle expandible */}
       <div
-        className="grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="grid transition-[grid-template-rows] duration-400 ease-expresivo"
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden">
-          <div className="px-3.5 pb-3.5 pt-1 space-y-2.5 border-t border-[#2a2a33]/60">
+          <div className="px-3.5 pb-3.5 pt-1 space-y-2.5 border-t border-border/60">
             {receta.ingredientes.length > 0 && (
               <div className="pt-2">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4AF37]/70 font-semibold mb-1.5">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-primary/70 font-semibold mb-1.5">
                   Ingredientes
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {receta.ingredientes.map((ing, i) => (
                     <span
                       key={i}
-                      className="text-[10px] text-[#FAF7F0]/75 bg-[#0B0B0F] border border-[#2a2a33] rounded-full px-2 py-0.5"
+                      className="text-[10px] text-foreground/75 bg-background border border-border rounded-full px-2 py-0.5"
                     >
                       {ing.nombre}
                     </span>
@@ -186,14 +186,14 @@ function DishCard({
                 value={notas}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setNotas(e.target.value)}
-                className="w-full text-[12px] bg-[#0B0B0F] border border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] resize-none transition-colors"
+                className="w-full text-[12px] bg-background border border-border text-foreground placeholder:text-foreground/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none transition-colors"
               />
             )}
 
             {!disabled && (
               <button
                 onClick={handleAdd}
-                className="w-full h-9 rounded-full font-semibold text-[13px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all"
+                className="w-full h-9 rounded-full font-semibold text-[13px] text-background bg-gradient-to-r from-primary to-primary hover:shadow-[0_0_18px_-4px_hsl(var(--primary)/0.6)] active:scale-[0.97] transition-all"
               >
                 Agregar al pedido
               </button>
@@ -208,8 +208,8 @@ function DishCard({
                 className={cn(
                   'w-full h-8 rounded-full font-semibold text-[12px] transition-all active:scale-[0.97] border',
                   disabled
-                    ? 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'
-                    : 'border-red-500/40 text-red-400 hover:bg-red-500/10',
+                    ? 'border-senal-ok/40 text-senal-ok hover:bg-senal-ok/10'
+                    : 'border-senal-critico/40 text-senal-critico hover:bg-senal-critico/10',
                 )}
               >
                 {disabled ? t('habilitar') : t('inhabilitar')}
@@ -342,26 +342,26 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
 
   if (step === 'setup') {
     return (
-      <div className="rounded-2xl bg-[#0B0B0F] text-[#FAF7F0] overflow-hidden border border-[#2a2a33]">
+      <div className="rounded-2xl bg-background text-foreground overflow-hidden border border-border">
         <div className="px-6 py-10 flex flex-col items-center gap-8">
           <div className="text-center space-y-2">
-            <UtensilsCrossed className="h-10 w-10 mx-auto text-[#D4AF37]/60" />
-            <h2 className="text-lg font-bold text-[#FAF7F0]">{t('setupTitle')}</h2>
-            <p className="text-sm text-[#FAF7F0]/50">{t('setupDescription')}</p>
+            <UtensilsCrossed className="h-10 w-10 mx-auto text-primary/60" />
+            <h2 className="text-title font-semibold text-foreground">{t('setupTitle')}</h2>
+            <p className="text-sm text-foreground/50">{t('setupDescription')}</p>
           </div>
 
           <div className="w-full max-w-xs space-y-4">
             <div className="space-y-1.5">
               <label
                 htmlFor="setup-mesa"
-                className="text-xs text-[#D4AF37] uppercase tracking-wide font-semibold"
+                className="text-caption text-primary uppercase tracking-wide font-semibold"
               >
                 {t('mesa')}
               </label>
               <Input
                 id="setup-mesa"
                 placeholder={t('mesaPlaceholder')}
-                className="h-10 text-sm bg-[#1C1C24] border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30 text-center"
+                className="h-10 text-sm bg-card border-border text-foreground placeholder:text-foreground/30 text-center"
                 value={mesa}
                 onChange={(e) => setMesa(e.target.value)}
                 autoFocus
@@ -371,25 +371,25 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             <div className="space-y-1.5">
               <label
                 htmlFor="setup-comensales"
-                className="text-xs text-[#D4AF37] uppercase tracking-wide font-semibold"
+                className="text-caption text-primary uppercase tracking-wide font-semibold"
               >
                 {t('comensales')}
               </label>
               <div className="flex items-center justify-center gap-4">
                 <button
                   type="button"
-                  className="h-10 w-10 rounded-full border border-[#2a2a33] flex items-center justify-center text-[#FAF7F0]/70 hover:bg-[#2a2a33] transition-colors disabled:opacity-30"
+                  className="h-10 w-10 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:bg-border transition-colors disabled:opacity-30"
                   disabled={comensales <= 1}
                   onClick={() => setComensales((n) => Math.max(1, n - 1))}
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="text-3xl font-bold tabular-nums text-[#FAF7F0] w-12 text-center">
+                <span className="text-3xl font-bold tabular-nums text-foreground w-12 text-center">
                   {comensales}
                 </span>
                 <button
                   type="button"
-                  className="h-10 w-10 rounded-full border border-[#2a2a33] flex items-center justify-center text-[#FAF7F0]/70 hover:bg-[#2a2a33] transition-colors disabled:opacity-30"
+                  className="h-10 w-10 rounded-full border border-border flex items-center justify-center text-foreground/70 hover:bg-border transition-colors disabled:opacity-30"
                   disabled={comensales >= 20}
                   onClick={() => setComensales((n) => Math.min(20, n + 1))}
                 >
@@ -401,7 +401,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             <button
               type="button"
               onClick={() => setStep('menu')}
-              className="w-full h-11 rounded-full font-bold text-[14px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all mt-4 flex items-center justify-center gap-2"
+              className="w-full h-11 rounded-full font-bold text-[14px] text-background bg-gradient-to-r from-primary to-primary hover:shadow-[0_0_18px_-4px_hsl(var(--primary)/0.6)] active:scale-[0.97] transition-all mt-4 flex items-center justify-center gap-2"
             >
               {t('verCarta')}
               <ChevronDown className="h-4 w-4 -rotate-90" />
@@ -413,40 +413,38 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
   }
 
   return (
-    <div className="rounded-2xl bg-[#0B0B0F] text-[#FAF7F0] overflow-hidden border border-[#2a2a33]">
+    <div className="rounded-2xl bg-background text-foreground overflow-hidden border border-border">
       {/* Header con tabs de categoría */}
-      <div className="sticky top-0 z-10 bg-[#0B0B0F]/95 backdrop-blur-md border-b border-[#1C1C24] px-4 py-3">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-card px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold tracking-wide uppercase text-[#D4AF37]">
-              {t('cartaTitle')}
-            </h2>
-            <div className="flex items-center gap-2 text-[11px] text-[#FAF7F0]/60">
+            <h2 className="label-seccion text-primary">{t('cartaTitle')}</h2>
+            <div className="flex items-center gap-2 text-[11px] text-foreground/60">
               {mesa && (
-                <span className="bg-[#1C1C24] border border-[#2a2a33] rounded px-1.5 py-0.5">
+                <span className="bg-card border border-border rounded px-1.5 py-0.5">
                   {t('mesa')}: {mesa}
                 </span>
               )}
               {comensales > 1 ? (
-                <span className="bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] rounded px-1.5 py-0.5 font-semibold">
+                <span className="bg-primary/20 border border-primary/40 text-primary rounded px-1.5 py-0.5 font-semibold">
                   {t('comensalDe', { n: comensalActual, total: comensales })}
                 </span>
               ) : (
-                <span className="bg-[#1C1C24] border border-[#2a2a33] rounded px-1.5 py-0.5">
+                <span className="bg-card border border-border rounded px-1.5 py-0.5">
                   1 {t('comensales').toLowerCase()}
                 </span>
               )}
               <button
                 type="button"
                 onClick={() => setStep('setup')}
-                className="text-[#D4AF37] hover:underline"
+                className="text-primary hover:underline"
               >
                 {t('cambiar')}
               </button>
             </div>
           </div>
           {totalItems > 0 && (
-            <span className="text-xs bg-[#D4AF37] text-[#0B0B0F] rounded-full px-3 py-1 font-bold tabular-nums">
+            <span className="text-caption bg-primary text-background rounded-full px-3 py-1 font-bold tabular-nums">
               {t('pedidoTitle', { count: totalItems })}
             </span>
           )}
@@ -458,10 +456,10 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
               type="button"
               onClick={() => setActiveCategory(cat)}
               className={cn(
-                'shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
+                'shrink-0 text-caption font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
                 activeCategory === cat
-                  ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37] shadow-[0_0_16px_-4px_rgba(212,175,55,0.5)]'
-                  : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40',
+                  ? 'bg-primary text-background border-primary shadow-[0_0_16px_-4px_hsl(var(--primary)/0.5)]'
+                  : 'border-border text-foreground/60 hover:text-primary hover:border-primary/40',
               )}
             >
               {tCat(cat)}
@@ -472,10 +470,10 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
               type="button"
               onClick={() => setActiveCategory('otros')}
               className={cn(
-                'shrink-0 text-xs font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
+                'shrink-0 text-caption font-semibold px-4 py-2 rounded-full border transition-all active:scale-95',
                 activeCategory === 'otros'
-                  ? 'bg-[#D4AF37] text-[#0B0B0F] border-[#D4AF37]'
-                  : 'border-[#2a2a33] text-[#FAF7F0]/60 hover:text-[#D4AF37] hover:border-[#D4AF37]/40',
+                  ? 'bg-primary text-background border-primary'
+                  : 'border-border text-foreground/60 hover:text-primary hover:border-primary/40',
               )}
             >
               {t('otros')}
@@ -487,7 +485,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
       {/* Platos */}
       <div className="px-4 py-4 space-y-2.5 max-h-[60vh] overflow-y-auto">
         {currentRecetas.length === 0 ? (
-          <div className="flex flex-col items-center py-12 gap-3 text-[#FAF7F0]/40">
+          <div className="flex flex-col items-center py-12 gap-3 text-foreground/40">
             <UtensilsCrossed className="h-8 w-8 opacity-50" />
             <p className="text-sm">{t('sinPlatos')}</p>
           </div>
@@ -507,15 +505,15 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
 
       {/* Carrito */}
       {cart.length > 0 && (
-        <div className="border-t border-[#D4AF37]/30 bg-[#1C1C24] px-4 py-4 space-y-3">
+        <div className="border-t border-primary/30 bg-card px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#FAF7F0]">
+            <h3 className="text-sm font-bold text-foreground">
               {t('pedidoTitle', { count: totalItems })}
             </h3>
             <button
               type="button"
               onClick={() => setCart([])}
-              className="text-xs text-[#FAF7F0]/50 hover:text-[#FAF7F0] transition-colors"
+              className="text-caption text-foreground/50 hover:text-foreground transition-colors"
             >
               {t('limpiar')}
             </button>
@@ -524,25 +522,25 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
           <div className="space-y-1.5">
             {cart.map((item) => (
               <div key={item.recetaId} className="flex items-center justify-between text-sm">
-                <span className="truncate flex-1 text-[#FAF7F0]/90">{item.nombre}</span>
+                <span className="truncate flex-1 text-foreground/90">{item.nombre}</span>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
-                    className="h-6 w-6 rounded border border-[#2a2a33] flex items-center justify-center text-[#FAF7F0]/70 hover:bg-[#2a2a33] transition-colors"
+                    className="h-6 w-6 rounded border border-border flex items-center justify-center text-foreground/70 hover:bg-border transition-colors"
                     onClick={() => updateQty(item.recetaId, -1)}
                   >
                     {item.cantidad === 1 ? (
-                      <Trash2 className="h-3 w-3 text-red-400" />
+                      <Trash2 className="h-3 w-3 text-senal-critico" />
                     ) : (
                       <Minus className="h-3 w-3" />
                     )}
                   </button>
-                  <span className="w-6 text-center tabular-nums font-bold text-[#D4AF37]">
+                  <span className="w-6 text-center tabular-nums font-bold text-primary">
                     {item.cantidad}
                   </span>
                   <button
                     type="button"
-                    className="h-6 w-6 rounded border border-[#2a2a33] flex items-center justify-center text-[#FAF7F0]/70 hover:bg-[#2a2a33] transition-colors"
+                    className="h-6 w-6 rounded border border-border flex items-center justify-center text-foreground/70 hover:bg-border transition-colors"
                     onClick={() => updateQty(item.recetaId, 1)}
                   >
                     <Plus className="h-3 w-3" />
@@ -555,14 +553,14 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
           <div className="space-y-1">
             <label
               htmlFor="cart-notas"
-              className="text-[10px] text-[#FAF7F0]/50 uppercase tracking-wide"
+              className="text-[10px] text-foreground/50 uppercase tracking-wide"
             >
               {t('notas')}
             </label>
             <Input
               id="cart-notas"
               placeholder={t('notasPlaceholder')}
-              className="h-8 text-sm bg-[#0B0B0F] border-[#2a2a33] text-[#FAF7F0] placeholder:text-[#FAF7F0]/30"
+              className="h-8 text-sm bg-background border-border text-foreground placeholder:text-foreground/30"
               value={notasPedido}
               onChange={(e) => setNotasPedido(e.target.value)}
             />
@@ -572,7 +570,7 @@ export function CartaAmex({ carta, onCreated, canToggle = false }: Props) {
             type="button"
             onClick={handleSend}
             disabled={sending}
-            className="w-full h-10 rounded-full font-bold text-[13px] text-[#0B0B0F] bg-gradient-to-r from-[#D4AF37] to-[#E8C76A] hover:shadow-[0_0_18px_-4px_rgba(212,175,55,0.6)] active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-10 rounded-full font-bold text-[13px] text-background bg-gradient-to-r from-primary to-primary hover:shadow-[0_0_18px_-4px_hsl(var(--primary)/0.6)] active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             {sending

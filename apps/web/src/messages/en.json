@@ -5,7 +5,7 @@
     "recetas": "Recipes",
     "cocinaFria": "Cold Kitchen KDS",
     "cocinaCaliente": "Hot Kitchen KDS",
-    "cocinaAmex": "AMEX KDS",
+    "cocinaAmex": "Prefer KDS",
     "produccion": "Production",
     "pasteleria": "Pastry",
     "pedidos": "Orders",
@@ -29,7 +29,7 @@
     "chef_cocina_fria": "Cold Kitchen Chef",
     "chef_cocina_caliente": "Hot Kitchen Chef",
     "sous_chef": "Sous Chef",
-    "mesero_amex": "AMEX Waiter",
+    "mesero_amex": "Prefer Waiter",
     "personal_snack": "Snack Staff",
     "personal_buffet": "Buffet Staff",
     "personal_almacen": "Warehouse Staff",
@@ -255,7 +255,9 @@
       "manana": "tomorrow",
       "diasShort": "{n}d",
       "proveedoresTitle": "Suppliers",
-      "proveedoresSubtitle": "Supplier catalog · Create, edit and delete from here"
+      "proveedoresSubtitle": "Supplier catalog · Create, edit and delete from here",
+      "requiereAtencion": "Needs attention",
+      "insumosEnBodega": "{n} items"
     },
     "nuevoIngreso": {
       "trigger": "New intake",
@@ -494,7 +496,7 @@
     "noLeidas": "Unread",
     "criticas": "Critical",
     "verificarVencimientos": "Check expirations (3d)",
-    "verificarDemoras": "Check Amex delays (15 min)",
+    "verificarDemoras": "Check Prefer delays (15 min)",
     "actualizar": "Refresh",
     "marcarTodas": "Mark all",
     "filtroTodas": "All",
@@ -510,7 +512,7 @@
       "stock_minimo": "Minimum stock",
       "vencimiento": "Expiration",
       "cambio_precio": "Price change",
-      "demora_amex": "Amex delay"
+      "demora_amex": "Prefer delay"
     }
   },
   "turnos": {
@@ -587,7 +589,7 @@
     "noData": "No data available"
   },
   "zonas": {
-    "amex": "Amex",
+    "amex": "Dorado Prefer",
     "snack": "Snack",
     "buffet": "Buffet"
   },
@@ -658,7 +660,10 @@
       "guardar": "Save recipe",
       "guardando": "Saving…",
       "cancelar": "Cancel"
-    }
+    },
+    "rendimiento": "Yield per batch",
+    "rendimientoPlaceholder": "e.g. 40",
+    "rendimientoAyuda": "How much finished product comes out of ONE batch. Net yield: production loss is already deducted."
   },
   "production": {
     "pageTitleProd": "Production",
@@ -694,7 +699,7 @@
       "zonaDestino": "Destination zone",
       "zonaDestinoPlaceholder": "Where is it for?",
       "zonaDestinoRequerida": "Select the destination zone",
-      "zonaAmex": "AMEX",
+      "zonaAmex": "Prefer",
       "zonaBuffet": "Buffet",
       "zonaSnack": "Snack",
       "responsable": "Responsible",
@@ -752,7 +757,7 @@
     "tabTodas": "All",
     "tabCocina": "Kitchen (Chef)",
     "tabPasteleria": "Pastry",
-    "tabAmex": "AMEX",
+    "tabAmex": "Prefer",
     "colReceta": "Recipe",
     "colTandas": "Batches",
     "colDestino": "Destination",
@@ -761,7 +766,7 @@
     "colEstado": "Status",
     "colCreada": "Created",
     "colAcciones": "Actions",
-    "zonaAmex": "AMEX",
+    "zonaAmex": "Prefer",
     "zonaBuffet": "Buffet",
     "zonaSnack": "Snack",
     "sinTandasTodas": "No batches registered. Create the first one with the button above.",
@@ -783,9 +788,9 @@
     "tituloPasteleria": "Order queue — KDS",
     "subtituloPasteleria": "Menu desserts routed to the pastry station",
     "sinSolicitudes": "No pending preparation requests",
-    "tituloAmex": "Amex Kitchen — KDS",
+    "tituloAmex": "Dorado Prefer Kitchen — KDS",
     "sinPedidosActivos": "No active orders",
-    "sinPedidosAmex": "No active Amex orders",
+    "sinPedidosAmex": "No active Prefer orders",
     "pedidosActivos": "{n, plural, =1 {1 active order} other {# active orders}}",
     "urgentes": "{n, plural, =1 {1 urgent} other {# urgent}}",
     "actualizar": "Refresh",
@@ -811,7 +816,7 @@
     "cargando": "Loading…",
     "sinEventos": "No events recorded",
     "nuevoPedidoToast": "New order — {zona} {mesa}",
-    "nuevoPedidoAmexToast": "New Amex order{mesa, select, none {} other { — {mesa}}}",
+    "nuevoPedidoAmexToast": "New Prefer order{mesa, select, none {} other { — {mesa}}}",
     "pedidoCanceladoToast": "Order canceled{mesa, select, none {} other { — {mesa}}}",
     "canceladoToast": "Canceled{mesa, select, none {} other { — {mesa}}}",
     "evento": {
@@ -826,7 +831,11 @@
     "iniciarItem": "Start",
     "marcarListo": "Ready",
     "recall": "Reopen",
-    "progresoArea": "{n}/{total} ready"
+    "progresoArea": "{n}/{total} ready",
+    "tiempoTranscurrido": "Elapsed time: {tiempo}",
+    "urgenciaCritica": "Delayed",
+    "urgenciaAviso": "Attention",
+    "otrasAreas": "Other areas"
   },
   "pedidos": {
     "estadoCreado": "Created",
@@ -862,11 +871,11 @@
     "no": "No",
     "metaTitle": "Orders — Dorado Lounge",
     "pageTitle": "Orders",
-    "pageSubtitle": "Active orders — Amex zone",
+    "pageSubtitle": "Active orders — Dorado Prefer zone",
     "tabCarta": "Menu",
     "tabPedidos": "Orders",
     "carta": {
-      "cartaTitle": "AMEX Menu",
+      "cartaTitle": "Dorado Prefer Menu",
       "setupTitle": "New order",
       "setupDescription": "Enter the table and number of guests",
       "verCarta": "View menu",
@@ -910,7 +919,8 @@
     },
     "historial": "History",
     "historialTitle": "{count, plural, one {# recent order} other {# recent orders}}",
-    "sinHistorial": "No orders in recent history."
+    "sinHistorial": "No orders in recent history.",
+    "tabsAriaLabel": "Order views"
   },
   "ingredientes": {
     "categoriaEntrada": "Starter",
@@ -948,11 +958,11 @@
   "pasteleria": {
     "metaTitle": "Pastry — Dorado Lounge",
     "pageTitle": "Pastry",
-    "pageSubtitle": "Pastry production · Special orders from Amex",
+    "pageSubtitle": "Pastry production · Special orders from Dorado Prefer",
     "dashboardTitle": "Pastry — Today's summary",
     "dashboardSubtitle": "Pastry production: what was made, how much, and where it was sent",
     "sinTurnoActivo": "No active shift — contact your admin to start one.",
-    "pedidosEspeciales": "{n, plural, =1 {1 special order pending from Amex} other {# special orders pending from Amex}}",
+    "pedidosEspeciales": "{n, plural, =1 {1 special order pending from Prefer} other {# special orders pending from Prefer}}",
     "sinMesa": "No table",
     "estadoNuevo": "New",
     "estadoEnPreparacion": "In preparation",
@@ -979,7 +989,7 @@
     "urlLabel": "QR URL",
     "urlRelativaWarn": "Relative URL detected — the QR won't work when scanned. Set {var} in Vercel.",
     "tokenInfo": "Token valid for 4 hours · Generate a new one when needed",
-    "zonaAmex": "Amex",
+    "zonaAmex": "Prefer",
     "zonaSnack": "Snack Bar",
     "zonaBuffet": "Buffet"
   },
@@ -1088,7 +1098,8 @@
       "guardar": "Send order",
       "guardando": "Sending…",
       "cancelar": "Cancel"
-    }
+    },
+    "tabsAriaLabel": "Zone views"
   },
   "requisiciones": {
     "pedir": {
@@ -1119,9 +1130,18 @@
       "area": {
         "cocina_caliente": "Hot kitchen",
         "cocina_fria": "Cold kitchen",
-        "amex": "AMEX kitchen",
+        "amex": "Prefer kitchen",
         "pasteleria": "Pastry"
       }
     }
+  },
+  "higValidacion": {
+    "mesa": "Table {numero}",
+    "tiempoTranscurrido": "{minutos} minutes elapsed",
+    "demora": "Delayed: over {umbral} minutes",
+    "avanzarItem": "Advance {nombre}, current state {estado}",
+    "pendiente": "pending",
+    "en_preparacion": "in preparation",
+    "listo": "ready"
   }
 }

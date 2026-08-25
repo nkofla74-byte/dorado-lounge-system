@@ -2,10 +2,29 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from '@dorado/shared-types';
 import { ROLE_HOME, canAccess } from '@/lib/auth/role-home';
+import { esRutaPublica } from '@/lib/auth/rutas-publicas';
+import { construirCsp, generarNonce } from '@/lib/security/csp';
 
-const PUBLIC_PATHS = ['/login', '/qr', '/api/cron', '/api/heartbeat', '/health'];
+/** Aplica la CSP con el nonce de esta petición a cualquier respuesta. */
+function conCsp(response: NextResponse, nonce: string): NextResponse {
+  response.headers.set(
+    'Content-Security-Policy',
+    construirCsp({
+      nonce,
+      supabaseUrl: process.env['NEXT_PUBLIC_SUPABASE_URL'],
+      socketUrl: process.env['NEXT_PUBLIC_SOCKET_URL'],
+      esProduccion: process.env.NODE_ENV === 'production',
+    }),
+  );
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
+  // Un nonce por respuesta: es lo que permite retirar el 'unsafe-inline' ciego
+  // que traía la CSP estática de next.config.mjs (F-019).
+  const nonce = generarNonce();
+  request.headers.set('x-nonce', nonce);
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -32,7 +51,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublicPath = esRutaPublica(pathname);
   const isLoginPath = pathname.startsWith('/login');
 
   // Sin sesión → redirigir a login (excepto rutas públicas).
@@ -55,7 +74,7 @@ export async function middleware(request: NextRequest) {
     // Usuario con sesión inválida (sin rol/tenant) → limpiar cookies y redirigir a login.
     // Sin limpiar cookies se produce un redirect loop (user existe pero sin claims válidos).
     if (!role || !tenantId) {
-      if (isLoginPath) return supabaseResponse;
+      if (isLoginPath) return conCsp(supabaseResponse, nonce);
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       const response = NextResponse.redirect(url, 302);
@@ -63,7 +82,7 @@ export async function middleware(request: NextRequest) {
       request.cookies.getAll().forEach(({ name }) => {
         if (name.startsWith('sb-')) response.cookies.delete(name);
       });
-      return response;
+      return conCsp(response, nonce);
     }
 
     if (isLoginPath) {
@@ -72,17 +91,17 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = destination;
       url.searchParams.delete('next');
-      return NextResponse.redirect(url, 302);
+      return conCsp(NextResponse.redirect(url, 302), nonce);
     }
 
     if (!isPublicPath && !canAccess(role, pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = ROLE_HOME[role] ?? '/inventario';
-      return NextResponse.redirect(url, 302);
+      return conCsp(NextResponse.redirect(url, 302), nonce);
     }
   }
 
-  return supabaseResponse;
+  return conCsp(supabaseResponse, nonce);
 }
 
 export const config = {

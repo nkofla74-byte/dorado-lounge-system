@@ -8,7 +8,8 @@ import { createPedidoSchema } from '@dorado/shared-validation';
 import { ok, err, toAppError } from '@/lib/result';
 import { headers } from 'next/headers';
 import type { Result } from '@/lib/result';
-import type { ZonaServicio } from '@dorado/shared-types';
+import { rutearPedido } from '@/modules/orders/domain/routing';
+import type { AreaProduccion, ZonaServicio } from '@dorado/shared-types';
 
 export interface PublicIngrediente {
   nombre: string;
@@ -73,6 +74,7 @@ export async function getMenuPublico(
       )
       .eq('tenant_id', mesa.tenantId)
       .eq('tipo_receta', 'servicio')
+      .eq('activo', true) // F-018: respetar el toggle de disponibilidad del chef
       .not('categoria_menu', 'is', null)
       .is('deleted_at', null)
       .order('nombre');
@@ -159,9 +161,10 @@ export async function createPedidoFromQR(
     const recetaIds = Array.from(new Set(parsed.data.items.map((i) => i.recetaId)));
     const { data: recetasValidas, error: recetasError } = await admin
       .from('recetas')
-      .select('id')
+      .select('id, area_produccion')
       .eq('tenant_id', mesa.tenantId)
       .eq('tipo_receta', 'servicio')
+      .eq('activo', true) // F-018
       .not('categoria_menu', 'is', null)
       .is('deleted_at', null)
       .in('id', recetaIds);
@@ -173,47 +176,65 @@ export async function createPedidoFromQR(
       );
     }
 
-    // Insertar pedido directamente (sin assertCan — token ya autenticó la mesa)
-    const { data: pedido, error: pedidoError } = await admin
-      .from('pedidos')
-      .insert({
-        tenant_id: mesa.tenantId,
-        zona: parsed.data.zona,
-        numero_mesa: parsed.data.numeroMesa ?? null,
-        notas: parsed.data.notas ?? null,
-        estado: 'creado',
-        version: 1,
-        origen: 'qr_pasajero',
-        idempotency_key: parsed.data.idempotencyKey,
-      })
-      .select('id')
-      .single();
+    // Ruteo por área: la misma función de dominio que usa el alta interna. Sin
+    // esto los ítems quedaban con área NULL, invisibles para los cuatro KDS, y
+    // el pedido no podía avanzar más allá de 'creado' (F-007).
+    const areasPorReceta = Object.fromEntries(
+      (recetasValidas as Array<{ id: string; area_produccion: AreaProduccion | null }>).map((r) => [
+        r.id,
+        r.area_produccion,
+      ]),
+    );
+    const ruteo = rutearPedido(
+      mesa.zona,
+      parsed.data.items.map((i) => ({
+        recetaId: i.recetaId,
+        areaProduccion: areasPorReceta[i.recetaId] ?? null,
+      })),
+    );
+    if (ruteo.itemsSinArea.length > 0) {
+      return err(
+        toAppError(new Error('Hay platos sin área de cocina asignada. Avisa a un mesero.')),
+      );
+    }
+    if (ruteo.areasNoPermitidas.length > 0) {
+      return err(toAppError(new Error('Alguno de los platos no se sirve en esta zona.')));
+    }
+
+    // Alta atómica (pedido + ítems en una transacción). Antes eran dos INSERT
+    // independientes: si fallaba el segundo quedaba un pedido huérfano sin
+    // ítems, el defecto que fn_crear_pedido ya había resuelto para el alta
+    // interna y que el camino QR nunca adoptó (F-007).
+    // Sin assertCan: la credencial es el token de mesa, ya verificado arriba.
+    const { data: nuevoPedidoId, error: pedidoError } = await admin.rpc('fn_crear_pedido_qr', {
+      p_tenant_id: mesa.tenantId,
+      p_zona: parsed.data.zona,
+      p_numero_mesa: parsed.data.numeroMesa ?? null,
+      p_notas: parsed.data.notas ?? null,
+      p_idempotency_key: parsed.data.idempotencyKey,
+      p_items: parsed.data.items.map((item) => ({
+        receta_id: item.recetaId,
+        cantidad: item.cantidad,
+        notas: item.notas ?? null,
+        area_produccion: areasPorReceta[item.recetaId],
+      })),
+    });
 
     if (pedidoError) {
-      // Idempotencia: si ya existe, devolver el pedido existente
+      // Idempotencia: el reintento de un pedido ya registrado devuelve el mismo.
       if (pedidoError.code === '23505') {
-        const { data: existing } = await admin
+        const { data: existente } = await admin
           .from('pedidos')
           .select('id')
           .eq('idempotency_key', parsed.data.idempotencyKey)
           .eq('tenant_id', mesa.tenantId)
           .single();
-        if (existing) return ok({ pedidoId: existing.id });
+        if (existente) return ok({ pedidoId: existente.id });
       }
       return err(toAppError(new Error(pedidoError.message)));
     }
 
-    // Insertar ítems
-    const itemsToInsert = parsed.data.items.map((item) => ({
-      pedido_id: pedido.id,
-      tenant_id: mesa.tenantId,
-      receta_id: item.recetaId,
-      cantidad: item.cantidad,
-      notas: item.notas ?? null,
-    }));
-
-    const { error: itemsError } = await admin.from('pedido_items').insert(itemsToInsert);
-    if (itemsError) return err(toAppError(new Error(itemsError.message)));
+    const pedido = { id: nuevoPedidoId as string };
 
     // Emitir evento a cocina
     try {

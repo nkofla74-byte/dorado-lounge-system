@@ -1,4 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import {
+  createInMemoryRepo,
+  makePedido,
+  EMPTY_TIMESTAMPS,
+} from './support/in-memory-order-repository';
 import { createPedido } from '../application/create-pedido';
 import { getPedidos } from '../application/get-pedidos';
 import { PEDIDO_TRANSITIONS } from '../domain/pedido';
@@ -10,126 +15,6 @@ import type {
   AreaProduccion,
 } from '../domain/pedido';
 import type { OrderRepository } from '../application/ports/order-repository.port';
-
-function createInMemoryRepo(): OrderRepository & { pedidos: PedidoWithItems[] } {
-  const pedidos: PedidoWithItems[] = [];
-  let counter = 0;
-
-  return {
-    pedidos,
-    async findRecetaAreas(_tenantId: string, recetaIds: string[]) {
-      const out: Record<string, AreaProduccion | null> = {};
-      for (const id of recetaIds) out[id] = 'cocina_fria';
-      return out;
-    },
-    async findActive(tenantId: string) {
-      return pedidos.filter(
-        (p) => p.tenantId === tenantId && !['entregado', 'cancelado'].includes(p.estado),
-      );
-    },
-    async findActiveByZona(tenantId: string, zona: string) {
-      return (await this.findActive(tenantId)).filter((p) => p.zona === zona);
-    },
-    async findActiveByArea(tenantId: string, area: string) {
-      return pedidos.filter(
-        (p) =>
-          p.tenantId === tenantId &&
-          p.estado !== 'entregado' &&
-          p.estado !== 'cancelado' &&
-          (p.items ?? []).some((i) => i.areaProduccion === area),
-      );
-    },
-    async findRecent(tenantId: string, limit: number) {
-      return pedidos
-        .filter((p) => p.tenantId === tenantId && ['entregado', 'cancelado'].includes(p.estado))
-        .slice(0, limit);
-    },
-    async create(
-      tenantId: string,
-      userId: string,
-      input: CreatePedidoInput,
-      itemAreas: Record<string, AreaProduccion>,
-    ) {
-      void userId;
-      counter++;
-      const p: PedidoWithItems = {
-        id: `ped-${counter}`,
-        tenantId,
-        numeroMesa: input.numeroMesa ?? null,
-        zona: input.zona,
-        estado: 'creado',
-        version: 1,
-        notas: input.notas ?? null,
-        cocineroId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        items: input.items.map((item, idx) => ({
-          id: `item-${counter}-${idx}`,
-          pedidoId: `ped-${counter}`,
-          recetaId: item.recetaId,
-          recetaNombre: 'Test',
-          cantidad: item.cantidad,
-          notas: null,
-          areaProduccion: itemAreas[item.recetaId] ?? null,
-          estado: 'pendiente' as const,
-          enPreparacionAt: null,
-          listoAt: null,
-          iniciadoPor: null,
-          listoPor: null,
-        })),
-        timestamps: {
-          recibidoCocinaAt: null,
-          enPreparacionAt: null,
-          despachadoAt: null,
-          entregadoAt: null,
-          canceladoAt: null,
-        },
-      };
-      pedidos.push(p);
-      return p;
-    },
-    async findByIdForDelivery(id: string, tenantId: string): Promise<PedidoForDelivery | null> {
-      const p = pedidos.find((p) => p.id === id && p.tenantId === tenantId);
-      if (!p) return null;
-      return {
-        ...p,
-        items: p.items.map((i) => ({
-          ...i,
-          recetaPorciones: 1,
-          recetaTipo: 'servicio' as const,
-          ingredientes: [],
-        })),
-      };
-    },
-    async transition(id: string, tenantId: string, estado: EstadoPedido, version: number) {
-      const idx = pedidos.findIndex((p) => p.id === id && p.tenantId === tenantId);
-      if (idx === -1) throw new Error('NOT_FOUND');
-      if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
-      if (!PEDIDO_TRANSITIONS[pedidos[idx]!.estado].includes(estado)) {
-        throw new Error('INVALID_TRANSITION');
-      }
-      pedidos[idx] = { ...pedidos[idx]!, estado, version: version + 1 };
-      return pedidos[idx]!;
-    },
-    async asignarCocinero(id: string, tenantId: string, cocineroId: string, version: number) {
-      const idx = pedidos.findIndex((p) => p.id === id && p.tenantId === tenantId);
-      if (idx === -1) throw new Error('NOT_FOUND');
-      if (pedidos[idx]!.version !== version) throw new Error('VERSION_CONFLICT');
-      pedidos[idx] = { ...pedidos[idx]!, cocineroId, version: version + 1 };
-      return pedidos[idx]!;
-    },
-    async findByTurnoZona(tenantId: string, turnoId: string, zona: string) {
-      void turnoId;
-      return await this.findActiveByZona(tenantId, zona);
-    },
-    async findItemForTransition() {
-      return null;
-    },
-    async transitionItem() {
-      return { pedidoEstado: 'recibido_cocina' as const, pedidoVersion: 1 };
-    },
-  };
-}
 
 const makeInput = (key: string): CreatePedidoInput => ({
   zona: 'amex',

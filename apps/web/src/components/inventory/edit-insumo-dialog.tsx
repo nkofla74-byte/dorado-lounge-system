@@ -106,7 +106,9 @@ export function EditInsumoDialog({ insumo, onOpenChange, onSaved }: EditInsumoDi
           <div className="space-y-1.5">
             <Label htmlFor="nombre">{tCreate('nombre')} *</Label>
             <Input id="nombre" {...register('nombre')} autoFocus />
-            {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
+            {errors.nombre && (
+              <p className="text-caption text-destructive">{errors.nombre.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -120,7 +122,7 @@ export function EditInsumoDialog({ insumo, onOpenChange, onSaved }: EditInsumoDi
                 {...register('stockMinimo', { valueAsNumber: true })}
               />
               {errors.stockMinimo && (
-                <p className="text-xs text-destructive">{errors.stockMinimo.message}</p>
+                <p className="text-caption text-destructive">{errors.stockMinimo.message}</p>
               )}
             </div>
 
@@ -142,9 +144,9 @@ export function EditInsumoDialog({ insumo, onOpenChange, onSaved }: EditInsumoDi
                 </span>
               </div>
               {errors.mermaDefault && (
-                <p className="text-xs text-destructive">{errors.mermaDefault.message}</p>
+                <p className="text-caption text-destructive">{errors.mermaDefault.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">{tCreate('mermaDefaultHint')}</p>
+              <p className="text-caption text-muted-foreground">{tCreate('mermaDefaultHint')}</p>
             </div>
           </div>
 

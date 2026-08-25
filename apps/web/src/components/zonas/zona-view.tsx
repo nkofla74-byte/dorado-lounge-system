@@ -18,6 +18,7 @@ import type { PedidoWithItems, ZonaServicio } from '@/modules/orders/domain/pedi
 import type { Tanda } from '@/modules/production/domain/tanda';
 import type { SocketEvent } from '@dorado/shared-types';
 import { Button } from '@/components/ui/button';
+import { TabBar, panelProps } from '@/components/ui/tab-bar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CreatePedidoZonaDialog } from './create-pedido-zona-dialog';
 
@@ -138,10 +139,10 @@ export function ZonaView({
     return { total, entregados: entregados.length, promedio };
   }, [turnoPedidos]);
 
-  const tabs: { key: Tab; label: string; icon: typeof ShoppingBasket }[] = [
-    { key: 'pedidos', label: t('tabPedidos'), icon: ClipboardList },
-    { key: 'disponibilidad', label: t('tabDisponibilidad'), icon: PackageCheck },
-    { key: 'turno', label: t('tabTurno'), icon: History },
+  const tabs: { value: Tab; label: string; icon: typeof ShoppingBasket }[] = [
+    { value: 'pedidos', label: t('tabPedidos'), icon: ClipboardList },
+    { value: 'disponibilidad', label: t('tabDisponibilidad'), icon: PackageCheck },
+    { value: 'turno', label: t('tabTurno'), icon: History },
   ];
 
   return (
@@ -149,35 +150,22 @@ export function ZonaView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t('subtitulo')}</p>
+          <h1 className="text-display font-semibold tracking-tight">{titulo}</h1>
+          <p className="text-body text-muted-foreground mt-1">{t('subtitulo')}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <ShoppingBasket className="h-4 w-4 mr-1.5" />
+        <Button size="lg" className="text-body" onClick={() => setDialogOpen(true)}>
+          <ShoppingBasket className="mr-2 size-5" aria-hidden="true" />
           {t('nuevoPedido')}
         </Button>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex rounded-lg border border-border overflow-hidden w-fit">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={cn(
-              'flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors',
-              key !== tabs[0]!.key && 'border-l border-border',
-              tab === key
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background text-muted-foreground hover:bg-muted',
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
-      </div>
+      <TabBar
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        ariaLabel={t('tabsAriaLabel')}
+        idPrefix="zona"
+      />
 
       {actionError && (
         <Alert variant="destructive">
@@ -186,115 +174,130 @@ export function ZonaView({
       )}
 
       {/* Tab: Pedidos activos */}
-      {tab === 'pedidos' && (
-        <div className="space-y-3">
-          {pedidos.length === 0 ? (
-            <div className="flex items-center justify-center h-32 rounded-lg border border-dashed text-sm text-muted-foreground">
-              {t('sinPedidos')}
-            </div>
-          ) : (
-            pedidos.map((p) => (
-              <div key={p.id} className="rounded-lg border border-border p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5 min-w-0">
-                    <p className="text-sm font-medium truncate">{formatItems(p)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {estadoLabels[p.estado] ?? p.estado}
-                      {' · '}
-                      {t('haceMinutos', { n: minutosDesde(p.createdAt) })}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    {p.estado === 'despachado' && (
-                      <Button size="sm" onClick={() => handleEntregar(p)}>
-                        {t('confirmarEntrega')}
-                      </Button>
-                    )}
-                    {p.estado === 'creado' && (
-                      <Button size="sm" variant="outline" onClick={() => handleCancelar(p)}>
-                        {t('cancelarPedido')}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Tab: Disponibilidad */}
-      {tab === 'disponibilidad' && (
-        <div className="space-y-3">
-          {tandas.length === 0 ? (
-            <div className="flex items-center justify-center h-32 rounded-lg border border-dashed text-sm text-muted-foreground">
-              {t('sinTandas')}
-            </div>
-          ) : (
-            tandas.map((tanda) => (
-              <div
-                key={tanda.id}
-                className="rounded-lg border border-border p-4 flex items-center justify-between gap-2"
-              >
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">{tanda.recetaNombre}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t('colTandas')}: {tanda.cantidadTandas}
-                    {tanda.completedAt && (
-                      <>
-                        {' · '}
-                        {format.dateTime(tanda.completedAt, { hour: '2-digit', minute: '2-digit' })}
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Tab: Mi turno */}
-      {tab === 'turno' && (
-        <div className="space-y-4">
-          {/* Métricas */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg border border-border p-4 text-center">
-              <p className="text-2xl font-bold">{turnoMetrics.total}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaPedidosTurno')}</p>
-            </div>
-            <div className="rounded-lg border border-border p-4 text-center">
-              <p className="text-2xl font-bold">{turnoMetrics.entregados}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaEntregados')}</p>
-            </div>
-            <div className="rounded-lg border border-border p-4 text-center">
-              <p className="text-2xl font-bold">{t('minutos', { n: turnoMetrics.promedio })}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('metricaTiempoPromedio')}</p>
-            </div>
-          </div>
-
-          {/* Historial */}
-          <div className="space-y-2">
-            {turnoPedidos.length === 0 ? (
-              <div className="flex items-center justify-center h-24 rounded-lg border border-dashed text-sm text-muted-foreground">
-                {t('sinHistorial')}
+      <div {...panelProps('zona', 'pedidos', tab === 'pedidos')}>
+        {tab === 'pedidos' && (
+          <div className="space-y-3">
+            {pedidos.length === 0 ? (
+              <div className="flex items-center justify-center h-32 rounded-lg border border-dashed text-sm text-muted-foreground">
+                {t('sinPedidos')}
               </div>
             ) : (
-              turnoPedidos.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-lg border border-border p-3 flex items-center justify-between gap-2"
-                >
-                  <p className="text-sm truncate min-w-0">{formatItems(p)}</p>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {estadoLabels[p.estado] ?? p.estado}
-                  </span>
+              pedidos.map((p) => (
+                <div key={p.id} className="rounded-lg border border-border p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="text-sm font-medium truncate">{formatItems(p)}</p>
+                      <p className="text-caption text-muted-foreground">
+                        {estadoLabels[p.estado] ?? p.estado}
+                        {' · '}
+                        {t('haceMinutos', { n: minutosDesde(p.createdAt) })}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      {p.estado === 'despachado' && (
+                        <Button size="sm" onClick={() => handleEntregar(p)}>
+                          {t('confirmarEntrega')}
+                        </Button>
+                      )}
+                      {p.estado === 'creado' && (
+                        <Button size="sm" variant="outline" onClick={() => handleCancelar(p)}>
+                          {t('cancelarPedido')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Tab: Disponibilidad */}
+      <div {...panelProps('zona', 'disponibilidad', tab === 'disponibilidad')}>
+        {tab === 'disponibilidad' && (
+          <div className="space-y-3">
+            {tandas.length === 0 ? (
+              <div className="flex items-center justify-center h-32 rounded-lg border border-dashed text-sm text-muted-foreground">
+                {t('sinTandas')}
+              </div>
+            ) : (
+              tandas.map((tanda) => (
+                <div
+                  key={tanda.id}
+                  className="rounded-lg border border-border p-4 flex items-center justify-between gap-2"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">{tanda.recetaNombre}</p>
+                    <p className="text-caption text-muted-foreground">
+                      {t('colTandas')}: {tanda.cantidadTandas}
+                      {tanda.completedAt && (
+                        <>
+                          {' · '}
+                          {format.dateTime(tanda.completedAt, {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Tab: Mi turno */}
+      <div {...panelProps('zona', 'turno', tab === 'turno')}>
+        {tab === 'turno' && (
+          <div className="space-y-4">
+            {/* Métricas */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border p-4 text-center">
+                <p className="text-2xl font-bold">{turnoMetrics.total}</p>
+                <p className="text-caption text-muted-foreground mt-0.5">
+                  {t('metricaPedidosTurno')}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border p-4 text-center">
+                <p className="text-2xl font-bold">{turnoMetrics.entregados}</p>
+                <p className="text-caption text-muted-foreground mt-0.5">
+                  {t('metricaEntregados')}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border p-4 text-center">
+                <p className="text-2xl font-bold">{t('minutos', { n: turnoMetrics.promedio })}</p>
+                <p className="text-caption text-muted-foreground mt-0.5">
+                  {t('metricaTiempoPromedio')}
+                </p>
+              </div>
+            </div>
+
+            {/* Historial */}
+            <div className="space-y-2">
+              {turnoPedidos.length === 0 ? (
+                <div className="flex items-center justify-center h-24 rounded-lg border border-dashed text-sm text-muted-foreground">
+                  {t('sinHistorial')}
+                </div>
+              ) : (
+                turnoPedidos.map((p) => (
+                  <div
+                    key={p.id}
+                    className="rounded-lg border border-border p-3 flex items-center justify-between gap-2"
+                  >
+                    <p className="text-sm truncate min-w-0">{formatItems(p)}</p>
+                    <span className="text-caption text-muted-foreground shrink-0">
+                      {estadoLabels[p.estado] ?? p.estado}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Diálogo de nuevo pedido */}
       <CreatePedidoZonaDialog

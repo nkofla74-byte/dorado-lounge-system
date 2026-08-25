@@ -12,7 +12,6 @@ import { getPedidos as getPedidosUseCase } from './application/get-pedidos';
 import { getPedidosByArea as getPedidosByAreaUseCase } from './application/get-pedidos-by-area';
 import { createPedido as createPedidoUseCase } from './application/create-pedido';
 import { createPedidoSchema, zonaServicioSchema } from '@dorado/shared-validation';
-import { calcularDescuentosPedido } from './application/calcular-descuentos';
 import { PEDIDO_TRANSITIONS } from './domain/pedido';
 import {
   CHANNELS,
@@ -336,7 +335,6 @@ export async function recibirEnCocina(pedidoId: string, version: number): Promis
     }
     await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], eventoPayload);
 
-    void registrarEvento(ctx.tenantId, pedidoId, 'recibido_cocina', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -428,32 +426,11 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       );
     }
 
-    const adminClient = createAdminClient();
-    const descuentos = calcularDescuentosPedido(pedidoId, pedido.items);
-    for (const d of descuentos) {
-      const { error } = await adminClient.rpc('fn_descontar_insumo_fefo', {
-        p_tenant_id: ctx.tenantId,
-        p_insumo_id: d.insumoId,
-        p_cantidad: d.cantidad,
-        p_idempotency_key: d.idempotencyKey,
-        p_tipo: 'salida_receta',
-        p_referencia_id: pedidoId,
-        p_referencia_tipo: 'pedido',
-        p_usuario_id: ctx.userId,
-      });
-
-      if (error) {
-        throw new AppError(
-          error.code === 'P0001' ? 'STOCK_INSUFICIENTE' : 'FEFO_ERROR',
-          error.code === 'P0001' ? 409 : 500,
-          error.code === 'P0001'
-            ? `Stock insuficiente para: ${d.insumoNombre}`
-            : `Error al descontar stock de '${d.insumoNombre}'. Intenta de nuevo.`,
-        );
-      }
-    }
-
-    const updated = await repo.transition(pedidoId, ctx.tenantId, 'entregado', version);
+    // Descuento FEFO de todos los ingredientes + transición a 'entregado' en una
+    // sola transacción de Postgres. Antes eran N llamadas independientes seguidas
+    // de un update con locking optimista, así que un fallo intermedio dejaba
+    // stock descontado sin pedido entregado y sin compensación (F-008).
+    const updated = await repo.entregar(pedidoId, ctx.tenantId, version);
 
     await auditLog({
       tenantId: ctx.tenantId,
@@ -489,7 +466,6 @@ export async function entregarPedido(pedidoId: string, version: number): Promise
       },
     });
 
-    void registrarEvento(ctx.tenantId, pedidoId, 'entregado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -543,7 +519,6 @@ export async function cancelarPedido(pedidoId: string, version: number): Promise
     await emitEvent(ctx.tenantId, CHANNELS.COCINA, canceladoPayload);
     await emitEvent(ctx.tenantId, ZONA_CHANNEL[pedido.zona], canceladoPayload);
 
-    void registrarEvento(ctx.tenantId, pedidoId, 'cancelado', ctx.userId);
     return ok(updated);
   } catch (e) {
     return err(toAppError(e));
@@ -637,12 +612,12 @@ async function ejecutarTransicionItem(
       }
     }
 
+    // La RPC vuelve a validar permiso de área, máquina de estados y versión
+    // dentro de la transacción: las comprobaciones de arriba son para dar un
+    // error legible, no la última palabra (defensa en profundidad).
     const result = await repo.transitionItem({
       itemId,
-      pedidoId: item.pedidoId,
-      tenantId: ctx.tenantId,
       nuevoEstado,
-      actorId: ctx.userId,
       pedidoVersion: version,
     });
 
@@ -689,7 +664,6 @@ async function ejecutarTransicionItem(
       });
     }
 
-    void registrarEvento(ctx.tenantId, item.pedidoId, result.pedidoEstado, ctx.userId);
     return ok({ pedidoEstado: result.pedidoEstado });
   } catch (e) {
     return err(toAppError(e));

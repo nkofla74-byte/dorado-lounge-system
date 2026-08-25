@@ -27,7 +27,7 @@ import type { Turno } from '@/modules/turnos/domain/turno';
 
 function EstadoBadge({ estado }: { estado: EstadoTanda }) {
   const t = useTranslations('tandas');
-  const baseClass = 'text-xs font-medium';
+  const baseClass = 'text-caption font-medium';
   const ESTADO_LABEL: Record<EstadoTanda, string> = {
     planificada: t('estadoPlanificada'),
     en_proceso: t('estadoEnProceso'),
@@ -45,7 +45,7 @@ function EstadoBadge({ estado }: { estado: EstadoTanda }) {
       <Badge
         className={cn(
           baseClass,
-          'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20',
+          'bg-senal-aviso/15 text-senal-aviso border border-senal-aviso/30 hover:bg-senal-aviso/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -56,7 +56,7 @@ function EstadoBadge({ estado }: { estado: EstadoTanda }) {
       <Badge
         className={cn(
           baseClass,
-          'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20',
+          'bg-senal-ok/15 text-senal-ok border border-senal-ok/30 hover:bg-senal-ok/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -81,11 +81,12 @@ function formatDate(d: Date): string {
 function ZonaDestinoBadge({ zona }: { zona: ZonaServicio | null }) {
   const t = useTranslations('tandas');
   if (!zona) return <span className="text-muted-foreground italic">—</span>;
-  const base = 'text-xs font-medium';
+  const base = 'text-caption font-medium';
   const styles: Record<ZonaServicio, string> = {
-    amex: 'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/20',
-    buffet: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
-    snack: 'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20',
+    amex: 'bg-zona-amex/15 text-zona-amex border border-zona-amex/30 hover:bg-zona-amex/20',
+    buffet:
+      'bg-zona-buffet/15 text-zona-buffet border border-zona-buffet/30 hover:bg-zona-buffet/20',
+    snack: 'bg-zona-snack/15 text-zona-snack border border-zona-snack/30 hover:bg-zona-snack/20',
   };
   const labels: Record<ZonaServicio, string> = {
     amex: t('zonaAmex'),
@@ -201,7 +202,7 @@ export function TandaTable({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="size-11"
             onClick={refresh}
             disabled={loading}
           >
@@ -238,7 +239,7 @@ export function TandaTable({
               key={area}
               onClick={() => setAreaFilter(area)}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+                'px-3 py-1.5 text-caption font-medium rounded transition-colors',
                 isActive
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
@@ -313,7 +314,7 @@ export function TandaTable({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-xs"
+                                className="min-h-14 text-caption"
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, iniciarTanda)}
                               >
@@ -322,7 +323,7 @@ export function TandaTable({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 text-xs text-muted-foreground"
+                                className="min-h-14 text-caption text-muted-foreground"
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, cancelarTanda)}
                               >
@@ -335,7 +336,7 @@ export function TandaTable({
                             <>
                               <Button
                                 size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="min-h-14 text-caption bg-senal-ok text-background hover:bg-senal-ok/90"
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(tanda.id)}
                               >
@@ -344,7 +345,7 @@ export function TandaTable({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 text-xs text-muted-foreground"
+                                className="min-h-14 text-caption text-muted-foreground"
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, cancelarTanda)}
                               >
@@ -355,12 +356,12 @@ export function TandaTable({
 
                           {isConfirming && (
                             <>
-                              <span className="text-xs text-muted-foreground mr-1">
+                              <span className="text-caption text-muted-foreground mr-1">
                                 {t('confirmarDescuento')}
                               </span>
                               <Button
                                 size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="min-h-14 text-caption bg-senal-ok text-background hover:bg-senal-ok/90"
                                 disabled={isProcessing}
                                 onClick={() => runAction(tanda.id, completarTanda)}
                               >
@@ -369,7 +370,7 @@ export function TandaTable({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 text-xs"
+                                className="min-h-14 text-caption"
                                 disabled={isProcessing}
                                 onClick={() => setConfirmingId(null)}
                               >
@@ -384,7 +385,7 @@ export function TandaTable({
                     {error && (
                       <TableRow className="border-0">
                         <TableCell colSpan={8} className="pt-0 pb-2">
-                          <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
+                          <div className="flex items-center gap-2 text-caption text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {error}
                           </div>

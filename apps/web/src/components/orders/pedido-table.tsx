@@ -30,7 +30,7 @@ const CANCEL_ROLES = new Set<UserRole>(['superuser', 'admin', 'sous_chef', 'mese
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   const t = useTranslations('pedidos');
-  const base = 'text-xs font-medium';
+  const base = 'text-caption font-medium';
   const ESTADO_LABEL: Record<EstadoPedido, string> = {
     creado: t('estadoCreado'),
     recibido_cocina: t('estadoRecibidoCocina'),
@@ -41,12 +41,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   };
   if (estado === 'creado')
     return (
-      <Badge
-        className={cn(
-          base,
-          'bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20',
-        )}
-      >
+      <Badge className={cn(base, 'border border-border text-muted-foreground hover:bg-muted')}>
         {ESTADO_LABEL[estado]}
       </Badge>
     );
@@ -55,7 +50,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
       <Badge
         className={cn(
           base,
-          'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/20',
+          'bg-senal-curso/15 text-senal-curso border border-senal-curso/30 hover:bg-senal-curso/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -66,7 +61,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
       <Badge
         className={cn(
           base,
-          'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20',
+          'bg-senal-aviso/15 text-senal-aviso border border-senal-aviso/30 hover:bg-senal-aviso/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -77,7 +72,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
       <Badge
         className={cn(
           base,
-          'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/20',
+          'bg-area-sala/15 text-area-sala border border-area-sala/30 hover:bg-area-sala/20',
         )}
       >
         {ESTADO_LABEL[estado]}
@@ -118,7 +113,7 @@ function TiemposChips({ pedido }: { pedido: PedidoWithItems }) {
           className={cn(
             'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 border',
             cocinaActive
-              ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+              ? 'bg-senal-aviso/10 border-senal-aviso/30 text-senal-aviso'
               : 'bg-muted/50 border-border text-muted-foreground',
           )}
           title="Tiempo de cocina (recibido → despachado)"
@@ -129,7 +124,7 @@ function TiemposChips({ pedido }: { pedido: PedidoWithItems }) {
       )}
       {meseroMin !== null && (
         <span
-          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 border bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 border bg-senal-ok/10 border-senal-ok/30 text-senal-ok"
           title="Tiempo de mesero (despachado → entregado)"
         >
           <Truck className="h-3 w-3" />
@@ -141,15 +136,15 @@ function TiemposChips({ pedido }: { pedido: PedidoWithItems }) {
 }
 
 const ZONA_COLORS: Record<string, string> = {
-  amex: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  snack: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  buffet: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  amex: 'bg-senal-curso/15 text-senal-curso border-senal-curso/30',
+  snack: 'bg-senal-aviso/15 text-senal-aviso border-senal-aviso/30',
+  buffet: 'bg-senal-ok/15 text-senal-ok border-senal-ok/30',
 };
 
 function ZonaBadge({ zona }: { zona: string }) {
   const tZ = useTranslations('zonas');
   return (
-    <Badge className={cn('text-xs font-medium border', ZONA_COLORS[zona] ?? '')}>
+    <Badge className={cn('text-caption font-medium border', ZONA_COLORS[zona] ?? '')}>
       {tZ.has(zona) ? tZ(zona as 'amex' | 'snack' | 'buffet') : zona}
     </Badge>
   );
@@ -158,14 +153,14 @@ function ZonaBadge({ zona }: { zona: string }) {
 function ItemsSummary({ items }: { items: PedidoWithItems['items'] }) {
   const t = useTranslations('pedidos');
   if (items.length === 0)
-    return <span className="text-muted-foreground text-xs">{t('sinItems')}</span>;
+    return <span className="text-muted-foreground text-caption">{t('sinItems')}</span>;
   const first = items[0]!;
   return (
     <span className="text-sm">
       {first.recetaNombre}
       {first.cantidad > 1 && <span className="text-muted-foreground"> ×{first.cantidad}</span>}
       {items.length > 1 && (
-        <span className="text-muted-foreground text-xs ml-1">+{items.length - 1} más</span>
+        <span className="text-muted-foreground text-caption ml-1">+{items.length - 1} más</span>
       )}
     </span>
   );
@@ -314,7 +309,7 @@ export function PedidoTable({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="size-11"
             onClick={refresh}
             disabled={loading}
             aria-label={t('actualizarPedidos')}
@@ -372,7 +367,7 @@ export function PedidoTable({
                         {pedido.numeroMesa ?? <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                        <span className="text-caption uppercase tracking-wide text-muted-foreground">
                           {pedido.zona}
                         </span>
                       </TableCell>
@@ -397,7 +392,7 @@ export function PedidoTable({
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="h-7 text-xs border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                    className="min-h-11 text-caption border-senal-curso/40 text-senal-curso hover:bg-senal-curso/10"
                                     disabled={isProcessing}
                                     onClick={() =>
                                       runAction(pedido, (id, v) => recibirEnCocina(id, v))
@@ -410,7 +405,7 @@ export function PedidoTable({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 text-xs text-muted-foreground"
+                                    className="min-h-11 text-caption text-muted-foreground"
                                     disabled={isProcessing}
                                     onClick={() =>
                                       runAction(pedido, (id, v) => cancelarPedido(id, v))
@@ -428,7 +423,7 @@ export function PedidoTable({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 text-xs text-muted-foreground"
+                                    className="min-h-11 text-caption text-muted-foreground"
                                     disabled={isProcessing}
                                     onClick={() =>
                                       runAction(pedido, (id, v) => cancelarPedido(id, v))
@@ -446,7 +441,7 @@ export function PedidoTable({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-7 text-xs text-muted-foreground"
+                                    className="min-h-11 text-caption text-muted-foreground"
                                     disabled={isProcessing}
                                     onClick={() =>
                                       runAction(pedido, (id, v) => cancelarPedido(id, v))
@@ -461,7 +456,7 @@ export function PedidoTable({
                             {pedido.estado === 'despachado' && isMesero && (
                               <Button
                                 size="sm"
-                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="min-h-11 text-caption bg-senal-ok text-background hover:bg-senal-ok/90"
                                 disabled={isProcessing}
                                 onClick={() => handleEntregar(pedido)}
                               >
@@ -476,7 +471,7 @@ export function PedidoTable({
                     {rowErr && (
                       <TableRow className="border-0">
                         <TableCell colSpan={6} className="pt-0 pb-2">
-                          <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
+                          <div className="flex items-center gap-2 text-caption text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1.5 rounded-md">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             {rowErr}
                           </div>
@@ -537,7 +532,7 @@ export function PedidoTable({
                         <ItemsSummary items={pedido.items} />
                       </TableCell>
                       {readOnly && (
-                        <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        <TableCell className="text-caption text-muted-foreground tabular-nums whitespace-nowrap">
                           {pedido.createdAt.toLocaleDateString('es-CO', {
                             day: '2-digit',
                             month: 'short',
@@ -552,7 +547,7 @@ export function PedidoTable({
                         <TiemposChips pedido={pedido} />
                       </TableCell>
                       {readOnly && (
-                        <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        <TableCell className="text-caption text-muted-foreground tabular-nums whitespace-nowrap">
                           {pedido.timestamps.entregadoAt
                             ? pedido.timestamps.entregadoAt.toLocaleTimeString('es-CO', {
                                 hour: '2-digit',

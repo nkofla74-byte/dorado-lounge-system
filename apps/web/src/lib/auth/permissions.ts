@@ -81,6 +81,9 @@ export const PERMISSIONS: Record<string, UserRole[]> = {
   ],
   // Analytics
   'analytics:read': ['admin'],
+  // Refrescar las vistas materializadas es una escritura cara, no una lectura:
+  // permiso propio para no concederla con analytics:read (F-020).
+  'analytics:refresh': ['admin'],
   // Turnos
   'turnos:read': [
     'admin',

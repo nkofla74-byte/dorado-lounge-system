@@ -54,7 +54,7 @@ export default async function PasteleriaPage() {
     return (
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('dashboardTitle')}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{t('dashboardTitle')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('dashboardSubtitle')}</p>
         </div>
         <ProduccionDashboard tandas={allTandas} />
@@ -65,15 +65,13 @@ export default async function PasteleriaPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
+        <h1 className="text-display font-semibold tracking-tight">{t('pageTitle')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('pageSubtitle')}</p>
       </div>
 
       {!turnoActivo && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3">
-          <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
-            {t('sinTurnoActivo')}
-          </p>
+        <div className="rounded-lg border border-senal-aviso/30 bg-senal-aviso/10 dark:bg-senal-aviso/150/20 dark:border-amber-800 px-4 py-3">
+          <p className="text-body font-medium text-senal-aviso">{t('sinTurnoActivo')}</p>
         </div>
       )}
 

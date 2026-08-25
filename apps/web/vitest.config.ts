@@ -11,9 +11,20 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'lcov'],
-      // Solo medimos dominio puro — la infraestructura (Supabase clients)
-      // requiere mocks pesados que no aportan al test de invariantes.
-      include: ['src/modules/*/domain/**', 'src/lib/audit.ts', 'src/lib/result.ts'],
+      // El alcance anterior era solo `src/modules/*/domain/**`: el umbral se
+      // calculaba sobre una fracción pequeña del código ejecutable y dejaba
+      // fuera precisamente donde estaban los hallazgos graves de la auditoría
+      // 2026-08-22 (autorización, Server Actions, camino QR). F-023.
+      include: [
+        'src/modules/*/domain/**',
+        'src/modules/*/application/**',
+        'src/lib/auth/**',
+        'src/lib/security/**',
+        'src/lib/audit.ts',
+        'src/lib/result.ts',
+        'src/lib/turnos.ts',
+        'src/lib/units.ts',
+      ],
       exclude: ['**/*.test.ts', '**/tests/**'],
       thresholds: {
         statements: 75,

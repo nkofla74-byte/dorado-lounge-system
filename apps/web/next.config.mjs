@@ -10,47 +10,9 @@ const nextConfig = {
   async headers() {
     const isProd = process.env.NODE_ENV === 'production';
 
-    // Domains that vary per environment — read from env at runtime
-    const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
-      : '*.supabase.co';
-    const socketUrl = new URL(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
-    const socketConnectSrc =
-      socketUrl.protocol === 'https:'
-        ? [`https://${socketUrl.host}`, `wss://${socketUrl.host}`]
-        : [`http://${socketUrl.host}`, `ws://${socketUrl.host}`];
-
-    const csp = [
-      "default-src 'self'",
-      // Next.js requires 'unsafe-eval' in dev for HMR; inline styles from Tailwind
-      isProd
-        ? "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://browser.sentry-cdn.com"
-        : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com",
-      "style-src 'self' 'unsafe-inline'",
-      [
-        'connect-src',
-        "'self'",
-        `https://${supabaseHost}`,
-        `wss://${supabaseHost}`,
-        ...socketConnectSrc,
-        'https://challenges.cloudflare.com',
-        'https://*.ingest.sentry.io',
-        'https://*.axiom.co',
-        // Better Stack Logs + heartbeat
-        'https://in.logs.betterstack.com',
-        'https://betteruptime.com',
-      ].join(' '),
-      "font-src 'self' data:",
-      "img-src 'self' data: https:",
-      // Turnstile widget renders inside an iframe from Cloudflare
-      'frame-src https://challenges.cloudflare.com',
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      ...(isProd ? ['upgrade-insecure-requests'] : []),
-    ].join('; ');
-
+    // La Content-Security-Policy NO se define aquí: necesita un nonce por
+    // petición y next.config solo admite cabeceras estáticas. La construye el
+    // middleware (lib/security/csp.ts) — ver F-019 de la auditoría 2026-08-22.
     return [
       {
         source: '/(.*)',
@@ -60,7 +22,6 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: csp },
           ...(isProd
             ? [
                 {

@@ -11,13 +11,15 @@ Sentry.init({
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { logger } from './lib/logger';
-import { authenticateHandshake, canJoinChannel } from './lib/auth';
+import { authenticateHandshake, canJoinChannel, msHastaExpiracion } from './lib/auth';
 import { createEmitHandler } from './lib/emit-handler';
 import type { SocketData } from './lib/auth';
 
 // Validar variables de entorno críticas antes de levantar el servidor.
 // Falla rápido en lugar de fallar silenciosamente en la primera petición.
-const REQUIRED_ENV_VARS = ['SUPABASE_JWT_SECRET', 'SOCKET_EMIT_SECRET'] as const;
+// SUPABASE_JWT_SECRET ya no es obligatorio: solo hace falta si se habilita
+// explícitamente la verificación HS256 legacy (ALLOW_LEGACY_HS256, F-030).
+const REQUIRED_ENV_VARS = ['SOCKET_EMIT_SECRET'] as const;
 const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 if (missingVars.length > 0) {
   logger.error({ event: 'startup_missing_env', missing: missingVars });
@@ -56,6 +58,23 @@ io.on('connection', (socket) => {
 
   logger.info({ event: 'socket_connected', socketId: socket.id, userId, tenantId, role });
 
+  // El JWT se verificaba solo en el handshake y `socket.data` no caducaba: un
+  // socket conservaba rol y tenant indefinidamente, incluso tras degradar o
+  // desactivar al usuario (F-014). Al vencer el token se cierra la conexión y el
+  // cliente debe reconectar con uno fresco.
+  const msRestantes = msHastaExpiracion(socket);
+  let temporizadorExpiracion: NodeJS.Timeout | undefined;
+  if (msRestantes !== null) {
+    temporizadorExpiracion = setTimeout(
+      () => {
+        logger.info({ event: 'socket_token_expirado', socketId: socket.id, userId });
+        socket.emit('error', { code: 'TOKEN_EXPIRED' });
+        socket.disconnect(true);
+      },
+      Math.max(msRestantes, 0),
+    );
+  }
+
   // join: el cliente solicita unirse a un canal
   socket.on('join', (channel: string) => {
     if (!canJoinChannel(socket, channel)) {
@@ -89,6 +108,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', (reason) => {
+    if (temporizadorExpiracion) clearTimeout(temporizadorExpiracion);
     logger.info({ event: 'socket_disconnected', socketId: socket.id, userId, reason });
   });
 });

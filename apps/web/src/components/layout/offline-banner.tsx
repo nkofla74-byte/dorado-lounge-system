@@ -16,18 +16,18 @@ export function OfflineBanner() {
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium',
-        isOnline ? 'bg-blue-500/90 text-white' : 'bg-amber-500 text-white',
+        'flex items-center justify-center gap-2 px-4 py-2 text-caption font-medium',
+        isOnline ? 'bg-senal-curso text-background' : 'bg-senal-aviso text-background',
       )}
     >
       {isOnline ? (
         <>
-          <RefreshCw className={cn('h-3.5 w-3.5 shrink-0', syncing && 'animate-spin')} />
+          <RefreshCw className={cn('size-4 shrink-0', syncing && 'motion-safe:animate-spin')} />
           <span>{syncing ? t('syncing') : t('pendingSync', { count: pendingCount })}</span>
         </>
       ) : (
         <>
-          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          <WifiOff className="size-4 shrink-0" />
           <span>
             {pendingCount > 0
               ? t('noConnectionWithSaved', { count: pendingCount })

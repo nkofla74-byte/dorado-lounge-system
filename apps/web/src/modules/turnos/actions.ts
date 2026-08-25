@@ -13,6 +13,7 @@ import { createTurnoSchema } from '@dorado/shared-validation';
 import { TurnoYaActivoError, TurnoNoActivoError } from './domain/turno';
 import { CHANNELS } from '@dorado/shared-types';
 import { detectarBloqueActual } from '@/lib/turnos';
+import { ASSIGNABLE_ROLES } from '@/lib/auth/assignable-roles';
 import type { Result } from '@/lib/result';
 import type { Turno } from './domain/turno';
 
@@ -29,7 +30,10 @@ export async function getUsuariosResumen(): Promise<Result<UsuarioResumen[]>> {
       .from('users')
       .select('id, nombre')
       .eq('tenant_id', ctx.tenantId)
-      .in('role', ['admin', 'chef', 'sous_chef', 'steward'])
+      // El filtro anterior era ['admin','chef','sous_chef','steward']: 'chef'
+      // está deprecado y faltaban todos los roles del refoco operacional, así
+      // que la lista de posibles teamlider quedaba casi vacía (F-017).
+      .in('role', ASSIGNABLE_ROLES as unknown as string[])
       .order('nombre');
     return ok((data ?? []).map((u) => ({ id: u.id as string, nombre: u.nombre as string })));
   } catch (e) {

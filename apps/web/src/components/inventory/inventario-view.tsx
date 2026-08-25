@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Package, Warehouse } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { TabBar, panelProps } from '@/components/ui/tab-bar';
 import { InsumoTable } from '@/components/inventory/insumo-table';
 import { AlmacenOperacionPanel } from '@/components/inventory/almacen-operacion-panel';
 import type { InsumoWithStock } from '@/modules/inventory/domain/insumo';
@@ -13,6 +13,8 @@ import type { RequisicionWithItems } from '@/modules/requisiciones/domain/requis
 import type { UserRole } from '@dorado/shared-types';
 
 type Tab = 'inventario' | 'almacen';
+
+const TABS: Tab[] = ['inventario', 'almacen'];
 
 interface InventarioViewProps {
   insumos: InsumoWithStock[];
@@ -40,60 +42,37 @@ export function InventarioView({
 }: InventarioViewProps) {
   const t = useTranslations('inventory.tabs');
   const [tab, setTab] = useState<Tab>('inventario');
-
-  const triggers: { value: Tab; label: string; Icon: typeof Package }[] = [
-    { value: 'inventario', label: t('inventario'), Icon: Package },
-    { value: 'almacen', label: t('almacen'), Icon: Warehouse },
-  ];
+  const ICONO: Record<Tab, typeof Package> = { inventario: Package, almacen: Warehouse };
+  const defs = TABS.map((value) => ({ value, label: t(value), icon: ICONO[value] }));
 
   return (
     <div className="space-y-6">
-      <div
-        role="tablist"
-        aria-label={t('ariaLabel')}
-        className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1"
-      >
-        {triggers.map(({ value, label, Icon }) => {
-          const active = tab === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(value)}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                active
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <TabBar
+        tabs={defs}
+        value={tab}
+        onValueChange={setTab}
+        ariaLabel={t('ariaLabel')}
+        idPrefix="inventario"
+      />
 
-      <div role="tabpanel" hidden={tab !== 'inventario'}>
-        {tab === 'inventario' && (
-          <InsumoTable initialData={insumos} error={insumosError} userRole={userRole} />
-        )}
-      </div>
-      <div role="tabpanel" hidden={tab !== 'almacen'}>
-        {tab === 'almacen' && (
-          <AlmacenOperacionPanel
-            insumos={insumos}
-            insumosError={insumosError}
-            vencimientos={vencimientos}
-            proveedores={proveedores}
-            requisiciones={requisiciones}
-            canIngresar={canIngresar}
-            userRole={userRole}
-          />
-        )}
-      </div>
+      {TABS.map((value) => (
+        <div key={value} {...panelProps('inventario', value, tab === value)}>
+          {tab === value &&
+            (value === 'inventario' ? (
+              <InsumoTable initialData={insumos} error={insumosError} userRole={userRole} />
+            ) : (
+              <AlmacenOperacionPanel
+                insumos={insumos}
+                insumosError={insumosError}
+                vencimientos={vencimientos}
+                proveedores={proveedores}
+                requisiciones={requisiciones}
+                canIngresar={canIngresar}
+                userRole={userRole}
+              />
+            ))}
+        </div>
+      ))}
     </div>
   );
 }

@@ -10,7 +10,12 @@ vi.mock('jose', () => ({
 }));
 
 import { jwtVerify } from 'jose';
-import { authenticateHandshake, canJoinChannel, __resetJwksCache } from '../lib/auth';
+import {
+  authenticateHandshake,
+  canJoinChannel,
+  msHastaExpiracion,
+  __resetJwksCache,
+} from '../lib/auth';
 
 const TEST_SECRET = 'test-jwt-secret';
 
@@ -33,6 +38,8 @@ describe('authenticateHandshake', () => {
   beforeEach(() => {
     process.env['SUPABASE_JWT_SECRET'] = TEST_SECRET;
     process.env['SUPABASE_URL'] = 'https://test.supabase.co';
+    // La verificación HS256 legacy es opt-in desde F-030.
+    process.env['ALLOW_LEGACY_HS256'] = 'true';
     __resetJwksCache();
     (jwtVerify as Mock).mockReset();
   });
@@ -40,6 +47,19 @@ describe('authenticateHandshake', () => {
   afterEach(() => {
     delete process.env['SUPABASE_JWT_SECRET'];
     delete process.env['SUPABASE_URL'];
+    delete process.env['ALLOW_LEGACY_HS256'];
+  });
+
+  it('rechaza HS256 si la verificación legacy no está habilitada', async () => {
+    delete process.env['ALLOW_LEGACY_HS256'];
+    const token = jwt.sign(
+      { sub: 'u', app_metadata: { tenant_id: 't', role: 'admin' } },
+      TEST_SECRET,
+    );
+    const socket = makeSocket(token);
+    const next = vi.fn();
+    await authenticateHandshake(socket as never, next);
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_TOKEN' }));
   });
 
   it('rechaza cuando no se provee token', async () => {
@@ -75,7 +95,7 @@ describe('authenticateHandshake', () => {
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'INVALID_CLAIMS' }));
   });
 
-  it('acepta JWT HS256 (legacy) con claims correctos', async () => {
+  it('acepta JWT HS256 (legacy) con claims correctos cuando está habilitado', async () => {
     const token = jwt.sign(
       { sub: 'user-123', app_metadata: { tenant_id: 'tenant-456', role: 'chef_cocina_fria' } },
       TEST_SECRET,
@@ -188,5 +208,43 @@ describe('canJoinChannel', () => {
 
   it('deniega a mesero_amex en sala:cocina', () => {
     expect(canJoinChannel(makeSocketWithRole('mesero_amex') as never, 'sala:cocina')).toBe(false);
+  });
+});
+
+describe('msHastaExpiracion', () => {
+  it('devuelve el tiempo restante del token', () => {
+    const ahora = 1_800_000_000_000;
+    const socket = { data: { expiraEn: ahora / 1000 + 60, role: 'admin' } };
+    expect(msHastaExpiracion(socket as never, ahora)).toBe(60_000);
+  });
+
+  it('devuelve un valor negativo si el token ya venció', () => {
+    const ahora = 1_800_000_000_000;
+    const socket = { data: { expiraEn: ahora / 1000 - 10, role: 'admin' } };
+    expect(msHastaExpiracion(socket as never, ahora)).toBeLessThan(0);
+  });
+
+  it('devuelve null si el JWT no declara exp', () => {
+    expect(msHastaExpiracion({ data: { expiraEn: null } } as never)).toBeNull();
+  });
+
+  it('devuelve null si el socket no tiene datos de sesión', () => {
+    expect(msHastaExpiracion({ data: undefined } as never)).toBeNull();
+  });
+});
+
+describe('authenticateHandshake — vencimiento', () => {
+  it('guarda exp del token en socket.data para poder cerrar la conexión', async () => {
+    process.env['SUPABASE_JWT_SECRET'] = TEST_SECRET;
+    process.env['ALLOW_LEGACY_HS256'] = 'true';
+    const token = jwt.sign(
+      { sub: 'u', app_metadata: { tenant_id: 't', role: 'admin' } },
+      TEST_SECRET,
+      { expiresIn: '1h' },
+    );
+    const socket = makeSocket(token);
+    await authenticateHandshake(socket as never, vi.fn());
+
+    expect(typeof (socket.data as { expiraEn: number }).expiraEn).toBe('number');
   });
 });

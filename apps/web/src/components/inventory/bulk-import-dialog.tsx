@@ -184,7 +184,9 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <span>
                   {t('headersInfo')}{' '}
-                  <code className="text-xs">nombre, codigo, capa, unidad_medida, stock_minimo</code>
+                  <code className="text-caption">
+                    nombre, codigo, capa, unidad_medida, stock_minimo
+                  </code>
                 </span>
               </div>
               <Button variant="outline" size="sm" onClick={downloadTemplate}>
@@ -197,7 +199,7 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
               <label className="flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-md cursor-pointer hover:bg-accent/50 transition-colors">
                 <Upload className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-sm font-medium">{t('uploadTitle')}</span>
-                <span className="text-xs text-muted-foreground">{t('uploadHint')}</span>
+                <span className="text-caption text-muted-foreground">{t('uploadHint')}</span>
                 <input
                   type="file"
                   accept=".csv,text/csv"
@@ -218,15 +220,15 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
                 }}
                 rows={6}
                 placeholder={t('csvPlaceholder')}
-                className="w-full font-mono text-xs rounded-md border border-input bg-background px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+                className="w-full font-mono text-caption rounded-md border border-input bg-background px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
               />
             </div>
 
             {/* Preview */}
             {rows.length > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                <div className="flex items-center gap-3 text-caption">
+                  <span className="flex items-center gap-1 text-senal-ok dark:text-senal-ok">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t('validRows', { n: validRows.length })}
                   </span>
@@ -240,7 +242,7 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
 
                 {invalidRows.length > 0 && (
                   <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 max-h-40 overflow-y-auto">
-                    <ul className="space-y-1 text-xs">
+                    <ul className="space-y-1 text-caption">
                       {invalidRows.slice(0, 10).map((r, idx) => (
                         <li key={idx} className="text-destructive">
                           <span className="font-mono">
@@ -269,16 +271,16 @@ export function BulkImportDialog({ open, onOpenChange, onImported }: BulkImportD
         ) : (
           // Resultado
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+            <div className="flex items-center gap-2 p-3 rounded-md bg-senal-ok/10 border border-senal-ok/30 text-senal-ok dark:text-senal-ok">
               <CheckCircle2 className="h-5 w-5 shrink-0" />
               <p className="text-sm">{t('createdOk', { n: result.created })}</p>
             </div>
             {result.failed.length > 0 && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 max-h-40 overflow-y-auto">
-                <p className="text-xs font-medium text-destructive mb-1.5">
+                <p className="text-caption font-medium text-destructive mb-1.5">
                   {t('failedHeader', { n: result.failed.length })}
                 </p>
-                <ul className="space-y-0.5 text-xs">
+                <ul className="space-y-0.5 text-caption">
                   {result.failed.map((f, idx) => (
                     <li key={idx} className="text-destructive">
                       <span className="font-mono">{t('filaPrefix', { n: f.row + 1 })}</span>{' '}

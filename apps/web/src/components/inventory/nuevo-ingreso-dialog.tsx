@@ -166,8 +166,11 @@ export function NuevoIngresoDialog({ insumos }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <PackagePlus className="h-4 w-4 mr-1.5" />
+        {/* Acción principal de la bodega: 56 px porque se recibe mercancía con
+            las manos ocupadas, y a ancho completo en móvil, donde el pulgar no
+            llega cómodo a una esquina. */}
+        <Button size="lg" className="w-full text-body sm:w-auto">
+          <PackagePlus className="mr-2 size-5" aria-hidden="true" />
           {t('trigger')}
         </Button>
       </DialogTrigger>
@@ -215,7 +218,7 @@ export function NuevoIngresoDialog({ insumos }: Props) {
             </div>
           ) : (
             <div className="space-y-3 border border-border rounded-md p-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="text-caption font-medium text-muted-foreground uppercase tracking-wide">
                 {t('seccionNuevoInsumo')}
               </p>
               <div className="space-y-1.5">
@@ -273,7 +276,7 @@ export function NuevoIngresoDialog({ insumos }: Props) {
                   onChange={(e) => setNuevoStockMinimo(e.target.value)}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">{t('codigoAutoHint')}</p>
+              <p className="text-caption text-muted-foreground">{t('codigoAutoHint')}</p>
             </div>
           )}
 

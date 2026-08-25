@@ -18,7 +18,7 @@ export default function QRError({
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center bg-background">
       <div className="text-5xl">⚠️</div>
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Lo sentimos / We&apos;re sorry</h1>
+        <h1 className="text-display font-semibold">Lo sentimos / We&apos;re sorry</h1>
         <p className="text-sm text-muted-foreground">
           Ocurrió un error inesperado · An unexpected error occurred
         </p>

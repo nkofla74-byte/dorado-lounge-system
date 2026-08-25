@@ -150,6 +150,13 @@ export const createRecetaSchema = z.discriminatedUnion('tipoReceta', [
     nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
     insumoDestinoId: uuidSchema,
     porciones: z.number().int().positive('Las porciones deben ser mayor que 0'),
+    // Cuánto produce UNA tanda, en la unidad del insumo destino. Sin este dato
+    // no se puede crear el lote del elaborado al completar la tanda, que era el
+    // agujero de F-037; la base lo exige con un CHECK.
+    rendimientoCantidad: z
+      .number()
+      .positive('El rendimiento por tanda debe ser mayor que 0')
+      .max(1_000_000),
     descripcion: z.string().max(500).optional().nullable(),
     ingredientes: z.array(recetaIngredienteInputSchema).optional(),
   }),

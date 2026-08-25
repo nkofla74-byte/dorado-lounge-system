@@ -30,10 +30,10 @@ type TipoKey = 'stock_minimo' | 'vencimiento' | 'cambio_precio' | 'demora_amex';
 
 function SeveridadIcon({ severidad }: { severidad: Alerta['severidad'] }) {
   if (severidad === 'critical')
-    return <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-senal-critico shrink-0" />;
   if (severidad === 'warning')
-    return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
-  return <Info className="h-3.5 w-3.5 text-blue-400 shrink-0" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-senal-aviso shrink-0" />;
+  return <Info className="h-3.5 w-3.5 text-senal-curso shrink-0" />;
 }
 
 interface AlertasAdminPanelProps {
@@ -113,26 +113,34 @@ export function AlertasAdminPanel({ initialData, showTenant = false }: AlertasAd
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <p className="text-caption text-muted-foreground flex items-center gap-1.5">
             <Bell className="h-3.5 w-3.5" /> {t('totalAlertas')}
           </p>
           <p className="text-2xl font-bold tabular-nums">{alertas.length}</p>
         </div>
         <div className="rounded-lg border bg-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <p className="text-caption text-muted-foreground flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" /> {t('noLeidas')}
           </p>
           <p
-            className={cn('text-2xl font-bold tabular-nums', noLeidas > 0 ? 'text-amber-500' : '')}
+            className={cn(
+              'text-2xl font-bold tabular-nums',
+              noLeidas > 0 ? 'text-senal-aviso' : '',
+            )}
           >
             {noLeidas}
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <p className="text-caption text-muted-foreground flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" /> {t('criticas')}
           </p>
-          <p className={cn('text-2xl font-bold tabular-nums', criticas > 0 ? 'text-red-500' : '')}>
+          <p
+            className={cn(
+              'text-2xl font-bold tabular-nums',
+              criticas > 0 ? 'text-senal-critico' : '',
+            )}
+          >
             {criticas}
           </p>
         </div>
@@ -199,7 +207,7 @@ export function AlertasAdminPanel({ initialData, showTenant = false }: AlertasAd
             key={f}
             onClick={() => setFiltro(f)}
             className={cn(
-              'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+              'px-3 py-1.5 rounded-md text-caption font-medium transition-colors',
               filtro === f
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted hover:bg-muted/80 text-muted-foreground',
@@ -212,7 +220,7 @@ export function AlertasAdminPanel({ initialData, showTenant = false }: AlertasAd
                 : t('filtroCriticas')}
           </button>
         ))}
-        <span className="ml-2 self-center text-xs text-muted-foreground">
+        <span className="ml-2 self-center text-caption text-muted-foreground">
           {t('resultados', { n: filtered.length })}
         </span>
       </div>
@@ -245,11 +253,11 @@ export function AlertasAdminPanel({ initialData, showTenant = false }: AlertasAd
                   >
                     {alerta.titulo}
                   </p>
-                  <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                  <span className="text-caption text-muted-foreground shrink-0 tabular-nums">
                     {formatTs(alerta.createdAt)}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground line-clamp-1 text-left">
+                <p className="text-caption text-muted-foreground line-clamp-1 text-left">
                   {alerta.mensaje}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">

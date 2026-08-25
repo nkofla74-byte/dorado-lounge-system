@@ -121,7 +121,7 @@ export function PedirInsumosDialog({
           {rows.map((row, i) => (
             <div key={i} className="flex items-end gap-2">
               <div className="flex-1 space-y-1">
-                <Label className="text-xs">{t('insumo')}</Label>
+                <Label className="text-caption">{t('insumo')}</Label>
                 <Select value={row.insumoId} onValueChange={(v) => updateRow(i, { insumoId: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('seleccioneInsumo')} />
@@ -136,7 +136,7 @@ export function PedirInsumosDialog({
                 </Select>
               </div>
               <div className="w-24 space-y-1">
-                <Label className="text-xs">{t('cantidad')}</Label>
+                <Label className="text-caption">{t('cantidad')}</Label>
                 <Input
                   type="number"
                   min="0"

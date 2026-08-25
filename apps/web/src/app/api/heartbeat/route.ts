@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
-// Vercel Cron: corre cada 5 minutos (configurado en vercel.json).
-// Hace ping al heartbeat de Better Stack para confirmar que el servicio está vivo.
-// Si Better Stack no recibe ping en el intervalo configurado, dispara alerta.
+// Vercel Cron: la cadencia real está en vercel.json (hoy diaria; el plan limita
+// la frecuencia). Hace ping al heartbeat de Better Stack para confirmar que la
+// aplicación está viva.
+//
+// Este endpoint es el ÚNICO productor del latido: antes existía además un
+// workflow de GitHub Actions que pingueaba la misma URL cada 5 minutos, así que
+// el monitor seguía en verde aunque el despliegue estuviera caído (F-011).
+// Para detección rápida, complementar con un monitor HTTP contra /health.
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {

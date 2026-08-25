@@ -1,14 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Tras F-008, la entrega es UNA transacción de Postgres (fn_entregar_pedido):
+// descuento FEFO de todos los ingredientes + transición a 'entregado'.
+//
+// El cálculo de cantidades y las claves de idempotencia ya no viven aquí; se
+// verifican contra una base real en scripts/sql-harness/tests/f008_entrega_atomica.sql,
+// que es donde ahora se garantizan de forma atómica. Esta prueba cubre lo que
+// sigue siendo responsabilidad de la Server Action: autorización, guarda de
+// zona, delegación a la RPC, auditoría y broadcast.
+
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
   auditLog: vi.fn(async () => {}),
   emitEvent: vi.fn(async () => {}),
-  rpc: vi.fn(),
   insert: vi.fn(async () => ({ error: null })),
-  findItemForTransition: vi.fn(),
-  transitionItem: vi.fn(),
   findByIdForDelivery: vi.fn(),
+  entregar: vi.fn(),
   transition: vi.fn(),
 }));
 
@@ -16,29 +23,24 @@ vi.mock('@/lib/auth/assertCan', () => ({ assertCan: mocks.assertCan }));
 vi.mock('@/lib/audit', () => ({ auditLog: mocks.auditLog }));
 vi.mock('@/lib/socket/emit-event', () => ({ emitEvent: mocks.emitEvent }));
 vi.mock('@/lib/supabase/admin', () => ({
-  createAdminClient: () => ({ rpc: mocks.rpc, from: () => ({ insert: mocks.insert }) }),
+  createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('@/modules/orders/infrastructure/order-repository', () => ({
   createOrderRepository: () => ({
-    findItemForTransition: mocks.findItemForTransition,
-    transitionItem: mocks.transitionItem,
     findByIdForDelivery: mocks.findByIdForDelivery,
+    entregar: mocks.entregar,
     transition: mocks.transition,
   }),
 }));
 
 import { entregarPedido, cancelarPedido } from '@/modules/orders/actions';
+import { AppError } from '@/lib/result';
 
 const CTX = { tenantId: 't1', userId: 'u1', role: 'mesero_amex' };
 
-describe('entregarPedido (actions)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.assertCan.mockResolvedValue(CTX);
-  });
-
-  const pedidoListo = {
+function pedido(overrides: Record<string, unknown> = {}) {
+  return {
     id: 'p1',
     tenantId: 't1',
     estado: 'despachado',
@@ -49,134 +51,75 @@ describe('entregarPedido (actions)', () => {
     cocineroId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    items: [
-      {
-        id: 'i1',
-        pedidoId: 'p1',
-        recetaId: 'r1',
-        recetaNombre: 'Pan',
-        cantidad: 2,
-        notas: null,
-        areaProduccion: 'amex',
-        estado: 'listo',
-        enPreparacionAt: null,
-        listoAt: null,
-        iniciadoPor: null,
-        listoPor: null,
-        recetaPorciones: 4,
-        recetaTipo: 'servicio',
-        ingredientes: [
-          { insumoId: 'ins1', insumoNombre: 'Pan', cantidadPorBatch: 100, mermaCoeficiente: 0 },
-        ],
-      },
-    ],
+    items: [],
+    ...overrides,
   };
+}
 
-  it('descuenta vía RPC FEFO con cantidad neta e idempotency key determinística', async () => {
-    mocks.findByIdForDelivery.mockResolvedValue(pedidoListo);
-    mocks.rpc.mockResolvedValue({ error: null });
-    mocks.transition.mockResolvedValue({ id: 'p1', estado: 'entregado', updatedAt: new Date() });
+describe('entregarPedido (actions)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.assertCan.mockResolvedValue(CTX);
+    mocks.findByIdForDelivery.mockResolvedValue(pedido());
+    mocks.entregar.mockResolvedValue({ ...pedido({ estado: 'entregado', version: 8 }) });
+  });
 
-    const result = await entregarPedido('p1', 7);
+  it('delega la entrega en la RPC transaccional con la versión del cliente', async () => {
+    const res = await entregarPedido('p1', 7);
 
-    expect(result.ok).toBe(true);
-    expect(mocks.rpc).toHaveBeenCalledWith(
-      'fn_descontar_insumo_fefo',
-      expect.objectContaining({
-        p_tenant_id: 't1',
-        p_insumo_id: 'ins1',
-        p_cantidad: 50, // (100 / 4 porciones) * 2 pedidos
-        p_idempotency_key: 'pedido:p1:item:i1:ing:ins1',
-        p_tipo: 'salida_receta',
-      }),
+    expect(res.ok).toBe(true);
+    expect(mocks.entregar).toHaveBeenCalledWith('p1', 't1', 7);
+  });
+
+  it('no invoca la RPC si el pedido no admite la transición a entregado', async () => {
+    mocks.findByIdForDelivery.mockResolvedValue(pedido({ estado: 'creado' }));
+
+    const res = await entregarPedido('p1', 7);
+
+    expect(res.ok).toBe(false);
+    expect(mocks.entregar).not.toHaveBeenCalled();
+  });
+
+  it('rechaza a un rol de zona operando una zona ajena', async () => {
+    mocks.assertCan.mockResolvedValue({ ...CTX, role: 'personal_snack' });
+    mocks.findByIdForDelivery.mockResolvedValue(pedido({ zona: 'buffet' }));
+
+    const res = await entregarPedido('p1', 7);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.code).toBe('FORBIDDEN');
+    expect(mocks.entregar).not.toHaveBeenCalled();
+  });
+
+  it('propaga STOCK_INSUFICIENTE sin auditar ni difundir', async () => {
+    mocks.entregar.mockRejectedValue(
+      new AppError('STOCK_INSUFICIENTE', 409, 'Stock insuficiente para insumo X'),
     );
-    expect(mocks.transition).toHaveBeenCalledWith('p1', 't1', 'entregado', 7);
+
+    const res = await entregarPedido('p1', 7);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.code).toBe('STOCK_INSUFICIENTE');
+    expect(mocks.auditLog).not.toHaveBeenCalled();
+    expect(mocks.emitEvent).not.toHaveBeenCalled();
   });
 
-  it('stock insuficiente (P0001) → STOCK_INSUFICIENTE y NO transiciona el pedido', async () => {
-    mocks.findByIdForDelivery.mockResolvedValue(pedidoListo);
-    mocks.rpc.mockResolvedValue({ error: { code: 'P0001', message: 'stock insuficiente' } });
+  it('propaga el conflicto de versión de la RPC', async () => {
+    mocks.entregar.mockRejectedValue(new AppError('VERSION_CONFLICT', 409, 'conflicto'));
 
-    const result = await entregarPedido('p1', 7);
+    const res = await entregarPedido('p1', 7);
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('STOCK_INSUFICIENTE');
-    expect(mocks.transition).not.toHaveBeenCalled();
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.code).toBe('VERSION_CONFLICT');
   });
 
-  it('transición inválida no descuenta stock', async () => {
-    mocks.findByIdForDelivery.mockResolvedValue({ ...pedidoListo, estado: 'creado' });
+  it('audita y difunde a cocina y a la zona tras entregar', async () => {
+    await entregarPedido('p1', 7);
 
-    const result = await entregarPedido('p1', 7);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('INVALID_TRANSITION');
-    expect(mocks.rpc).not.toHaveBeenCalled();
-  });
-
-  it('entregar pedido de solo elaboraciones NO invoca fn_descontar_insumo_fefo', async () => {
-    mocks.findByIdForDelivery.mockResolvedValue({
-      id: 'p1',
-      tenantId: 't1',
-      numeroMesa: null,
-      zona: 'buffet',
-      estado: 'despachado',
-      version: 4,
-      notas: null,
-      cocineroId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      items: [
-        {
-          id: 'i1',
-          pedidoId: 'p1',
-          recetaId: 'r1',
-          recetaNombre: 'Arroz blanco',
-          cantidad: 2,
-          notas: null,
-          areaProduccion: 'cocina_caliente',
-          estado: 'listo',
-          enPreparacionAt: null,
-          listoAt: null,
-          iniciadoPor: null,
-          listoPor: null,
-          recetaPorciones: 1,
-          recetaTipo: 'produccion',
-          ingredientes: [
-            {
-              insumoId: 'ins1',
-              insumoNombre: 'Arroz',
-              cantidadPorBatch: 5000,
-              mermaCoeficiente: 0,
-            },
-          ],
-        },
-      ],
-    });
-    mocks.transition.mockResolvedValue({
-      id: 'p1',
-      estado: 'entregado',
-      version: 5,
-      updatedAt: new Date(),
-    });
-
-    const result = await entregarPedido('p1', 4);
-
-    expect(result.ok).toBe(true);
-    expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.transition).toHaveBeenCalledWith('p1', 't1', 'entregado', 4);
-  });
-
-  it('personal_snack no puede entregar un pedido de otra zona', async () => {
-    mocks.assertCan.mockResolvedValue({ tenantId: 't1', userId: 'u1', role: 'personal_snack' });
-    mocks.findByIdForDelivery.mockResolvedValue(pedidoListo); // zona amex
-
-    const result = await entregarPedido('p1', 7);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
-    expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.transition).not.toHaveBeenCalled();
+    expect(mocks.auditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'orders:entregar_pedido', resourceId: 'p1' }),
+    );
+    expect(mocks.emitEvent).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -184,47 +127,23 @@ describe('cancelarPedido (actions)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.assertCan.mockResolvedValue(CTX);
+    mocks.findByIdForDelivery.mockResolvedValue(pedido({ estado: 'creado' }));
+    mocks.transition.mockResolvedValue(pedido({ estado: 'cancelado', version: 8 }));
   });
 
-  const pedidoCreado = {
-    id: 'p2',
-    tenantId: 't1',
-    estado: 'creado',
-    zona: 'snack',
-    version: 1,
-    numeroMesa: null,
-    notas: null,
-    cocineroId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    items: [],
-  };
+  it('cancela vía la RPC de transición', async () => {
+    const res = await cancelarPedido('p1', 7);
 
-  it('emite el evento de cancelación también al canal de la zona', async () => {
-    mocks.findByIdForDelivery.mockResolvedValue(pedidoCreado);
-    mocks.transition.mockResolvedValue({ id: 'p2', estado: 'cancelado', updatedAt: new Date() });
-
-    const result = await cancelarPedido('p2', 1);
-
-    expect(result.ok).toBe(true);
-    expect(mocks.emitEvent).toHaveBeenCalledWith(
-      't1',
-      'sala:snack',
-      expect.objectContaining({
-        type: 'PEDIDO_ESTADO',
-        payload: expect.objectContaining({ pedidoId: 'p2', estadoNuevo: 'cancelado' }),
-      }),
-    );
+    expect(res.ok).toBe(true);
+    expect(mocks.transition).toHaveBeenCalledWith('p1', 't1', 'cancelado', 7);
   });
 
-  it('personal_buffet no puede cancelar un pedido de otra zona', async () => {
-    mocks.assertCan.mockResolvedValue({ tenantId: 't1', userId: 'u1', role: 'personal_buffet' });
-    mocks.findByIdForDelivery.mockResolvedValue(pedidoCreado); // zona snack
+  it('no cancela un pedido ya entregado', async () => {
+    mocks.findByIdForDelivery.mockResolvedValue(pedido({ estado: 'entregado' }));
 
-    const result = await cancelarPedido('p2', 1);
+    const res = await cancelarPedido('p1', 7);
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+    expect(res.ok).toBe(false);
     expect(mocks.transition).not.toHaveBeenCalled();
   });
 });

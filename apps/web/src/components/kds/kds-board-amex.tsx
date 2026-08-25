@@ -117,24 +117,24 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
   }
 
   const cardBorder = isCrit
-    ? 'ring-2 ring-red-500 animate-pulse'
+    ? 'ring-2 ring-senal-critico motion-safe:animate-atencion'
     : isWarn
-      ? 'ring-2 ring-amber-500'
+      ? 'ring-2 ring-senal-aviso'
       : '';
 
   return (
     <div
-      className={`rounded-lg border bg-card p-4 space-y-3 shadow-sm transition-all ${cardBorder}`}
+      className={`rounded-xl border bg-card p-4 space-y-3 shadow-sm transition-colors duration-200 ease-smooth ${cardBorder}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-1">
-          <p className="font-semibold text-sm leading-tight">
+          <p className="text-headline font-semibold leading-tight">
             {pedido.numeroMesa ?? <span className="text-muted-foreground">{t('sinMesa')}</span>}
           </p>
           <Badge
             variant="outline"
-            className={`text-xs ${isCrit ? 'border-red-500 text-red-500' : isWarn ? 'border-amber-500 text-amber-500' : ''}`}
+            className={`text-caption ${isCrit ? 'border-senal-critico text-senal-critico' : isWarn ? 'border-senal-aviso text-senal-aviso' : ''}`}
           >
             {pedido.estado === 'creado' && t('estadoNuevo')}
             {pedido.estado === 'recibido_cocina' && t('estadoRecibido')}
@@ -143,28 +143,32 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
           </Badge>
         </div>
         <div
-          className={`flex items-center gap-1 text-xs shrink-0 ${isCrit ? 'text-red-500 font-bold' : isWarn ? 'text-amber-500' : 'text-muted-foreground'}`}
+          className={`flex items-center gap-1.5 shrink-0 ${isCrit ? 'text-senal-critico' : isWarn ? 'text-senal-aviso' : 'text-muted-foreground'}`}
         >
-          {isCrit ? <AlertTriangle className="h-3.5 w-3.5" /> : <Clock className="h-3 w-3" />}
-          <span className="font-mono tabular-nums">{elapsed}</span>
+          {isCrit ? (
+            <AlertTriangle className="size-5" aria-hidden="true" />
+          ) : (
+            <Clock className="size-4" aria-hidden="true" />
+          )}
+          <span className="font-mono text-title font-semibold tabular-nums">{elapsed}</span>
         </div>
       </div>
 
       {/* Ítems */}
       <ul className="space-y-1">
         {pedido.items.map((item) => (
-          <li key={item.id} className="text-sm">
-            <span className="font-medium">{item.cantidad}×</span> {item.recetaNombre}
+          <li key={item.id} className="text-body">
+            <span className="font-semibold tabular-nums">{item.cantidad}×</span> {item.recetaNombre}
             {item.notas && (
-              <p className="text-xs text-muted-foreground ml-4 italic">↳ {item.notas}</p>
+              <p className="mt-1 rounded-md bg-muted px-2 py-1 text-caption font-medium">
+                ↳ {item.notas}
+              </p>
             )}
           </li>
         ))}
       </ul>
 
-      {pedido.notas && (
-        <p className="text-xs text-muted-foreground border-t pt-2 italic">{pedido.notas}</p>
-      )}
+      {pedido.notas && <p className="border-t pt-2 text-caption font-medium">{pedido.notas}</p>}
 
       {/* Acciones */}
       {!readOnly && (
@@ -209,7 +213,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
             </Button>
           )}
           {pedido.estado === 'despachado' && (
-            <Badge variant="outline" className="w-full justify-center py-1.5 text-xs">
+            <Badge variant="outline" className="w-full justify-center py-2 text-caption">
               {t('esperandoMesero')}
             </Badge>
           )}
@@ -219,7 +223,7 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
       {/* Historia de trazabilidad */}
       <div className="border-t border-border/50 pt-2">
         <button
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+          className="flex min-h-11 w-full items-center gap-1.5 rounded-md text-caption text-muted-foreground transition-colors duration-200 ease-smooth hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={toggleHistory}
         >
           {loadingHistory ? (
@@ -237,12 +241,12 @@ function AmexCard({ pedido, onRefresh, onOptimistic, readOnly }: AmexCardProps) 
         {showHistory && (
           <div className="mt-2 space-y-1.5">
             {eventos === null || loadingHistory ? (
-              <p className="text-xs text-muted-foreground pl-3">{t('cargando')}</p>
+              <p className="text-caption text-muted-foreground pl-3">{t('cargando')}</p>
             ) : eventos.length === 0 ? (
-              <p className="text-xs text-muted-foreground pl-3">{t('sinEventos')}</p>
+              <p className="text-caption text-muted-foreground pl-3">{t('sinEventos')}</p>
             ) : (
               eventos.map((ev, idx) => (
-                <div key={ev.id} className="flex gap-2 text-xs">
+                <div key={ev.id} className="flex gap-2 text-caption">
                   <div className="flex flex-col items-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1 shrink-0" />
                     {idx < eventos.length - 1 && (
@@ -371,11 +375,11 @@ export function KdsBoardAmex({ initialPedidos, readOnly }: KdsBoardAmexProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('tituloAmex')}</h1>
+          <h1 className="text-display font-semibold tracking-tight">{t('tituloAmex')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {total === 0 ? t('sinPedidosActivos') : t('pedidosActivos', { n: total })}
             {urgentes > 0 && (
-              <span className="ml-2 text-red-500 font-medium">
+              <span className="ml-2 font-medium text-senal-critico">
                 · {t('urgentes', { n: urgentes })}
               </span>
             )}
@@ -384,7 +388,7 @@ export function KdsBoardAmex({ initialPedidos, readOnly }: KdsBoardAmexProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="size-11"
           onClick={refresh}
           disabled={refreshing}
         >

@@ -14,15 +14,15 @@ type ZonaKey = 'amex' | 'snack' | 'buffet';
 const ZONA_CONFIG: Record<ZonaKey, { icon: typeof ChefHat; colorClass: string }> = {
   amex: {
     icon: Truck,
-    colorClass: 'border-blue-500/30 bg-blue-500/5 text-blue-700 dark:text-blue-300',
+    colorClass: 'border-senal-curso/30 bg-senal-curso/5 text-senal-curso dark:text-senal-curso',
   },
   buffet: {
     icon: Package,
-    colorClass: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300',
+    colorClass: 'border-senal-ok/30 bg-senal-ok/5 text-senal-ok dark:text-senal-ok',
   },
   snack: {
     icon: ChefHat,
-    colorClass: 'border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300',
+    colorClass: 'border-senal-aviso/30 bg-senal-aviso/5 text-senal-aviso dark:text-senal-aviso',
   },
 };
 
@@ -86,12 +86,12 @@ export function ProduccionDashboard({ tandas }: Props) {
               <div className="flex items-center gap-2">
                 <Icon className="h-4 w-4" />
                 <span className="font-semibold text-sm">{tZ(zona)}</span>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-caption">
                   {items.length} {t('despachos')}
                 </Badge>
               </div>
               {ultimaHora && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>
                     {t('ultimoDespacho')}: {formatHora(ultimaHora)}
@@ -108,7 +108,7 @@ export function ProduccionDashboard({ tandas }: Props) {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b text-xs text-muted-foreground">
+                    <tr className="border-b text-caption text-muted-foreground">
                       <th className="text-left py-2 px-3 font-medium">{t('colReceta')}</th>
                       <th className="text-center py-2 px-3 font-medium">{t('colTandas')}</th>
                       <th className="text-left py-2 px-3 font-medium">{t('colResponsable')}</th>
@@ -149,7 +149,7 @@ export function ProduccionDashboard({ tandas }: Props) {
 function SummaryCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border bg-card p-3 space-y-1">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-caption text-muted-foreground">{label}</p>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
     </div>
   );

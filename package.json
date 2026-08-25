@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "reset:test-users": "node --env-file=apps/web/.env.local scripts/reset-test-users.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "rbac:generate": "UPDATE_RBAC=1 pnpm --filter @dorado/web exec vitest run src/lib/auth/tests/rbac-sql.test.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs}": [
@@ -31,11 +32,15 @@
       "@parcel/watcher"
     ],
     "overrides": {
-      "brace-expansion@1": ">=1.1.12 <2",
-      "brace-expansion@2": ">=2.0.2 <3",
-      "brace-expansion@5": ">=5.0.6",
-      "fast-uri": ">=3.1.2",
-      "postcss": ">=8.5.10",
+      "brace-expansion@1": ">=1.1.18 <2",
+      "brace-expansion@2": ">=2.1.4 <3",
+      "fast-uri": ">=3.1.5",
+      "js-yaml@4": ">=4.3.1",
+      "minimatch@10>brace-expansion": ">=5.0.9",
+      "nanoid@3": ">=3.3.18",
+      "postcss": ">=8.5.18",
+      "sharp": ">=0.35.0",
+      "socket.io-parser": ">=4.2.7",
       "ws": ">=8.21.0"
     }
   },

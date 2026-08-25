@@ -1,7 +1,6 @@
 'use server';
 
-import { headers } from 'next/headers';
-import { rateLimit } from '@/lib/rate-limit';
+import { consumirIntentoDeLogin } from '@/lib/auth/login-throttle';
 
 interface TurnstileResponse {
   success: boolean;
@@ -12,17 +11,25 @@ export type TurnstileResult =
   | { ok: true }
   | { ok: false; reason: 'rate_limited' | 'invalid_token' | 'verify_failed' };
 
+// ATENCIÓN: un token de Turnstile es de un solo uso — Cloudflare devuelve
+// `timeout-or-duplicate` en la segunda validación. Por eso el login NO usa esta
+// función: con la protección CAPTCHA nativa de Supabase Auth activada, quien
+// valida el token es el propio endpoint de Supabase. Esta función queda para el
+// camino QR de pasajeros, donde Supabase Auth no interviene.
 export async function verifyTurnstile(token: string): Promise<TurnstileResult> {
   // Rate limit por IP (5/15min) — defense-in-depth contra abuso del endpoint.
-  const h = await headers();
-  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
-  const rl = await rateLimit('login', ip);
-  if (!rl.allowed) {
+  if (!(await consumirIntentoDeLogin())) {
     return { ok: false, reason: 'rate_limited' };
   }
 
   const secret = process.env['TURNSTILE_SECRET_KEY'];
-  if (!secret) return { ok: true }; // Not configured — skip in local dev
+  if (!secret) {
+    // En producción, un secreto ausente es un fallo de configuración, no una
+    // invitación a saltarse la verificación (F-013). Mismo criterio que los
+    // buckets fail-closed de lib/rate-limit.
+    if (process.env['NODE_ENV'] === 'production') return { ok: false, reason: 'verify_failed' };
+    return { ok: true }; // sin configurar en desarrollo local
+  }
 
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',

@@ -181,7 +181,7 @@ export function RecipeTable({
                     <TableCell>
                       <Badge
                         variant={receta.tipoReceta === 'produccion' ? 'secondary' : 'outline'}
-                        className="text-xs"
+                        className="text-caption"
                       >
                         {receta.tipoReceta === 'produccion'
                           ? t('tipoProduccion')
@@ -203,7 +203,7 @@ export function RecipeTable({
                         className={cn(
                           'text-sm tabular-nums',
                           receta.ingredientes.length === 0
-                            ? 'text-amber-500/80'
+                            ? 'text-senal-aviso/80'
                             : 'text-foreground',
                         )}
                       >
@@ -215,31 +215,33 @@ export function RecipeTable({
                         <span
                           className={cn(
                             'text-sm tabular-nums',
-                            !costo.tieneCostoCompleto && 'text-amber-500/80',
+                            !costo.tieneCostoCompleto && 'text-senal-aviso/80',
                           )}
                           title={!costo.tieneCostoCompleto ? t('faltanPrecios') : undefined}
                         >
                           {costo.costoPorPorcion != null ? formatCOP(costo.costoPorPorcion) : '—'}
                           {!costo.tieneCostoCompleto && (
-                            <AlertTriangle className="inline h-3 w-3 ml-1 text-amber-500/80" />
+                            <AlertTriangle className="inline h-3 w-3 ml-1 text-senal-aviso/80" />
                           )}
                         </span>
                       ) : receta.ingredientes.length === 0 ? (
-                        <span className="text-xs text-muted-foreground/40">
+                        <span className="text-caption text-muted-foreground/40">
                           {t('sinIngredientes')}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40">{t('sinPrecios')}</span>
+                        <span className="text-caption text-muted-foreground/40">
+                          {t('sinPrecios')}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       {receta.tipoReceta === 'servicio' ? (
                         receta.categoriaMenu ? (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-caption">
                             {tCat(receta.categoriaMenu)}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground/60">
+                          <span className="text-caption text-muted-foreground/60">
                             {t('sinCategoria')}
                           </span>
                         )

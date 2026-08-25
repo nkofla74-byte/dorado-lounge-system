@@ -64,6 +64,7 @@ export function CreateRecipeDialog({
     register,
     handleSubmit,
     setValue,
+    watch,
     control,
     reset,
     formState: { errors, isSubmitting },
@@ -95,6 +96,10 @@ export function CreateRecipeDialog({
   // capa_2 también si la receta es de servicio (puede usar productos intermedios).
   const insumosParaIngredientes =
     tipoReceta === 'servicio' ? insumos : insumos.filter((i) => i.capa === 'capa_1');
+
+  // La unidad del rendimiento la manda el insumo destino, no un campo aparte.
+  const destinoId = watch('insumoDestinoId' as keyof FormInput) as string | undefined;
+  const unidadDestino = insumosCapa2.find((i) => i.id === destinoId)?.unidadMedida;
 
   const onSubmit = async (values: FormOutput) => {
     setServerError('');
@@ -137,7 +142,7 @@ export function CreateRecipeDialog({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-1">
           {/* ── Datos generales ──────────────────────────────────────── */}
           <section className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
               {t('seccionGeneral')}
             </h3>
 
@@ -151,7 +156,7 @@ export function CreateRecipeDialog({
                   autoFocus
                 />
                 {formErrors.nombre && (
-                  <p className="text-xs text-destructive">{formErrors.nombre.message}</p>
+                  <p className="text-caption text-destructive">{formErrors.nombre.message}</p>
                 )}
               </div>
 
@@ -172,7 +177,7 @@ export function CreateRecipeDialog({
                   </SelectContent>
                 </Select>
                 {formErrors.tipoReceta && (
-                  <p className="text-xs text-destructive">{formErrors.tipoReceta.message}</p>
+                  <p className="text-caption text-destructive">{formErrors.tipoReceta.message}</p>
                 )}
               </div>
 
@@ -187,7 +192,7 @@ export function CreateRecipeDialog({
                   {...register('porciones', { valueAsNumber: true })}
                 />
                 {formErrors.porciones && (
-                  <p className="text-xs text-destructive">{formErrors.porciones.message}</p>
+                  <p className="text-caption text-destructive">{formErrors.porciones.message}</p>
                 )}
               </div>
 
@@ -219,7 +224,43 @@ export function CreateRecipeDialog({
                     </SelectContent>
                   </Select>
                   {formErrors.insumoDestinoId && (
-                    <p className="text-xs text-destructive">{formErrors.insumoDestinoId.message}</p>
+                    <p className="text-caption text-destructive">
+                      {formErrors.insumoDestinoId.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Rendimiento por tanda (F-037).
+                  Sin este dato, completar la tanda descontaba los ingredientes y
+                  no creaba el producto elaborado: los amasijos y postres no
+                  existían como stock. La unidad la manda el insumo destino, así
+                  que se muestra en vez de pedirla: dos fuentes de verdad para la
+                  misma unidad acabarían contradiciéndose. */}
+              {tipoReceta === 'produccion' && (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="rendimientoCantidad">
+                    {t('rendimiento')} *
+                    {unidadDestino && (
+                      <span className="ml-1 font-normal text-muted-foreground">
+                        ({unidadDestino})
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="rendimientoCantidad"
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min={0}
+                    placeholder={t('rendimientoPlaceholder')}
+                    {...register('rendimientoCantidad' as keyof FormInput, { valueAsNumber: true })}
+                  />
+                  <p className="text-caption text-muted-foreground">{t('rendimientoAyuda')}</p>
+                  {formErrors.rendimientoCantidad && (
+                    <p className="text-caption text-destructive">
+                      {formErrors.rendimientoCantidad.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -245,7 +286,7 @@ export function CreateRecipeDialog({
                       </SelectContent>
                     </Select>
                     {formErrors.zona && (
-                      <p className="text-xs text-destructive">{formErrors.zona.message}</p>
+                      <p className="text-caption text-destructive">{formErrors.zona.message}</p>
                     )}
                   </div>
 
@@ -288,7 +329,7 @@ export function CreateRecipeDialog({
           {/* ── Ingredientes ─────────────────────────────────────────── */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h3 className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('seccionIngredientes')}
               </h3>
               <Button
@@ -304,9 +345,9 @@ export function CreateRecipeDialog({
             </div>
 
             {!tipoReceta ? (
-              <p className="text-xs text-muted-foreground italic">{t('elegiTipoPrimero')}</p>
+              <p className="text-caption text-muted-foreground italic">{t('elegiTipoPrimero')}</p>
             ) : fields.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">{t('sinIngredientes')}</p>
+              <p className="text-caption text-muted-foreground italic">{t('sinIngredientes')}</p>
             ) : (
               <div className="space-y-2">
                 {fields.map((field, idx) => {
@@ -378,7 +419,9 @@ export function CreateRecipeDialog({
                             </SelectContent>
                           </Select>
                           {errs?.insumoId?.message && (
-                            <p className="text-xs text-destructive mt-1">{errs.insumoId.message}</p>
+                            <p className="text-caption text-destructive mt-1">
+                              {errs.insumoId.message}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -393,7 +436,9 @@ export function CreateRecipeDialog({
                             })}
                           />
                           {errs?.cantidad?.message && (
-                            <p className="text-xs text-destructive mt-1">{errs.cantidad.message}</p>
+                            <p className="text-caption text-destructive mt-1">
+                              {errs.cantidad.message}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -447,12 +492,12 @@ export function CreateRecipeDialog({
                                 }
                               }}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-caption text-muted-foreground pointer-events-none">
                               %
                             </span>
                           </div>
                           {errs?.mermaCoeficiente?.message && (
-                            <p className="text-xs text-destructive mt-1">
+                            <p className="text-caption text-destructive mt-1">
                               {errs.mermaCoeficiente.message}
                             </p>
                           )}
@@ -489,7 +534,7 @@ export function CreateRecipeDialog({
               </div>
             )}
             {ingredientesError?.message && (
-              <p className="text-xs text-destructive">{ingredientesError.message}</p>
+              <p className="text-caption text-destructive">{ingredientesError.message}</p>
             )}
           </section>
 

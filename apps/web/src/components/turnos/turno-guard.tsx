@@ -75,12 +75,12 @@ export function TurnoGuard({ role, userName, initialTurno }: Props) {
   if (initialTurno) {
     return (
       <div className="fixed top-3 right-3 z-40 flex items-center gap-2 rounded-full border bg-card/95 backdrop-blur px-3 py-1.5 shadow-md">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        <span className="h-2 w-2 rounded-full bg-senal-ok animate-pulse shrink-0" />
         <div className="flex flex-col leading-tight">
           <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
             {t(`bloque_${initialTurno.bloque ?? bloque}`)}
           </span>
-          <span className="text-xs font-semibold truncate max-w-[140px]">
+          <span className="text-caption font-semibold truncate max-w-[140px]">
             {initialTurno.teamlider}
           </span>
         </div>
@@ -121,7 +121,7 @@ export function TurnoGuard({ role, userName, initialTurno }: Props) {
             <Label>{t('bloque')}</Label>
             <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm">
               <span className="font-medium">{t(`bloque_${bloque}`)}</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-caption text-muted-foreground tabular-nums">
                 {formatBloqueHorario(bloque)}
               </span>
             </div>
@@ -140,7 +140,7 @@ export function TurnoGuard({ role, userName, initialTurno }: Props) {
                 if (e.key === 'Enter' && !pending) handleAbrir();
               }}
             />
-            <p className="text-xs text-muted-foreground">{t('tuNombreHint')}</p>
+            <p className="text-caption text-muted-foreground">{t('tuNombreHint')}</p>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}

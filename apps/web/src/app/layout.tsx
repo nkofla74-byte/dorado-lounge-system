@@ -1,13 +1,31 @@
 import type { Metadata, Viewport } from 'next';
-import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { Playfair_Display } from 'next/font/google';
+import { Fraunces, Onest } from 'next/font/google';
 
-const playfair = Playfair_Display({
+// TIPOGRAFÍA — decisión de marca, 2026-08-22.
+//
+// Geist Sans era el cuerpo: una grotesca impecable, pero es la fuente de
+// Vercel y lee a «herramienta de desarrollo», no a sala VIP. Playfair Display
+// era el display: elegante y a la vez el serif por defecto de medio mundo, y
+// sus astas finas desaparecen en la tablet de cocina con brillo alto.
+//
+// Onest para la interfaz: humanista, cálida, de aperturas abiertas — se lee
+// bien a un brazo de distancia, que es la restricción que manda aquí.
+const onest = Onest({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  variable: '--font-onest',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+});
+
+// Fraunces para los momentos de marca. Serif de contraste alto con eje óptico
+// (`opsz`): el propio tipo ajusta el grosor de sus astas según el tamaño, así
+// que aguanta el reflejo donde Playfair se rompía. Da el registro de hotelería
+// que pedía el cliente sin caer en el serif de invitación de boda.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  display: 'swap',
+  axes: ['SOFT', 'WONK', 'opsz'],
 });
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -39,6 +57,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
+  // Hex literales por obligación: una etiqueta <meta> no lee variables CSS.
+  // Son el color del cromo del navegador y deben seguir a --background.
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f7f4eb' },
     { media: '(prefers-color-scheme: dark)', color: '#0b0f17' },
@@ -51,7 +71,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={locale}
-      className={`dark ${GeistSans.variable} ${GeistMono.variable} ${playfair.variable}`}
+      // Sin `dark` escrito a mano: lo pone next-themes desde su script previo
+      // al pintado, según lo guardado o `defaultTheme`. Tenerlo aquí solo
+      // duplicaba la decisión y obligaba a corregir la clase en la hidratación.
+      className={`${onest.variable} ${GeistMono.variable} ${fraunces.variable}`}
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">

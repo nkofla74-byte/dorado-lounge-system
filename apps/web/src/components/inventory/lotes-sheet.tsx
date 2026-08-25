@@ -45,7 +45,7 @@ function expiryClass(fechaVencimiento: string | null): string {
   const diff = new Date(fechaVencimiento).getTime() - Date.now();
   const days = diff / (1000 * 60 * 60 * 24);
   if (days < 0) return 'text-destructive font-medium';
-  if (days < 7) return 'text-amber-400 font-medium';
+  if (days < 7) return 'text-senal-aviso font-medium';
   return 'text-muted-foreground';
 }
 
@@ -190,15 +190,15 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                       {unidad}
                     </span>
                   </span>
-                  <span className={cn('text-xs', expiryClass(lote.fechaVencimiento))}>
+                  <span className={cn('text-caption', expiryClass(lote.fechaVencimiento))}>
                     {expiryLabel(lote.fechaVencimiento)}
                   </span>
                 </div>
                 {lote.proveedor && (
-                  <p className="text-xs text-muted-foreground">{lote.proveedor}</p>
+                  <p className="text-caption text-muted-foreground">{lote.proveedor}</p>
                 )}
                 {lote.costoUnitario !== null && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     ${lote.costoUnitario.toLocaleString('es-CO')} / {unidad}
                   </p>
                 )}
@@ -242,7 +242,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                   {...register('cantidadInicial', { valueAsNumber: true })}
                 />
                 {errors.cantidadInicial && (
-                  <p className="text-xs text-destructive">{errors.cantidadInicial.message}</p>
+                  <p className="text-caption text-destructive">{errors.cantidadInicial.message}</p>
                 )}
               </div>
 
@@ -265,7 +265,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                   {proveedores.length > 0 ? (
                     <select
                       id="proveedorId"
-                      className="flex-1 min-w-0 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="flex-1 min-w-0 min-h-11 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={selectedProvId}
                       onChange={(e) => {
                         const id = e.target.value;
@@ -294,7 +294,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0"
+                    className="size-11 shrink-0"
                     title="Nuevo proveedor"
                     onClick={() => {
                       setProvEditing(undefined);
@@ -307,7 +307,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 shrink-0"
+                    className="size-11 shrink-0"
                     title="Editar proveedor seleccionado"
                     disabled={!selectedProvId}
                     onClick={() => {
@@ -323,7 +323,7 @@ export function LotesSheet({ insumo, onOpenChange, onLoteCreated }: LotesSheetPr
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                    className="size-11 shrink-0 text-destructive hover:text-destructive"
                     title="Eliminar proveedor seleccionado"
                     disabled={!selectedProvId || provDeleting}
                     onClick={handleProvDelete}

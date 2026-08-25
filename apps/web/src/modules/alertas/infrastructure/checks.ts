@@ -2,10 +2,10 @@
 // Se invocan fire-and-forget desde otros módulos del servidor.
 // Los errores se silencian intencionalmente para no bloquear la operación principal.
 
-import { emitEvent } from '@/lib/socket/emit-event';
+import { emitEventoMulticanal } from '@/lib/socket/emit-event';
+import { canalesDeAlerta } from '../domain/canales';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createAlertaRepository } from './alerta-repository';
-import { CHANNELS } from '@dorado/shared-types';
 import type { Alerta, CreateAlertaInput } from '../domain/alerta';
 import {
   severidadStockMinimo,
@@ -22,7 +22,7 @@ export async function crearAlerta(
     const repo = createAlertaRepository();
     const alerta = await repo.create(tenantId, input);
 
-    await emitEvent(tenantId, CHANNELS.ADMIN, {
+    await emitEventoMulticanal(tenantId, [...canalesDeAlerta(alerta.tipo)], {
       type: 'ALERTA',
       payload: {
         alertaId: alerta.id,

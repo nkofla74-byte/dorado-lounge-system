@@ -28,6 +28,56 @@
     --ring: 42 80% 58%;
     --sidebar: 40 30% 94%;
     --radius: 0.625rem;
+
+    /* Estados operativos — semánticos. Sustituyen a la paleta cruda de Tailwind
+       (bg-blue-500, ring-red-500…), que no responde al tema ni al contraste. */
+    --senal-aviso: 35 92% 33%;
+    --senal-curso: 217 85% 42%;
+    --senal-ok: 160 70% 30%;
+    --senal-critico: 347 89% 44%;
+
+    /* Áreas operativas — color de orientación en la navegación, NO severidad.
+       Se eligen fuera de los tonos de `senal-*` para que nadie lea un icono de
+       almacén como si fuera un aviso. Cocina usa el dorado de marca: es el
+       centro del negocio. */
+    --area-almacen: 190 85% 27%;
+    --area-sala: 265 60% 45%;
+    --area-cocina: 42 85% 29%;
+
+    /* Zonas de servicio. Tercer eje, distinto de `senal` y de `area`: dice a
+       QUÉ zona pertenece algo. Amex comparte tono con `area-sala` porque es la
+       sala; buffet y snack necesitan tono propio para distinguirse de un
+       vistazo en una tabla. */
+    --zona-amex: 265 60% 45%;
+    --zona-buffet: 172 75% 26%;
+    --zona-snack: 330 68% 42%;
+
+    /* Materiales — profundidad de desenfoque. Ver dorado-design-system §3. */
+    --material-thin: 12px;
+    --material-regular: 20px;
+    --material-thick: 32px;
+  }
+
+  /* ── Dorado Prefer ────────────────────────────────────────────────────────
+     Paleta de la carta del pasajero. Sustituye al azul de American Express
+     (#00175A, #016FD0) que estaba escrito a mano 157 veces.
+
+     Se definen SOLO aquí, nunca bajo `.dark`: esa superficie fuerza fondo
+     claro pase lo que pase, así que un color que se invierta con el tema se
+     vuelve ilegible sobre él.
+
+     El acento es oro viejo, no oro brillante, por contraste: el azul Amex
+     daba 5,4:1 sobre blanco y el oro de marca daría 2:1. Sobre relleno de oro
+     el texto va en `prefer-tinta`. */
+  :root {
+    --prefer-tinta: 224 36% 12%;
+    --prefer-acento: 43 79% 28%;
+    --prefer-acento-fuerte: 43 79% 21%;
+    --prefer-oro: 42 73% 46%;
+    --prefer-linea: 41 33% 83%;
+    --prefer-superficie: 40 48% 94%;
+    --prefer-superficie-2: 39 42% 89%;
+    --prefer-papel: 42 50% 96%;
   }
 
   .dark {
@@ -55,6 +105,19 @@
     --ring: 42 80% 58%;
     --sidebar: 218 60% 7%;
     --radius: 0.625rem;
+
+    --area-almacen: 187 85% 60%;
+    --area-sala: 265 85% 76%;
+    --area-cocina: 42 80% 58%;
+    --zona-amex: 265 85% 76%;
+    --zona-buffet: 170 70% 52%;
+    --zona-snack: 332 88% 70%;
+
+    /* En oscuro los estados suben en luminosidad para mantener AA sobre #0d1117 */
+    --senal-aviso: 43 96% 62%;
+    --senal-curso: 213 92% 68%;
+    --senal-ok: 158 64% 52%;
+    --senal-critico: 347 95% 70%;
   }
 }
 
@@ -69,6 +132,25 @@
   body {
     @apply bg-background text-foreground antialiased;
     overscroll-behavior-y: none;
+    /* Onest es variable: se deja que el navegador use el eje de peso real en
+       lugar de sintetizar negritas, que es lo que emborrona el texto pequeño. */
+    font-synthesis-weight: none;
+    font-optical-sizing: auto;
+  }
+
+  /* Los títulos se equilibran solos: sin viudas de una palabra en pantallas
+     estrechas, que es donde más se nota la falta de oficio tipográfico. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Fraunces tiene eje óptico. En display se le pide contraste alto y astas
+     apretadas; el propio tipo engorda las finas cuando el tamaño baja. */
+  .font-serif {
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
   }
   /* Touch-friendly defaults para botones e inputs sin perder densidad en desktop */
   button,
@@ -97,6 +179,51 @@
   .safe-min-h {
     min-height: 100dvh;
   }
+  /* Etiqueta de sección: versal con prosa abierta. En versalitas apretadas el
+     texto se convierte en una mancha, sobre todo en español, que tiene palabras
+     más largas que el inglés. */
+  .label-seccion {
+    font-size: theme('fontSize.caption[0]');
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Momento de marca: el nombre de la sala. Se reserva para eso — un serif
+     repartido por toda la interfaz operativa la vuelve lenta de leer. */
+  .marca {
+    font-family: theme('fontFamily.serif');
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+
+  /* Materiales translúcidos. Siempre con fallback opaco: si el navegador no
+     soporta backdrop-filter, queda el color sólido de debajo. */
+  .material-thin {
+    background-color: hsl(var(--card) / 0.85);
+  }
+  .material-regular {
+    background-color: hsl(var(--card) / 0.75);
+  }
+  .material-thick {
+    background-color: hsl(var(--card) / 0.65);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .material-thin {
+      backdrop-filter: blur(var(--material-thin)) saturate(180%);
+      background-color: hsl(var(--card) / 0.7);
+    }
+    .material-regular {
+      backdrop-filter: blur(var(--material-regular)) saturate(180%);
+      background-color: hsl(var(--card) / 0.6);
+    }
+    .material-thick {
+      backdrop-filter: blur(var(--material-thick)) saturate(180%);
+      background-color: hsl(var(--card) / 0.5);
+    }
+  }
+
   /* Tipografía fluida — solo aplicar opt-in con .text-fluid-* */
   .text-fluid-h1 {
     font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
@@ -123,8 +250,51 @@
   }
 }
 
+/* Curvas de Apple. `smooth` es la de las transiciones de UIKit; `snappy` la de
+   los controles que responden al dedo. Expuestas en tailwind.config.ts. */
+:root {
+  --ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Salida expresiva (easeOutQuint): arranca rápido y frena largo. Es la que
+     ya usaban las entradas de la carta QR, repetida nueve veces a mano. */
+  --ease-expresivo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Pulso de atención por opacidad. `animate-pulse` de Tailwind reconstruye capas
+   en cada fotograma; en una cola de KDS que se repinta por Socket.io eso cuesta
+   fotogramas. Esto solo compone opacidad. */
+@keyframes atencion {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* INTERRUPTOR GLOBAL de Reduce Motion.
+   Antes solo cubría .dish-card, así que el `animate-pulse` de las tarjetas de
+   KDS seguía parpadeando para quien pidió menos movimiento. Ahora es del
+   sistema: ninguna pantalla puede olvidarlo. */
 @media (prefers-reduced-motion: reduce) {
-  .dish-card {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduce Transparency: el cristal se cae a color sólido. El material es un
+   adorno; la legibilidad no es negociable (dorado-design-system §3). */
+@media (prefers-reduced-transparency: reduce) {
+  .material-thin,
+  .material-regular,
+  .material-thick {
+    backdrop-filter: none !important;
+    background-color: hsl(var(--card)) !important;
   }
 }

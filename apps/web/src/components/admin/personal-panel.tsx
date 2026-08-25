@@ -126,7 +126,7 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20">
           <Users className="h-10 w-10 text-muted-foreground mb-3" />
           <p className="text-sm font-medium text-muted-foreground">{t('emptyTitle')}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t('emptyHint')}</p>
+          <p className="text-caption text-muted-foreground mt-1">{t('emptyHint')}</p>
         </div>
       ) : (
         <div className="rounded-md border">
@@ -149,7 +149,7 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
                     <TableCell className="font-medium">
                       {user.nombre}
                       {isSelf && (
-                        <span className="ml-2 text-xs text-muted-foreground">{t('tu')}</span>
+                        <span className="ml-2 text-caption text-muted-foreground">{t('tu')}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">{user.email}</TableCell>
@@ -159,12 +159,12 @@ export function PersonalPanel({ initialUsers, currentUserId }: Props) {
                         onValueChange={(role) => handleRoleChange(user.id, role)}
                         disabled={isPending || isSelf}
                       >
-                        <SelectTrigger className="h-7 text-xs w-36">
+                        <SelectTrigger className="h-7 text-caption w-36">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {ASSIGNABLE_ROLES.map((role) => (
-                            <SelectItem key={role} value={role} className="text-xs">
+                            <SelectItem key={role} value={role} className="text-caption">
                               {tR(role)}
                             </SelectItem>
                           ))}
