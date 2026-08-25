@@ -55,7 +55,6 @@ DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nat
 | `admin`                | `/inventario`      | Panel completo: almacén, recetas, costos, KDS monitor, producción, pedidos, analíticos, proveedores, alertas, trazabilidad, turnos |
 | `chef_cocina_caliente` | `/cocina-caliente` | KDS Cocina Caliente: cola por área, despacho por ítem con FEFO                                                                     |
 | `chef_cocina_fria`     | `/cocina-fria`     | KDS Cocina Fría: cola por área, despacho por ítem con FEFO                                                                         |
-| `chef`                 | `/cocina`          | KDS supervisor (jefe de cocina): vista combinada Cocina Caliente + Fría                                                            |
 | `sous_chef`            | `/cocina-amex`     | Cocina AMEX: cola exclusiva AMEX, trazabilidad completa por orden, timer visible, alertas de demora                                |
 | `mesero_amex`          | `/pedidos`         | Tomar pedidos (carta QR + extras pastelería/jefe turno), confirmar entrega                                                         |
 | `personal_almacen`     | `/almacen`         | Recepción lotes, alertas stock/vencimiento/precio, historial compras                                                               |
@@ -64,6 +63,13 @@ DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nat
 | `personal_snack`       | `/snack`           | UI dedicada zona Snack: pedidos por elaboración, descuento al entregar                                                             |
 | `personal_buffet`      | `/buffet`          | UI dedicada zona Buffet: pedidos por elaboración, descuento al entregar                                                            |
 | anónimo (QR)           | `/qr/[locale]`     | Menú digital self-service: fotos, ingredientes, pedir, sin login                                                                   |
+
+> El rol `chef` (jefe de cocina, `/cocina`, vista combinada caliente + fría) se
+> **deprecó en el refoco operacional** y esta tabla se quedó sin actualizar. No
+> existe en `permissions.ts`, ni en `ROLE_HOME`, ni en `rbac_permisos`, ni la
+> ruta `/cocina`; `reset-test-users.mjs` borra `chef@dorado.test` si reaparece.
+> Los 11 roles de arriba son el mapa completo: 10 con permisos en la matriz RBAC
+> más `superuser`, con exactamente un usuario cada uno.
 
 ---
 
