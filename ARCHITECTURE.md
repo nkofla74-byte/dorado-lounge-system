@@ -9,6 +9,23 @@
 
 ---
 
+> ## ⚠️ Estado de vigencia — leer antes de usar este documento
+>
+> Este es el **documento de diseño original (mayo 2025)**. El sistema pivotó en el
+> **refoco operacional de mayo–junio de 2026** (ADR al final del fichero) y volvió a cambiar en
+> la **remediación forense de agosto de 2026**. Buena parte del cuerpo describe decisiones que
+> se tomaron, no necesariamente el código que hoy existe.
+>
+> **Para el estado real y verificado del sistema: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)**
+> — auditoría del 2026-08-30 comprobada por ejecución (567 pruebas, build, las 80 migraciones
+> sobre un Postgres limpio y 12 suites de RLS), con el detalle en `docs/project-audit/`.
+>
+> Las secciones con divergencias **confirmadas** llevan una marca `⚠️ DESACTUALIZADO` en el
+> punto exacto. El resto del documento sigue siendo válido como registro de por qué se decidió
+> cada cosa; para saber **qué hay**, la autoridad es el código y, tras él, la auditoría.
+
+---
+
 ## Índice
 
 1. [Resumen ejecutivo](#1-resumen-ejecutivo)
@@ -197,7 +214,7 @@ flowchart TB
 
   subgraph DB["Datos"]
     PG[("PostgreSQL<br/>Supabase Pro")]
-    STORE[("Supabase Storage<br/>imágenes carta")]
+    STORE[("Supabase Storage<br/>imágenes carta · NO IMPLEMENTADO")]
   end
 
   subgraph Ext["Externos"]
@@ -1005,6 +1022,16 @@ GROUP BY m.tenant_id, m.turno_id;
 
 ## 10. Real-time engine — topología y contratos
 
+> ⚠️ **DESACTUALIZADO — §10 entera.** La topología y el `CHANNEL_ACL` que siguen no son los del
+> código. Diferencias confirmadas: los tres canales `sala:stuart:*` y `sala:broadcast:admin`
+> **no existen**; el rol `chef` se dividió en `chef_cocina_fria` / `chef_cocina_caliente`; hay
+> cuatro canales de cocina por área (`sala:cocina:fria`, `:caliente`, `:amex`, `:pasteleria`)
+> que este diagrama no contempla; y el `CHANNEL_ACL` real es
+> `Record<Channel, UserRole[]>`, sin el eje `read`/`write` que aquí se muestra.
+> **La fuente de verdad es `packages/shared-types/src/socket-events.ts`.**
+> Estado de conexión real de cada canal (7 de 11 conectados de extremo a extremo):
+> `docs/project-audit/12-api-and-services.md` §5.
+
 ### 10.1 Diagrama de canales
 
 ```mermaid
@@ -1110,7 +1137,12 @@ export const CHANNEL_ACL: Record<string, Partial<Record<Role, Permission[]>>> = 
 };
 ```
 
-**Regla de oro:** un usuario que intente unirse a un canal sin permiso es desconectado y registrado en `audit_log`. No es un warning; es un evento de seguridad.
+**Regla de oro:** un usuario que intente unirse a un canal sin permiso es desconectado. No es un warning; es un evento de seguridad.
+
+> ⚠️ **DESACTUALIZADO en un punto.** La desconexión sí ocurre, pero el registro **no va a
+> `audit_log`**: el socket-server no tiene acceso a la base. Lo registra en su logger
+> estructurado y lo eleva a Sentry como `channel_acl_violation`. Ver
+> `apps/socket-server/src/index.ts`.
 
 ### 10.3 Contratos de eventos (selección)
 
@@ -1224,7 +1256,12 @@ Cada evento operativo (Stock Out, dispatch, chat, broadcast) se persiste en Post
 - **2FA obligatorio** para `admin` y `superuser` vía TOTP (Supabase MFA).
 - Sesiones JWT con `aud='authenticated'`, refresh rotativo.
 - Custom claims (`tenant_id`, `role`) inyectadas con un trigger `on_auth_user_created` o vía `service_role` al crear el usuario.
-- QR pasajero: NO usa Supabase Auth. Usa una sesión anónima generada por el escaneo del QR (token JWT firmado por `JWT_PASSENGER_SECRET`, 4 h TTL, scope: `mesa:<id>`).
+- QR pasajero: NO usa Supabase Auth. Usa una sesión anónima generada por el escaneo del QR (token JWT firmado por `JWT_PASSENGER_SECRET`, scope: `mesa:<id>`).
+
+> ⚠️ **DESACTUALIZADO.** El TTL real es de **12 h**, no 4 h (`lib/qr/token.ts`,
+> `QR_TOKEN_TTL = '12h'`). Bajarlo a 4 h es una decisión de negocio pendiente, registrada como
+> F-028 en `docs/remediacion/REMEDIATION_TRACKER.md`. El **2FA obligatorio** para `admin` y
+> `superuser` que menciona la línea anterior **tampoco está implementado**.
 
 ### 11.3 Autorización en aplicación (RBAC)
 
@@ -1278,10 +1315,11 @@ CREATE POLICY tenant_isolation_modify ON insumos
 
 1. **Token firmado por mesa** generado al escanear (no por sesión, por mesa). Rotación cada 24 h.
 2. **Rate limit**: 5 pedidos por mesa cada 30 min, 1 pedido cada 60 s.
-3. **Captcha invisible** (Cloudflare Turnstile) en el primer pedido de cada sesión.
-4. **CORS**: el QR PWA está en el mismo dominio (`/qr/[locale]`) → no hay CORS lax que abusar.
-5. **CSP estricta** en `/qr/`: no inline scripts, no eval, solo orígenes propios.
-6. **No se almacenan datos personales** salvo locale e idempotency. El borrado a 90 días es automático.
+
+> ⚠️ **DESACTUALIZADO en dos cifras.** El token vive **12 h** y no hay mecanismo de rotación
+> automática: caduca y se regenera al escanear. El rate limit implementado es de **6 pedidos
+> cada 10 min** por `tenant:mesa:ip` (bucket `qrOrder` en `lib/rate-limit.ts`), _fail-closed_
+> en producción. Los puntos 3 a 5 sí describen el comportamiento real. 3. **Captcha invisible** (Cloudflare Turnstile) en el primer pedido de cada sesión. 4. **CORS**: el QR PWA está en el mismo dominio (`/qr/[locale]`) → no hay CORS lax que abusar. 5. **CSP estricta** en `/qr/`: no inline scripts, no eval, solo orígenes propios. 6. **No se almacenan datos personales** salvo locale e idempotency. El borrado a 90 días es automático.
 
 ### 11.6 Hardening de cabeceras (Next config)
 
@@ -1725,5 +1763,10 @@ FF_FLIGHTS_INTEGRATION_ENABLED=false
 **Consecuencias:** Codebase más pequeño (~9000 líneas eliminadas), menor superficie de bugs, KDS operacional desde el día 1. Analytics pierde `cogs_per_passenger` y `cash_outflow_per_passenger` hasta implementar afluencia en K2/K3.
 
 ---
+
+_v1.2 — 2026-08-30 · Banner de vigencia y marcas `⚠️ DESACTUALIZADO` en los puntos donde la
+auditoría exhaustiva demostró divergencia con el código: §4 (Storage), §10 (topología y ACL de
+canales, regla de `audit_log`), §11.2 (TTL del token QR, 2FA) y §11.5 (rotación y rate limit del
+QR). Estado real verificado: `docs/PROJECT_STATUS.md`_
 
 _v1.1 — Junio 2026 · Correcciones de drift post-refoco operacional (§ER, §Merma F3, ADR refoco)_

@@ -10,20 +10,20 @@ reproducible documentada.
 
 ## Críticos y altos
 
-| ID                                              | Causa raíz | Estado     | Verificación                                         | Riesgo residual                                                                                                                                |
-| ----------------------------------------------- | ---------- | ---------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| F-001 escalada por metadata de signup           | RC-1       | Verificado | U (4) + R (`f001_...`)                               | Ninguno en código. Se recomienda además deshabilitar el registro público en Supabase Auth: es defensa en profundidad, no un requisito del fix. |
-| F-002 bypass del Principio Rector vía PostgREST | RC-1       | Verificado | R (`f002_principio_rector`, `f002_sin_borrado_duro`) | Las políticas de **lectura** siguen siendo por tenant sin filtro de permiso (decisión consciente, ver ADR-004).                                |
-| F-003 sesión no revocada al desactivar          | RC-6       | Verificado | U (11 de `assertCan` + 3 de `toggleUser`)            | Una acción en vuelo puede completarse en la ventana entre la desactivación y su siguiente `assertCan`.                                         |
-| F-004 `turno_id` nunca escrito en el ledger     | RC-4       | Verificado | R (`f004_turno_en_ledger`)                           | Los movimientos históricos siguen con `turno_id` nulo: la analítica solo cubre desde el despliegue. Backfill opcional, ver MIGRATION_PLAN.     |
-| F-005 vistas materializadas nunca pobladas      | RC-3       | Verificado | R (`f005_analytics_refrescable`)                     | Ninguno.                                                                                                                                       |
-| F-006 RLS de producción con roles obsoletos     | RC-2       | Verificado | R (`f006_...`)                                       | Ninguno: la matriz se genera desde TypeScript y una prueba detecta la deriva.                                                                  |
-| F-007 pedidos QR sin área productiva            | RC-5       | Verificado | U (8)                                                | Los pedidos QR creados **antes** del fix siguen con área nula y bloqueados; requieren cancelación manual o backfill.                           |
-| F-008 entrega no atómica                        | RC-3       | Verificado | R (`f008_entrega_atomica`)                           | Ninguno.                                                                                                                                       |
-| F-009 transición de ítem no atómica             | RC-3       | Verificado | R (`f009_...`)                                       | Ninguno.                                                                                                                                       |
-| F-010 job de auditoría en rojo                  | —          | Verificado | CI (`pnpm audit --prod` exit 0)                      | 3 avisos restantes (1 low, 2 moderate) bajo el umbral del gate. Los de `undici` son dev-only vía jsdom.                                        |
-| F-011 heartbeat emitido por GitHub Actions      | —          | Verificado | M (workflow eliminado)                               | Hace falta configurar un monitor HTTP contra `/health` para detección rápida; es configuración de Better Stack, fuera del repositorio.         |
-| F-036 `WITH CHECK` sin predicado de rol         | RC-1       | Verificado | R (`f036_insert_exige_permiso`)                      | Ninguno.                                                                                                                                       |
+| ID                                              | Causa raíz | Estado                     | Verificación                                         | Riesgo residual                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------- | ---------- | -------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F-001 escalada por metadata de signup           | RC-1       | Verificado                 | U (4) + R (`f001_...`)                               | Ninguno en código. Se recomienda además deshabilitar el registro público en Supabase Auth: es defensa en profundidad, no un requisito del fix.                                                                                                                                                   |
+| F-002 bypass del Principio Rector vía PostgREST | RC-1       | Verificado                 | R (`f002_principio_rector`, `f002_sin_borrado_duro`) | Las políticas de **lectura** siguen siendo por tenant sin filtro de permiso (decisión consciente, ver ADR-004).                                                                                                                                                                                  |
+| F-003 sesión no revocada al desactivar          | RC-6       | Verificado                 | U (11 de `assertCan` + 3 de `toggleUser`)            | Una acción en vuelo puede completarse en la ventana entre la desactivación y su siguiente `assertCan`.                                                                                                                                                                                           |
+| F-004 `turno_id` nunca escrito en el ledger     | RC-4       | Verificado                 | R (`f004_turno_en_ledger`)                           | Los movimientos históricos siguen con `turno_id` nulo: la analítica solo cubre desde el despliegue. Backfill opcional, ver MIGRATION_PLAN.                                                                                                                                                       |
+| F-005 vistas materializadas nunca pobladas      | RC-3       | **Reabierto** (2026-08-30) | R (`f005_analytics_refrescable`) — **insuficiente**  | 🔴 **El cierre no se sostiene.** La vista se puebla, pero **no se puede leer**: `/analytics` devuelve `permission denied`. La prueba verifica que la vista _se refresque_, nunca que se pueda hacer `SELECT` como `authenticated`. Ver H-A/H-B/H-D en `docs/project-audit/20-technical-debt.md`. |
+| F-006 RLS de producción con roles obsoletos     | RC-2       | Verificado                 | R (`f006_...`)                                       | Ninguno: la matriz se genera desde TypeScript y una prueba detecta la deriva.                                                                                                                                                                                                                    |
+| F-007 pedidos QR sin área productiva            | RC-5       | Verificado                 | U (8)                                                | Los pedidos QR creados **antes** del fix siguen con área nula y bloqueados; requieren cancelación manual o backfill.                                                                                                                                                                             |
+| F-008 entrega no atómica                        | RC-3       | Verificado                 | R (`f008_entrega_atomica`)                           | Ninguno.                                                                                                                                                                                                                                                                                         |
+| F-009 transición de ítem no atómica             | RC-3       | Verificado                 | R (`f009_...`)                                       | Ninguno.                                                                                                                                                                                                                                                                                         |
+| F-010 job de auditoría en rojo                  | —          | Verificado                 | CI (`pnpm audit --prod` exit 0)                      | 3 avisos restantes (1 low, 2 moderate) bajo el umbral del gate. Los de `undici` son dev-only vía jsdom.                                                                                                                                                                                          |
+| F-011 heartbeat emitido por GitHub Actions      | —          | Verificado                 | M (workflow eliminado)                               | Hace falta configurar un monitor HTTP contra `/health` para detección rápida; es configuración de Better Stack, fuera del repositorio.                                                                                                                                                           |
+| F-036 `WITH CHECK` sin predicado de rol         | RC-1       | Verificado                 | R (`f036_insert_exige_permiso`)                      | Ninguno.                                                                                                                                                                                                                                                                                         |
 
 ## Medios
 
@@ -47,22 +47,37 @@ reproducible documentada.
 
 ## Bajos
 
-| ID                                                | Estado     | Nota                                                                   |
-| ------------------------------------------------- | ---------- | ---------------------------------------------------------------------- |
-| F-027 service_role key en socket-server           | Verificado | **Acción de despliegue: rotar la clave.**                              |
-| F-028 TTL del token QR (12 h vs 4 h documentadas) | Verificado | Se documentó el valor real; decidir si debe bajar a 4 h es de negocio. |
-| F-029 rutas públicas por prefijo                  | Verificado | U (12)                                                                 |
-| F-030 HS256 legacy siempre activo                 | Verificado | U (6)                                                                  |
-| F-031 `document.write` en impresión QR            | Verificado | Revisión; era self-XSS.                                                |
-| F-032 acción de CI sin anclar                     | Verificado | —                                                                      |
-| F-033 pre-commit incompleto                       | Verificado | Ahora ejecuta `typecheck`.                                             |
-| F-034 workflow residual con `contents: write`     | Verificado | Eliminado.                                                             |
-| F-035 roles obsoletos en políticas                | Verificado | Absorbido por la matriz RBAC.                                          |
+| ID                                                | Estado                                       | Nota                                                                                                                                                 |
+| ------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-027 service_role key en socket-server           | Verificado                                   | **Acción de despliegue: rotar la clave.**                                                                                                            |
+| F-028 TTL del token QR (12 h vs 4 h documentadas) | Verificado (cierre completado el 2026-08-30) | El cierre estaba a medias: `CLAUDE.md` y `ARCHITECTURE.md` seguían diciendo 4 h. Ya dicen 12 h. Decidir si debe bajar a 4 h sigue siendo de negocio. |
+| F-029 rutas públicas por prefijo                  | Verificado                                   | U (12)                                                                                                                                               |
+| F-030 HS256 legacy siempre activo                 | Verificado                                   | U (6)                                                                                                                                                |
+| F-031 `document.write` en impresión QR            | Verificado                                   | Revisión; era self-XSS.                                                                                                                              |
+| F-032 acción de CI sin anclar                     | Verificado                                   | —                                                                                                                                                    |
+| F-033 pre-commit incompleto                       | Verificado                                   | Ahora ejecuta `typecheck`.                                                                                                                           |
+| F-034 workflow residual con `contents: write`     | Verificado                                   | Eliminado.                                                                                                                                           |
+| F-035 roles obsoletos en políticas                | Verificado                                   | Absorbido por la matriz RBAC.                                                                                                                        |
 
 ## Resumen
 
-- **35 de 36 hallazgos cerrados.** F-026 queda abierto por requerir una decisión
-  de producto (ADR-005).
+> **Revisado el 2026-08-30 por la auditoría exhaustiva** (`docs/PROJECT_STATUS.md`), que
+> reejecutó todo lo que este tracker daba por verificado. Las cifras de abajo se corrigieron
+> con lo medido; F-005 se reabrió.
+
+- **34 de 36 hallazgos cerrados.** F-026 sigue abierto por requerir una decisión de producto
+  (ADR-005) y **F-005 se reabrió**: la prueba que lo cerraba cubría el refresco de la vista
+  materializada, no su lectura, y la lectura está rota.
 - **8 migraciones** nuevas, todas idempotentes y con rollback documentado.
-- **Pruebas**: 507 automáticas (394 web, 45 validación, 44 tipos, 24 socket) más
-  11 suites de RLS/RPC contra Postgres real. Antes de la remediación: 354 y 0.
+- **Pruebas**: **567** automáticas (452 web, 47 validación, 44 tipos, 24 socket) más **12**
+  suites de RLS/RPC contra Postgres real. Antes de la remediación: 354 y 0.
+  _(Este tracker declaraba 507 y 11; la diferencia es trabajo posterior a su redacción, no un
+  error de entonces.)_
+
+## Lección para el próximo cierre
+
+F-005 pasó por «Verificado · riesgo residual: Ninguno» con una prueba en verde. La prueba era
+correcta y el hallazgo seguía vivo, porque **verificaba el camino de escritura y el defecto
+estaba en el de lectura**. Al cerrar un hallazgo, la pregunta no es «¿pasa la prueba?» sino
+**«¿prueba lo que el usuario hace?»**. Los cinco defectos que encontró la auditoría de agosto
+caen, sin excepción, fuera del alcance de cobertura configurado.

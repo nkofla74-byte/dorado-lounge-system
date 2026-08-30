@@ -1,5 +1,40 @@
 # Estado y próximos pasos
 
+> ## 📍 Actualización del 2026-08-30 — empieza por aquí
+>
+> Se ejecutó una **auditoría exhaustiva del repositorio**, verificada por ejecución y no por
+> lectura de esta documentación. Su resultado es ahora el estado autoritativo del proyecto:
+>
+> **→ [`docs/PROJECT_STATUS.md`](../PROJECT_STATUS.md)** · detalle en `docs/project-audit/` (24 documentos)
+>
+> **Lo bueno, medido:** las 80 migraciones aplican sobre un Postgres limpio sin un error, las
+> 12 suites de RLS pasan, 567 pruebas en verde, typecheck y lint limpios, el build genera las
+> 29 rutas y el guardia de sesión funciona en ejecución. Las cuatro consultas de verificación
+> que propone este mismo documento (§Cómo retomar) se ejecutaron y **las cuatro coinciden**.
+>
+> **Lo que no:** cinco defectos funcionales abiertos, ninguno de seguridad.
+>
+> | ID  | Qué pasa                                                                                                                                   |
+> | --- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+> | H-A | 🔴 `/analytics` devuelve `permission denied` a cualquier rol. `security_invoker=true` sobre una MV cuyo `SELECT` la misma migración revocó |
+> | H-B | 🔴 La analítica del superuser devuelve siempre cero filas (`service_role` sin `tenant_id`)                                                 |
+> | H-C | 🟠 `AlertasBell` escucha eventos `ALERTA` sin unirse a ningún canal: no llegan en tiempo real                                              |
+> | H-D | 🟠 La vista materializada de analítica no tiene refresco en `pg_cron`                                                                      |
+> | H-E | 🟠 El alta de pedidos por QR emite a un solo canal: no despierta AMEX ni pastelería                                                        |
+>
+> **F-005 se reabrió** en `REMEDIATION_TRACKER.md`: su prueba cubría el refresco de la vista,
+> no su lectura.
+>
+> **Ruta más corta:** prueba en rojo → recrear la vista sin `security_invoker` → `cron.schedule`
+> del refresco → camino del superuser → `join` en la campana → canales del QR. Seis cambios,
+> ninguno por encima de complejidad «S». Detalle con criterios de aceptación en
+> `docs/project-audit/21-roadmap.md` §Fase 1.
+>
+> Lo que sigue debajo es el punto de retomada del 2026-08-25 y **conserva su valor**: explica
+> cómo se llegó aquí. Nada de lo que afirma quedó desmentido, salvo el cierre de F-005.
+
+---
+
 Punto de retomada. Última actualización: **2026-08-25**, después de fusionar
 PR #29. Ese día tuvo dos mitades: la madrugada (despliegue de PR #28) y la
 mañana (caída del login y su cierre). Si lees esto buscando el estado actual,

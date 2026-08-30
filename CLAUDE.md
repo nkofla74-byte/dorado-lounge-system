@@ -31,13 +31,17 @@ DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nat
 | -------------- | --------------------------------------------------------- |
 | Framework      | Next.js 15 App Router · TypeScript strict                 |
 | UI             | React · Tailwind CSS · shadcn/ui                          |
-| DB / Auth      | Supabase (PostgreSQL 15 + Auth + Storage)                 |
+| DB / Auth      | Supabase (PostgreSQL 15 + Auth) — Storage aún sin usar¹   |
 | Real-time      | Socket.io en Node.js independiente (Render.com Starter)   |
 | Validación     | Zod + React Hook Form                                     |
 | i18n           | next-intl — dashboards: es/en · QR pasajeros: es/en/fr/pt |
 | Testing        | Vitest (unit/integration) · Playwright (E2E)              |
 | Observabilidad | Sentry · Axiom · Better Stack                             |
 | Deploy         | Vercel (web) · Render.com Starter (socket)                |
+
+¹ No hay ninguna llamada a `supabase.storage` en el repositorio. Las imágenes de plato son
+URLs de texto en `recetas.imagen_url`, capturadas a mano. La subida de imágenes es trabajo
+pendiente (`docs/project-audit/19-pending-features.md` A-7).
 
 ---
 
@@ -55,7 +59,6 @@ DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nat
 | `admin`                | `/inventario`      | Panel completo: almacén, recetas, costos, KDS monitor, producción, pedidos, analíticos, proveedores, alertas, trazabilidad, turnos |
 | `chef_cocina_caliente` | `/cocina-caliente` | KDS Cocina Caliente: cola por área, despacho por ítem con FEFO                                                                     |
 | `chef_cocina_fria`     | `/cocina-fria`     | KDS Cocina Fría: cola por área, despacho por ítem con FEFO                                                                         |
-| `chef`                 | `/cocina`          | KDS supervisor (jefe de cocina): vista combinada Cocina Caliente + Fría                                                            |
 | `sous_chef`            | `/cocina-amex`     | Cocina AMEX: cola exclusiva AMEX, trazabilidad completa por orden, timer visible, alertas de demora                                |
 | `mesero_amex`          | `/pedidos`         | Tomar pedidos (carta QR + extras pastelería/jefe turno), confirmar entrega                                                         |
 | `personal_almacen`     | `/almacen`         | Recepción lotes, alertas stock/vencimiento/precio, historial compras                                                               |
@@ -64,6 +67,13 @@ DB: migraciones en `supabase/migrations/*.sql`. Las aplica la **integración nat
 | `personal_snack`       | `/snack`           | UI dedicada zona Snack: pedidos por elaboración, descuento al entregar                                                             |
 | `personal_buffet`      | `/buffet`          | UI dedicada zona Buffet: pedidos por elaboración, descuento al entregar                                                            |
 | anónimo (QR)           | `/qr/[locale]`     | Menú digital self-service: fotos, ingredientes, pedir, sin login                                                                   |
+
+> **Roles inertes.** `chef` (jefe de cocina transversal) y `recepcion` quedaron deprecados en el
+> refoco operacional: siguen en el ENUM SQL `user_role` por datos históricos —Postgres no
+> permite eliminar un valor— pero **no son asignables ni navegables**, y la ruta `/cocina` que
+> tenía `chef` **no existe**. La fuente de verdad de los roles vivos es
+> `packages/shared-types/src/enums.ts`. Si hace falta una vista combinada Caliente + Fría para
+> un supervisor, es funcionalidad **pendiente**, no existente (ver `docs/project-audit/19-pending-features.md` M-7).
 
 ---
 
@@ -162,7 +172,10 @@ Idempotente por `idempotency_key`. Obligatoria en: Stock Out, despacho, tickets.
 
 **Tablas existentes:**
 
-`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `requisiciones` · `requisicion_items` · `requisicion_eventos` (log append-only) · `domain_events` · `audit_log` · `operaciones_idempotentes` · `tenant_codigo_counters` (contadores SKU/lote por tenant, solo RPC)
+`tenants` · `users` · `insumos` · `lotes` (con `proveedor_id` FK, `costo_unitario numeric(14,4)`) · `recetas` · `receta_ingredientes` · `tandas_produccion` · `despachos` · `movimientos_inventario` · `pedidos` · `pedido_items` (con `estado`, `area_produccion`, timestamps/actores) · `pedido_eventos` · `pedido_item_eventos` (log append-only por ítem) · `mermas` · `turnos` (con `teamlider`) · `proveedores` · `alertas` · `requisiciones` · `requisicion_items` · `requisicion_eventos` (log append-only) · `domain_events` · `audit_log` · `operaciones_idempotentes` · `tenant_codigo_counters` (contadores SKU/lote por tenant, solo RPC) · `rbac_permisos` (matriz generada, 144 filas, solo RPC)
+
+Son **25 tablas**. Las tres marcadas «solo RPC» tienen RLS habilitada y **cero políticas**: son
+inaccesibles salvo desde funciones `SECURITY DEFINER`. Es intencional.
 
 > `costos` no es tabla — es la RPC `fn_costo_receta(p_tenant_id, p_receta_id)` que calcula en tiempo real desde `lotes` (FEFO-next por costo). Validación de tenant vía `auth.jwt() -> 'app_metadata' ->> 'tenant_id'` (migración 0004).
 
@@ -204,7 +217,11 @@ COCINA_FRIA COCINA_CALIENTE COCINA_AMEX PASTELERÍA  ← nodos de producción
 
 Eventos clave (literales `type` en `socket-events.ts`): `PEDIDO_CREADO`, `PEDIDO_ESTADO`, `PEDIDO_COCINERO`, `ITEM_ESTADO`, `ALERTA`, `REQUISICION_ESTADO`, `TURNO_EVENTO`.
 
-Canal sin permiso → desconexión inmediata + `audit_log` (evento de seguridad, no warning).
+Canal sin permiso → desconexión inmediata. Se trata como evento de seguridad, no como warning:
+el socket-server lo registra en su logger estructurado y lo eleva a Sentry
+(`Sentry.captureMessage('channel_acl_violation', { level: 'warning' })`). **No** escribe en
+`audit_log` — el socket-server no tiene acceso a la base. Llevarlo a `audit_log` es trabajo
+pendiente, no comportamiento actual.
 
 **Persistencia primero, broadcast después.** Si Socket.io falla, el evento queda en DB para reconciliación.
 
@@ -213,7 +230,8 @@ Canal sin permiso → desconexión inmediata + `audit_log` (evento de seguridad,
 ## Turnos y Sesión
 
 - Cada sesión de usuario = una entrada en `turnos`.
-- Campos requeridos: `usuario`, `rol`, `teamlider`, `login_time`, `logout_time`.
+- Columnas reales de `turnos`: `responsable_id` (FK a `users`, de donde salen usuario y rol),
+  `teamlider` (`NOT NULL`, sin default), `bloque`, `iniciado_at`, `cerrado_at`, `cierre_motivo`.
 - Toda producción, pedido y movimiento de inventario está vinculado al turno activo.
 - Admin puede filtrar cualquier reporte por turno, responsable, nodo, período.
 - `teamlider` es un campo obligatorio al abrir turno — no tiene valor por defecto.
@@ -261,7 +279,7 @@ SUPABASE_SERVICE_ROLE_KEY=          # solo lib/supabase/admin.ts — nunca NEXT_
 NEXT_PUBLIC_SOCKET_URL=
 
 # Auth QR
-JWT_PASSENGER_SECRET=               # tokens QR anónimos de mesa (4h TTL)
+JWT_PASSENGER_SECRET=               # tokens QR anónimos de mesa (12h TTL — ver lib/qr/token.ts)
 
 # Observabilidad
 SENTRY_DSN=
@@ -283,7 +301,19 @@ UPSTASH_REDIS_REST_TOKEN=
 
 ## Analytics — KPIs operacionales
 
-Métricas de consumo por turno, nodo y responsable. Solo lectura via `fn_costo_receta` y vistas del módulo `analytics`. Filtros obligatorios: turno, nodo, responsable, período.
+Solo lectura vía `fn_costo_receta` y las vistas del módulo `analytics`. Nunca escribe.
+
+**Estado real (auditoría 2026-08-30):** la vista materializada `mv_consumo_vs_produccion_turno`
+tiene dimensiones **turno × insumo**, y los filtros implementados son **turno, desde y hasta**.
+Las dimensiones **nodo** y **responsable** no existen todavía: añadirlas exige rehacer la vista,
+no solo la UI (pendiente A-5).
+
+> ⚫ **La pantalla `/analytics` no funciona hoy.** La vista se creó `WITH (security_invoker = true)`
+> y la misma migración revocó a `authenticated` el `SELECT` sobre la vista materializada de la
+> que depende, así que devuelve `permission denied`; el camino cross-tenant del superuser
+> devuelve cero filas; y no hay refresco programado en `pg_cron`.
+> Diagnóstico reproducido con SQL y corrección propuesta en
+> `docs/project-audit/20-technical-debt.md` (H-A, H-B, H-D).
 
 ---
 
@@ -294,8 +324,12 @@ Métricas de consumo por turno, nodo y responsable. Solo lectura via `fn_costo_r
 3. **Módulo nuevo:** hexagonal estricto — `domain → application → infrastructure → actions.ts`.
 4. **Canal Socket.io nuevo:** verificar topología y actualizar `CHANNEL_ACL` en shared-types.
 5. **Tabla nueva:** verificar lista de módulos y ER en `ARCHITECTURE.md §8`.
-6. **Idempotencia offline:** Stock Out, despacho y tickets requieren `idempotency_key` siempre.
-7. **UI strings:** nunca hardcoded — siempre vía next-intl.
+6. **Idempotencia:** Stock Out, merma, despacho y tandas requieren `idempotency_key` siempre —
+   está enforzado con `UNIQUE` en base. Ojo: la **cola offline** hoy solo existe para el QR del
+   pasajero; el personal no puede operar sin red (pendiente M-1).
+7. **UI strings:** nunca hardcoded — siempre vía next-intl. Paridad `es`/`en` verificada: 989
+   claves cada uno. Única infracción viva: `components/qr/offline-banner.tsx` lleva un objeto
+   `TEXTS` con los 4 idiomas a mano (pendiente B-5); no imitarlo.
 8. **Teamlider:** campo obligatorio al abrir turno; vinculado a todos los registros del turno.
 9. **Permiso nuevo o cambio de rol:** editar `lib/auth/permissions.ts` y ejecutar `pnpm rbac:generate`. Nunca tocar el bloque generado de `20260822000002_rbac_matriz.sql` a mano.
 10. **Escritura de pedidos:** siempre vía RPC. Añadir un `UPDATE` directo sobre `pedidos` desde la app fallará por privilegios.
@@ -323,11 +357,25 @@ instalación en `docs/skills/`.
 
 ## Auditoría y remediación
 
+**`docs/PROJECT_STATUS.md` es el estado actual del proyecto.** Auditoría exhaustiva del
+2026-08-30 verificada por ejecución —no por lectura de documentación—: 567 pruebas, build,
+las 80 migraciones sobre un Postgres limpio y las 12 suites de RLS. Su detalle vive en
+`docs/project-audit/` (24 documentos); la evidencia reproducible, en `23-evidence-index.md`;
+la deuda priorizada, en `20-technical-debt.md`.
+
+**Cinco defectos funcionales abiertos** (ninguno de seguridad): `/analytics` devuelve
+`permission denied` (H-A) y cero filas para el superuser (H-B); la vista materializada no
+tiene refresco programado (H-D); `AlertasBell` escucha eventos sin unirse a ningún canal, así
+que el tiempo real de alertas no llega (H-C); y el alta de pedidos por QR emite a un solo
+canal (H-E). **Léelos antes de tocar analytics, alertas o el QR.**
+
 `docs/remediacion/` — informe de la auditoría forense 2026-08-22 y su remediación:
 roadmap, tracker por hallazgo, cambios de seguridad (incluye **acciones de
 configuración pendientes fuera del repositorio**), planes de migración, pruebas y
 rollback, y los ADR. Empezar por `REMEDIATION_TRACKER.md`.
 
 ---
+
+_v6.2 — 2026-08-30 · Alineado con el código tras la auditoría exhaustiva: rol `chef` y ruta `/cocina` retirados de la tabla de UIs, TTL real del token QR, alcance real de analytics, Storage sin usar, columnas reales de `turnos`, `rbac_permisos` en la lista de tablas. Estado del proyecto: `docs/PROJECT_STATUS.md`_
 
 _v6.1 — Agosto 2026 · Remediación forense: autorización en base, escritura de pedidos por RPC, matriz RBAC generada_

@@ -30,3 +30,14 @@ Next.js 15 (App Router) | Supabase (Postgres + Auth + Storage) | Socket.io | Tai
 Monorepo con pnpm workspaces. Módulos hexagonales (`domain -> application -> infrastructure -> actions.ts`). Multi-tenant con RLS en Postgres. Inventario FEFO atómico vía RPC. Optimistic locking en pedidos. Estado por ítem en KDS con log append-only.
 
 Detalles en `CLAUDE.md` y `ARCHITECTURE.md`.
+
+## Estado del proyecto
+
+**[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)** — auditoría exhaustiva del 2026-08-30,
+verificada por ejecución: 567 pruebas en verde, las 80 migraciones aplican sobre un Postgres
+limpio, 12 suites de RLS pasan, el build genera 29 rutas.
+
+Núcleo operativo terminado; **cinco defectos funcionales abiertos**, ninguno de seguridad, los
+dos primeros críticos: `/analytics` no puede leer sus datos y las alertas no llegan en tiempo
+real. Detalle en `docs/project-audit/` (24 documentos), incluida una versión sin tecnicismos
+para el cliente en `22-client-presentation.md`.
