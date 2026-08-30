@@ -4,3 +4,6 @@ dist
 build
 pnpm-lock.yaml
 *.tsbuildinfo
+
+# Entregable al cliente: HTML autónomo generado, con su propio formato.
+docs/INFORME-CLIENTE.html

@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Estado del sistema de gestión del Dorado Lounge: qué existe, qué está a medias y qué falta. Verificado ejecutando el software.">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}</style>
+<title>Auditoría Dorado Lounge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  :root {
+    --papel:      #FAF8F3;
+    --papel-2:    #F2EEE4;
+    --tinta:      #0D1220;
+    --tinta-sueve: #2A3040;
+    --neutro:     #6E6759;
+    --linea:      #DFD8C8;
+    --linea-sutil:#EAE4D7;
+    --oro:        #B07C0A;
+    --oro-filete: #DFA019;
+
+    --ok:         #17805C;
+    --ok-tinte:   #E4F2EC;
+    --medias:     #1A56C4;
+    --medias-tinte:#E4EAF8;
+    --roto:       #C90B37;
+    --roto-tinte: #FAE4EA;
+    --falta:      #6E6759;
+    --falta-tinte:#EDE9DF;
+
+    --bg:         var(--papel);
+    --bg-2:       var(--papel-2);
+    --texto:      var(--tinta);
+    --texto-2:    var(--neutro);
+    --borde:      var(--linea);
+    --borde-2:    var(--linea-sutil);
+    --acento:     var(--oro);
+    --filete:     var(--oro-filete);
+
+    --ancho:      74ch;
+    --ancho-full: 1080px;
+
+    --paso-0: 0.78rem;
+    --paso-1: 0.92rem;
+    --paso-2: 1.0625rem;
+    --paso-3: 1.35rem;
+    --paso-4: 1.85rem;
+    --paso-5: 2.6rem;
+    --paso-6: 3.6rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #0D1220;
+      --bg-2:    #151B2B;
+      --texto:   #F4F1E8;
+      --texto-2: #A29B8C;
+      --borde:   #2A3142;
+      --borde-2: #1E2534;
+      --acento:  #F0BC4E;
+      --filete:  #C08A18;
+
+      --ok:          #4FD3A0;
+      --ok-tinte:    #10291F;
+      --medias:      #7BA8F5;
+      --medias-tinte:#111A2E;
+      --roto:        #FF6E8E;
+      --roto-tinte:  #2C1119;
+      --falta:       #A29B8C;
+      --falta-tinte: #1C2130;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:      #0D1220;
+    --bg-2:    #151B2B;
+    --texto:   #F4F1E8;
+    --texto-2: #A29B8C;
+    --borde:   #2A3142;
+    --borde-2: #1E2534;
+    --acento:  #F0BC4E;
+    --filete:  #C08A18;
+
+    --ok:          #4FD3A0;
+    --ok-tinte:    #10291F;
+    --medias:      #7BA8F5;
+    --medias-tinte:#111A2E;
+    --roto:        #FF6E8E;
+    --roto-tinte:  #2C1119;
+    --falta:       #A29B8C;
+    --falta-tinte: #1C2130;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--texto);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: var(--paso-2);
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .lienzo {
+    max-width: var(--ancho-full);
+    margin: 0 auto;
+    padding: 0 clamp(1.1rem, 4vw, 3rem) 6rem;
+  }
+
+  .col { max-width: var(--ancho); }
+
+  h1, h2, h3, .rotulo, .cifra, .chip, th, .nota-lat {
+    font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 6vw, var(--paso-6));
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.6vw, var(--paso-4));
+    font-weight: 650;
+    line-height: 1.16;
+    letter-spacing: -0.014em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: var(--paso-3);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.008em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  p { margin: 0; }
+  strong { font-weight: 600; }
+
+  .rotulo {
+    font-size: var(--paso-0);
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--acento);
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Cabecera ─────────────────────────────────────────── */
+  .masthead {
+    border-top: 5px solid var(--filete);
+    padding-top: 2.4rem;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.6rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: var(--paso-0);
+    color: var(--texto-2);
+    letter-spacing: 0.02em;
+  }
+  .masthead-meta b { color: var(--texto); font-weight: 500; }
+
+  .bajada {
+    font-size: clamp(1.1rem, 2.4vw, 1.32rem);
+    line-height: 1.5;
+    color: var(--texto-2);
+    max-width: 62ch;
+  }
+
+  /* ── Secciones ────────────────────────────────────────── */
+  section { margin-top: 4.6rem; }
+  .bloque { display: flex; flex-direction: column; gap: 1.15rem; }
+  .bloque-ancho { display: flex; flex-direction: column; gap: 1.15rem; }
+
+  .sec-cabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--borde);
+    margin-bottom: 1.6rem;
+  }
+
+  /* ── Veredicto ────────────────────────────────────────── */
+  .veredicto {
+    background: var(--bg-2);
+    border: 1px solid var(--borde);
+    border-left: 5px solid var(--filete);
+    padding: clamp(1.4rem, 3vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .veredicto p { max-width: 66ch; }
+  .veredicto .titular {
+    font-family: Archivo, sans-serif;
+    font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+    font-weight: 650;
+    line-height: 1.28;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  /* ── Estados ──────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem 0.2rem 0.45rem;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .chip::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: none;
+  }
+  .chip-ok     { color: var(--ok);     border-color: color-mix(in srgb, var(--ok) 40%, transparent);     background: var(--ok-tinte); }
+  .chip-ok::before     { background: var(--ok); border-radius: 50%; }
+  .chip-medias { color: var(--medias); border-color: color-mix(in srgb, var(--medias) 40%, transparent); background: var(--medias-tinte); }
+  .chip-medias::before { background: var(--medias); border-radius: 50%; clip-path: inset(0 50% 0 0); }
+  .chip-roto   { color: var(--roto);   border-color: color-mix(in srgb, var(--roto) 45%, transparent);   background: var(--roto-tinte); }
+  .chip-roto::before   { background: var(--roto); transform: rotate(45deg); }
+  .chip-falta  { color: var(--falta);  border-color: color-mix(in srgb, var(--falta) 40%, transparent);  background: var(--falta-tinte); }
+  .chip-falta::before  { border: 1.5px solid var(--falta); border-radius: 50%; }
+
+  /* Columnas explícitas, no auto-fit: 4 y 6 tarjetas deben dividir exacto en
+     cada tramo o la rejilla deja una celda huérfana y el fondo de las líneas
+     se ve como un bloque vacío. */
+  .leyenda {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--borde);
+    border: 1px solid var(--borde);
+  }
+  @media (max-width: 900px) { .leyenda { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 460px) { .leyenda { grid-template-columns: 1fr; } }
+  .leyenda > div {
+    background: var(--bg);
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .leyenda p { font-size: var(--paso-1); color: var(--texto-2); line-height: 1.45; }
+
+  /* ── Tablas ───────────────────────────────────────────── */
+  .tabla-caja { overflow-x: auto; border: 1px solid var(--borde); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; }
+  th {
+    text-align: left;
+    font-size: var(--paso-0);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-2);
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--borde);
+    background: var(--bg-2);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--borde-2);
+    font-size: var(--paso-1);
+    line-height: 1.5;
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.modulo { font-family: Archivo, sans-serif; font-weight: 600; white-space: nowrap; }
+  td.estado { white-space: nowrap; width: 1%; }
+
+  /* ── Evidencia ────────────────────────────────────────── */
+  .evidencia {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--borde);
+    border: 1px solid var(--borde);
+  }
+  @media (max-width: 780px) { .evidencia { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 440px) { .evidencia { grid-template-columns: 1fr; } }
+  .evidencia > div {
+    background: var(--bg);
+    padding: 1.15rem 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .cifra {
+    font-size: clamp(1.7rem, 4vw, 2.15rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ok);
+  }
+  .cifra-neutra { color: var(--texto); }
+  .evidencia .qué {
+    font-family: Archivo, sans-serif;
+    font-size: var(--paso-1);
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .evidencia .cómo {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--texto-2);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Defectos ─────────────────────────────────────────── */
+  .defecto {
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--roto);
+    background: var(--bg-2);
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .defecto.alto { border-left-color: var(--medias); }
+  .defecto-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.85rem;
+  }
+  .defecto-cabeza h3 { font-size: 1.1rem; }
+  .defecto p { font-size: var(--paso-1); max-width: 70ch; }
+  .arreglo {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--texto-2);
+    border-top: 1px dashed var(--borde);
+    padding-top: 0.7rem;
+    letter-spacing: 0.01em;
+  }
+  .arreglo b { color: var(--ok); font-weight: 600; }
+
+  .pila { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ── Listas ───────────────────────────────────────────── */
+  ul.limpia { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+  ul.limpia > li {
+    padding-left: 1.35rem;
+    position: relative;
+    font-size: var(--paso-1);
+    line-height: 1.55;
+  }
+  ul.limpia > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 0.45rem;
+    height: 1px;
+    background: var(--filete);
+  }
+
+  .prioridad {
+    display: grid;
+    gap: 1px;
+    background: var(--borde);
+    border: 1px solid var(--borde);
+  }
+  .prioridad > div { background: var(--bg); padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.65rem; }
+  .prioridad h3 { font-size: 1.02rem; }
+  .prioridad ul.limpia > li { font-size: var(--paso-1); }
+  .prio-etiqueta {
+    font-family: Archivo, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .p1 { color: var(--roto); }
+  .p2 { color: var(--medias); }
+  .p3 { color: var(--texto-2); }
+
+  /* ── Nota metodológica ────────────────────────────────── */
+  .nota {
+    border: 1px solid var(--borde);
+    background: var(--bg-2);
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .nota p { font-size: var(--paso-1); color: var(--texto-2); max-width: 70ch; }
+  .nota strong { color: var(--texto); }
+
+  .pie {
+    margin-top: 5rem;
+    padding-top: 1.5rem;
+    border-top: 3px solid var(--filete);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: var(--paso-0);
+    color: var(--texto-2);
+    line-height: 1.7;
+  }
+
+  a { color: var(--acento); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 620px) {
+    .veredicto { border-left-width: 4px; }
+    section { margin-top: 3.4rem; }
+  }
+
+  @media print {
+    :root {
+      --bg: #fff; --bg-2: #F7F5F0; --texto: #000; --texto-2: #444;
+      --borde: #BBB; --borde-2: #DDD;
+    }
+    body { font-size: 10.5pt; }
+    .lienzo { max-width: none; padding: 0; }
+    section { margin-top: 2rem; break-inside: avoid-page; }
+    .defecto, .nota, .veredicto, .leyenda, .evidencia, .tabla-caja { break-inside: avoid; }
+    h2 { break-after: avoid; }
+    .pie { break-before: avoid; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lienzo">
+
+  <header class="masthead">
+    <div class="col bloque">
+      <p class="rotulo">Informe de estado · Dorado Lounge System</p>
+      <h1>Qué hay construido, qué falta y qué no funciona</h1>
+      <p class="bajada">
+        Revisión completa del sistema de gestión de la sala VIP. Cada afirmación de este
+        informe se comprobó ejecutando el software, no leyendo su documentación.
+      </p>
+    </div>
+    <div class="masthead-meta">
+      <span>Cliente <b>GISAT S.A. · Dorado Lounge, El Dorado</b></span>
+      <span>Fecha <b>30 de agosto de 2026</b></span>
+      <span>Alcance <b>Repositorio completo</b></span>
+    </div>
+  </header>
+
+  <!-- ── VEREDICTO ────────────────────────────────────── -->
+  <section>
+    <div class="veredicto">
+      <p class="titular">
+        El sistema que opera la sala está terminado y funciona. Los informes de
+        analítica no, y las alertas no avisan solas.
+      </p>
+      <p>
+        Todo el circuito que sostiene el día a día está construido y probado: la mercancía
+        entra por bodega con su merma y su vencimiento, las recetas calculan su coste, la
+        cocina despacha desde cuatro pantallas, el mesero entrega y el inventario se
+        descuenta solo. Un pasajero puede pedir desde el QR de su mesa en cuatro idiomas.
+      </p>
+      <p>
+        Se encontraron <strong>cinco defectos</strong>. Ninguno es un problema de seguridad
+        ni de datos: son piezas que quedaron sin conectar entre sí. El más grave deja la
+        pantalla de informes inutilizable, y su corrección es de una línea.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── CÓMO SE COMPROBÓ ─────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">La base de este informe</p>
+      <h2>Cómo se comprobó</h2>
+      <p style="color: var(--texto-2); font-size: var(--paso-1);">
+        Un informe que solo lee documentación repite sus errores. Este se hizo al revés:
+        se instaló el sistema, se ejecutó y se midió.
+      </p>
+    </div>
+    <div class="evidencia">
+      <div>
+        <span class="cifra">567</span>
+        <span class="qué">pruebas automáticas</span>
+        <span class="cómo">todas en verde · 56 ficheros</span>
+      </div>
+      <div>
+        <span class="cifra">80</span>
+        <span class="qué">actualizaciones de base de datos</span>
+        <span class="cómo">aplicadas sobre una base limpia · 0 errores</span>
+      </div>
+      <div>
+        <span class="cifra">12</span>
+        <span class="qué">pruebas de seguridad de datos</span>
+        <span class="cómo">contra una base real · 12 de 12</span>
+      </div>
+      <div>
+        <span class="cifra">29</span>
+        <span class="qué">pantallas y servicios generados</span>
+        <span class="cómo">compilación de producción · sin fallos</span>
+      </div>
+      <div>
+        <span class="cifra cifra-neutra">338</span>
+        <span class="qué">ficheros de código revisados</span>
+        <span class="cómo">28.156 líneas de programa</span>
+      </div>
+      <div>
+        <span class="cifra cifra-neutra">25</span>
+        <span class="qué">tablas de datos auditadas</span>
+        <span class="cómo">48 reglas de acceso verificadas</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LEYENDA ──────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Cómo leer este informe</p>
+      <h2>Cuatro estados, sin medias tintas</h2>
+    </div>
+    <div class="leyenda">
+      <div>
+        <span class="chip chip-ok">Terminado</span>
+        <p>Existe, funciona de principio a fin y se puede demostrar.</p>
+      </div>
+      <div>
+        <span class="chip chip-medias">A medias</span>
+        <p>Las piezas existen y funcionan por separado, pero falta conectar una.</p>
+      </div>
+      <div>
+        <span class="chip chip-roto">No funciona</span>
+        <p>Está entregado y da error al usarlo.</p>
+      </div>
+      <div>
+        <span class="chip chip-falta">Falta</span>
+        <p>No existe todavía. No es un fallo: es trabajo pendiente.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── QUÉ ES ───────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">El producto</p>
+      <h2>Qué es este software</h2>
+    </div>
+    <div class="col bloque">
+      <p>
+        Es el sistema que gestiona la sala VIP de principio a fin: desde que la mercancía
+        entra por la bodega hasta que el plato llega al pasajero. Está pensado para
+        funcionar 24 horas al día, con turnos rotativos, sobre tabletas que el personal
+        maneja con guantes.
+      </p>
+      <p>
+        Responde con exactitud a tres preguntas que sin sistema se responden a ojo:
+        <strong>qué tengo</strong> en inventario y con qué vencimiento,
+        <strong>qué gasté</strong> realmente en cada plato, y
+        <strong>quién hizo qué y cuándo</strong>.
+      </p>
+      <h3 style="margin-top: 1rem;">La regla que gobierna todo</h3>
+      <p>
+        <strong>Nada sale de cocina sin receta.</strong> Ningún gramo de producto puede salir
+        del inventario si no está justificado por una receta. No hay atajos, ni siquiera para
+        un administrador: la regla está grabada en la base de datos, no en el programa, y
+        existe una prueba automática que verifica que sigue siendo imposible saltársela.
+        Esa prueba se ejecutó en esta revisión y pasa.
+      </p>
+      <p>
+        La merma —lo que se pierde al limpiar, pelar o cortar— se descuenta una sola vez, al
+        recibir la mercancía. A partir de ahí, el inventario refleja siempre lo que realmente
+        se puede cocinar.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── MÓDULOS ──────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">El inventario completo</p>
+      <h2>Los catorce módulos, uno a uno</h2>
+    </div>
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr><th>Módulo</th><th>Qué hace</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="modulo">Bodega</td><td>Recepción de lotes con proveedor, precio y vencimiento; control de stock mínimo</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Recetario</td><td>Recetas de producción interna y de servicio, con sus ingredientes</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Costos</td><td>Coste real de cada plato, calculado al momento con el precio de los lotes usados</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Producción</td><td>Tandas de elaboración: lo que la cocina prepara para tener listo</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Pedidos</td><td>Toma de pedidos desde tres zonas: AMEX, Snack y Buffet</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Cocina</td><td>Cuatro pantallas independientes: cocina caliente, cocina fría, pastelería y AMEX</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Requisiciones</td><td>La cocina pide insumos al almacén y el almacén los despacha</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Turnos</td><td>Apertura y cierre con jefe de turno obligatorio; cierre automático</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Carta QR</td><td>Menú digital para el pasajero, sin instalar nada, en cuatro idiomas</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Proveedores</td><td>Ficha de proveedor e historial de compras</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Trazabilidad</td><td>Historial completo de cada pedido: quién, cuándo, qué</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Administración</td><td>Alta de personal, roles y gestión de salas</td><td class="estado"><span class="chip chip-ok">Terminado</span></td></tr>
+          <tr><td class="modulo">Alertas</td><td>Avisos de stock bajo, vencimiento, cambio de precio y demora</td><td class="estado"><span class="chip chip-medias">A medias</span></td></tr>
+          <tr><td class="modulo">Analítica</td><td>Informes de consumo por turno</td><td class="estado"><span class="chip chip-roto">No funciona</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── QUÉ FUNCIONA ─────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Lo que hay</p>
+      <h2>Qué puede hacer hoy el sistema</h2>
+    </div>
+    <div class="col bloque">
+      <p>Todo el circuito operativo de la sala funciona. En concreto:</p>
+      <ul class="limpia">
+        <li>El <strong>almacenero</strong> recibe mercancía, registra lotes con vencimiento y precio, ve qué está por caducar y qué está bajo mínimos, y despacha lo que le piden desde cocina.</li>
+        <li>El <strong>cocinero de cada área</strong> ve solo los platos que le corresponden, con un cronómetro por pedido que cambia de color si se demora. Marca cada plato como iniciado o listo, y puede devolverlo a preparación.</li>
+        <li>El <strong>mesero</strong> toma el pedido en la tableta y confirma la entrega. En ese momento exacto el sistema descuenta del inventario todos los ingredientes, cogiendo siempre los lotes que vencen antes.</li>
+        <li>El <strong>pasajero</strong> escanea el QR de su mesa y pide desde su móvil en español, inglés, francés o portugués. Si se queda sin cobertura, el pedido se guarda y se envía solo al recuperar la red, sin duplicarse.</li>
+        <li>El <strong>administrador</strong> da de alta personal, gestiona proveedores y recetas, consulta el coste de cada plato y revisa la trazabilidad completa de cualquier pedido.</li>
+      </ul>
+      <h3 style="margin-top: 1.4rem;">Y lo hace con control de acceso real</h3>
+      <p>
+        Cada empleado entra con su usuario y llega directamente a su pantalla. No ve nada que
+        no le corresponda, y esa restricción <strong>no depende de esconder botones</strong>:
+        está aplicada en el servidor y en la base de datos. Son <strong>once perfiles</strong>
+        distintos, cada uno con sus permisos.
+      </p>
+      <p>
+        Antes de poder trabajar, todo empleado debe abrir turno indicando quién es el jefe de
+        turno. Sin turno abierto, el sistema no deja operar.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── DEFECTOS ─────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Lo que no funciona</p>
+      <h2>Los cinco defectos encontrados</h2>
+      <p style="color: var(--texto-2); font-size: var(--paso-1);">
+        Ninguno compromete la seguridad ni los datos. Los cinco son piezas construidas que
+        quedaron sin conectar, y los cinco están diagnosticados con precisión.
+      </p>
+    </div>
+    <div class="pila">
+
+      <div class="defecto">
+        <div class="defecto-cabeza">
+          <h3>La pantalla de informes no puede leer sus datos</h3>
+          <span class="chip chip-roto">Crítico</span>
+        </div>
+        <p>
+          Al reforzar la seguridad de la base de datos en mayo, una misma actualización hizo dos
+          cosas incompatibles entre sí: creó el informe pidiendo que se identifique con las
+          credenciales de quien lo consulta, y a la vez le quitó a esas credenciales el permiso
+          de lectura. El resultado es que <strong>cualquier usuario, incluido el administrador,
+          recibe un error de permisos</strong>.
+        </p>
+        <p class="arreglo">Corrección: <b>una línea</b> · verificado reproduciendo el fallo</p>
+      </div>
+
+      <div class="defecto">
+        <div class="defecto-cabeza">
+          <h3>El informe global no muestra ninguna fila</h3>
+          <span class="chip chip-roto">Crítico</span>
+        </div>
+        <p>
+          La vista que abarca todas las salas a la vez consulta con una credencial de sistema
+          que no está asociada a ninguna sala concreta. El filtro del informe, que solo deja
+          pasar los datos de tu sala, descarta entonces absolutamente todo. La pantalla se ve
+          vacía en lugar de dar error, que es peor: parece que no hay datos.
+        </p>
+        <p class="arreglo">Corrección: <b>pequeña</b> · verificado con datos reales en la base</p>
+      </div>
+
+      <div class="defecto alto">
+        <div class="defecto-cabeza">
+          <h3>Las alertas no aparecen solas en pantalla</h3>
+          <span class="chip chip-medias">Alto</span>
+        </div>
+        <p>
+          El sistema genera y guarda correctamente los avisos de vencimiento, stock bajo y
+          demora, cada cinco minutos. Pero la campana de la interfaz está escuchando en un
+          canal al que nunca se suscribió, así que <strong>los avisos no saltan solos</strong>:
+          el usuario los ve al recargar la página o al abrir la campana.
+        </p>
+        <p class="arreglo">Corrección: <b>pequeña</b> · afecta a producto perecedero, conviene priorizarla</p>
+      </div>
+
+      <div class="defecto alto">
+        <div class="defecto-cabeza">
+          <h3>Los informes no se actualizan solos</h3>
+          <span class="chip chip-medias">Alto</span>
+        </div>
+        <p>
+          Aun corrigiendo lo anterior, los datos de analítica quedarían congelados: nadie
+          programó su actualización periódica. Hoy solo se refrescan si un administrador pulsa
+          el botón manualmente.
+        </p>
+        <p class="arreglo">Corrección: <b>una línea</b></p>
+      </div>
+
+      <div class="defecto alto">
+        <div class="defecto-cabeza">
+          <h3>Un pedido por QR no despierta todas las cocinas</h3>
+          <span class="chip chip-medias">Alto</span>
+        </div>
+        <p>
+          Cuando el pedido lo toma un mesero, el aviso llega a las tres pantallas de cocina
+          implicadas. Cuando lo hace el pasajero desde el QR, solo llega a una:
+          <strong>un postre pedido por QR no hace sonar la pantalla de pastelería</strong>.
+        </p>
+        <p class="arreglo">Corrección: <b>reutilizar código que ya existe</b></p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── A MEDIAS ─────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Lo que está a medias</p>
+      <h2>Construido, pero incompleto</h2>
+    </div>
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr><th>Función</th><th>Qué existe y qué falta</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="modulo">Modo sin conexión</td><td>Funciona para el pasajero del QR: si pierde cobertura, su pedido se guarda y se envía al reconectar. <strong>El personal aún no puede trabajar sin red.</strong></td></tr>
+          <tr><td class="modulo">Recetas</td><td>Se pueden crear y añadirles ingredientes. <strong>No se pueden editar ni eliminar</strong> desde la interfaz: una receta mal creada solo se corrige por base de datos.</td></tr>
+          <tr><td class="modulo">Aviso de stock bajo</td><td>Salta cuando se saca material a mano. <strong>No salta cuando el stock baja al entregar pedidos</strong>, que es la vía habitual de consumo.</td></tr>
+          <tr><td class="modulo">Inventario físico</td><td>La base de datos está preparada para registrar conteos y ajustes. <strong>No hay pantalla</strong> para hacerlos: las diferencias no se pueden corregir desde la aplicación.</td></tr>
+          <tr><td class="modulo">Fotos de los platos</td><td>Se muestran en la carta AMEX y en el QR. <strong>Hay que pegar la dirección de la imagen a mano</strong>; no se pueden subir desde el sistema.</td></tr>
+          <tr><td class="modulo">Borrado de datos personales</td><td>Borra el correo del empleado. <strong>Deja el nombre</strong>, que es el dato visible en pantalla. Relevante para Habeas Data.</td></tr>
+          <tr><td class="modulo">Filtros de informes</td><td>Filtran por turno y por fechas. <strong>Faltan los filtros por área y por responsable</strong> que se habían previsto.</td></tr>
+          <tr><td class="modulo">Solicitudes a pastelería</td><td>La pantalla existe en el sistema, pero <strong>quedó sin conexión al retirarse el chat interno</strong>. Hoy nunca mostrará contenido: hay que implementarla o retirarla.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── QUÉ FALTA ────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Lo que no hay</p>
+      <h2>Qué falta por desarrollar</h2>
+      <p style="color: var(--texto-2); font-size: var(--paso-1);">
+        Ordenado por lo que impide entregar el producto, no por dificultad.
+      </p>
+    </div>
+    <div class="prioridad">
+      <div>
+        <span class="prio-etiqueta p1">Antes de dar el sistema por entregado</span>
+        <ul class="limpia">
+          <li>Arreglar la pantalla de informes y programar la actualización de sus datos.</li>
+          <li>Hacer que las alertas aparezcan solas, sin recargar.</li>
+          <li>Hacer que los pedidos por QR despierten todas las pantallas de cocina.</li>
+          <li>Avisar de stock bajo también cuando el stock baja al entregar pedidos.</li>
+        </ul>
+      </div>
+      <div>
+        <span class="prio-etiqueta p2">Para completar el producto</span>
+        <ul class="limpia">
+          <li>Poder editar y eliminar recetas desde la interfaz.</li>
+          <li>Pantalla de conteo físico y ajuste de inventario.</li>
+          <li>Subida de fotos de platos desde el sistema.</li>
+          <li>Completar el borrado de datos personales.</li>
+          <li>Añadir a los informes los filtros por área y responsable.</li>
+          <li>Decidir el destino de las solicitudes a pastelería: implementarlas o retirarlas.</li>
+        </ul>
+      </div>
+      <div>
+        <span class="prio-etiqueta p3">Mejoras de operación</span>
+        <ul class="limpia">
+          <li>Que el personal pueda seguir trabajando sin conexión.</li>
+          <li>Exportar los informes a Excel.</li>
+          <li>Vista combinada de las cuatro cocinas para el administrador.</li>
+          <li>Historial de precios por insumo.</li>
+          <li>Aligerar las pantallas de bodega, hoy pesadas para una tableta.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ESTADO GLOBAL ────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">La cifra, y de dónde sale</p>
+      <h2>Estado global: alrededor del 80 %</h2>
+    </div>
+    <div class="col bloque">
+      <div class="nota">
+        <p>
+          <strong>Cómo se calculó.</strong> Cada área del sistema se puntuó sobre tres factores
+          verificables, no sobre una impresión: si la función <strong>existe y hace lo que
+          dice</strong> (la mitad del peso), si está <strong>conectada de principio a
+          fin</strong> (un 30 %) y si tiene <strong>pruebas automáticas</strong> que la respalden
+          (un 20 %). Después se ponderó cada área por su peso en la operación diaria: el circuito
+          bodega → cocina → sala pesa más que los informes.
+        </p>
+        <p>
+          Por eso las alertas puntúan bajo pese a tener el motor completo y probado: existe y
+          funciona, pero no está conectada, y ese factor se puntúa a cero cuando falta un extremo.
+        </p>
+        <p>
+          <strong>El 20 % restante no está repartido de forma uniforme.</strong> Se concentra en
+          dos zonas concretas —los informes y el aviso en tiempo real— y más de la mitad se
+          recupera con las cuatro correcciones de la primera prioridad, ninguna de ellas grande.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VALORACIÓN ───────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Conclusión</p>
+      <h2>Valoración de conjunto</h2>
+    </div>
+    <div class="col bloque">
+      <p>
+        El sistema está construido con un nivel de rigor superior al habitual. Dos datos lo
+        respaldan, y ninguno es opinión:
+      </p>
+      <ul class="limpia">
+        <li>Las reglas de negocio críticas —incluida la de que nada sale sin receta— <strong>están grabadas en la base de datos</strong>, no solo en el programa. Ni un error de programación futuro ni alguien con acceso técnico pueden saltárselas.</li>
+        <li>Existen <strong>doce pruebas automáticas</strong> que se ejecutan contra una base de datos real para verificar, cada vez que se cambia algo, que las reglas de seguridad siguen en pie. Las doce pasan.</li>
+      </ul>
+      <p style="margin-top: 0.5rem;">
+        Los problemas encontrados no son de diseño ni de arquitectura: son piezas concretas
+        que quedaron sin conectar. El más grave se corrige con un cambio muy pequeño.
+      </p>
+      <p>
+        Los cinco defectos caen, sin excepción, en las zonas del código que las pruebas
+        automáticas no alcanzaban. No es casualidad, y señala con precisión dónde conviene
+        extender esas pruebas para que no vuelva a ocurrir.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── LÍMITES ──────────────────────────────────────── -->
+  <section>
+    <div class="col sec-cabeza">
+      <p class="rotulo">Transparencia</p>
+      <h2>Qué no se pudo comprobar</h2>
+    </div>
+    <div class="col bloque">
+      <div class="nota">
+        <p>
+          Este informe distingue entre <strong>«existe en el código»</strong> y <strong>«se probó
+          ejecutándolo»</strong>, y nunca presenta lo primero como lo segundo. Quedó fuera del
+          alcance:
+        </p>
+        <ul class="limpia" style="color: var(--texto-2);">
+          <li>El comportamiento contra el servidor de producción real: no se dispuso de sus credenciales. Todo lo relativo a la base de datos se verificó sobre una copia equivalente montada desde cero.</li>
+          <li>Las pruebas de recorrido de pantallas, que requieren un entorno de ensayo con usuarios cargados. Su código se revisó; su ejecución, no.</li>
+          <li>La configuración que vive fuera del programa: claves rotadas, avisos de caída del servicio y ajustes del proveedor de datos.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="pie col">
+    <p>
+      Auditoría del repositorio <span class="mono">dorado-lounge-system</span> · 30 de agosto de 2026<br>
+      Verificada por ejecución: instalación, compilación, 567 pruebas, arranque del servidor,
+      80 actualizaciones de base de datos y 12 pruebas de seguridad.<br>
+      Informe técnico completo y evidencia reproducible: 24 documentos en el repositorio.
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
